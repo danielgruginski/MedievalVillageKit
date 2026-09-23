@@ -1,0 +1,14 @@
+* text=auto
+.gitattributes text eol=lf
+.gitignore     text eol=lf
+*.py   text eol=lf
+*.md   text eol=lf
+*.json text eol=lf
+*.js   text eol=lf
+*.txt  text eol=lf
+*.log  text eol=lf
+*.bat  text eol=crlf
+*.blend binary
+*.png   binary
+*.webp  binary
+*.fbx   binary

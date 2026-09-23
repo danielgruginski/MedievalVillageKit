@@ -1,0 +1,744 @@
+{
+  "summary": "Re-review the rebuilt valley town: confirm the 33 earlier issues are fixed and find regressions, then adversarially verify new findings",
+  "agentCount": 8,
+  "logs": [
+    "[verify:play] failed: You've hit your session limit · resets 5:40pm (America/Sao_Paulo)"
+  ],
+  "result": [
+    {
+      "lens": "ground",
+      "rev": {
+        "issue_status": [
+          {
+            "id": 1,
+            "status": "partial",
+            "evidence": "The ground part is fixed. SM_VK_Gatehouse_Block_inst is now at (1626.0,75.0,3.0), bbox x 1620.69-1631.33, so it is centred on the road cells i 41-42. Ray casts at x 1624.5, 1626 and 1627.5 show the row-22 ramp climbing from z 1.50 at y 67.5 to 3.00 at y 70.6. Terrain stays flat at 3.00 from there on. The gate floor (z 3.04) starts at y≈72 over terrain at 3.00, so the step is 0.04 m (was about 0.8 m). The apron L[23,40:44]=2 is in place. Renders: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g01_gate.png and g04_gate_ramp_topcorners.png. Still open: the passage has not reached the requested 3 m. Horizontal ray casts on the block give jambs at x 1624.91-1627.09 (2.18 m) at the portcullis groove (y 72) and walls at 1624.4-1627.6 (3.2 m) at y 74-76. The open leaves GateLeaf_inst (x 1624.18-1624.93) and .001 (x 1627.07-1627.82) leave only 2.14 m clear."
+          },
+          {
+            "id": 4,
+            "status": "partial",
+            "evidence": "Improved: the level-4 shoulders exist at x 1533-1539 and 1551-1557, rows 30-33 (z 6.0). The back face is on the cliff line: Quarry_Face_InnerCorner and Straight reach y 102.03. The rim is flush: ray tops at (1545,101.5), (1541,98) and (1549,100) all hit the face pieces at z 6.00. TreadwheelCrane_inst is at (1544.4,104.4,6.0), and its footing verts at y 103.2-107.05 sit on ridge terrain at 6.0. Still open: (a) Two trenches 1.5 m wide and 3 m deep remain between the face pieces and the shoulder cliffs, at x 1539.0-1540.5 and x 1549.5-1551.0, y 96-102. Scene ray casts at (1539.8, y 97/99/101) and (1550.4, y 97/99/101) hit terrain at z 3.0 while both sides are at 6.0. They show as dark lavender slots beside the green rim in C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g13_quarry_front.png and g14_quarry_se.png. (b) Nothing climbs to level 4: G.ramp holds no ramp or stair in rows 34-46 except (9,33), which only reaches level 3, so the crane is unreachable. (c) LeanTo_inst.010 (x 1537.3-1540.7, y 89.84-93.81, base z 3.0) is half inside the west shoulder; see new finding 2. Fix: close each trench with a Quarry_Face_Straight at x 1539.75 and x 1550.25, rot ±90, y 97.5/100.5, or build the pit 12 m wide to match the cell gap x 1539-1551. Add a level-3→4 ramp, e.g. G.ramp[34,10]=... going east, or G.ramp at (10,35) direction 1 onto the i 11 ridge."
+          },
+          {
+            "id": 6,
+            "status": "fixed",
+            "evidence": "The footbridge is on the west road. Bridge_Wood_End_inst spans x 1527.96-1532.04, y 32.78-36.02, and End_inst.001 spans y 47.98-51.22. Heights at x 1530: the south ramp (row 10) runs 1.50 at y 28 to 0.00 at y 32, then sand at 0.0 to y 36. The north ramp (row 17) runs 0.0 at y 52 to 1.50 at y 56. Both bridge ends land on flat sand at z 0 (terrain ramp bottom y 32 vs bridge end at 32.78; bridge end 51.22 vs ramp foot about 52.5). Dirt ground=1 continues across the sand banks, and the river road on row 9 links east. The crop plots stop at row 8. Renders: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g05_footbridge_overview.png and g08_footbridge_sramp_from_river.png."
+          },
+          {
+            "id": 12,
+            "status": "partial",
+            "evidence": "The vertical ramp-side triangles now render as grey cliff stone instead of black. See the gate ramp east and west sides at x≈1623.2 and x≈1628.8, y 67.5-69 (g02_gate_ramp_east.png, g03_gate_ramp_west.png), and the west-bench ramp at i 9-10, row 23 (g09_bench_ramp_row23.png). Still open: the ramp tile runs from the low cell centre to the high cell centre, so it is sunk 1.5 m into the upper terrace. At the west-bench ramp this cut is at y 72-73.5, where x 1527.0 is at 2.97 beside a ramp surface at 2.35 at y 72.2. The cut's side walls render as black slivers at both top corners: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g29_bench_ramp_topwest_slot.png (west corner x≈1527.2, y 72-73.5), g10_bench_ramp_row23_west.png (east corner), and the new footbridge south ramp at x 1527/1533, y 29-30 (g07_footbridge_sramp_westcorner.png, g08). The side triangles are also still thin vertical blades, not the flared banks the fix proposed."
+          },
+          {
+            "id": 17,
+            "status": "fixed",
+            "evidence": "Prop_Laundry_inst.002 now spans x 1638.63-1643.77, y 52.92-53.68, and Prop_FishRack_inst spans y 51.66-53.54. Both footprints sample flat z 0.0, clear of the y=54 bank cliff. Prop_Crates_inst.007 at y 57.63-59.6 samples flat 0.0, clear of the y=60 inlet cliff. Prop_Cart_inst.008 no longer exists. The mill-inlet ramp G.ramp[19,24:26]=1 is present: at x 1573.5-1576.5 the terrain rises from 0.0 at y 58 to 1.5 at y 62. Renders: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g17_mill_ramp_top.png and g16_mill_ramp_nw.png. One small leftover, the herb rack standing in the ramp exit, is new finding 6."
+          },
+          {
+            "id": 19,
+            "status": "partial",
+            "evidence": "The stair is now on the road: G.ramp[33,9]=1 and stair=True. Terrain at x 1527.5-1528.5 climbs from 3.0 at y 100.5 to 4.5 at y 104, and the road cells i 9-10 run up to it (C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g11_ridge_stair.png). The 'treeless cells above the stair top' part was not done. SM_VK_Tree_Oak_B_inst.014 stands at (1530.8,103.44,4.5), 2.3 m from the centre of the stair-top cell (1528.5,103.5). Its canopy bbox (x 1525.9-1535.0, y 98.9-107.3) covers the whole stair. Oak_B_inst.015 stands at (1527.65,106.71), on the stair axis 3 m past the top (g12_ridge_stair_top.png). Also, the stair is only about 2 m wide (x 1527.25-1529.25), so the east 4 m of the 6 m road ends at the ridge cliff."
+          },
+          {
+            "id": 21,
+            "status": "partial",
+            "evidence": "The lake is fixed: water is now inset one sand cell (i 71) from the east edge, and no water cut face is visible at x 1716 (C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g18_lake_east_edge.png). The river's west end is unchanged. Water planes VKV_Water_0_0 and _0_1 still start at x 1498.5 (z -0.6, y 34.5-49.5), and the terrain edge vertices at x 1498.5 for y 36.3-47.7 lie at z -0.6 to -1.5 with no skirt. The channel cross-section is open, and the water sheet shows as light-blue strips under the sand banks beyond the terrain edge (g19_river_west_edge.png). The NE and SE edges of the lake basin also show the dark cut cross-section of the level-1 cliff at the map edge (g18, top right)."
+          },
+          {
+            "id": 25,
+            "status": "fixed",
+            "evidence": "The lake is now a superellipse basin with rounded corners. The river banks meet it with smooth concave and convex curves at about x 1674-1680, y 30-36 and y 48-54, with no square notches. Top-down render: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g20_lake_top.png. The fisher-hut pier (Pier_Deck/End at x 1691.85-1695.15, y 23.74-33.26) sits on the water with its deck at z≈0.05."
+          },
+          {
+            "id": 26,
+            "status": "fixed",
+            "evidence": "The shore ramp G.ramp[5,66:68]=3 exists. At x 1698.5-1703, terrain runs 1.5 at y 13, 0.75 at y 15 and 0.0 at y 17. The ramp is clear of the training yard, whose fence stops at x 1695.2. From the ramp foot to the pier at x 1692-1695, y 23.7+, the sand walk is open: NetRack ends at x 1700.0, and Crates.010 is at x 1694.7-1697.5. The willow neck is gone: the map now has only 3 willows, none at i 55-59 rows 5-7. Renders: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g21_fisher_ramp.png and g20_lake_top.png."
+          },
+          {
+            "id": 28,
+            "status": "partial",
+            "evidence": "M_VK_TerrainTown now warps the ground-control lookup: Noise Texture (scale 0.35) goes through (noise-0.5)*1.6 into the CTL_MAP Mapping, so road edges wobble by about ±0.8 m. T_VK_GroundCtl_Town is still 72x56 px (one texel per cell, Linear). The roads also still have no ruts and no edge stones. From a colony-style camera the main road (x 1623-1629, y 0-30) still reads as a straight 6 m strip with uniform mottled fill: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g22_mainroad_colonycam.png."
+          }
+        ],
+        "new_findings": [
+          {
+            "title": "The west-postern lane on row 30 runs over both new level-4 quarry shoulders, so the painted path hits 3 m cliffs four times",
+            "severity": "high",
+            "location": "town_grid, vk_town_map.py:37 (L[30:34,11:13]=4; L[30:34,17:19]=4) against line 58 (G.ground[POSTERN_J,11:WALL_W]=1). World y 90-93, x 1533-1539 and 1551-1557.",
+            "evidence": "G.level row 30 for i 5-25 is 2 2 2 2 2 2 4 4 2 2 2 2 4 4 2 2..., while ground row 30 is 1 from i 9. Terrain along y=91.5 is 3.0 at x 1531, 5.88-6.0 at x 1533-1539, 3.0 at x 1541-1549, 6.0 at x 1551-1557, and 3.0 from x 1559 to the postern at x 1569. The dirt lane climbs onto each shoulder top and drops off it. SM_VK_LeanTo_inst.010 (x 1537.3-1540.7, y 89.84-93.81) also stands on the lane. Renders: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g23_postern_lane.png (overview) and g32_postern_lane_blocked.png (lane running into the west shoulder cliff).",
+            "fix": "Route the lane one row south, where row 29 is level 2 for i 5-25 and unoccupied. Replace line 58 with G.ground[POSTERN_J-1,11:WALL_W-1]=1 and G.ground[POSTERN_J,WALL_W-2:WALL_W]=1, a dog-leg into the postern at i 21-22. Change the stiff mark on line 79 to the same cells. The shoulders then keep rows 30-33 without a road painted on them."
+          },
+          {
+            "title": "The quarry lean-to is built half inside the west level-4 shoulder",
+            "severity": "medium",
+            "location": "build_quarry_yard via T.build('quarry', ..., 45, 97.5), vk_town_map.py:321. The object is SM_VK_LeanTo_inst.010 at (1539.0,93.65,3.0).",
+            "evidence": "Its bbox is x 1537.3-1540.7, y 89.84-93.81, with the base at z 3.0. Terrain under its west half (x<1539, y>90) is the shoulder top at z 6.0: h(1538,92)=6.0. Scene ray tops at (1538.5,93) and (1539.3,91) hit its roof at only z 6.38 and 5.88, about 0.4 m above the shoulder turf. The thatch pokes out of the shoulder top (g32_postern_lane_blocked.png, g13_quarry_front.png, same render folder). town_fix_levels skips everything inside the quarry box and T.build ran with allow_higher=True, so no check caught it.",
+            "fix": "In build_quarry_yard, move the lean-to onto flat level-2 ground clear of both shoulders and the lane, e.g. world (1561, 93.5), east of the east shoulder. Otherwise drop it. Alternatively call T.build for the quarry without allow_higher and let clashes with level-4 cells fail."
+          },
+          {
+            "title": "The props-on-wrong-level pass ignores water, so bank props overhang the river edge",
+            "severity": "low",
+            "location": "town_fix_levels.ok(), vk_town_map.py:560, which only tests G.level and G.ramp. North-bank lavoir and smokehouse dressing at y 47-49.",
+            "evidence": "Prop_BarrelStack_inst.010 at (1654.6,48.5) has bbox y 47.54-49.46, and the ground under its south end is -0.66. Prop_Woodpile_inst.004 at (1660.8,49.3) has bbox y 47.1-50.8; a ray at (1660.8,47.4) passes the woodpile at 0.0 and hits water at -0.6 over bed -0.91. Prop_HandPump_inst at (1645.2,48.3) has bbox y 47.47-48.85, with ground at -0.73. All three hang over the bank drop into the water cells (row 15, y 45-48). Render: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g28_smokehouse_bank.png (barrels and the chopping block over the lip).",
+            "fix": "In ok(), reject water cells too: `if G.level[j,i]!=k or G.ramp[j,i] or G.water[j,i]: return False`. FLOATING props are already excluded, so the ring search will nudge these props north by 0.5-1.2 m."
+          },
+          {
+            "title": "Trees are planted right up to the map border, and 66 overhang the terrain edge by more than 1 m",
+            "severity": "low",
+            "location": "town_scatter.safe(), vk_town_map.py:412-422. G.cell clamps out-of-map neighbours to the cell itself, so the border never counts as an edge. Worst case: SM_VK_Tree_Willow_inst.001 at (1714.9,22.27).",
+            "evidence": "Willow_inst.001 has its trunk 1.1 m from the east edge on the 3 m lake sand strip. Its canopy reaches x 1720.67, while the terrain ends at x 1717.5 (g18_lake_east_edge.png, g20_lake_top.png, bottom right). Pine_B_inst.248 (1513.5,167.3) overhangs the north edge by 5.1 m, Pine_B_inst.273 (1706.2,167.6) by 5.0 m, and Pine_B_inst.102 (1501.2,137.1) the west edge by 4.4 m. Willow_inst.003 (1504.28,34.29) reaches x 1498.61 at the river's west end. Render folder: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\",
+            "fix": "In safe(), treat a neighbour outside 0..W-1 / 0..H-1 as a level change so the inset applies, e.g. `if not (0<=i+di<G.W and 0<=j+dj<G.H) or G.level[jj,ii]!=l ...`. For Willow, also require at least 5 m from the map edge (x in [5,211], y in [5,163])."
+          },
+          {
+            "title": "The herb drying rack stands in the exit of the new mill-inlet ramp",
+            "severity": "low",
+            "location": "SM_VK_Prop_DryingRack_Herbs_inst at (1574.5,62.6,1.5), on ramp-top cell (24,20). The ramp is G.ramp[19,24:26]=1 at vk_town_map.py:71.",
+            "evidence": "The rack's bbox is x 1574.06-1574.94, y 61.76-63.44. The ramp surface spans x ≈1573.2-1577.0 and climbs from y 58.5 (z 0) to y 62 (z 1.5), so the rack stands on the ramp's top edge, 1 m east of the ramp axis (x 1575). It blocks the west half of the 4 m exit. Render: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g17_mill_ramp_top.png (ladder-like rack at the top of the sand ramp).",
+            "fix": "Move the rack to x≈1570.5 (west, beside the HerbBundles frame) or to y≥65. Better, extend town_fix_levels.ok() to reject ramp high-neighbour cells (G.stiff from the ramp loop), so props never stand in a ramp mouth."
+          },
+          {
+            "title": "Scatter bushes spill onto the new streets (west-quarter street and river road)",
+            "severity": "low",
+            "location": "town_scatter, inside_town and south-land branches, vk_town_map.py:469-471 and 487-489. safe() insets only from level or water changes, not from road cells.",
+            "evidence": "SM_VK_Bush_Round_inst.038 at (1585.7,93.3) has bbox x 1583.8-1587.5, y 91.5-95.3. It covers 1.5 m of the 3 m cobbled postern street (row 30, y 90-93) in front of the corner-house turret; see the bush on the cobbles in C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\rereview\\ground\\g25_west_quarter_street.png. SM_VK_Bush_Round_inst.025 at (1582.9,26.4) reaches 1.23 m into the new river road (row 9, y 27-30).",
+            "fix": "In safe(), also inset from neighbour cells where `roads[jj,ii]` is true, using the object's half-size (about 1.9 m for Bush_Round). Or skip bush and flower picks when near(roads,i,j,0) is true and the chosen point is within 1.9 m of the road cell."
+          }
+        ]
+      },
+      "ver": {
+        "verdicts": [
+          {
+            "title": "The west-postern lane on row 30 runs over both new level-4 quarry shoulders, so the painted path hits 3 m cliffs four times",
+            "real": true,
+            "reason": "Reproduced. Code: line 37 sets L[30:34,11:13]=4 and L[30:34,17:19]=4, and line 58 paints ground[30,11:23]=1 over those cells. G.ramp has no ramp there. Terrain ray casts along y=91.5 give z 3.0 at x 1531, 6.0 at x 1534 and 1537, 3.0 at x 1541-1549, 6.0 at x 1552 and 1555, and 3.0 at x 1558-1565 up to the postern. So the lane climbs 3 m at x 1533 and x 1551 and drops 3 m at x 1539 and x 1557. SM_VK_LeanTo_inst.010 (bbox x 1537.3-1540.7, y 89.84-93.81) also sits on row 30. In the top view renders2\\rereview\\verify_ground\\v01_postern_lane_top.png, the dirt lane from the postern stops dead at the east shoulder's cliff face, and the west shoulder top is painted dirt. The lane cannot be walked."
+          },
+          {
+            "title": "The quarry lean-to is built half inside the west level-4 shoulder",
+            "real": true,
+            "reason": "Reproduced. SM_VK_LeanTo_inst.010 is at (1539.0,93.65,3.0) with bbox x 1537.3-1540.7, y 89.84-93.81, z 3.0-6.53. Terrain under its west half is the shoulder top at z 6.0: rays at (1537.6,92) and (1538,92) hit the roof at 6.13 and then terrain at 6.0, only 0.13 m apart. East of x 1539 the terrain is 3.0 and the lean-to's floor is at 3.06. renders2\\rereview\\verify_ground\\v02_leanto_shoulder.png clearly shows the thatch roof lying on the shoulder turf, with the west half of the structure swallowed by the shoulder block. The quarry box is skipped in town_fix_levels (line 549), and the quarry build uses allow_higher=True (line 321), so no check catches it."
+          },
+          {
+            "title": "The props-on-wrong-level pass ignores water, so bank props overhang the river edge",
+            "real": true,
+            "reason": "Reproduced. ok() at line 560 tests only G.level!=k and G.ramp. The river water cells are level 0 (line 20), so level-0 props over them pass. Ray profiles: Prop_BarrelStack_inst.010 at (1654.6,48.5) has mesh at y 47.6-47.8 over terrain at -0.6 (water) and -0.45. Prop_Woodpile_inst.004 at (1660.8,49.3) has a mesh piece at (1660.8,47.4) at z 0.5 over water at -0.6. Prop_HandPump_inst at (1645.2,48.3) has its base plate at z 0.14 over y 47.6-48.0, where terrain is -0.6 to -0.11. In renders2\\rereview\\verify_ground\\v04_north_bank_side.png, the woodpile's chopping block visibly hangs in the air over the bank slope and the barrel stack's plank juts over the lip. The overhangs are small, about 0.4-0.7 m, but they can be measured and they come from a real gap in the check. Low severity is right."
+          },
+          {
+            "title": "Trees are planted right up to the map border, and 66 overhang the terrain edge by more than 1 m",
+            "real": true,
+            "reason": "Reproduced. G.cell clamps out-of-map neighbours (vk_terrain.py:431), so safe() never insets at the border. The terrain bbox is x 1498.5-1717.5, y -1.5-169.5. Measured against it, exactly 66 of 705 tree instances overhang by more than 1 m (34 Pine_B, 24 Pine_A, 1 Willow, and others), and 59 trunks stand within 1.5 m of the grid edge (Pine_B_inst.262 at y 167.63 is 0.37 m from it). SM_VK_Tree_Willow_inst.001 at (1714.9,22.27) has bbox max x 1720.67. The top view renders2\\rereview\\verify_ground\\v08_east_edge_willow_top.png shows its canopy about 2 m past the terrain edge, over the void. v07_north_edge_pines.png shows pine branches hanging past the north edge. The overhang distances depend on the tree meshes that are being rebuilt. The trunk placement 0.4-1.2 m from the border is a placement fault that is in scope."
+          },
+          {
+            "title": "The herb drying rack stands in the exit of the new mill-inlet ramp",
+            "real": false,
+            "reason": "Part of the evidence is wrong, and the defect is subjective. Measured ramp: terrain rises from z 0 at y≈59 to z 1.5 at y≈61.5, across x ≈1572.3-1577.5, a mouth about 5 m wide. The rack (bbox x 1574.06-1574.94, y 61.76-63.44) is 0.26 m past the top edge. Its centre, x 1574.5, is 0.5 m WEST of the ramp axis (x 1575), not 1 m east as claimed. It takes up only 0.9 m of the mouth and leaves about 1.7 m clear to the west and about 2.5 m to the east. So it does not block the west half of the exit. renders2\\rereview\\verify_ground\\v09_mill_ramp_mouth.png shows a thin ladder rack on open meadow beyond the ramp top, with room on both sides. No generator rule requires ramp landings to be kept clear. This is a layout preference, not a reproducible fault."
+          },
+          {
+            "title": "Scatter bushes spill onto the new streets (west-quarter street and river road)",
+            "real": true,
+            "reason": "Reproduced, but smaller than claimed. safe() (lines 412-422) insets only for level or water changes, and the inside_town r_<0.16 branch (line 469) and south r_<0.2 branch (line 487) have no road check. The evaluated mesh of SM_VK_Bush_Round_inst.038 at (1585.68,93.33) reaches y 92.03. That is about 0.97 m into the 3 m cobbled row-30 street (y 90-93), not the 1.5 m that the bbox suggests. renders2\\rereview\\verify_ground\\v12_bush_postern_street_top.png shows the bush sitting on about a third of the cobbles. The mesh of SM_VK_Bush_Round_inst.025 at (1582.88,26.37) reaches y 27.85, about 0.85 m into the row-9 river road, not 1.23 m (v11_bush_river_road.png). A sweep of the Bush_Round, Bush_Large and Hydrangea instances against a road mask rebuilt from the grid code found only these 2 with more than 0.5 m of encroachment. So this is a real but isolated low-severity case."
+          }
+        ]
+      }
+    },
+    {
+      "lens": "build",
+      "rev": {
+        "issue_status": [
+          {
+            "id": 2,
+            "status": "fixed",
+            "evidence": "Numeric AABB test over all 4584 objects: no overlap at all between any TownWall_*/Tower_Round/Gatehouse_Block and a building piece, apart from the gatehouse's own timber storey. Nearest building piece to each tower is 0.67 m or more: tower .007 (1671,138) to BarrelStack.024 is 0.67 m, Roof_Gable.084 is 0.90 m; tower .002 (1608,75) to Roof_Gable.081 is 1.22 m; tower .004 (1650,75) to Roof_Mid.041 is 0.97 m; tower .006 (1671,75) to Roof_Gable_Frame.001 is 0.95 m. The nearest foreign piece to the gatehouse is 1.23 m away. The infill beside the gate starts at y 80.5/81, while the gatehouse bbox ends at y 78.25. Renders: renders2/rereview/build/b01_town_overview.png, b03_west_quarter_backs.png, b05_gate_inside.png."
+          },
+          {
+            "id": 3,
+            "status": "fixed",
+            "evidence": "No tree, bush, flower or LipGrass anchor lies inside any TownWall/Tower/Gatehouse bbox (0 hits). The nearest trunk to the north wall is Oak_B.026 at (1696.9,143.0), 3.8 m from the outer face at y 139.2. The nearest tree to any tower centre is Pine_Young.132 (1584.9,147.4), 9.6 m from tower .001. There are no trees inside the walls, and tree spacing has 0 violations. Render b19_north_wall_from_inside.png shows a clean wall walk and tower .005."
+          },
+          {
+            "id": 5,
+            "status": "fixed",
+            "evidence": "Merchant, gablefront and corner house are at rot 180. Their front walls are on y=90 and face +Y onto the cobbled row-30 street: Wall_Stone_Shop_inst (1582.5,90), Wall_Plaster_Door_inst.019 (1591.5,90), Wall_Plaster_Shop_inst (1590.5-1594.5,90), Wall_Stone_Shop_inst.002 (1609.5,90). Shop goods sit at y 90.5 on the street. Render b02_west_quarter_fronts.png. The tower .002 clash is gone. Remnant: the terrace rear door Wall_Plaster_Door_inst.024 is still at (1672.5,81) facing tower .006, but it now has 2.4-2.75 m of clearance (the tower bbox ends at y 78.57)."
+          },
+          {
+            "id": 11,
+            "status": "partial",
+            "evidence": "All five door corridors are now clear. Barracks door .036 (1686,6): WeaponRack.007 ends at y 5.25, while the corridor is y 5.35-6.65. Blacksmith door .050 (1669.5,126): Woodpile.016 starts at x 1670.25. Brewery door .049 (1672.5,114): CiderPress ends at x 1671.54 and BarrelStack.023 starts at x 1673.25. Skyline door .046: Anvil.004 is at x 1600.6-1601.5, outside Porch.030. Watermill door .034: BarrelStack.007 ends at y 54.75. However, the slide stops only 0.1 m past the corridor, so the props now swallow the porch posts. BarrelStack.023 contains the east post of Porch.031 (x 1673.41-1673.77, y 112.18-112.83). CiderPress overlaps the west post (x 1671.23-1671.61) by 0.3 m. Cart.014 overlaps BarrelStack.023 by 0.88 x 1.28 m. Woodpile.016 contains the east post of Porch.032 (x 1670.4-1670.8, y 124.2-124.9). Renders: b08_brewery_door.png, b09_blacksmith_door.png, b21_blacksmith_east.png. See new finding 3."
+          },
+          {
+            "id": 14,
+            "status": "partial",
+            "evidence": "The merchant yard is now on the south side, between the house back (y 84) and LowWall.030/.031 (y 81). No cart is left in the yard and the gap to Stair_Stone_Ext_inst is open. However, Prop_Crates_inst.014 (bbox x 1581.05-1583.92, y 80.68-83.03) still runs 0.70 m into LowWall_inst.030 (y 80.60-81.38) and into posts .017/.019. BarrelStack.017 (x 1581.04-1582.96, y 81.54-82.70) sits entirely inside the Crates.014 bbox. Sacks.013 (x 1580.04-1581.52) stands in the 3 m yard opening against LowWall_Post.019. Render b10_merchant_yard.png shows the barrels and crates merged over the east yard wall."
+          },
+          {
+            "id": 16,
+            "status": "fixed",
+            "evidence": "Chapel_Wall_Door_inst.003 is at (1651.5,117.0) with rot 0, so it faces -Y onto the cobbled forecourt G.ground[36:39,47:52] (x 1641-1656, y 108-117). The forecourt opens onto the plaza's north-east corner at cell (47,35). The only objects inside the forecourt are the flanking house walls at x<=1641.8 and x>=1655.2. Render b06_chapel_from_plaza.png."
+          },
+          {
+            "id": 18,
+            "status": "fixed",
+            "evidence": "The nursery moved by +0.45 m: Crop_TreeNursery_inst x 1536.45-1539.43 against Wall_Shed_Window_inst.003, which ends at x 1536.53 (0.08 m contact). The ends of FenceGate.024 and Fence.183 start at x 1536.28-1536.29, so they abut the shed corner by 0.24 m and the pen reads as butted against the shed. Render b11_forester_pen.png."
+          },
+          {
+            "id": 20,
+            "status": "fixed",
+            "evidence": "The plaza lamps are placed after the infill, at (1611/1641, 96.6/104.4). LampPost.037 (x<=1641.23) is 0.5 m clear of Porch.035 (x>=1641.74). There is no lamp inside any TownWall bbox, and the old wall lamp is gone. The corner-house lamp is now LampPost.029 at (1612.6,91.9) on the street. Render b16_plaza.png."
+          },
+          {
+            "id": 22,
+            "status": "fixed",
+            "evidence": "The training yard origin is now (187.5,7.5). The lowest barracks walls are at y 0.88 (Corner_Stone .137/.140) and Roof_Gable.078 is at y 0.30. No building or prop is below y 0, except the longhouse pen fences at -0.09 and Deco_Bush .005/.006 at -0.23/-0.35. Render b23_barracks.png. Side note: the barracks corners at y 1.5/13.5 are half a cell off the 3 m grid, because the origin is 7.5 instead of the suggested 9.0."
+          },
+          {
+            "id": 24,
+            "status": "partial",
+            "evidence": "Fixed items: Coop.002 now ends at x 1549.49 against RoofThatch_Hip.006 at x>=1549.47. Palisade Crates.012 (x<=1664.55) is 1.26 m clear of Palisade_Tower.001. Trough.013 (y<=58.95) is 0.55 m clear of Wall_Plaster.083. Cauldron (x 1511.7-1513.5) is off the axis of tannery door .017. Not fixed: the plank piles are still not inset. Pile_Planks_2 spans x 1611.05-1613.95 inside Stockpile_Border.001 (1611.03-1613.96). Pile_Planks_2.001 spans 1664.55-1667.45 inside Border.008 (1664.53-1667.46). Pile_Planks_3 is inset only 0.19 m. The planks lie over the rails in b17_stockpile.png. Trough.013 now rests on the TanningPit rim (AABB overlap 1.76 x 0.68 m, b18_tannery_yard.png)."
+          },
+          {
+            "id": 31,
+            "status": "fixed",
+            "evidence": "Only one SM_VK_Prop_Well is left: inst.002 at (1615,114), from the skyline builder. A NoticeBoard.003 at (1620,103) now stands on the plaza. Render b16_plaza.png."
+          },
+          {
+            "id": 33,
+            "status": "partial",
+            "evidence": "Brewery: all Corner_* pieces are on the 3 m grid, with walls at y 114/120 (for example Wall_Stone_Door_inst.049 is now at (1672.5,114.0)). Tannery: the y is fixed, with walls at y 60.0/66.0 (Wall_Plaster.083 at (1506,60)). However, its corners Corner_Plaster_inst.067-.070 are at x 1504.5/1513.5, still 1.5 m off the grid in x. Cheap fix: tannery origin x 3*4+1.5."
+          }
+        ],
+        "new_findings": [
+          {
+            "title": "The new postern lane (row 30) runs over the level-4 quarry shoulders, and the quarry lean-to sits on the lane, half buried in the west shoulder",
+            "severity": "high",
+            "location": "vk_town_map.py:37 L[30:34,11:13]=4 and L[30:34,17:19]=4 versus line 58 G.ground[POSTERN_J,11:WALL_W]=1. LeanTo_inst.010 at (1539.0,93.65,3.0).",
+            "evidence": "A terrain ray cast along the lane at y=91.5 gives z 6.0 at x 1534-1538 and 1552-1556, and z 3.0 elsewhere. Row 29 at y=88.5 is flat at 3.0 from x 1528 to 1568. The dirt lane climbs two 3 m shoulder cliffs between the bench road and the postern. LeanTo.010 (bbox x 1537.30-1540.70, y 89.84-93.81, z 3.0-6.53) stands on lane cells (12-13,30). Ray-cast ground under its west corners is 5.9-6.0, so its west half is inside the hill and only the roof ridge shows. Renders: b24_postern_lane_quarry.png, b12_quarry_leanto.png.",
+            "fix": "Start the shoulders one row north with L[31:34,11:13]=4 and L[31:34,17:19]=4. The quarry front faces begin at y about 92.9, so the rock sides stay hidden for rows 31-33, and row 30 stays level 2 all the way to the postern. Remove the LeanTo from build_quarry_yard, or place it on the pit floor at about (1545,97.5). Re-run the y=91.5 ray-cast check."
+          },
+          {
+            "title": "Festival green lamp posts stand inside the market-cross plinth and on the stocks platform",
+            "severity": "medium",
+            "location": "vk_mod_defence build_festival_green, lamps at local (+/-3.2,-3.6). World: LampPost_inst.032 (1655.8,95.4) and LampPost_inst.033 (1662.2,95.4).",
+            "evidence": "LampPost.032 is 0.9 m from the centre of Prop_MarketCross_inst (1654.9,95.6), inside its plinth bbox (x 1653.20-1656.60, y 93.90-97.30). LampPost.033 is inside Prop_Stocks_inst (x 1662.07-1664.59, y 93.78-95.60). Render b07_festival_green.png shows both posts rising out of the plinth steps and the stocks deck.",
+            "fix": "In build_festival_green, place the lamps at (-1.8,-4.4) and (1.8,-4.4). These are clear of the cross plinth (local x<=-2.4), the stocks (x>=3.07), the gate arch and low wall (y<=-5.62) and the maypole ribbons (y>=-3.54). Hang the bunting at y -4.4 scaled to about 0.6 in x, or use Prop_Festoon."
+          },
+          {
+            "title": "town_door_clear slides props just 0.1 m past the door corridor, into porch posts and other props",
+            "severity": "medium",
+            "location": "vk_town_map.py:518-544 town_door_clear, at the brewery Porch_inst.031 (1672.5,114) and the blacksmith Porch_inst.032 (1669.5,126).",
+            "evidence": "The porch post footprints come from the mesh. BarrelStack.023 (x 1673.25-1675.40, y 111.56-113.18) encloses the east post of Porch.031 (x 1673.41-1673.77, y 112.18-112.83). CiderPress (x 1669.30-1671.54) cuts 0.3 m into the west post (x 1671.23-1671.61). Cart.014 (x 1674.52-1678.08, y 110.55-112.84) overlaps BarrelStack.023 by 0.88 x 1.28 m. Woodpile.016 (x 1670.25-1673.95, y 123.45-124.75) encloses the east post of Porch.032 (x 1670.4-1670.8, y 124.2-124.9). Renders: b08_brewery_door.png, b09_blacksmith_door.png, b21_blacksmith_east.png.",
+            "fix": "When a door has a Porch, use the porch half-width (1.55 m) plus the prop half-width as the slide target, not 0.65. After each slide, run T.clashes([o],'door_clear',shrink=0.05) against the spatial hash. If the prop still clashes, try the opposite side, and drop the prop if both sides fail. For this layout, that means BarrelStack.023 to x about 1676.3 (with Cart.014 moved to x about 1679.5), CiderPress to x about 1668.6, and Woodpile.016 to x about 1672.5."
+          },
+          {
+            "title": "Weed strips are laid across door modules, so tufts grow on the door steps of 17 doors",
+            "severity": "low",
+            "location": "vk_helpers._dress line 765 (and the similar calls at vk_mod_frontier:688 and vk_mod_humble:922). Examples: Deco_Weeds_inst.168 at the brewery door (1672.5,114), .173 at the blacksmith door (1669.5,126), .146 at the skyline door (1597.5,126), .183 (1633.5,108), .194 (1644,103.5).",
+            "evidence": "17 Deco_Weeds instances share the exact x, y and rotation of a *_Door module. Each covers the full 3.2 m module width at v -0.87 to -0.13 in front of the opening. Visible on the door steps in b08_brewery_door.png and b09_blacksmith_door.png. vk_mod_town:990 already limits weeds to walls typed '.W'.",
+            "fix": "In vk_helpers._dress, change `if r.random()<0.4:` to `if c!=\"D\" and r.random()<0.4:`, and apply the same guard in the frontier and humble dress helpers."
+          },
+          {
+            "title": "Blacksmith weapon rack is set into the building's south-east corner quoins",
+            "severity": "low",
+            "location": "Prop_WeaponRack_inst.009 (1674.6,126.5), rot 0, from build_blacksmith. Corner_Stone_inst.181 at (1674,126), Wall_Stone_inst.198 at (1674,127.5).",
+            "evidence": "Rack bbox x 1673.84-1675.36, y 126.18-126.82. It overlaps the Corner_Stone.181 AABB by 0.77 x 0.47 m and Wall_Stone.198 by 0.70 x 0.64 m. In b21_blacksmith_east.png the rack frame disappears into the corner quoins.",
+            "fix": "In build_blacksmith, shift the rack +1.0 m in x (to about 1675.6,126.5) so it stands free east of the corner, or rotate it 90 degrees and set it against the east wall at y about 124.8."
+          },
+          {
+            "title": "Round bushes spill onto the new postern street and through the festival low wall and gate arch",
+            "severity": "low",
+            "location": "Bush_Round_inst.038 (1585.7,93.3) and Bush_Round_inst.037 (1657.5,91.9). town_scatter inside_town branch, vk_town_map.py:469-471.",
+            "evidence": "Bush.038 bbox y 91.48-95.29 covers 1.5 m of the 3 m row-30 street (y 90-93) in front of the merchant and tower house; it shows as a bush on the cobbles in b02_west_quarter_fronts.png. Bush.037 bbox (x 1655.59-1659.36, y 90.03-93.82) passes through LowWall_inst.035 (y 92.62-93.40) and 0.57 m into LowWall_GateArch_inst (x>=1658.79). Visible at the bottom of b07_festival_green.png. safe() only insets from level or water borders, not from roads or occupied cells.",
+            "fix": "In safe() for the inside-town scatter, also treat a neighbour that is a road or has T.occ!=0 as a border. Use an inset equal to the bush radius (about 1.9 m for Bush_Round, 1.2 m for Hydrangea and Wildflowers). Alternatively, skip bushes when near(roads,i,j,1) or T.near_occ(i,j,1)."
+          },
+          {
+            "title": "Tower-house woodpile is pushed into the external stair landing",
+            "severity": "low",
+            "location": "Prop_Woodpile_inst.015 (1581.0,94.4) against Stair_Stone_Ext_inst.001 (1576.5,96), the tower house's south stair.",
+            "evidence": "Woodpile bbox x 1579.50-1583.20, y 93.75-95.05 overlaps the stair bbox (x 1574.75-1580.20, y 94.44-95.79) by 0.70 x 0.61 m. In b20_towerhouse_stair_woodpile.png the woodpile roof runs into the landing block and half covers the small arch under it.",
+            "fix": "Move Woodpile.015 to about (1582.4,94.2), clear of the stair (x<=1580.2), and drop Bush_Round.038, which occupies that spot (see the bush finding). Alternatively, place the woodpile against the tower house's east wall at x about 1582.2, y about 99."
+          },
+          {
+            "title": "The moved brewery and blacksmith front doors open onto lawn with no paved link to any street",
+            "severity": "low",
+            "location": "Brewery door Wall_Stone_Door_inst.049 (1672.5,114), front cell (57,37). Blacksmith door Wall_Stone_Door_inst.050 (1669.5,126), front cell (56,41). The code paves only the chapel door (vk_town_map.py:341-342).",
+            "evidence": "Both front cells have ground 0 (grass). The nearest paved cells are the chapel forecourt at i<=51, which the infill at x 1655.7-1662 blocks for row 37, and the terrace street on row 29. Column i=57 (x 1671-1674) rows 30-36 is free, apart from a 0.5 m wall edge of the infill at x>=1673.4, so a lane fits. The overview b01_town_overview.png shows the NE corner as a lawn island.",
+            "fix": "After building them, call pave(T,door_front_cell(T,brewery_door),(57,29),own='brewery') for a straight lane south to the terrace street. Also call pave(T,(56,40),(52,38),own='blacksmith') followed by pave(T,(52,38),(51,38)) to reach the chapel forecourt. Check T.occ first, as the chapel pave does."
+          }
+        ]
+      },
+      "ver": {
+        "verdicts": [
+          {
+            "title": "The new postern lane (row 30) runs over the level-4 quarry shoulders, and the quarry lean-to sits on the lane, half buried in the west shoulder",
+            "real": true,
+            "reason": "Reproduced. I ray-cast the VKV_Chunk terrain meshes. At y=90.5, 91.5 and 92.5 the ground is z=6.0 at x 1534-1538 and 1552-1556, and z=3.0 at every other x from 1526 to 1570. At y=88.5 the ground is flat at 3.0 all the way across. This matches the source: vk_town_map.py:37 sets L[30:34,11:13]=4 and L[30:34,17:19]=4, and line 58 paves G.ground[30,11:23]=1 across the same row. SM_VK_LeanTo_inst.010 is at (1539.0,93.65,3.0) with bbox x 1537.3-1540.7, y 89.84-93.81, z 3.0-6.53, and the ground under x 1538 is 6.0, so its west half is inside the shoulder. In render renders2/rereview/build_verify/v01_postern_lane_quarry.png the dirt lane climbs both 3 m shoulder blocks, and only the lean-to's roof shows above the west one."
+          },
+          {
+            "title": "Festival green lamp posts stand inside the market-cross plinth and on the stocks platform",
+            "real": true,
+            "reason": "Reproduced. SM_VK_Prop_LampPost_inst.032 is at (1655.8,95.4). A BVH test finds 84 intersecting triangle pairs with SM_VK_Prop_MarketCross_inst, and a ray cast shows the plinth top at z 3.91 at the lamp's position, so the post comes out of the steps. SM_VK_Prop_LampPost_inst.033 at (1662.2,95.4) has 15 intersecting triangle pairs with SM_VK_Prop_Stocks_inst. The source is vk_mod_defence.py:1465, which puts the lamps at local (+/-3.2,-3.6), next to the MarketCross at (-4.1,-3.4) and the Stocks at (4.3,-4.4). In render v02_festival_lamps.png the west post rises out of the plinth steps and the east post stands on the end of the stocks."
+          },
+          {
+            "title": "town_door_clear slides props just 0.1 m past the door corridor, into porch posts and other props",
+            "real": true,
+            "reason": "Reproduced with mesh intersection tests (BVH triangle overlap). BarrelStack_inst.023 and Porch_inst.031 have 62 intersecting triangle pairs. CiderPress_inst and Porch_inst.031 have 27. Cart_inst.014 and BarrelStack_inst.023 have 23. Woodpile_inst.016 and Porch_inst.032 have 84. The bboxes match the claim. BarrelStack.023 starts at x 1673.25, which is door x 1672.5 + 0.65 + 0.1, and Woodpile.016 starts at x 1670.25, which is door x 1669.5 + 0.75. This matches the slide rule at vk_town_map.py:538 (half-u0+0.1). In render v03_brewery_door.png the barrel stack surrounds the east porch post, the cider press is hard against the west post, and the cart runs into the barrels. v04_blacksmith_door_rack.png shows the woodpile under the blacksmith porch."
+          },
+          {
+            "title": "Weed strips are laid across door modules, so tufts grow on the door steps of 17 doors",
+            "real": true,
+            "reason": "Reproduced. I count 16 doors, not 17, but the defect is the same. 16 SM_VK_Deco_Weeds instances share the exact location and rotation of a *_Door module, for example .168 on Wall_Stone_Door_inst.049 (1672.5,114), .173 on .050 (1669.5,126), .146 on .043 (1597.5,126), .183 on .052 and .194 on .054. The weed mesh spans local x -1.6 to 1.58, y -0.87 to -0.13 and z up to 0.54. 72 of its 180 vertices lie inside the door opening (|x|<0.7), which puts them on the step. vk_helpers._dress places weeds with no check for c=='D'. In close-ups v10_brewery_doorstep_weeds.png and v11_skyline_door_weeds.png, flower and grass tufts come up through the stone step in front of the door."
+          },
+          {
+            "title": "Blacksmith weapon rack is set into the building's south-east corner quoins",
+            "real": true,
+            "reason": "Reproduced. SM_VK_Prop_WeaponRack_inst.009 is at (1674.6,126.5), rot 0, with bbox x 1673.84-1675.36, y 126.18-126.82. A BVH test finds 191 intersecting triangle pairs with Corner_Stone_inst.181 at (1674,126) and 68 with Wall_Stone_inst.198 at (1674,127.5). The rack straddles the east wall line at x=1674 and sits behind the front face at y=126. In render v07_weaponrack_corner.png the rack frame and shield go into the corner quoin stack."
+          },
+          {
+            "title": "Round bushes spill onto the new postern street and through the festival low wall and gate arch",
+            "real": true,
+            "reason": "Mostly reproduced, but the gate-arch part is wrong. Bush_Round_inst.038 is at (1585.68,93.33) with bbox y 91.48-95.29, so it covers 1.5 m of the 3 m row-30 street (y 90-93). In render v08_bush038_postern_street.png the bush sits on the cobbles. Bush_Round_inst.037 at (1657.54,91.94) has 200 intersecting triangle pairs with LowWall_inst.035, and in v09_bush037_lowwall.png its foliage passes through the festival low wall. It has 0 intersecting triangles with LowWall_GateArch_inst, so the gate-arch clash is only an AABB overlap. The source confirms the cause: safe() in town_scatter insets only at level or water borders."
+          },
+          {
+            "title": "Tower-house woodpile is pushed into the external stair landing",
+            "real": true,
+            "reason": "Reproduced. SM_VK_Prop_Woodpile_inst.015 is at (1581.0,94.4) with bbox x 1579.5-1583.2, y 93.75-95.05. SM_VK_Stair_Stone_Ext_inst.001 is at (1576.5,96) with bbox x 1574.75-1580.2, y 94.43-95.79. A BVH test finds 88 intersecting triangle pairs. In the top-down close-up v06_towerhouse_stair_woodpile.png the woodpile roof runs into the stair landing block and covers part of its small arch. The bush from the previous claim does not touch the woodpile (0 intersecting triangles)."
+          },
+          {
+            "title": "The moved brewery and blacksmith front doors open onto lawn with no paved link to any street",
+            "real": false,
+            "reason": "The facts check out, but it is a design preference, not a defect. Render v12_ne_quarter_topdown.png shows the brewery front (door Wall_Stone_Door_inst.049 at 1672.5,114) opening onto lawn with no cobbles. That lawn is walkable and joins the row-29 terrace street across open grass east of the festival green (x ~1668-1689, y 90-106), so the building can still be reached. The code treats grass door fronts as a normal case: town_door_clear paints worn ground (G.wear=120) on grass door-front cells. The road-facing rule applies only to town_infill. Other doors inside the walls also open onto lawn or yards, for example the terrace rear door Wall_Plaster_Door_inst.024 at front cell (57,26). A missing decorative path is a subjective layout choice, not a clash."
+          }
+        ]
+      }
+    },
+    {
+      "lens": "art",
+      "rev": {
+        "issue_status": [
+          {
+            "id": 7,
+            "status": "partial",
+            "evidence": "The material part is fixed. Measured lawn in the overview went from S 0.71-0.88 (review\\art\\review_art_00_overview.png, e.g. HSV 82,0.88,0.46) to S 0.44-0.50, H 86-90, V 0.52-0.56 (rereview\\art\\art_00_overview.png, art_03_chapel.png, art_04_westquarter.png). M_VK_TerrainTown now has Hue/Sat (hue 0.505, sat 0.80, val 0.97), T_VK_TerrainMacro drives a ±10% value term (0.9+0.2*R) and a warm tint (1.05,1,0.8)*G*0.3. The worn-ground channel is present (T_VK_GroundCtl_Town R=0.47/0.59 on 241 cells), and 32 kitchen-garden crop cells were added inside the walls. The composition complaint is not fixed and is now worse: lawns still dominate the colony view because lowland trees are almost gone (see new finding 1). Examples are the bare lawn east of the blacksmith (x 1676-1686, y 100-136, art_12_blacksmith.png) and the open south land around the camp (art_05_camp.png)."
+          },
+          {
+            "id": 8,
+            "status": "partial",
+            "evidence": "Done: the materials are desaturated. Rendered RoofRed is HSV 12,0.51,0.67 and Blue is 220,0.21,0.51 (art_01_skyline.png). Every roof material has an Object Info.Random ±6% value jitter (Map Range 0.94-1.06). Infill houses use district_roofs(), and the plaza blocks now read as slate and shingle (art_16_town_roofs.png). Not done: the fixed builders ignore the district palette. On the skyline row (y 129), Red Roof_Mid.037/CapR (1594.5-1597.5), Blue Roof_Gable_Flush/Bellcote/HalfHip (1600.5-1603.5) and Thatch RoofThatch_HalfHip/Mid.013 (1609.5-1615.5) sit side by side, which puts Thatch inside the walls and Blue on a non-landmark (art_01_skyline.png). The SE terrace (y 84) has Red Roof_Mid.040/Caps (1657.5-1663.5) next to Blue Roof_Gable_Flush.001/Mid.039 (1666.5-1669.5) next to Slate (art_02_terrace_se.png, art_23_terrace_north.png). The corner house (Roof_Gable.080/.081, LCorner.008 at 1603-1608, y 82-87) is Green in the west district. The brewery (Roof_Hip.013/.014, 1669-1675, y 117) is Red in the east district. Blue appears on 5 non-landmark roof pieces."
+          },
+          {
+            "id": 9,
+            "status": "partial",
+            "evidence": "Done: M_VKT_Water has Emission Strength 0, Alpha 0.9 and X-stretched ripple noise (Mapping scale 0.18,1.4,1). Not done: nothing drives colour by depth. River samples from the bank, the centre and the far bank give V 0.55/0.54/0.56 (art_07_river_mill.png). The lake is V 0.57 at the shore and 0.60 about 10 m out, i.e. lighter offshore, not darker (art_25_shore_close.png). There is no foam or shore band: the water meets the bank stone in a hard line (art_25). The large 8 m cloud blotches from Noise Texture.001 (scale 0.12, unstretched) still drive the tint mix (art_08_lake.png, art_19_lake_top.png). The overall look barely changed: old water rendered HSV 185,0.43,0.57, new is 188,0.52,0.57. The tints (0.035,0.17,0.2)/(0.06,0.27,0.28) are mid-turquoise in sRGB. Fix: darken them about 2x and mix by distance to shore instead of Noise.001."
+          },
+          {
+            "id": 13,
+            "status": "fixed",
+            "evidence": "Face-level material check on all town scaffold instances (10 Scaffold_Wall, 5 Wall_Top, 4 Corner, 2 Corner_Top): no faces use M_VK_BarkBirch. The pole faces use M_VK_BarkOak (46 per wall and 86 per corner piece) plus M_VK_Wood and Planks. In the render the poles are brown timber (art_06_construction.png, site at x 1660-1680, y 57-69)."
+          },
+          {
+            "id": 15,
+            "status": "fixed",
+            "evidence": "No Tree_* or Bush_Large exists within x 1580-1615, y -5..30. Oak_A_inst.017 and Oak_B_inst.015 now stand on the west ridge at (1558.7,104.0) and (1527.7,106.7). The tents (Tent_Bell 1597.0,11.2; Tent_A 1593.9,16.7 and 1591.5,12.2) and the campfire (1594.5,13.5) are fully readable from the colony camera (art_05_camp.png). Nothing frames the camp now, but the occlusion defect is gone."
+          },
+          {
+            "id": 30,
+            "status": "partial",
+            "evidence": "M_VK_Stained emission went from 1.4 to 0.5. The chapel windows no longer glow but still read as red/blue/yellow rainbow panes (art_03_chapel.png). The BottleKiln_inst (1543.0,63.1) uses M_VK_Clay with a tint of (0.56,0.42,0.35) and renders HSV 30,0.38,0.70 (art_09_pottery_kiln.png), a pale biscuit or peach tan. The fix asked for fired-brick brown-orange (V about 0.5) with soot toward the top, and neither was done. The old render was salmon (review_art_26_meadow_west_crafts.png). The 3 in-town hydrangeas (1681.0,126.7), (1644.5,130.1) and (1685.3,132.8) are part of the mesh rebuild and out of scope."
+          },
+          {
+            "id": 32,
+            "status": "partial",
+            "evidence": "The merchant's Sign_Anvil is gone; the merchant front now has generic Prop_Sign_inst/.001 at (1581.2,90.2). SM_VK_Emblem_Ridge_Anvil_inst is still on the skyline house at (1598.0,114.0,z 11.1) and reads clearly as a black anvil on the ridge (art_11_skyline_anvil.png). Prop_Anvil_inst.004 is still in front of it at (1601.2,118.2), shifted only 2 m. The real forge Prop_Forge_inst.003 (1675.6,130.2) with Anvil.005 remains tucked on the blacksmith's east side behind the brewery's red hip roof and is not readable from the colony camera (art_12_blacksmith.png)."
+          }
+        ],
+        "new_findings": [
+          {
+            "title": "Lowland trees almost eliminated: bare lawns, and a hard edge between the dense ridge forest and empty valley",
+            "severity": "high",
+            "location": "All level 0-2 land. vk_town_map.py town_scatter lines 459-486 (town branch near_occ(i,j,1)+near(roads,1); south/meadow branch near_occ(i,j,2) for big trees)",
+            "evidence": "Count of Tree_*/Bush_Large at z<3.5: 12 in the whole valley. That is 3 on the south land (rows 0-9), 2 in the meadow, 2 willows on the banks, 1 on the west bench and 0 inside the walls. The map has 0 Blossom trees, 3 Apple trees and no lowland oak. The north and west ridges hold 695. The old map had dozens of lowland trees plus 18 willows (review\\art\\review_art_00_overview.png against rereview\\art\\art_00_overview.png, art_21_west_top.png, art_05_camp.png, art_16_town_roofs.png). The rules are the cause: near_occ() treats the -1 wall band, -2 kitchen gardens and crop occupancy as buildings, and in town nearly every cell is within 1 of a road or an occupied cell.",
+            "fix": "In town_scatter, test big trees with T.near_bld(i,j,1), which counts building tags >0 only, instead of near_occ(i,j,2), and use near(roads,i,j,0). Inside the walls, use `not T.near_bld(i,j,0) and not roads[j,i]` for Blossom/Apple. Raise the south-land/meadow probability from 0.07 to about 0.12 and place 2-3 trees within 4 m as clumps. Target about 40 lowland trees and 6-8 inside the walls, and keep the camp and footprint canopy test from #15."
+          },
+          {
+            "title": "The west-postern lane is painted over the level-4 quarry shoulders and climbs two 3 m cliffs",
+            "severity": "high",
+            "location": "Row 30 (y 90-93), cells i 11-12 (x 1533-1539) and i 17-18 (x 1551-1557). town_grid lines 37 and 58",
+            "evidence": "Ray-cast ground height along y 91.5: i 9-10 at z 3.0, i 11-12 at z 6.0, i 13-16 at z 3.0, i 17-18 at z 6.0, i 19-23 at z 3.0. G.ground[30,11:23]=1 overlaps L[30:34,11:13]=4 and L[30:34,17:19]=4, and there are no ramps. The dirt lane visibly runs up onto the flat shoulder tops beside the quarry (art_15_quarry.png, art_24_mine_quarry_bench.png), so the new postern (art_14b_postern_west.png) is cut off from the bench road.",
+            "fix": "Route the lane one row south, where row 29 is level 2: G.ground[29,11:22]=1 and G.ground[29:31,21:23]=1, a dogleg into the postern cell (22,30), with stiff on those cells. Set G.ground[30,11:21] back to 0. Alternatively start the shoulders at row 31 (L[31:34,11:13]=4, L[31:34,17:19]=4)."
+          },
+          {
+            "title": "Kit foliage (hedges, quarry rim turf, mine mound) is far more saturated than the newly desaturated grass",
+            "severity": "medium",
+            "location": "M_VK_Foliage on SM_VK_Deco_Hedge (festival green, about 1647-1668, y 95-104), SM_VK_Quarry_Face_* tops (1537-1556, 92-102), SM_VK_Mine_Portal mound (about 1512, 96), Deco_Ivy_A/B",
+            "evidence": "Rendered samples: hedge HSV 82,0.93,0.28 (art_03_chapel.png, x 905-935), quarry rim turf 77,0.87-0.91,0.35 (art_15_quarry.png), mine mound 76,0.80,0.38 (art_24_mine_quarry_bench.png). The adjacent terrain grass is 89,0.45,0.54. The quarry reads as a neon-green U on dull grass.",
+            "fix": "In M_VK_Foliage, add a Hue/Saturation node after T_VK_Foliage_BCA with Hue 0.51, Saturation 0.55 and Value 1.3, which lands near the terrain grass (S about 0.5, V about 0.5). If cabbages should stay bright, instead reassign the turf faces of Quarry_Face_* and Mine_Portal to a grass material matched to T_VK_Grass_BC."
+          },
+          {
+            "title": "Kitchen-garden plots read as black holes scattered on street-front lawns",
+            "severity": "medium",
+            "location": "The 32 in-town Crop_* plots from town_scatter line 461-464. Examples: Crop_Carrot_inst.013 (1636.5,91.5) and Carrot (1645.5,91.5) between the plaza and the terrace street, Carrot (1597.5,100.5) opposite the gablefront. Also the apiary Crop_Lavender_inst.008 (1567.9,67.5)",
+            "evidence": "Carrot plots render at HSV 54,0.75,0.08 and Lavender at about 0.18 V, against lawn V 0.54 (art_17_terrace_street_gardens.png, art_18_carrot_close.png, art_22_westquarter_north.png, art_12_blacksmith.png). 8 Carrot and 9 Lavender plots sit as isolated single cells, often on the lawn in front of houses rather than behind them. M_VK_Soil is T_VK_Soil_BC × vertex colour with no lift, so the hamlet plots are also V 0.14-0.19 (art_21_west_top.png).",
+            "fix": "Lift M_VK_Soil with a Hue/Sat value of 1.8 (or a multiply of 1.8) to about V 0.3, matching the worn-dirt ground at 117,88,54. In the garden pass, drop Carrot from the pick list. Only accept cells on the side opposite a house's front (use door_front_cell to find the front) and group them 2 cells at a time with a Prop_Fence edge."
+          },
+          {
+            "title": "Worn-ground pads are uniform axis-aligned cell rectangles",
+            "severity": "medium",
+            "location": "town_wear (lines 575-581) → T_VK_GroundCtl_Town R channel",
+            "evidence": "221 cells carry exactly R=0.59 in solid blocks: construction sites i 45-59 × rows 19-23 (a 45×15 m slab), camp i 29-33 rows 2-6, sawpit i 35-38 rows 2-4, stockpile i 36-37 rows 6-7, training i 60-65 rows 0-4, and a quarry ring. With 1 texel per cell and Linear filtering, each block renders as a brown rectangle with straight edges (art_06_construction.png, art_13_gate.png, art_05_camp.png, art_15_quarry.png).",
+            "fix": "In town_wear, write 150 only to cells whose 4 neighbours are also in the footprint. Give perimeter cells a random 60-110, and skip corner cells and about 30% of edge cells. Also apply the cheap part of #28, a 0.5-1 m low-frequency noise offset on the CTL_MAP UV lookup, so pad and road edges wobble."
+          },
+          {
+            "title": "Trees overhang the map border into the void, including 2 of the 3 remaining willows",
+            "severity": "low",
+            "location": "Tree_Willow_inst.001 (1714.9,22.3), Tree_Willow_inst.003 (1504.3,34.3), and 116 ridge pines on the north and west edges, e.g. Pine_B (1513.5,167.3), (1706.2,167.6), (1501.2,137.1)",
+            "evidence": "Willow.001's canopy bbox is x 1709.2-1720.7, 4.7 m past the east edge at x 1716, and is visible over the grey backdrop (art_19_lake_top.png, right edge). Willow.003's canopy reaches x 1498.6. 118 trees in total extend more than 1 m past the map rectangle, up to 6.6 m. After the new willow rules, no willow is left along the river banks between them.",
+            "fix": "In put_tree, reject a tree when x-r<0.5 or x+r>215.5 (and likewise for y), with r = 4.5 for Willow and Oak and 3.0 for Pine. Alternatively set inset ≥4 m in safe() for cells with i∈{0,W-1} or j∈{0,H-1}. Allow willows again on bank cells at least 2 cells from the ramps, bridges and quay, so 5-6 willows line the river."
+          },
+          {
+            "title": "The reshaped lake still reads as a rounded-rectangle swimming pool",
+            "severity": "low",
+            "location": "town_grid lines 22-25 (superellipse exponent 4), lake i 58-71, rows 5-18",
+            "evidence": "With exponent 4, the water edge sits at i 70.6-71.0 for every row from 9 to 16, a straight 24 m east shore. It is parallel to an equally straight south shore at the pier, and concave notches appear where the straight river canal joins (art_19_lake_top.png, art_08_lake.png).",
+            "fix": "Use exponent 2.3 instead of 4 for both the basin and lake masks and add an angular wobble (radius × (1+0.12*sin(3θ+0.7))). OR an ellipse centred at (58.5,13.5) with a 3×4 cell radius into both masks to flare the river mouth. Then re-check the fisher-hut and pier footprints."
+          },
+          {
+            "title": "Thatch was left out of the palette pass and is now the most saturated large surface",
+            "severity": "low",
+            "location": "M_VK_Roof_Thatch / M_VK_Thatch: hamlet roofs (rows 0-8), the granary and tannery, and the skyline thatch house (1609.5-1615.5, y 129)",
+            "evidence": "Thatch renders HSV 37-39, S 0.66-0.70 (art_01_skyline.png x 900-1260; art_21_west_top.png hamlet roofs), the same as before (old overview S 0.70). RoofRed dropped to S 0.51 and grass to S 0.45, so the golden roofs now pop hardest in the colony view (art_00_overview.png).",
+            "fix": "Add a Hue/Saturation node in M_VK_Roof_Thatch and M_VK_Thatch with Saturation 0.75 and Value 0.95, targeting S about 0.5, and give it the same Object Info ±6% jitter as the other roof materials."
+          }
+        ]
+      },
+      "ver": {
+        "verdicts": [
+          {
+            "title": "Lowland trees almost eliminated: bare lawns, and a hard edge between the dense ridge forest and empty valley",
+            "real": true,
+            "reason": "Reproduced with a live count. Tree_*/Bush_Large instances with z<3.5: 12 in the whole valley, 0 inside the walls (x 1569-1689, y 75-138), 0 Blossom and 3 Apple. There are 695+ on the ridges. The per-area split in the claim is slightly off: south land 2 (Bush_Large 1637.3,3.6; Apple 1711.3,7.7), meadow 2 (Birch 1692.8,62.2; Apple 1683.9,65.6), 3 willows, 1 on the west bench (Pine_Young 1541.1,80.2), and 4 on the level-1 strip east of the walls (x 1709-1714, y 87-119). The total of 12 is correct. The old overview (review/art/review_art_00_overview.png) shows dozens of lowland trees and bank willows, and old finding #10 lists 18 willows. The new overview (rereview/art/art_00_overview.png) and my renders show bare lawns: verify_art/va_09_hamlet_thatch.png (hamlet, no trees), va_05_gardens_colony.png and va_03_hedge.png (inside the walls, no trees). The code agrees. The in-town Blossom/Apple branch requires r<0.08, not near_occ(i,j,1) and not near(roads,1). The south/meadow branch requires r<0.07 and not near_occ(i,j,2) for big trees. near_occ also counts the -1 wall band and the -2 kitchen gardens. This is a placement regression, not tree-mesh looks, so it is in scope."
+          },
+          {
+            "title": "The west-postern lane is painted over the level-4 quarry shoulders and climbs two 3 m cliffs",
+            "real": true,
+            "reason": "Confirmed by ray-cast on the VKV chunks along y=91.5. Ground height is 3.0 at i 8-10, 6.0 at i 11-12, 3.0 at i 13-16, 6.0 at i 17-18 and 3.0 at i 19-23. The code agrees: town_grid sets G.ground[POSTERN_J=30, 11:WALL_W]=1 and L[30:34,11:13]=4 / L[30:34,17:19]=4. No G.ramp exists on row 30; the only nearby ramp is (33,9), the stair. Render verify_art/va_02_postern_lane.png shows dirt painted on both raised shoulder tops, with cliff faces at y≈90. The bench road (i 9-10, z 3) runs into the west shoulder's cliff, and the lane resumes at ground level east of the east shoulder toward the postern. The painted lane cannot be walked."
+          },
+          {
+            "title": "Kit foliage (hedges, quarry rim turf, mine mound) is far more saturated than the newly desaturated grass",
+            "real": true,
+            "reason": "The saturation gap reproduces in my renders. Quarry rim turf is HSV 78/0.90/0.35 against adjacent terrain grass at 90/0.46/0.54 (verify_art/va_02_postern_lane.png). The mine mound is 75/0.86/0.42 against grass at 89/0.46/0.54 (va_04_mine.png). The festival hedges (SM_VK_Deco_Hedge_inst 1653-1665, y 94.5-105) are 84/0.85/0.29 and 80/0.96/0.26 against grass at 89/0.45/0.55 (va_03_hedge.png). The quarry reads as a neon-green U. One correction: the turf tops of SM_VK_Quarry_Face_* and SM_VK_Mine_Portal use M_VK_Moss (top-face area: Quarry_Face_Straight 4.6 m² Moss, Mine_Portal 37.8 m² Moss), not M_VK_Foliage. Only the hedge turf is M_VK_Foliage. M_VK_Moss is T_VK_Moss_BC × vertex colour with no HSV node. A Hue/Sat node only in M_VK_Foliage would therefore not fix the quarry or the mine; M_VK_Moss needs the same adjustment, or the faces need the reassignment the claim offers as its alternative fix."
+          },
+          {
+            "title": "Kitchen-garden plots read as black holes scattered on street-front lawns",
+            "real": true,
+            "reason": "Reproduced from a colony-style camera (1642,64,32) looking at (1642,93,3): verify_art/va_05_gardens_colony.png. Crop_Carrot_inst.013 (1636.5,91.5) samples RGB 28,26,10 (HSV 52/0.64/0.11), and Crop_Carrot_inst.014 (1645.5,91.5) samples 22,21,5 (V 0.09). The lawn between them is 88/0.43/0.55. Both plots read as near-black squares between the plaza and the terrace street. Live data: 32 Crop_* inside the walls (15 Cabbage, 9 Lavender, 8 Carrot), all at scale 0.8 as single cells. M_VK_Soil is T_VK_Soil_BC × vertex colour with no lift. The advice to put gardens only behind houses is a design preference. The very dark plots are measurable."
+          },
+          {
+            "title": "Worn-ground pads are uniform axis-aligned cell rectangles",
+            "real": true,
+            "reason": "The T_VK_GroundCtl_Town (72×56, Non-Color, Linear) R channel has exactly 221 texels at 150 in solid rectangles. The blocks are: training i 59-64 rows 0-4, camp i 29-33 rows 2-6, sawpit i 35-38 rows 2-4, stockpile i 36-37 rows 6-7, construction i 44-58 rows 19-23 (not 45-59 as claimed), charcoal i 15-19 rows 24-26, mine i 1-6 rows 30-34, quarry i 12-17 rows 31-35. Renders show square-cornered brown mats: verify_art/va_06_construction_pad.png (a 45×15 m slab) and rereview/art/art_05_camp.png (camp and sawpit). One correction: a low-frequency warp already exists on the CTL lookup (Noise Texture scale 0.35, (n-0.5)×1.6 added to the object coordinates before Mapping). That warp is why the edges are slightly ragged, so that part of the fix is already done. The missing part is the per-cell falloff and corner cutting."
+          },
+          {
+            "title": "Trees overhang the map border into the void, including 2 of the 3 remaining willows",
+            "real": true,
+            "reason": "The main example reproduces. Tree_Willow_inst.001 trunk is at (1714.9,22.3), 1.1 m from the east edge. Its transformed mesh vertices reach x 1719.4, 3.4 m past x=1716, and the canopy is clearly over the grey void in verify_art/va_07_willow_east_edge.png. Apple (1711.3,7.7) also overhangs there. The claim's numbers are inflated because it used rotated bound_box AABBs. Exact vertex extents give 87 trees more than 1 m past the map rectangle (not 118) and a maximum of 4.8 m (Pine_B_inst.273, not 6.6 m). Tree_Willow_inst.003 reaches x 1499.8, only 0.2 m past the west edge, so only 1 of the 3 willows really overhangs. The border-inset placement defect is still real for Willow.001 and the edge pines on the north and west rows."
+          },
+          {
+            "title": "The reshaped lake still reads as a rounded-rectangle swimming pool",
+            "real": true,
+            "reason": "Evaluating the lake mask in town_grid ((|i-64.5|/6.5)^4+(|j-12.5|/5)^4<1) per row gives water at cols 59-70 for every row 9-16 and 60-69 for rows 8 and 17. The water is a 12×10-cell rectangle with one-cell corner chamfers, so the east and west water edges are dead straight for 8 rows (24 m). The river (rows 12-15) enters at col 58, which leaves concave notches at i 58-59, rows 9-11 and 16. My colony render verify_art/va_08_lake_colony.png shows straight east, north and south shores and concave rounded notches at the river mouth, matching rereview/art/art_19_lake_top.png. Confirmed finding #25 (hard rectangle with notches) is therefore only softened, not fixed."
+          },
+          {
+            "title": "Thatch was left out of the palette pass and is now the most saturated large surface",
+            "real": false,
+            "reason": "The number reproduces but the defect is subjective, and part of the premise is wrong. Hamlet thatch samples HSV 37/0.67/0.61 (verify_art/va_09_hamlet_thatch.png) against RoofRed at 8/0.52/0.48 (va_03_hedge.png). But golden straw being more saturated than terracotta or slate is a normal material colour in a WoW-style kit, not a defect. Earlier finding #8 only asked to keep Thatch outside the walls and to desaturate RoofRed and RoofBlue, not thatch. The claim also says thatch lacks the per-instance jitter, but M_VK_Roof_Thatch already has an Object Info Random → Map Range → Multiply jitter node chain. Only M_VK_Thatch lacks it. This is an art preference with no measurable failure."
+          }
+        ]
+      }
+    },
+    {
+      "lens": "play",
+      "rev": {
+        "issue_status": [
+          {
+            "id": 1,
+            "status": "partial",
+            "evidence": "Now centred: SM_VK_Gatehouse_Block_inst bbox x 1620.69-1631.33 (centre 1626.0). The ramp profile at x 1626 rises from z 1.5 at y 67.5 to z 3.0 at y 70.6. The apron is at z 3.0, and the gate floor ray-casts at z 3.04 against terrain z 3.0, so the step is 0.04 m. The portcullis is raised to z 5.16, giving 2.16 m headroom. Still short of the >=3 m clear passage asked for. Horizontal ray casts at z 3.6 against the block give 2.07 m at y 72 (x 1624.97-1627.03, the outer arch pinch between y 71 and 73). The vault is 3.2 m wide, but GateLeaf_inst/.001 open only to 78 and 102 degrees, which leaves 2.74 m at y 74.5. In the 0.5 m walk grid the gate is the narrowest point on the main road. Render: renders2/rereview/play/play_01_gate_south.png. Fix: rotate the leaves to 90 and 90 degrees (flush with the vault, 3.2 m), and widen the outer arch jambs of SM_VK_Gatehouse_Block by about 0.5 m per side at y 71-73."
+          },
+          {
+            "id": 5,
+            "status": "fixed",
+            "evidence": "The merchant, gablefront and corner house now use rot 180. Wall_Stone_Shop_inst.001/.000 are at (1576.5,90) and (1582.5,90), Wall_Plaster_Shop at (1594.5,90), Wall_Stone_Shop.002 at (1609.5,90), and the doors Wall_Stone_Door .038 (1579.5,90), Wall_Plaster_Door .019 (1591.5,90) and Wall_Stone_Door .039 (1606.5,90) all face +Y onto the cobbled row-30 street (y 90-93). Shop goods are at y 90.2-90.9. Every front door, and the rear doors .040 (1606.5,81) and .018 (1590,85.5), is reached from the main road in the walk BFS. The corner-house rear wall (y 80.16) is 1.9 m from the tower .002 surface (y 78.24), so the clash is gone. Terrace rear door Wall_Plaster_Door .024 (1672.5,81) has 2.0 m to the tower .006 surface and its front is reachable. Renders: play_03_westquarter_fronts.png, play_15_postern_street_topdown.png."
+          },
+          {
+            "id": 6,
+            "status": "fixed",
+            "evidence": "Bridge_Wood_End/Mid span x 1527.96-1532.04 over the west road (cols 9-10). The deck is at z 0.35 over water at z -0.6. The south bank ramp profile at x 1530.2 goes from z 1.5 at y 28 to 0.0 at y 32, and the north bank ramp from 0.0 at y 52 to 1.5 at y 56. The mid-deck (1530,42) is reached in the walk graph, at 136 m from the plaza. Render play_07_footbridge_from_east.png shows the dirt road running onto both ramps and the deck."
+          },
+          {
+            "id": 10,
+            "status": "fixed",
+            "evidence": "Placement only; the mesh is out of scope. There are 3 SM_VK_Tree_Willow instances: .001 (1714.9,22.3), .002 (1662.5,30.9) and .003 (1504.3,34.3). The closest pair is 53 m apart. None is within 2 cells of the bridge columns, the quay or a ramp; the old .005/.013/.015/.016 spots are clear. The barge is at (1605,45.8) rot 0, bbox y 44.0-47.6, and no longer overlaps Quay_Stair_inst (y 47.61-48.91). No reeds are left on the quay (x 1599-1611); the nearest, Reeds .047, is at x 1612.98."
+          },
+          {
+            "id": 16,
+            "status": "fixed",
+            "evidence": "SM_VK_Chapel_Wall_Door_inst.003 is at (1651.5,117) rot 0, facing -Y onto the cobbled forecourt (rows 36-38, cols 47-51). The walk path from the plaza (1626,96) to the door front is 32.9 m against a 32.1 m straight line. Render play_09_chapel_forecourt.png shows the door opening onto the cobbles toward the plaza."
+          },
+          {
+            "id": 17,
+            "status": "fixed",
+            "evidence": "Laundry_inst.002 is at y 52.92-53.68 with terrain 0.0-0.0 under it. FishRack_inst is at y 51.66-53.54 on flat z 0; this is a straddle fix, but see the new FishRack finding. Crates_inst.007 (1583.0,58.1) sits on the flat pad at z 0, and the mill cart is gone. The mill-inlet ramp at cols 24-25 rises 0 to 1.5 between y 58.5 and 61.5 at x 1572-1578, and it is reached. Mill doors Wall_Stone_Door .033/.034 are reached, 87 m from the plaza. Render: play_14_mill_inlet_ramp.png."
+          },
+          {
+            "id": 19,
+            "status": "fixed",
+            "evidence": "The stair is now on road column 9: F at x 1527.7-1528.7 rises from z 3.0 at y 100.5 to z 4.5 at y 103.25, at the end of the dirt road. The stair top is reached, 111.8 m from the plaza. The nearest trunk, Oak_B_inst.014 at (1530.8,103.4), stands beside the exit rather than on it. Render: play_12_ridge_stair.png."
+          },
+          {
+            "id": 26,
+            "status": "fixed",
+            "evidence": "The fisher ramp at x ~1698-1704 descends from z 1.5 at y 13.5 to 0.0 at y 16.5. The front of Wall_Shed_Door_inst (1693.5,21), and the pier deck at z 0.06 (1693.5, 25-31), are both reached from the main road (134 m from the plaza). The sand neck at i 55-59 has no willows. Render: play_08_fisher_ramp.png."
+          },
+          {
+            "id": 27,
+            "status": "fixed",
+            "evidence": "SM_VK_TownWall_Postern_inst (1569,91.5): ray casts give a 1.79 m clear opening, headroom z 3.0-5.7, and floor z 3.0 on both sides; the leaves are open (render play_04_postern_close_outside.png). The walk path from the plaza to the forester door front (1534.5,73.5) is now 101.9 m against a 94.2 m straight line; it was about 170 m. The log cabin is 130.9 m and the mine 119.3 m. Caveat: the painted lane itself runs over the quarry shoulders (see new findings)."
+          }
+        ],
+        "new_findings": [
+          {
+            "title": "Quarry pit is sealed: banker and stone pile block its only entrance, so the quarry floor is unreachable",
+            "severity": "high",
+            "location": "Quarry mouth at x 1543.6-1546.4, y 93-94. Prop_Banker_inst (1544.1,94.1), bbox x 1543.13-1545.07, y 93.34-94.98. Pile_Stone_3_inst.001 (1546.6,93.5), bbox x 1545.25-1547.95, y 93.0-94.0.",
+            "evidence": "The quarry faces leave one channel, between Quarry_Face_Corner_inst.001 (x max 1543.62) and Quarry_Face_Corner_inst (x min 1546.42). The banker plus the stone pile span x 1543.13-1547.95 across that channel. In the walk grid row y 93.5 is fully blocked from x 1537 to 1551, and the Quarry_Floor samples (1545, 94-99) form a 9 m² island the main road cannot reach (Dijkstra distance inf). The treadwheel crane (1544.4,104.4,z 6.0) also sits on level-4 ground, and 0 of 24,240 walkable level-4 samples are reachable. Renders: play_06_quarry_mouth.png and play_13_postern_lane_over_shoulders.png, where the block pallets fill the pit mouth.",
+            "fix": "In build_quarry_yard (or after T.build 'quarry'), put the Banker at about (1541.5,91.0) and Pile_Stone_3 at about (1548.5,91.0) in the reachable pit yard (y 89.5-92.5, level 2). Keep x 1543.6-1546.4 clear from y 89 to 99. Moving the crane down is issue #4."
+          },
+          {
+            "title": "FishRack moved by the door-clear pass seals the bank strip at the smokehouse, forcing a 166 m detour",
+            "severity": "medium",
+            "location": "SM_VK_Prop_FishRack_inst (1655.09,52.6), bbox x 1653.42-1656.75, y 51.66-53.54, plus Pile_Fish_1_inst (1655.1,52.1). It sits between the smokehouse corner Corner_Stone_inst.134 (y max 51.62) and the bank-to-meadow cliff toe (y about 53.9).",
+            "evidence": "The rack sits 0.1 m west of door .035's keep-clear corridor (x 1656.85-1658.15), where the door-clear pass slid it, and it leaves gaps of 0.04 m and about 0.36 m on the two sides. The smokehouse door front (Wall_Stone_Door_inst.035 at (1657.5,51), facing +Y) is reached only from the east, through the lake's NE corner: 166.5 m from the plaza. With the rack footprint cleared, the same Dijkstra path is 73.5 m, along the bank from the stone-bridge ramp. Render: play_10_smokehouse_fishrack.png.",
+            "fix": "Put the FishRack west of the building, parallel to the bank, at about (1649.5,49.6) rot 185. That spot (x 1647.8-1651.2, y 48.7-50.6) is clear of the HandPump and BarrelStack.010, and the 1.9 m strip at y 51.7-53.9 stays open. In town_door_clear, reject a slide whose result closes a gap below 1.2 m to a level change (test the shifted bbox against G.level cells within 1.2 m), and try the other side or drop the prop instead."
+          },
+          {
+            "title": "Postern lane is painted over the two 3 m quarry shoulders; the real walking route on row 29 is plain grass",
+            "severity": "medium",
+            "location": "Row 30 (y 90-93), cells 11-12 (x 1533-1539) and 17-18 (x 1551-1557). vk_town_map.py:58 sets G.ground[POSTERN_J,11:WALL_W]=1, but :37 sets L[30:34,11:13]=4 and L[30:34,17:19]=4.",
+            "evidence": "Terrain along y 91.5: z 3.0 up to x 1532.2, z 6.0 over x 1533.2-1538.2, z 3.0 over x 1540-1550, z 6.0 over x 1551.2-1556.2, and z 3.0 from x 1558. So the dirt lane climbs two 3 m cliffs. SM_VK_LeanTo_inst.010 (x 1537.3-1540.7, y 89.84-93.81) also stands on the lane. Colonists actually walk row 29 (z 3.0 along y 88.5 from x 1526 to 1545), which is unpainted. Render: play_13_postern_lane_over_shoulders.png, with dirt on the shoulder tops.",
+            "fix": "Route the lane below the shoulders. Replace line 58 with G.ground[POSTERN_J-1,11:20]=1; G.ground[POSTERN_J-1:POSTERN_J+1,19]=1; G.ground[POSTERN_J,19:WALL_W]=1, and update the stiff marks on line 79 to match. Alternatively, start the shoulders one row later: L[31:34,11:13]=4; L[31:34,17:19]=4."
+          },
+          {
+            "title": "Bush and lamp post narrow the new postern street",
+            "severity": "low",
+            "location": "SM_VK_Bush_Round_inst.038 (1585.68,93.33), bbox y 91.48-95.29, and SM_VK_Prop_LampPost_inst.029 (1612.6,91.9), bbox x 1611.85-1612.92, y 91.58-92.65, both on the 3 m row-30 street. Also SM_VK_Bush_Round_inst.025 (1582.88,26.37) on the row-9 river road.",
+            "evidence": "Bush.038 reaches 1.52 m into the street. Opposite the merchant's wall face (y 90.97) this leaves 0.5 m at ground level, under the turret corbel (bottom z 4.33). LampPost.029 blocks the full grid width at x 1612.25-1612.75 (walk-width scan = 0 at y 91.6). Bush.025 reaches 1.23 m into the river road. In town_scatter, the inside_town bush branch (line 469-471) and the south-land branch (lines 487-489) have no road check, and safe() insets only at level changes. Renders: play_03_westquarter_fronts.png and play_15_postern_street_topdown.png (dark bush on the cobbles).",
+            "fix": "In town_scatter, skip Bush_Round, Hydrangea and Wildflowers when near(roads,i,j,1), or make safe() inset 1.2 m on sides whose neighbour cell is a road. Move LampPost.029 to about (1612.3,91.1), against the corner-house front, or drop it."
+          },
+          {
+            "title": "Apiary herb props clutter the top of the mill-inlet ramp, one on the cliff lip",
+            "severity": "low",
+            "location": "SM_VK_Prop_HerbBundles_inst (1571.8,60.9), bbox x 1570.55-1573.05, y 60.69-61.55, and SM_VK_Prop_DryingRack_Herbs_inst (1574.5,62.6), bbox x 1574.06-1574.94, y 61.76-63.44. The ramp is at x 1572-1578 and tops out at y about 61.5.",
+            "evidence": "HerbBundles covers the west 1 m of the ramp exit, and the terrain under it spans z 1.09-1.5, so it overhangs the inlet cliff lip. The DryingRack stands mid-exit, leaving lanes of 1.0 m and 3.0 m. Both show at the ramp head in render play_14_mill_inlet_ramp.png.",
+            "fix": "Move both props to x<=1569 or y>=64.5. Before the builders dress their yards, mark G.ramp cells and the cell each ramp leads to in T.occ, so later props and the door-clear pass avoid ramp heads."
+          },
+          {
+            "title": "Smokehouse props hang over the river edge",
+            "severity": "low",
+            "location": "SM_VK_Prop_BarrelStack_inst.010 (1654.6,48.5), bbox y 47.54-49.46, and SM_VK_Prop_Woodpile_inst.004 (1660.8,49.3), bbox y 47.1-50.8. The bank edge is at y about 48.",
+            "evidence": "Terrain samples under the bboxes go down to -0.76 and -1.25 (riverbed), so the props float 0.5-0.9 m out over the water; the barrels are visible hanging off the bank in play_10_smokehouse_fishrack.png. town_fix_levels.ok() tests only G.level, and river cells are level 0, so water is not rejected.",
+            "fix": "In town_fix_levels.ok(), also return False when G.water[j,i]. The existing nudge ring then moves these props about 1 m north onto the bank."
+          },
+          {
+            "title": "East-shore willow canopy hangs past the map edge",
+            "severity": "low",
+            "location": "SM_VK_Tree_Willow_inst.001 (1714.9,22.27) on the lake's one-cell east sand strip (i 71). Canopy bbox x 1709.2-1720.7; the map edge is x 1716.",
+            "evidence": "The canopy extends 4.7 m beyond the terrain border into empty space. no_willow (vk_town_map.py:442-444) does not exclude the border columns.",
+            "fix": "Add no_willow[:,G.W-2:]=True and no_willow[:,:2]=True, or reject any put_tree whose trunk is within 3 m of the map border."
+          }
+        ]
+      },
+      "ver": null
+    }
+  ],
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Review"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Verify"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "review:ground",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "ad3b9a1ab2e178f2e",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1790189242208,
+      "queuedAt": 1790189242192,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are reviewing a procedural WoW-style medieval valley town built in a live Blender 4.4 session (Blender MCP tool mcp__blender__execute_blender_code; load it with ToolSearch \"select:mcp__blender__execute_blender_code\").\nRead first: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\VALL…",
+      "promptFramed": true,
+      "lastProgressAt": 1790191867503,
+      "tokens": 279627,
+      "toolCalls": 101,
+      "durationMs": 2625291,
+      "resultPreview": "{\"issue_status\":[{\"id\":1,\"status\":\"partial\",\"evidence\":\"The ground part is fixed. SM_VK_Gatehouse_Block_inst is now at (1626.0,75.0,3.0), bbox x 1620.69-1631.33, so it is centred on the road cells i 41-42. Ray casts at x 1624.5, 1626 and 1627.5 show the row-22 ramp climbing from z 1.50 at y 67.5 to 3.00 at y 70.6. Terrain stays flat at 3.00 from there on. The gate floor (z 3.04) starts at y≈72 ove…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "review:build",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "ac12452b28630d828",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1790189242209,
+      "queuedAt": 1790189242192,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are reviewing a procedural WoW-style medieval valley town built in a live Blender 4.4 session (Blender MCP tool mcp__blender__execute_blender_code; load it with ToolSearch \"select:mcp__blender__execute_blender_code\").\nRead first: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\VALL…",
+      "promptFramed": true,
+      "lastProgressAt": 1790191741197,
+      "tokens": 361095,
+      "toolCalls": 104,
+      "durationMs": 2497852,
+      "resultPreview": "{\"issue_status\":[{\"id\":2,\"status\":\"fixed\",\"evidence\":\"Numeric AABB test over all 4584 objects: no overlap at all between any TownWall_*/Tower_Round/Gatehouse_Block and a building piece, apart from the gatehouse's own timber storey. Nearest building piece to each tower is 0.67 m or more: tower .007 (1671,138) to BarrelStack.024 is 0.67 m, Roof_Gable.084 is 0.90 m; tower .002 (1608,75) to Roof_Gable…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "review:art",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "ac910b8221bab24cf",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1790189242211,
+      "queuedAt": 1790189242193,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are reviewing a procedural WoW-style medieval valley town built in a live Blender 4.4 session (Blender MCP tool mcp__blender__execute_blender_code; load it with ToolSearch \"select:mcp__blender__execute_blender_code\").\nRead first: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\VALL…",
+      "promptFramed": true,
+      "lastProgressAt": 1790191617879,
+      "tokens": 240379,
+      "toolCalls": 97,
+      "durationMs": 2374534,
+      "resultPreview": "{\"issue_status\":[{\"id\":7,\"status\":\"partial\",\"evidence\":\"The material part is fixed. Measured lawn in the overview went from S 0.71-0.88 (review\\\\art\\\\review_art_00_overview.png, e.g. HSV 82,0.88,0.46) to S 0.44-0.50, H 86-90, V 0.52-0.56 (rereview\\\\art\\\\art_00_overview.png, art_03_chapel.png, art_04_westquarter.png). M_VK_TerrainTown now has Hue/Sat (hue 0.505, sat 0.80, val 0.97), T_VK_TerrainMac…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 4,
+      "label": "review:play",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "a32999cbfb63f790b",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1790189242212,
+      "queuedAt": 1790189242193,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are reviewing a procedural WoW-style medieval valley town built in a live Blender 4.4 session (Blender MCP tool mcp__blender__execute_blender_code; load it with ToolSearch \"select:mcp__blender__execute_blender_code\").\nRead first: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\VALL…",
+      "promptFramed": true,
+      "lastProgressAt": 1790192070724,
+      "tokens": 278268,
+      "toolCalls": 95,
+      "durationMs": 2827379,
+      "resultPreview": "{\"issue_status\":[{\"id\":1,\"status\":\"partial\",\"evidence\":\"Now centred: SM_VK_Gatehouse_Block_inst bbox x 1620.69-1631.33 (centre 1626.0). The ramp profile at x 1626 rises from z 1.5 at y 67.5 to z 3.0 at y 70.6. The apron is at z 3.0, and the gate floor ray-casts at z 3.04 against terrain z 3.0, so the step is 0.04 m. The portcullis is raised to z 5.16, giving 2.16 m headroom. Still short of the >=3…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 5,
+      "label": "verify:art",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "a566dfaef9de86f6e",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1790191619299,
+      "queuedAt": 1790191619280,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are reviewing a procedural WoW-style medieval valley town built in a live Blender 4.4 session (Blender MCP tool mcp__blender__execute_blender_code; load it with ToolSearch \"select:mcp__blender__execute_blender_code\").\nRead first: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\VALL…",
+      "promptFramed": true,
+      "lastProgressAt": 1790192444288,
+      "tokens": 147919,
+      "toolCalls": 50,
+      "durationMs": 824988,
+      "resultPreview": "{\"verdicts\":[{\"title\":\"Lowland trees almost eliminated: bare lawns, and a hard edge between the dense ridge forest and empty valley\",\"real\":true,\"reason\":\"Reproduced with a live count. Tree_*/Bush_Large instances with z<3.5: 12 in the whole valley, 0 inside the walls (x 1569-1689, y 75-138), 0 Blossom and 3 Apple. There are 695+ on the ridges. The per-area split in the claim is slightly off: south…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 6,
+      "label": "verify:build",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "ada0d012842d11eb2",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1790191742757,
+      "queuedAt": 1790191742753,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are reviewing a procedural WoW-style medieval valley town built in a live Blender 4.4 session (Blender MCP tool mcp__blender__execute_blender_code; load it with ToolSearch \"select:mcp__blender__execute_blender_code\").\nRead first: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\VALL…",
+      "promptFramed": true,
+      "lastProgressAt": 1790192625209,
+      "tokens": 139742,
+      "toolCalls": 50,
+      "durationMs": 882451,
+      "resultPreview": "{\"verdicts\":[{\"title\":\"The new postern lane (row 30) runs over the level-4 quarry shoulders, and the quarry lean-to sits on the lane, half buried in the west shoulder\",\"real\":true,\"reason\":\"Reproduced. I ray-cast the VKV_Chunk terrain meshes. At y=90.5, 91.5 and 92.5 the ground is z=6.0 at x 1534-1538 and 1552-1556, and z=3.0 at every other x from 1526 to 1570. At y=88.5 the ground is flat at 3.0 …"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 7,
+      "label": "verify:ground",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "a9443d3c9a8f63004",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1790191868702,
+      "queuedAt": 1790191868699,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are reviewing a procedural WoW-style medieval valley town built in a live Blender 4.4 session (Blender MCP tool mcp__blender__execute_blender_code; load it with ToolSearch \"select:mcp__blender__execute_blender_code\").\nRead first: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\VALL…",
+      "promptFramed": true,
+      "lastProgressAt": 1790192777657,
+      "tokens": 128527,
+      "toolCalls": 39,
+      "durationMs": 908954,
+      "resultPreview": "{\"verdicts\":[{\"title\":\"The west-postern lane on row 30 runs over both new level-4 quarry shoulders, so the painted path hits 3 m cliffs four times\",\"real\":true,\"reason\":\"Reproduced. Code: line 37 sets L[30:34,11:13]=4 and L[30:34,17:19]=4, and line 58 paints ground[30,11:23]=1 over those cells. G.ramp has no ramp there. Terrain ray casts along y=91.5 give z 3.0 at x 1531, 6.0 at x 1534 and 1537, 3…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 8,
+      "label": "verify:play",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "a606e2482c9428bb8",
+      "model": "claude-opus-5-5",
+      "state": "error",
+      "startedAt": 1790192072762,
+      "queuedAt": 1790192072757,
+      "attempt": 1,
+      "lastToolName": "mcp__blender__execute_blender_code",
+      "lastToolSummary": "import bpy exec(bpy.data.texts[\"vk_render\"].as_string()) OU…",
+      "promptPreview": "You are reviewing a procedural WoW-style medieval valley town built in a live Blender 4.4 session (Blender MCP tool mcp__blender__execute_blender_code; load it with ToolSearch \"select:mcp__blender__execute_blender_code\").\nRead first: C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\VALL…",
+      "promptFramed": true,
+      "lastProgressAt": 1790192971033,
+      "error": "You've hit your session limit · resets 5:40pm (America/Sao_Paulo)",
+      "tokens": 151551,
+      "toolCalls": 33,
+      "durationMs": 898271
+    }
+  ],
+  "totalTokens": 1727108,
+  "totalToolCalls": 569
+}

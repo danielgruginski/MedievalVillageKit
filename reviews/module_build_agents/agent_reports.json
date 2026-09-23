@@ -1,0 +1,2390 @@
+[
+ {
+  "agent": "humble",
+  "report": {
+   "module_path": "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\ws_humble.py",
+   "text_name": "ws_humble",
+   "pieces": [
+    {
+     "name": "SM_VK_Wall_Wattle",
+     "description": "Wattle-and-daub wall module, wall top at 2.4 m (HUM_HW). Rubble footing with chunky face rocks, sole plate, left post, stud and diagonal brace. A wall plate sags in 3 pieces. Pillowed daub panels have 2 organic bare-wattle patches. Hidden STONE skirt goes down to z -0.6.",
+     "flags": "std (wobble+grime)",
+     "tris": 1924,
+     "bbox": "3.13 x 0.52 x 3.00 (z -0.6..2.4)"
+    },
+    {
+     "name": "SM_VK_Wall_Wattle_Window",
+     "description": "Wattle wall with an opening at x \u00b10.35, z 1.10-1.65. VOID back face, log lintel, sill, 2 bars, a top-hinged plank shutter propped open at 55\u00b0 on a stick, and a bare patch.",
+     "flags": "std",
+     "tris": 2522,
+     "bbox": "3.13 x 0.96 x 3.00"
+    },
+    {
+     "name": "SM_VK_Wall_Wattle_Door",
+     "description": "Wattle wall with a door opening at x \u00b10.45, z 0.36-2.15. It has a 4-board leaf ajar 25\u00b0 inward with iron straps and a ring, a VOID interior box, a threshold and a step stone.",
+     "flags": "std",
+     "tris": 2524,
+     "bbox": "3.13 x 1.42 x 3.00"
+    },
+    {
+     "name": "SM_VK_Wall_Wattle_Byre",
+     "description": "Byre wall with a 2.0 m opening, z 0.22-2.1. The lower half-doors are closed and braced; the upper leaves are swung open 90\u00b0. It has a HAY floor, a hay tuft inside and hay spilled on the ground.",
+     "flags": "std",
+     "tris": 2900,
+     "bbox": "3.13 x 1.94 x 3.00"
+    },
+    {
+     "name": "SM_VK_Wall_Wattle_Frame",
+     "description": "Stage-1 build piece: footing, sole plate, posts and plates. A WATTLE panel rises to z 1.3 with bare stakes above, plus a bundle of withies and a sack leaning on it.",
+     "flags": "std",
+     "tris": 1652,
+     "bbox": "3.13 x 0.96 x 3.00"
+    },
+    {
+     "name": "SM_VK_Corner_Wattle",
+     "description": "Outer corner (faces -X/-Y). A 0.28 m post stands on a rock with crossing plates at 2.3 and sole plates. Hidden skirt to z -0.6.",
+     "flags": "ng (wobble=False, grime=True)",
+     "tris": 660,
+     "bbox": "0.76 x 0.80 x 3.01"
+    },
+    {
+     "name": "SM_VK_InnerCorner_Wattle",
+     "description": "Inner corner: a 0.24 m post at (0.1, 0.1) on a rock, with a hidden skirt (added this session).",
+     "flags": "ng",
+     "tris": 228,
+     "bbox": "0.45 x 0.44 x 3.01"
+    },
+    {
+     "name": "SM_VK_RoofThatch_Gable_Cruck",
+     "description": "Thatch gable bay placed at the wall top (2.4). It has the kit thatch slab, eave and rake rolls and ridge cap, plus a daub gable triangle with 2 wattle patches. Two curved cruck blades (8 WOOD boxes per side along a B\u00e9zier) come down to foot stones inside the wall line. Also a tie beam, a collar and a framed VOID smoke hole at local (1.61, 0, 3.03).",
+     "flags": "nw (wobble=False, grime=False)",
+     "tris": 5148,
+     "bbox": "4.18 x 9.11 x 6.87 (z -2.47..4.40 from origin)"
+    },
+    {
+     "name": "SM_VK_RoofThatch_Vent",
+     "description": "Ridge smoke louvre. Origin is the ridge apex; place it at wall_top + RIDGE. A saddle-shaped thatch hump grows out of the ridge, a dark smoke gap sits on 4 WOOD stilts, then a lifted thatch bonnet with a ligger rim, a straw knob and a spike. The hump reaches 0.64 m below the apex, where the roof hides it.",
+     "flags": "nw",
+     "tris": 808,
+     "bbox": "1.69 x 1.25 x 1.84 (z -0.64..1.20)"
+    },
+    {
+     "name": "SM_VK_LeanTo_Thatch_Low",
+     "description": "Low thatch lean-to for 2.4 m wattle walls. Its back beam rests on the wall plate, and it fits under a thatch gable end. It has 2 front and 2 back posts on footing stones (skirt to -0.6), knee braces, 4 pole rafters and a thatch sheet with rolled front and rake edges. It projects 3.0 m toward -Y. Renamed because SM_VK_LeanTo_Thatch already exists in the kit (that one is for 3 m walls).",
+     "flags": "ng",
+     "tris": 2330,
+     "bbox": "3.73 x 3.44 x 3.76 (z -0.6..3.16)"
+    },
+    {
+     "name": "SM_VK_Animal_Cow",
+     "description": "Chunky Holstein cow facing +X, origin at the feet. Black and white patches, black head with a white blaze, pink muzzle and udder, cream horns, red collar with a bronze bell. White is now CLOTH_B instead of PAPER, whose script lines showed on large areas.",
+     "flags": "ng",
+     "tris": 1992,
+     "bbox": "2.61 x 1.03 x 1.57"
+    },
+    {
+     "name": "SM_VK_Animal_Sheep",
+     "description": "Fluffy cream fleece (CLOTH_B, smooth-shaded) with a black face, ears and legs, and a wool cap. Faces +X.",
+     "flags": "ng",
+     "tris": 1172,
+     "bbox": "1.45 x 0.83 x 1.07"
+    },
+    {
+     "name": "SM_VK_Animal_Pig",
+     "description": "Round PIGSKIN pig with SOIL mud socks and belly, snout disc, flap ears and a curly tail. Faces +X.",
+     "flags": "ng",
+     "tris": 1254,
+     "bbox": "1.67 x 0.74 x 0.85"
+    },
+    {
+     "name": "SM_VK_Animal_Goat",
+     "description": "HIDE goat with a black dorsal stripe, dark lower legs, swept-back COAL horns, beard, amber eyes and a flag tail. Faces +X.",
+     "flags": "ng",
+     "tris": 1264,
+     "bbox": "1.31 x 0.47 x 1.33"
+    },
+    {
+     "name": "SM_VK_Animal_Horse",
+     "description": "Draft horse in buckskin HIDE with black points (mane, tail, lower legs), white blaze and feathered fetlocks, padded collar with bronze hames. Faces +X.",
+     "flags": "ng",
+     "tris": 1836,
+     "bbox": "2.95 x 0.89 x 2.52"
+    },
+    {
+     "name": "SM_VK_Animal_Chickens",
+     "description": "Flock of 4 hens (2 of them pecking) and a rooster with a green-black tail around a feed dish with grain. Trimmed from 2414 tris this session.",
+     "flags": "nw",
+     "tris": 2024,
+     "bbox": "1.91 x 1.56 x 0.71"
+    },
+    {
+     "name": "SM_VK_Prop_HayRack",
+     "description": "Slatted V hay rack on 4 posts with footing rocks. Hay is heaped in the V with stalks poking out, over a plank-and-hay floor, under a small thatch hood with a ridge roll. One hay spill on the ground. Trimmed from 2940 tris.",
+     "flags": "ng",
+     "tris": 2092,
+     "bbox": "2.76 x 2.05 x 2.70"
+    },
+    {
+     "name": "SM_VK_Prop_ChickenCoop_Wattle",
+     "description": "Round woven WATTLE coop on 4 stilts with a pointed thatch hat and rolled rim, an arched VOID door facing -Y, and a cleated ramp. The inverted ramp was fixed this session. Renamed because SM_VK_Prop_ChickenCoop already exists in the kit.",
+     "flags": "ng",
+     "tris": 1535,
+     "bbox": "1.99 x 2.58 x 2.29"
+    },
+    {
+     "name": "SM_VK_Deco_MudWallow",
+     "description": "Extra helper piece, new this session. A trodden SOIL pig wallow with a lumpy rim, clods and straws. Its edge sinks to z -0.04. Used by build_pigsty.",
+     "flags": "ng",
+     "tris": 418,
+     "bbox": "3.49 x 2.56 x 0.17"
+    }
+   ],
+   "builders": [
+    {
+     "signature": "build_hovel(coll, origin, seed=0, variant=\"cruck\")",
+     "description": "Hovel (T1, 4 beds): 2x2 wattle-and-daub house under a thatch haystack roof with cruck gables. Faces are F '.W', B '..', L '..', R 'DW'; the door is on the R gable end at local (3, -1.5) and faces +X, the street. A smoke vent sits on bay 0. Variants: 'hip' puts a kit RoofThatch_Hip on the L end and moves the vent to bay 1; 'leanto' adds LeanTo_Thatch_Low on the L gable end sheltering a hay bale and sacks. The yard has a woodpile (not in the leanto variant), chicken coop, chickens, garden bed, bench, planter, bush and seeded weeds.",
+     "footprint": "house 2x2; lot 3x3 = local x -6..3, y -6..3 (origin at the house centre; the L column is the yard, the y -6..-3 strip is the garden)"
+    },
+    {
+     "signature": "build_longhouse(coll, origin, seed=0)",
+     "description": "Longhouse (T1, 8 beds + 4 livestock): 5x2 thatch loaf. Faces are F '.W.W.', B '....W', L 'D.', R 'B.'. The L end is a cruck gable with the people door at (-7.5, 1.5) facing -X; the R end is a kit RoofThatch_Gable_Planks over a byre door at (7.5, -1.5) facing +X. Vents sit on bays 1 and 3. A fenced paddock (gate at x 13.5, y -1.5) holds a hay rack, trough, hay bale, cow, draft horse and 2 sheep. The people end has a bench, coop, chickens, garden bed, woodpile on the front strip, bush and weeds.",
+     "footprint": "house 5x2; lot 8x3 = local x -10.5..13.5, y -6..3"
+    },
+    {
+     "signature": "build_pigsty(coll, origin, seed=0)",
+     "description": "Pig sty: 6x6 m yard in kit LowWall / LowWall_Post dry-stone walls with a FenceGate at (1.5, -3). Two Wall_Wattle modules on the back line y = 3 carry two LeanTo_Thatch_Low shelters. Also a mud wallow, trough, 3 pigs, sacks and hay bale outside, and weeds.",
+     "footprint": "3x3 lot, local x/y -4.5..4.5"
+    },
+    {
+     "signature": "build_sheepfold(coll, origin, seed=0)",
+     "description": "Sheepfold: a fenced pen (gate at (0, -4.5)) with a 3-module wattle back wall on y = 4.5, daub side into the pen. Corner_Wattle sits at both ends (rotations fixed this session: 0 and 90). Two LeanTo_Thatch_Low shelters, a hay rack, trough, hay bale, 5 sheep and a goat.",
+     "footprint": "3x3 lot, local x/y -4.5..4.5"
+    },
+    {
+     "signature": "hum_block(coll, origin, n, faces, ends=(\"cruck\",\"cruck\"), style=None, vents=())",
+     "description": "Generic wattle house used by the hovel and longhouse builders. n >= 2 cells along X, 2 cells deep, 2.4 m walls. faces is a dict with F/B/L/R strings using '.', 'W', 'D', 'B' or 'F'. ends are cruck, planks, gable or hip. It raises ValueError for a door on an eave wall, a door under a hip end, or a vent on a hipped bay. It returns the placed instances. Default style is {plaster: Daub, roof: Thatch}.",
+     "footprint": "n x 2 house cells"
+    }
+   ],
+   "renders": [
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\humble\\catalog_final.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\humble\\hero_hamlet.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\humble\\hero_colony.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\humble\\hero_longhouse.png"
+   ],
+   "integration_notes": "State recovery: the local ws_humble.py was newer than the Blender text (better patch shape, vent tweaks, longhouse animal placement), so the file was kept as the source of truth. I then edited it and pushed it again. Final check, in one fresh call: the Blender text is identical to the file, ws_build(\"humble\") built all 19 WS_SPECS pieces without error, and all 6 builder runs (the 3 hovel variants, longhouse, pigsty, sheepfold) went into WS_humble_Assembly without error, 175 objects. Nothing was saved, and no shared texts, other scenes or materials were touched.\n\nDependencies:\n- No other agent's pieces; hum_pick() exists but is unused.\n- Kit pieces used: RoofThatch_Mid, RoofThatch_Gable_Planks, RoofThatch_Hip (and RoofThatch_Gable via ends='gable'), Prop_Woodpile, Prop_Bench, Prop_GardenBed, Prop_Planter, Deco_Bush, Deco_Weeds, Prop_Fence, Prop_FenceGate, Prop_Trough, Prop_HayBale, Prop_Sacks, LowWall, LowWall_Post.\n- No new materials. Walls, lean-tos and the woodpile use place_v style {plaster: Daub, roof: Thatch}.\n\nName deviations from the manifest (the kit already owns these names):\n- LeanTo_Thatch \u2192 SM_VK_LeanTo_Thatch_Low\n- Prop_ChickenCoop \u2192 SM_VK_Prop_ChickenCoop_Wattle\n- Extra helper piece: SM_VK_Deco_MudWallow\n\nConventions:\n- The wall top is HUM_HW = 2.4 and the outer timber face is at wall-local y -0.16.\n- Roofs are placed at z = 2.4 and ridge pieces at 2.4 + RIDGE (4.19).\n- Animals face +X with the origin at the feet.\n\nIMPORTANT VAR cache gotcha: place_v caches restyled mesh copies (VAR_<hash>) forever. If a master is rebuilt after a styled instance was placed, those instances keep the old geometry. hum_refresh_variants(names) copies the new master geometry into the cached copies for the styles this module uses. Other agents' styled pieces have the same issue.\n\nSuggested sockets (piece-local unless noted):\n- Wall_Wattle_Door: Door (0, 0.12, 0.36) facing -Y, opening x \u00b10.45, z 0.36-2.15.\n- Wall_Wattle_Byre: AnimalDoor (0, 0.12, 0.22), width 2.0.\n- Wall_Wattle_Window: WindowLight (0, 0.10, 1.375).\n- RoofThatch_Vent: Smoke (0, 0, 0.35) venting out of the side gaps, or (0, 0, 1.0).\n- RoofThatch_Gable_Cruck: Smoke at the gable smoke hole (1.65, 0, 3.03).\n- Prop_ChickenCoop_Wattle: CoopDoor (0, -0.66, 0.54); ramp foot (0, -1.57, 0).\n- Prop_HayRack: Feed (0, \u00b10.9, 0).\n- Hovel (builder-local): Door (3.0, -1.5, 0.36) facing +X; Smoke (-1.5, 0, 6.99), or (1.5, 0, 6.99) for the hip variant.\n- Longhouse: people Door (-7.5, 1.5) facing -X; byre Door (7.5, -1.5) facing +X; Smoke (-3, 0, 6.99) and (3, 0, 6.99); paddock gate (13.5, -1.5).\n- Pigsty gate: (1.5, -3).\n- Sheepfold gate: (0, -4.5).\n\nKnown limitations the integrator should know:\n- Kit smoothing is decided by material. HIDE, PIGSKIN and COAL are flat, so the cow, horse, pig and goat look faceted and low-poly. Sheep wool and the white areas (CLOTH_B) are smooth. Consider smoothing by angle for SM_VK_Animal_* in the Unity import.\n- The cruck blade foot stones sit about 7 cm below z 0, inside the wall line, so they need a floor or ground under them.\n- Ground-contact building pieces (walls, corners, lean-to posts) have skirts to -0.6. Animals and props do not.",
+   "unfinished": [
+    "Triangle budgets exceeded: RoofThatch_Gable_Cruck has 5148 tris against a 3k roof-bay budget (the kit's own RoofThatch_Gable is already 4536). Prop_HayRack (2092) and Animal_Chickens (2024) are slightly over the 2k prop budget after trimming.",
+    "Animals are flat-shaded because kit smoothing is chosen by material, so they read as faceted low-poly rather than smooth hand-painted.",
+    "The pig reads pale, because PIGSKIN is a very light flat colour, and the MudWallow reads very dark (SOIL). Materials could not be changed.",
+    "The two side-by-side LeanTo_Thatch_Low pieces in the pig sty and sheepfold give a doubled post and a visible rake-roll seam where they meet. There is no wide or continuous lean-to variant.",
+    "hum_block needs n >= 2. There is no single-bay (1x1 or 1x2) wattle hut and no S roof family (3 m deep) support.",
+    "Not done: the Hovel 'upgrade look' (Chimney_Gable_H24 replacing the vent), district_style, the stages and build_block infrastructure, and real sockets. Socket positions are only recorded in the notes.",
+    "Wall_Wattle_Frame (the stage-1 piece) and InnerCorner_Wattle are built but used by no builder, so there is no L-shaped plan and no construction-stage demo.",
+    "The vent's lower hump is tuned for the M thatch roof (RIDGE 4.19). It has not been checked on other roof families, where it could poke through.",
+    "Not verified on the upcoming terrain tiles or on 1.5 m level steps. Builders assume a flat plateau.",
+    "The hovel's R-end door step stone projects about 0.8 m past the lot edge (x = 3) into the street verge.",
+    "The longhouse and hovel use the kit Prop_Woodpile, whose little roof is restyled to Thatch. It reads a little cluttered next to the main thatch."
+   ]
+  }
+ },
+ {
+  "agent": "frontier",
+  "report": {
+   "module_path": "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\ws_frontier.py",
+   "text_name": "ws_frontier",
+   "pieces": [
+    {
+     "name": "SM_VK_Wall_Log",
+     "description": "3.0 m round-log wall, phase A (9 courses at z 0.47+0.30i, r 0.165+-0.015 seeded per course, same seeds as corners/gables), PLASTER chinking (recolours with plaster style), stone plinth with rocks, hidden skirt to -0.6. Use on the long faces (F/B).",
+     "flags": "wobble=False, grime=True",
+     "tris": 1512,
+     "bbox": "3.00 x 0.53 x 3.64 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Log_Window",
+     "description": "Log wall A with courses 3-5 cut at x +-0.55 (chamfered ENDGRAIN caps), glazed window, head/sill boards with brackets, two shutters (SHUTTER slot).",
+     "flags": "wobble=False, grime=True",
+     "tris": 2502,
+     "bbox": "3.00 x 0.90 x 3.64 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Log_Door",
+     "description": "Log wall A with a 1.2 m opening, heavy proud lintel log, jamb boards, VOID reveal, 5-board Z-braced door ajar 20 deg inward with iron straps, stone step.",
+     "flags": "wobble=False, grime=True",
+     "tris": 2566,
+     "bbox": "3.00 x 1.44 x 3.64 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Log_B",
+     "description": "Log wall phase B (courses at 0.62+0.30i, taller plinth) for the gable/end faces (L/R) so the corner log ends interleave instead of intersecting.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1512,
+     "bbox": "3.00 x 0.55 x 3.81 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Log_B_Window",
+     "description": "Phase-B log wall with window and shutters.",
+     "flags": "wobble=False, grime=True",
+     "tris": 2502,
+     "bbox": "3.00 x 0.90 x 3.81 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Log_B_Door",
+     "description": "Phase-B log wall with door (lintel log, ajar door, step).",
+     "flags": "wobble=False, grime=True",
+     "tris": 2566,
+     "bbox": "3.00 x 1.44 x 3.81 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Corner_Log",
+     "description": "Notched log corner: crossing log ends of both walls sticking out ~0.5 m, cut end grain, stone footing plus skirt. The X arm is phase A: use at rot 0/180.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1106,
+     "bbox": "0.89 x 0.94 x 3.64 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Corner_Log_B",
+     "description": "Extra helper piece: the same corner with the X arm in phase B. Use at rot +-90 so the phases match the walls.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1106,
+     "bbox": "0.87 x 0.95 x 3.64 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Roof_Gable_Logs",
+     "description": "M-family (6 m) gable end bay: kit roof slab, eave tabs and ridge; the gable triangle is stacked phase-B logs cut to the rake, with chinking, a small gable window, 3 purlin ends through the verge and crossed barge 'horns' at the apex. Use it with SM_VK_Roof_Mid.",
+     "flags": "wobble=False, grime=False",
+     "tris": 5542,
+     "bbox": "4.16 x 9.04 x 5.44 (zmin -0.7)"
+    },
+    {
+     "name": "SM_VK_Wall_Shed",
+     "description": "2.6 m plank shed wall: 12 painted PLANKS boards (one painted board per board UV), battens, sill beam and top plate, module post plus inner stud, one brace, 3 sill stones, stone skirt.",
+     "flags": "wobble=True, grime=True (default)",
+     "tris": 1304,
+     "bbox": "3.09 x 0.46 x 3.21 (zmin -0.61)"
+    },
+    {
+     "name": "SM_VK_Wall_Shed_Door",
+     "description": "Shed wall with a 1.0 x 2.0 m Z-braced plank door swung 30 deg out, frame, VOID and threshold stone.",
+     "flags": "wobble=True, grime=True",
+     "tris": 1766,
+     "bbox": "3.09 x 1.02 x 3.21 (zmin -0.61)"
+    },
+    {
+     "name": "SM_VK_Wall_Shed_Wide",
+     "description": "Shed wall with a 2.0 m double door: one leaf closed, one open 100 deg, hay spill.",
+     "flags": "wobble=True, grime=True",
+     "tris": 2154,
+     "bbox": "3.09 x 1.25 x 3.21 (zmin -0.61)"
+    },
+    {
+     "name": "SM_VK_Wall_Shed_Window",
+     "description": "Shed wall with a 0.5 x 0.5 VOID opening at z 1.45-1.95, top-hinged flap propped open 45 deg with a stick.",
+     "flags": "wobble=True, grime=True",
+     "tris": 1814,
+     "bbox": "3.09 x 0.78 x 3.21 (zmin -0.61)"
+    },
+    {
+     "name": "SM_VK_Corner_Shed",
+     "description": "Square 0.28 m corner post on a stone pad with a skirt, and a top-plate block.",
+     "flags": "wobble=False, grime=True",
+     "tris": 272,
+     "bbox": "0.55 x 0.55 x 3.22 (zmin -0.61)"
+    },
+    {
+     "name": "SM_VK_Wall_Shed_Raised",
+     "description": "Extra helper piece: shed wall on a heavy bearer instead of sill stones, for raised stores such as the granary on staddle stones (base at z 0.765).",
+     "flags": "wobble=True, grime=False",
+     "tris": 1012,
+     "bbox": "3.09 x 0.33 x 2.73 (zmin -0.13)"
+    },
+    {
+     "name": "SM_VK_Wall_Shed_Door_Raised",
+     "description": "Extra helper piece: raised shed door wall on a bearer.",
+     "flags": "wobble=True, grime=False",
+     "tris": 1474,
+     "bbox": "3.09 x 0.96 x 2.73 (zmin -0.13)"
+    },
+    {
+     "name": "SM_VK_Corner_Shed_Raised",
+     "description": "Extra helper piece: raised corner post on a bearer block.",
+     "flags": "wobble=False, grime=False",
+     "tris": 196,
+     "bbox": "0.42 x 0.42 x 2.74 (zmin -0.13)"
+    },
+    {
+     "name": "SM_VK_Wall_Posts",
+     "description": "Open bay for a 3.0 m storey: 0.28 m post at x -1.5 on a stone pad with a skirt, 0.3 m beam at z H-0.15, 2 knee braces.",
+     "flags": "wobble=False, grime=True",
+     "tris": 360,
+     "bbox": "3.26 x 0.53 x 3.60 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Posts_Barn",
+     "description": "Open cart bay at barn height 4.2 m (the same design).",
+     "flags": "wobble=False, grime=True",
+     "tris": 360,
+     "bbox": "3.29 x 0.51 x 4.80 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Corner_Posts",
+     "description": "0.34 m corner post (3.0 m) with a pad, a cap and knee braces in both directions.",
+     "flags": "wobble=False, grime=True",
+     "tris": 360,
+     "bbox": "1.03 x 1.03 x 3.66 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Corner_Posts_Barn",
+     "description": "The 4.2 m version of the corner post.",
+     "flags": "wobble=False, grime=True",
+     "tris": 360,
+     "bbox": "1.01 x 1.01 x 4.86 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Ceiling_Cell",
+     "description": "Cell-centred loft floor: 12 PLANKS boards (top at H-0.24 = 2.76) on 3 joists. Place it at the storey base (z = storey base; z = HB-3 for a barn loft).",
+     "flags": "wobble=False, grime=False",
+     "tris": 660,
+     "bbox": "2.99 x 3.00 x 0.28 (zmin 2.48)"
+    },
+    {
+     "name": "SM_VK_RoofS_Mid",
+     "description": "S roof family mid bay: 3 m deep (HALF 1.5, eave overhang 0.9, ridge 2.27 above the wall top, 52 deg); ROOF slab (recolours) with wood soffit, eave tabs, ridge.",
+     "flags": "wobble=False, grime=False",
+     "tris": 2368,
+     "bbox": "3.06 x 5.00 x 2.86 (zmin -0.36)"
+    },
+    {
+     "name": "SM_VK_RoofS_Gable",
+     "description": "S gable end bay with a timber-framed plaster gable triangle, bargeboards and a finial post.",
+     "flags": "wobble=False, grime=False",
+     "tris": 4202,
+     "bbox": "3.88 x 5.14 x 3.75 (zmin -0.48)"
+    },
+    {
+     "name": "SM_VK_RoofS_Gable_Planks",
+     "description": "S gable end bay with a board-clad gable, battens and a loft hatch with one leaf open.",
+     "flags": "wobble=False, grime=False",
+     "tris": 4292,
+     "bbox": "3.88 x 5.14 x 3.75 (zmin -0.48)"
+    },
+    {
+     "name": "SM_VK_RoofS_Single",
+     "description": "One-bay S roof: plank gables at both ends (mirrored) for 1x1 huts.",
+     "flags": "wobble=False, grime=False",
+     "tris": 6116,
+     "bbox": "4.70 x 5.14 x 3.75 (zmin -0.48)"
+    },
+    {
+     "name": "SM_VK_RoofThatchS_Mid",
+     "description": "S thatch mid bay: thick THATCH slab, eave roll, ridge cap.",
+     "flags": "wobble=False, grime=False",
+     "tris": 2464,
+     "bbox": "3.03 x 5.01 x 2.97 (zmin -0.49)"
+    },
+    {
+     "name": "SM_VK_RoofThatchS_Gable",
+     "description": "S thatch gable end: slab end caps, a rake roll following the S profile, and a timber gable underneath.",
+     "flags": "wobble=False, grime=False",
+     "tris": 3862,
+     "bbox": "3.83 x 5.21 x 3.02 (zmin -0.54)"
+    },
+    {
+     "name": "SM_VK_RoofThatchS_Single",
+     "description": "One-bay S thatch roof with rake rolls and timber gables at both ends.",
+     "flags": "wobble=False, grime=False",
+     "tris": 5296,
+     "bbox": "4.62 x 5.23 x 3.03 (zmin -0.55)"
+    },
+    {
+     "name": "SM_VK_Prop_StaddleStone",
+     "description": "Mushroom staddle stone (ROCK lathe, jittered), top at z 0.645, shaft goes down to -0.6.",
+     "flags": "wobble=False, grime=True",
+     "tris": 154,
+     "bbox": "0.73 x 0.73 x 1.25 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Prop_GranaryStep",
+     "description": "3 detached stone steps (tops at 0.30/0.57/0.84) in door-local space; the top step ends 0.3 m short of the wall face; skirts to -0.6.",
+     "flags": "wobble=False, grime=True",
+     "tris": 360,
+     "bbox": "1.17 x 1.24 x 1.47 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Crop_TreeNursery",
+     "description": "New helper piece, a stand-in for the unassigned spec piece Crop_Saplings: a 3x3 cell soil bed (kit soil_bed) with 4 rows of young trees. Rows 0 and 2 are conifers (stacked MOSS cones), rows 1 and 3 are staked birch whips with crossed ivy-card crowns. Trees get taller toward +Y. Row-end pegs.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1964,
+     "bbox": "2.98 x 2.94 x 1.45 (zmin 0.0)"
+    }
+   ],
+   "builders": [
+    {
+     "signature": "build_logcabin(coll, origin, seed=0, n=2)",
+     "description": "Frontier log cabin n x 2 (n>=2): long faces use Wall_Log*, end faces use Wall_Log_B* with Corner_Log / Corner_Log_B; Roof_Gable_Logs at both ends plus kit Roof_Mid between; style roof Shingle, stone Field, plaster Daub/Cream, random shutters. There is a gable chimney on the L end (Chimney_Gable_H30 when present, else the kit Chimney). The front is 'DW'/'WDW', or with p .4 the door is on the R gable with the kit Porch. The last back cell is blank and gets the woodpile, recoloured to the roof style. Dressing: flower boxes, weeds, a door lantern, stump, chopping block, grass. Returns {wall_top:3.0, footprint:(n,2)}.",
+     "footprint": "n x 2 cells (building); yard props reach about 1.6 m in front and 1.7 m behind"
+    },
+    {
+     "signature": "build_woodcutter(coll, origin, seed=0)",
+     "description": "Woodcutter's lodge on a 3x3 lot: a 2x2 log cabin in the back-left 2x2 (door 'DW', gable chimney on L). Kit LeanTo on the R gable over Pile_Logs_3 (end grain visible from above; the kit Woodpile is the fallback). Front work yard keeps the door path clear: Sawhorse, Log_Fallen, ChoppingBlock, stump, tall grass. Returns {wall_top:3.0, footprint:(3,3)}.",
+     "footprint": "3 x 3 cells (lot centred on the origin; the lean-to pokes about 0.4 m past the +X lot edge)"
+    },
+    {
+     "signature": "build_forester_hut(coll, origin, seed=0)",
+     "description": "Forester's hut on a 3x2 lot: a 1-cell plank hut (Wall_Shed family, F 'D', B 'W', R 'W') in the front-left cell with RoofS_Single, or RoofThatchS_Single when the roof is Thatch. The fenced sapling nursery uses 2 x Crop_Saplings if it exists, else Crop_TreeNursery, over the 2 front-right cells, with a FenceGate. Back row: trough, wheelbarrow, 2 stumps and one Tree_Pine_Young seed tree. Returns {wall_top:2.6, footprint:(3,2)}.",
+     "footprint": "3 x 2 cells"
+    },
+    {
+     "signature": "build_granary(coll, origin, seed=0)",
+     "description": "Granary 2x2: 9 Prop_StaddleStone, 4 Ceiling_Cell as the raised floor, raised shed walls (Wall_Shed_Raised family) at base z 0.765 with a door at front-right, thatch pyramid from 2 x kit RoofThatch_Hip (rot 180/0), detached Prop_GranaryStep, sack pile, sacks, cart. Returns {wall_top:3.365, footprint:(2,2)}.",
+     "footprint": "2 x 2 cells (plus about 1.3 m for the steps, sacks and cart)"
+    },
+    {
+     "signature": "build_storehouse(coll, origin, seed=0)",
+     "description": "Storehouse: a 3x2 kit barn (Wall_Barn, Wall_Barn_Door, Corner_Barn, HB height). The front-right bay is SM_VK_Wall_Posts_Barn as an open cart bay with an interior partition, a Ceiling_Cell hay loft and a cart. Roof is Roof_Gable_Planks/Roof_Mid, or the thatch versions, by seeded style. The bordered stock yard in front (3x2 cells, y -3.6..-9.6) holds Stockpile_Border and pile pieces in the left column and back cell. The x=+3 column stays a cart lane from the bay, and the cell in front of the door stays open. Sacks by the door, signpost at the lane mouth. Returns {wall_top:HB, footprint:(3,2), yard:(3,2)}.",
+     "footprint": "3 x 2 building + 3 x 2 yard in front (-Y)"
+    }
+   ],
+   "renders": [
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\frontier\\catalog_final.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\frontier\\hero_colony.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\frontier\\hero_hamlet.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\frontier\\hero_yard.png"
+   ],
+   "integration_notes": "STATE: The file code\\ws_frontier.py is identical to the Blender text ws_frontier (checked). In one fresh call, exec(ws_common); g=ws_ns(\"frontier\"); ws_build(\"frontier\",g=g) built all 32 WS_SPECS pieces without error (about 3 s). All 5 builders ran without error into WS_frontier_Assembly (172 instances, a compact demo hamlet around the origin). Rotated origins were tested for woodcutter (90 deg) and forester (180 deg), then removed. The piece masters are laid out as a catalog at y 32..50 in WS_frontier_Pieces. The layout, render and demo helpers live in my own file renders2\\frontier\\_fro_harness.py, not in the module. No new materials, no .blend save, no shared texts touched.\n\nS ROOF FAMILY: fro_roof_family(\"S\"|\"M\") is a context manager. It switches HALF/EAVE/RIDGE/GX (S: HALF 1.5, overhang 0.9, GX 2.1, RIDGE = roof_z(0) \u2248 2.27) and restores them in __exit__. fro_roof_slab and fro_thatch_slab are profile-driven copies of the kit roof_slab. fro_gable_end generalises gable_end to any family, with the kinds timber, planks and logs. The integrator's future roof_family infrastructure can replace this.\n\nGRID AND CONVENTIONS: Log walls are 3.0 m (wall top H1). Long faces (F/B) must use Wall_Log* (phase A); end faces (L/R) must use Wall_Log_B* (phase B, +0.15 m). Corner_Log goes at rot 0/180 and Corner_Log_B at rot +-90. fro_ring_walls does this automatically. Shed walls are 2.6 m (fro_HS). S roofs go at z = 2.6 on shed huts; the Roof_Gable_Logs M bay goes at z = 3.0. All ground pieces have skirts to -0.6. The raised shed family and Ceiling_Cell have no skirt.\n\nDEPENDENCIES: Every reference to another agent's piece goes through fro_pick with a kit fallback. From construction: Prop_ChoppingBlock, Prop_Sawhorse, Pile_Logs_2/3, Pile_Planks_1/2, Pile_Stone_1, Pile_Sacks_2, Stockpile_Border, Prop_Wheelbarrow. From skyline: Chimney_Gable_H30. All of these existed and were used in the renders. The builders also use the kit pieces Roof_Mid, LeanTo, Porch, Woodpile, Wall_Barn*, Corner_Barn, Roof_Gable_Planks, RoofThatch_Hip/Mid/Gable_Planks, Fence/FenceGate (fence_run), Log_Fallen, Stump, Tree_Pine_Young, trough, cart, sacks and signpost. Crop_Saplings (spec forester piece) is not in the manifest, so I made SM_VK_Crop_TreeNursery. build_forester_hut picks Crop_Saplings first if it ever appears.\n\nSUGGESTED SOCKETS (not implemented):\n- Log cabin: door at the front cell centre, z 0.33, facing -Y (on the R gable when gable_door). Chimney smoke at (-L/2-0.6, 0, ~9.3). Work spot at the chopping block (L/2-0.8, -4.4).\n- Woodcutter: work spots at the chopping block (3.3,-1.9) and sawhorse (-0.7,-3.6), lot-local. Log storage under the lean-to at about (3.1, 1.5).\n- Forester: planting spots on the nursery rows (x -1.1..4.1, y -2.6..-0.4). Gate at (0,-3). Hut door at (-3,-3).\n- Granary: door at (1.5,-3,1.07). Loading at the step foot (1.5,-4.2,0).\n- Storehouse: door at (0,-3). Cart bay entry at (3,-3). Yard stock cells at (-3,-5.1), (-3,-8.1), (0,-8.1). Lane at x=3.\n\nKNOWN LIMITATIONS:\n- The gable bays exceed the 3k roof-bay budget: Roof_Gable_Logs 5.5k, RoofS_Gable ~4.2k, RoofS_Single 6.1k, RoofThatchS_Single 5.3k. This is in line with the kit's own gables (Roof_Gable 5.7k, RoofThatch_Gable 4.5k).\n- The default Cream chinking reads bright in the catalog. The builders use Daub mostly.\n- The thatch rake and eave roll ends show some texture streaking, inherited from the kit thatch-roll UV approach.\n- At the 50 deg colony pitch, the M-roof eaves hide most of the log walls, the same as in the kit houses.",
+   "unfinished": [
+    "Wall_Log_Half / Wall_Log_B_Half (stage-1 construction pieces), Wall_Shed_Frame, RoofS_Hip / RoofThatchS_Hip and RoofS_*_Frame from spec 6 were not built. They are not in my manifest list but the spec mentions them.",
+    "Sockets are not implemented; suggested positions are listed in the integration notes.",
+    "Crop_Saplings is unassigned in the manifest. My stand-in is SM_VK_Crop_TreeNursery, and the integrator may rename it or replace it.",
+    "Wall_Shed_Raised, Wall_Shed_Door_Raised, Corner_Shed_Raised and Corner_Log_B are extra helper names beyond the manifest; the builders need them.",
+    "Some gable roof bays exceed the brief's 3k budget (see limitations); no LOD pass was done.",
+    "The Wall_Shed_Window flap and door leaves are static open poses; there are no closed variants.",
+    "The storehouse relies on the kit barn walls for everything except the Posts_Barn cart bay; there is no dedicated plank-barn wall set."
+   ]
+  }
+ },
+ {
+  "agent": "construction",
+  "report": {
+   "module_path": "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\ws_construction.py",
+   "text_name": "ws_construction",
+   "pieces": [
+    {
+     "name": "SM_VK_BuildSite_Cell",
+     "description": "Full 3x3 m cell of dug SOIL (edges at z 0.015 so cells tile without seams), 4 skewed plot boards, 6 survey pegs with rag tags, clods and pebbles, SOIL skirt to -0.6",
+     "flags": "nw",
+     "tris": 736,
+     "bbox": "3.00x3.00x0.99 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Foundation_Wall",
+     "description": "Trench plus rubble footing (stone_panel -0.6..0.45, plinth), inner-face rocks, a ragged first course being laid, setting-out stakes and a string line that runs on across modules",
+     "flags": "ng",
+     "tris": 2092,
+     "bbox": "3.04x1.87x1.24 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Foundation_Corner",
+     "description": "Corner footing block and rocks, batter-board corner (3 stakes, 2 rails) with strings meeting the wall strings at y/x -0.9",
+     "flags": "ng",
+     "tris": 484,
+     "bbox": "1.54x1.54x1.24 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Stone_Half",
+     "description": "Rubble wall built to z 1.2, then six 0.5 m columns up to a seeded ragged top of about 1.25-1.9; plinth, batter, loose top course, ASHLAR block, mortar board with trowel, a block waiting at the foot",
+     "flags": "std",
+     "tris": 1264,
+     "bbox": "3.04x1.38x2.37 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Stone_Half_Door",
+     "description": "Half-built wall with a door opening at x \u00b10.68 up to 1.9: jamb stones, step, and timber arch centring (props, sill, 7-segment rib, brace)",
+     "flags": "std",
+     "tris": 2164,
+     "bbox": "3.12x1.65x3.39 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Corner_Stone_Half",
+     "description": "Quoin corner stopped at z 1.62 with a loose top stone and the next quoin waiting on the ground",
+     "flags": "ng",
+     "tris": 596,
+     "bbox": "1.92x1.74x2.40 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Plaster_Frame",
+     "description": "Plaster_ground timber frame with no infill: stone base to PL, sill and head beams, posts, braces, and one panel half woven with WATTLE and bare staves above",
+     "flags": "std",
+     "tris": 1108,
+     "bbox": "3.13x0.77x3.60 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Plaster_Frame_Door",
+     "description": "Door-frame version: jambs, lintel, braces, door step, and an unhung plank door leaf leaning against the wall",
+     "flags": "std",
+     "tris": 1452,
+     "bbox": "3.13x1.43x3.60 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Timber_Frame",
+     "description": "Upper-storey timber_frame('V') without infill: belt beam and joist ends, top plate, posts, rail, braces and 2 knee braces",
+     "flags": "fade wobble, grime off",
+     "tris": 784,
+     "bbox": "3.13x0.74x3.01 (zmin -0.2)"
+    },
+    {
+     "name": "SM_VK_Roof_Mid_Frame",
+     "description": "Open M-roof bay that follows roof_z exactly: 5 rafter pairs (pitch and kick segments), 2 purlins per side, 6 fresh PLANKS battens per side, ridge beam, tie beams and collars",
+     "flags": "nw",
+     "tris": 1684,
+     "bbox": "3.00x8.39x4.44"
+    },
+    {
+     "name": "SM_VK_Roof_Gable_Frame",
+     "description": "Mid frame extended to GX, plus verge rafters, ridge-beam end, the gable_end timber truss without infill, and bargeboards (2 straight runs per side)",
+     "flags": "nw",
+     "tris": 2828,
+     "bbox": "4.11x8.93x4.80"
+    },
+    {
+     "name": "SM_VK_Roof_Hip_Frame",
+     "description": "Frame matching Roof_Hip (apex at local x -1.5): common rafters at the apex, 2 deep hip rafters, jack rafters every 0.6, end rafters, U-shaped purlin and batten contours, ceiling joists",
+     "flags": "nw",
+     "tris": 2592,
+     "bbox": "4.31x8.42x4.50"
+    },
+    {
+     "name": "SM_VK_Scaffold_Wall",
+     "description": "One 3 m lift of a 2-row birch-pole scaffold: standards at the module's left edge at y -0.9 and -1.58 (clear of opened shutters at -0.82), ledgers at 0.95 and 2.0, transoms, 2-board deck at z 2.15, brace, BURLAP lashings. Stacks per storey",
+     "flags": "nw",
+     "tris": 388,
+     "bbox": "3.24x0.91x3.00"
+    },
+    {
+     "name": "SM_VK_Scaffold_Corner",
+     "description": "Corner lift: 4 standards (2 on the diagonal, 2 closing the run on the local -X face), ledgers wrapping both faces, transoms, corner deck boards, brace",
+     "flags": "nw",
+     "tris": 612,
+     "bbox": "1.83x1.80x3.00"
+    },
+    {
+     "name": "SM_VK_Scaffold_Wall_Top",
+     "description": "EXTRA helper (not in manifest): top-lift Scaffold_Wall with standards ending at 2.3, so under a roof they stay clear of eaves, verge rafters, bargeboards and hip rafters",
+     "flags": "nw",
+     "tris": 388,
+     "bbox": "3.24x0.91x2.30"
+    },
+    {
+     "name": "SM_VK_Scaffold_Corner_Top",
+     "description": "EXTRA helper (not in manifest): top-lift Scaffold_Corner with short standards (the full one poked through hip rafters and verges)",
+     "flags": "nw",
+     "tris": 612,
+     "bbox": "1.83x1.80x2.30"
+    },
+    {
+     "name": "SM_VK_Scaffold_Ladder",
+     "description": "Ladder from (0.75,-2.15,0) to (0.75,-1.44,3.0), resting on the outer upper ledger. Rails 0.06x0.04, 0.45 wide, rungs every 0.3",
+     "flags": "nw",
+     "tris": 178,
+     "bbox": "0.49x0.76x3.01"
+    },
+    {
+     "name": "SM_VK_Prop_Wheelbarrow",
+     "description": "Hollow tapered plank tray, handles, legs, iron stays, spoked wheel, load of stones",
+     "flags": "ng",
+     "tris": 780,
+     "bbox": "2.20x0.73x0.84"
+    },
+    {
+     "name": "SM_VK_Prop_MortarTub",
+     "description": "Plank tub with lumpy mortar surface, hoe resting in it, trowel, banded bucket, lime sack",
+     "flags": "ng",
+     "tris": 520,
+     "bbox": "1.85x0.93x0.97"
+    },
+    {
+     "name": "SM_VK_Prop_LadderLean",
+     "description": "Ladder leaning on a wall face in wall-local space (outer face y -0.25), top at z 2.78 so it stays below jetty joists",
+     "flags": "ng",
+     "tris": 168,
+     "bbox": "0.50x0.77x2.79"
+    },
+    {
+     "name": "SM_VK_Prop_ShearLegs",
+     "description": "5 m birch tripod lashed at the apex; pulley block, rope and chains; hanging ASHLAR block 0.8x0.6x0.5; haul rope to a coil; spare block; foot stones",
+     "flags": "ng",
+     "tris": 580,
+     "bbox": "3.01x2.76x5.23"
+    },
+    {
+     "name": "SM_VK_Pile_Logs_1",
+     "description": "3 sawn logs, 2.8 m long, r U(0.15,0.2), BARK_OAK with bevelled ENDGRAIN ends, on bearers, with chock stakes",
+     "flags": "ng",
+     "tris": 368,
+     "bbox": "2.94x1.46x0.56"
+    },
+    {
+     "name": "SM_VK_Pile_Logs_2",
+     "description": "7 logs (4+3)",
+     "flags": "ng",
+     "tris": 792,
+     "bbox": "2.95x1.85x0.90"
+    },
+    {
+     "name": "SM_VK_Pile_Logs_3",
+     "description": "10 logs (4+3+2+1)",
+     "flags": "ng",
+     "tris": 1080,
+     "bbox": "2.95x1.85x1.48"
+    },
+    {
+     "name": "SM_VK_Pile_Planks_1",
+     "description": "2 stacks of 4 layers of 3 boards on bearers, 1 painted board per plank face (UVs per board)",
+     "flags": "ng",
+     "tris": 612,
+     "bbox": "2.90x1.95x0.34"
+    },
+    {
+     "name": "SM_VK_Pile_Planks_2",
+     "description": "9 layers, stickers every 3 layers",
+     "flags": "ng",
+     "tris": 1044,
+     "bbox": "2.90x1.95x0.63"
+    },
+    {
+     "name": "SM_VK_Pile_Planks_3",
+     "description": "14 layers",
+     "flags": "ng",
+     "tris": 1560,
+     "bbox": "2.90x1.95x0.96"
+    },
+    {
+     "name": "SM_VK_Pile_Stone_1",
+     "description": "6 ASHLAR blocks 0.58x0.39x0.35 (UVs snap each face to one painted block) on 2 pallets, \u00b13\u00b0 jitter",
+     "flags": "ng",
+     "tris": 624,
+     "bbox": "2.70x1.00x0.47"
+    },
+    {
+     "name": "SM_VK_Pile_Stone_2",
+     "description": "14 blocks",
+     "flags": "ng",
+     "tris": 976,
+     "bbox": "2.70x1.00x0.82"
+    },
+    {
+     "name": "SM_VK_Pile_Stone_3",
+     "description": "24 blocks",
+     "flags": "ng",
+     "tris": 1416,
+     "bbox": "2.70x1.00x1.18"
+    },
+    {
+     "name": "SM_VK_Pile_Sacks_1",
+     "description": "4 tied burlap grain sacks (superellipsoid pillows) on a pallet",
+     "flags": "ng",
+     "tris": 628,
+     "bbox": "1.70x1.60x0.45"
+    },
+    {
+     "name": "SM_VK_Pile_Sacks_2",
+     "description": "9 sacks in 2 cross-laid layers",
+     "flags": "ng",
+     "tris": 1188,
+     "bbox": "1.71x1.69x0.71"
+    },
+    {
+     "name": "SM_VK_Pile_Sacks_3",
+     "description": "16 sacks in 3 layers",
+     "flags": "ng",
+     "tris": 1972,
+     "bbox": "1.72x1.68x0.96"
+    },
+    {
+     "name": "SM_VK_Stockpile_Border",
+     "description": "4 on-edge boards inset 0.05 plus 4 capped corner pegs; one per zoned cell",
+     "flags": "ng",
+     "tris": 400,
+     "bbox": "2.93x2.92x0.42"
+    },
+    {
+     "name": "SM_VK_Tent_A",
+     "description": "Ridge tent, door at -Y: 2-sided sagging canvas (CLOTH_B), recolourable hem band (CLOTH_A), closed back, VOID doorway with 2 tied-back flaps, poles, guy ropes, pegs, sod stones, hide groundsheet",
+     "flags": "ng",
+     "tris": 871,
+     "bbox": "2.88x5.42x2.27"
+    },
+    {
+     "name": "SM_VK_Tent_Bell",
+     "description": "Bell tent, door at -Y: lathed canvas with recolourable CLOTH_A stripes, scalloped valance, VOID doorway with rolled canvas, centre pole, bronze finial, pennant, 7 guy ropes, hide mat",
+     "flags": "ng",
+     "tris": 718,
+     "bbox": "4.95x4.33x3.44"
+    },
+    {
+     "name": "SM_VK_Prop_Campfire",
+     "description": "Stone ring, coal bed, glowing embers, 5 burning logs, 4 twisted GLOW flames, tripod with iron pot of stew",
+     "flags": "ng",
+     "tris": 1344,
+     "bbox": "1.53x1.60x1.73"
+    },
+    {
+     "name": "SM_VK_Prop_Bedroll",
+     "description": "Hide mat, CLOTH_A blanket and rolled blanket, CLOTH_B pillow roll with ties (pillow end +Y)",
+     "flags": "ng",
+     "tris": 352,
+     "bbox": "0.74x1.66x0.25"
+    },
+    {
+     "name": "SM_VK_Prop_Wagon_Covered",
+     "description": "Settler wagon: undercarriage, 4 spoked wheels (single felloe ring with an iron rolling face), board sides, canvas cover over hoops (end hoops modelled, inner hoops show as ribs), VOID front mouth, driver's bench, tongue and singletree, tail barrel and bucket",
+     "flags": "ng",
+     "tris": 1990,
+     "bbox": "5.16x1.94x1.80"
+    },
+    {
+     "name": "SM_VK_Prop_ChoppingBlock",
+     "description": "Oak stump block with an axe bitten in, 4 split billets, wood chips",
+     "flags": "ng",
+     "tris": 300,
+     "bbox": "1.59x1.41x0.99"
+    },
+    {
+     "name": "SM_VK_Prop_Sawhorse",
+     "description": "X-leg sawhorse with a log, bow saw, sawdust heap and offcuts",
+     "flags": "ng",
+     "tris": 696,
+     "bbox": "1.71x0.83x1.22"
+    },
+    {
+     "name": "SM_VK_Prop_SawPit",
+     "description": "Plank-lined pit (hidden lining and VOID floor to -1.2, VOID mouth decal at z 0.015), timber kerb, 2 trestles, 4 m log with kerf, pit saw with tiller, sawdust heaps, fresh boards, SOIL skirt",
+     "flags": "ng",
+     "tris": 960,
+     "bbox": "4.06x2.81x2.85 (zmin -1.2)"
+    },
+    {
+     "name": "SM_VK_Prop_Privy",
+     "description": "Board privy with a pent roof falling to the back, Z-battened door with crescent moon cut-out at -Y, corner posts on stones, skirt",
+     "flags": "ng",
+     "tris": 1000,
+     "bbox": "1.51x1.67x2.96 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Prop_WaysideShrine",
+     "description": "Stepped stone base, ASHLAR shaft, niche head with arch voussoirs and a figurine, little gabled ROOF with a bronze sun, candles (GLOW), flowers, offering bowl with apples",
+     "flags": "ng",
+     "tris": 1775,
+     "bbox": "1.21x1.23x3.22"
+    }
+   ],
+   "builders": [
+    {
+     "signature": "build_construction_site(coll, origin, stage, seed=0, style=None)",
+     "description": "3x2 two-storey cottage at stage 0 (BuildSite_Cell on all 6 cells, Foundation_Wall/Corner, Pile_Stone_3, logs and chopping block), 1 (Wall_Stone_Half*/Corner_Stone_Half, or Wall_Plaster_Frame* with real Corner_Plaster; lower scaffold lift; MortarTub, ShearLegs and Pile_Stone for stone, Sawhorse and logs for plaster), 2 (real ground walls, Wall_Timber_Frame upper storey, real Corner_Timber, roof frames via CON_FRAME, real chimney, lower and top scaffold lifts, Scaffold_Ladder, LadderLean, Sawhorse, plank piles) or 3 (finished house with flower boxes). style keys: ground 'Stone'|'Plaster'; ends (-X end, +X end), each 'gable'|'hip'; and the plaster/shutter/roof/stone recolours. The scaffold goes on the front plus a gable end (FL, FR, or FB when both ends are hips). Returns dict(footprint, lot, wall_top, ground, ends). The demo has a stone/gable row at stages 0-3 (the last is the finished house), plus plaster hip/gable variants at stages 1, 2 and 3 and a stone hip/hip house at stage 2",
+     "footprint": "house 3x2 cells centred on origin, door facing -Y; lot 5x4 cells (x -4.5..10.5, y -9..3 relative): stock cell at (-3,-7), tools on the +X cells"
+    },
+    {
+     "signature": "build_camp(coll, origin, seed=0)",
+     "description": "Settler camp (T0): campfire at the centre, 2 Tent_A and 1 Tent_Bell on a ring with doors towards the fire (random cloth colours), 4 bedrolls, covered wagon on the east side with BarrelStack, Crates and Sacks unloaded, Pile_Logs_1 and chopping block to the south-west, privy, wayside shrine facing the fire. Returns dict(footprint=(3,3), beds=6)",
+     "footprint": "3x3 cells centred on origin. The privy sits about 1 m outside the NW corner, and the guy ropes reach about 1 m past the edges"
+    },
+    {
+     "signature": "build_stockpile(coll, origin, w=2, d=2, seed=0, kinds=None)",
+     "description": "Player-zoned storage: Stockpile_Border on every cell, with a seeded pile per cell (kinds cycle through Logs/Planks/Stone/Sacks at levels 1-3; about 12% of cells stay empty). Returns dict(footprint=(w,d), storage=w*d)",
+     "footprint": "w x d cells centred on origin"
+    },
+    {
+     "signature": "build_sawpit_yard(coll, origin, seed=0)",
+     "description": "Sawpit yard (T1, logs to planks): Prop_SawPit at the origin, 2 bordered stock cells behind it (Pile_Logs_3 and Pile_Planks_2 at y +3), sawhorse, chopping block and wheelbarrow at the sides. Returns dict(footprint=(2,2), jobs=2)",
+     "footprint": "nominal 2x2 (pit across 2x1 plus the stock row). The props at x \u00b13.9 make the real extent about 3x2 cells (9x6 m)"
+    }
+   ],
+   "renders": [
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\construction\\catalog_final.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\construction\\hero_stages.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\construction\\hero_camp.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\construction\\hero_colony.png"
+   ],
+   "integration_notes": "STATE / VERIFICATION\n- Resumed from the interrupted run. The local file was newer than the Blender text: it had the builders, and the piece code was identical. Both are now identical (checked with a string comparison).\n- In one fresh call, exec(ws_common); g=ws_ns(\"construction\"); ws_build(\"construction\", g=g) builds all 44 WS_SPECS pieces with no error in about 2.5 s.\n- Every builder ran once into WS_construction_Assembly (374 instances, no error):\n  - y=0: stone/gable cottage at stages 0, 1, 2 and 3 (finished), x = -24, -8, 8, 24.\n  - y=13: camp (x -20), 3x2 stockpile (x -4), sawpit yard (x 10).\n  - y=30: plaster hip/gable at stage 1 (x -16) and stage 2 (x 0); stone hip/hip with Slate roof at stage 2 (x 16); plaster finished house (x 32).\n- The piece masters are laid out as a catalog in WS_construction_Pieces (y -12..-45).\n- No .blend save. No shared text, other scene or other agent's object was touched. No new materials: only kit slots 0-51.\n\nDEPENDENCIES\n- None on other agents' pieces. The builders use only shipped kit pieces:\n  - walls and corners: Wall_Stone/_Window/_Door, Wall_Plaster*, Corner_Stone, Corner_Plaster, Wall_Timber/_Window/_X/_K, Corner_Timber;\n  - roofs: Roof_Mid, Roof_Gable, Roof_Hip, Chimney;\n  - props: Prop_FlowerBox, Prop_Crates, Prop_Sacks, Prop_BarrelStack.\n- Optional later: an Animal_Horse (humble) at the wagon tongue (local +x 2.95), and log/wattle stage mappings.\n\nSTAGE SUBSTITUTION (spec 5.7)\n- CON_FRAME maps finished roof pieces to frames: {Roof_Mid: Roof_Mid_Frame, Roof_Gable: Roof_Gable_Frame, Roof_Hip: Roof_Hip_Frame}.\n- The frames use exactly the finished roof's placement (z = wall top, rot 180 on the -X end bay). Roof_Hip_Frame matches Roof_Hip's apex at local x -1.5.\n- The frames follow roof_z, so they sit under the M ridge. Thatch M roofs can use the same frames.\n- Construction pile: Pile_Stone_3/2 for stone at stages 0/1, planks for roofing at stage 2; Logs_2 or Planks_3/2 for plaster.\n\nSCAFFOLD RULES\n- Use con_scaffold_run(coll, origin, walls, corners, faces, z, n, top).\n- Place Scaffold_Wall on each module of a face; the standards sit on the module's left edge.\n- A Scaffold_Corner closes the run on its local -X face and wraps the local -Y face. Place it when the face on its local -X side is scaffolded.\n- The lower lifts use the full pieces (standards to 3.0, so the next lift stands on them). The last lift under a roof must use the *_Top pieces, whose standards end at 2.3 and stay clear of eaves, verges and hip rafters.\n- Scaffold hip ends only through their corners: the end rafter at y=0 would clash with a standard.\n\nMATERIALS / STYLES\n- In my pieces the PLASTER slot is mortar (mortar board, MortarTub). Do not recolour them with a plaster style. The builder passes only the 'stone' style to my pieces and the full style to kit pieces.\n- Tents and bedrolls: CLOTH_A is the recolourable hem, stripes and blanket; CLOTH_B is undyed canvas. Style them with {\"cloth\": ...}.\n- place_v's VAR_* cache is keyed by (piece, style) and does NOT refresh when a master is rebuilt. After rebuilding a piece that was placed with a style, remove its unused VAR meshes; I do this for my cloth variants before re-running the builders.\n\nTERRAIN\n- Hidden skirts to -0.6 on BuildSite_Cell, Foundation*, the half walls, the plaster frames and the Privy.\n- Prop_SawPit has a hidden plank lining and VOID floor to -1.2. On flat ground its VOID mouth decal at z 0.015 reads as the pit; on terrain it needs a 3.2x0.9 hole or stays a decal.\n- Scaffolds, piles, tents and props have no skirt and sit at z 0 (pile stakes go to -0.1).\n\nBUDGETS (all within)\n- Largest wall: Wall_Stone_Half_Door 2164 tris.\n- Largest roof bay: Roof_Gable_Frame 2828 (was 3268; bargeboards reduced to 2 runs).\n- Largest props: Wagon 1990 (was 2906) and Pile_Sacks_3 1972 (was 2100).\n- Every pile fits inside 2.9x2.9x1.6.\n- Scaffold decks (y -0.95..-1.53) never overlap opened shutters (y \u2265 -0.82). The inner standard row moved from -0.85 to -0.9, so the ledgers also clear the shutters.\n\nSUGGESTED SOCKETS (not implemented; piece-local coordinates)\n- Piles: Pile_* SOCK_Stock at (0,0,top of pile); Stockpile_Border SOCK_Stock at (0,0,0).\n- Camp:\n  - Prop_Campfire: SOCK_Fire/Smoke (0,0,0.8), SOCK_Cook at the pot (0,0,1.0);\n  - Tent_A: SOCK_Bed \u00d72 at (\u00b10.55,0.2,0.05), SOCK_Door (0,-1.6,0);\n  - Tent_Bell: SOCK_Bed \u00d72 at (\u00b10.7,0.4,0.05), SOCK_Door (0,-1.8,0);\n  - Prop_Bedroll: SOCK_Bed (0,0,0.12), head towards +Y;\n  - Prop_Wagon_Covered: SOCK_Hitch (2.95,0,0.3), SOCK_Cargo (-0.2,0,0.75);\n  - Prop_Privy: SOCK_Use (0,-0.9,0);\n  - Prop_WaysideShrine: SOCK_Pray (0,-0.8,0).\n- Work spots:\n  - Prop_SawPit: top sawyer on the log (0.25,0,1.02), pit man (0.25,0,-1.2) or ground (0.25,-0.8,0);\n  - Prop_Sawhorse: SOCK_Work (0.2,-0.6,0);\n  - Prop_ChoppingBlock: SOCK_Work (-0.6,-0.2,0);\n  - Prop_MortarTub: SOCK_Work (0,-0.6,0);\n  - Prop_ShearLegs: SOCK_Hook (0,0.04,1.66), SOCK_Work (0,-1.0,0).\n- Scaffold:\n  - Scaffold_Wall(_Top): SOCK_Work on the deck at (-0.75 and 0.75, -1.24, 2.17);\n  - Scaffold_Ladder: climb path (0.75,-2.15,0) to (0.75,-1.44,3.0).\n- Construction site (builder coordinates): stock cell (-3,-7); tool cells (6.6..7.6, -4..2.3).",
+   "unfinished": [
+    "No generic stage_piece(piece, stage, level) function (spec 5.7). Stage substitution exists only inside build_construction_site: Stone or Plaster ground, Timber upper storey, M roof with gable or hip ends.",
+    "No roof frames for Roof_Single, Roof_LCorner, the S roof family or thatch-specific roofs; no Wall_StoneUp_Half. These are listed in spec M1 but were not in my manifest.",
+    "No stage-1 pieces for other agents' wall families (Log, Wattle, Shed). Under the spec's 'others real' rule they would show real walls at stage 1.",
+    "Sockets are not built as objects; the positions are listed in the integration notes.",
+    "Added 2 helper pieces that are not in the manifest: SM_VK_Scaffold_Wall_Top and SM_VK_Scaffold_Corner_Top. Without them, top lifts poked through verge rafters, bargeboards and hip rafters.",
+    "The top scaffold lift stops at the deck and does not climb gable triangles; nothing scaffolds the gable apex.",
+    "build_camp: the privy sits about 1 m outside the nominal 3x3 footprint, and tent guy ropes reach past the edges.",
+    "build_sawpit_yard reports footprint (2,2), but its side props make the real extent about 3x2 cells.",
+    "Only 1 wheelbarrow design, so every site shows the same barrow. The camp's covered wagon has no horse.",
+    "hero_colony uses a 50\u00b0 pitch from about 52 m. The rows in the demo assembly are 13-17 m apart, so the shot shows a lot of lawn; it is a review layout, not a composed village."
+   ]
+  }
+ },
+ {
+  "agent": "skyline",
+  "report": {
+   "module_path": "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\ws_skyline.py",
+   "text_name": "ws_skyline",
+   "pieces": [
+    {
+     "name": "SM_VK_Roof_Single",
+     "description": "Gable roof for one 3 m bay with gable ends at both ends (+X and a mirrored -X): tile slabs from -GX to GX, eave tabs, ridge, timber gables, bargeboards and finials at x=+-2.53.",
+     "flags": "wobble=False, grime=False",
+     "tris": 9008,
+     "bbox": "5.40 x 9.04 x 5.89 (zmin -0.70)"
+    },
+    {
+     "name": "SM_VK_RoofThatch_Single",
+     "description": "Thatch version of the single bay: thatch slabs, eave rolls, ridge cap, rake rolls at +-GX, and untrimmed timber gables at both ends.",
+     "flags": "wobble=False, grime=False",
+     "tris": 6600,
+     "bbox": "5.32 x 9.13 x 5.17 (zmin -0.77)"
+    },
+    {
+     "name": "SM_VK_Roof_Hip_Plain",
+     "description": "Hipped end that drops in for Roof_Gable, with no finial. Continuous height-field surface that matches the Roof_Mid profile and sag at x=-1.5, hip roll segments, eave tabs on 3 sides and a ridge knob.",
+     "flags": "wobble=False, grime=False",
+     "tris": 6936,
+     "bbox": "4.68 x 8.94 x 5.07 (zmin -0.59)"
+    },
+    {
+     "name": "SM_VK_Roof_HalfHip",
+     "description": "Half-hip (jerkinhead) tile end that drops in for Roof_Gable: a hip down to roof_z(GX), bargeboards and a fascia on the clipped eave, and a small timber-framed trapezoid gable wall with a window.",
+     "flags": "wobble=False, grime=False",
+     "tris": 6602,
+     "bbox": "4.12 x 9.08 x 5.20 (zmin -0.65)"
+    },
+    {
+     "name": "SM_VK_RoofThatch_HalfHip",
+     "description": "Thatch half-hip end: hip tubes, rolled clipped eave, ridge-cap knob and a trapezoid timber gable. Joins RoofThatch_Mid at x=-1.5.",
+     "flags": "wobble=False, grime=False",
+     "tris": 6142,
+     "bbox": "4.22 x 9.08 x 5.28 (zmin -0.76)"
+    },
+    {
+     "name": "SM_VK_Roof_CrossGable",
+     "description": "Replaces one Roof_Mid bay. A small gable facing -Y (ridge 2.27, i.e. S-family pitch) with valleys to (0,-1.5), a cross ridge roll, bargeboards and finial, a timber-framed plaster triangle with a window, and eave stops that close the neighbouring bays' eaves.",
+     "flags": "wobble=False, grime=False",
+     "tris": 3912,
+     "bbox": "3.31 x 8.80 x 5.09 (zmin -0.67)"
+    },
+    {
+     "name": "SM_VK_Roof_Gable_Hoist",
+     "description": "Roof_Gable variant whose gable holds a VOID loading door (z 0.5-2.0) with a frame and 2 PLANKS leaves open 100 deg. Also a tiled hood, hoist beam and brace, pulley ring, rope, and a BURLAP sack hanging to z -2.0.",
+     "flags": "wobble=False, grime=False",
+     "tris": 6540,
+     "bbox": "5.08 x 9.04 x 7.48 (zmin -2.29, the sack)"
+    },
+    {
+     "name": "SM_VK_Roof_Gable_Flush",
+     "description": "Tile slabs to x 1.6 ending in a STONE raked parapet (x 1.25-1.75, top roof_z+0.30). Adds ASHLAR coping blocks, an apex saddle stone with a pyramid cap, skew kneelers at both eaves and a string course.",
+     "flags": "wobble=False, grime=False",
+     "tris": 3376,
+     "bbox": "3.39 x 8.88 x 5.79 (zmin -0.58)"
+    },
+    {
+     "name": "SM_VK_Roof_Gable_Stepped",
+     "description": "Crow-stepped stone gable with 6 steps per side and ASHLAR step caps. Has a pinnacle with a 4-sided cap and a BRONZE ball, an ASHLAR-ringed ox-eye window on the outer face, and kneelers.",
+     "flags": "wobble=False, grime=False",
+     "tris": 3706,
+     "bbox": "3.39 x 8.88 x 6.71 (zmin -0.58)"
+    },
+    {
+     "name": "SM_VK_Roof_Firewall",
+     "description": "Free-standing raked stone parapet for a unit boundary: origin on the boundary, x -0.25..0.25, with coping, apex stone and kneelers. No slabs.",
+     "flags": "wobble=False, grime=False",
+     "tris": 800,
+     "bbox": "0.72 x 7.84 x 5.56 (zmin -0.35)"
+    },
+    {
+     "name": "SM_VK_Roof_Mid_CapL",
+     "description": "Roof_Mid with a closed slab end, a thin verge board and a ridge knob at x=-1.45, for a roof that ends against a taller neighbour's wall. The open side (+X) joins Roof_Mid.",
+     "flags": "wobble=False, grime=False",
+     "tris": 3032,
+     "bbox": "3.19 x 9.02 x 5.10 (zmin -0.67)"
+    },
+    {
+     "name": "SM_VK_Roof_Mid_CapR",
+     "description": "Mirror of CapL: the capped end is at x=+1.45.",
+     "flags": "wobble=False, grime=False",
+     "tris": 3032,
+     "bbox": "3.19 x 9.02 x 5.10 (zmin -0.67)"
+    },
+    {
+     "name": "SM_VK_Roof_Mid_Hatch",
+     "description": "Roof_Mid with a 1x1 m roof hatch on the front (-Y) slope at ay 1.7: curb, flashing, VOID opening, PLANKS lid open 65 deg with iron straps and a prop stick.",
+     "flags": "wobble=False, grime=False",
+     "tris": 2864,
+     "bbox": "3.06 x 8.90 x 5.00 (zmin -0.58)"
+    },
+    {
+     "name": "SM_VK_Roof_Mid_Skylight",
+     "description": "Roof_Mid with a glazed skylight on the front slope: curb, WINDOW pane, glazing bars and flashing.",
+     "flags": "wobble=False, grime=False",
+     "tris": 2690,
+     "bbox": "3.06 x 8.90 x 5.00 (zmin -0.58)"
+    },
+    {
+     "name": "SM_VK_Chimney_Gable_H30",
+     "description": "End-wall chimney for a 3.0 m wall top, wall-local (outer -Y), origin on the ridge line at the ground. Rubble base 1.6 x 1.1 from z -0.6 (terrain skirt), quoin rocks, weathering, flue to Ztop-0.2 = 7.99, cap rock and 2 CLAY pots.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1948,
+     "bbox": "1.94 x 1.49 x 9.30 (zmin -0.60)"
+    },
+    {
+     "name": "SM_VK_Chimney_Gable_H58",
+     "description": "Same design for a 5.8 m wall top (2 storeys). Flue top 10.79.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1776,
+     "bbox": "1.94 x 1.49 x 12.10 (zmin -0.60)"
+    },
+    {
+     "name": "SM_VK_Chimney_Gable_H24",
+     "description": "Same design for a 2.4 m wall top (wattle hovels).",
+     "flags": "wobble=False, grime=True",
+     "tris": 1688,
+     "bbox": "1.94 x 1.49 x 8.70 (zmin -0.60)"
+    },
+    {
+     "name": "SM_VK_Chimney_Party",
+     "description": "Ridge-straddling party-wall stack, origin at the ridge apex. Stack 1.8 x 1.0 from z -1.2 to 1.3, rock cap 2.0 x 1.2 and 3 CLAY pots.",
+     "flags": "wobble=False, grime=False",
+     "tris": 720,
+     "bbox": "2.06 x 1.25 x 3.21 (zmin -1.20)"
+    },
+    {
+     "name": "SM_VK_Roof_Vent",
+     "description": "Louvred ridge ventilator, origin at the ridge apex (place at RIDGE-0.15): PLANKS body, 40-deg louvres, a tiny tiled roof with ridge roll, and gable boards.",
+     "flags": "wobble=False, grime=False",
+     "tris": 932,
+     "bbox": "1.75 x 0.94 x 1.75 (zmin -0.69)"
+    },
+    {
+     "name": "SM_VK_Roof_Bellcote",
+     "description": "Small ASHLAR bellcote astride the ridge, origin at the ridge apex. Saddle from z -0.9, one arched opening with a bronze bell, a gabled tile cap and a BRONZE cross.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1008,
+     "bbox": "1.30 x 0.91 x 4.04 (zmin -0.90)"
+    },
+    {
+     "name": "SM_VK_Emblem_Ridge_Anvil",
+     "description": "Trade emblem on the common mount: IRON spike, bronze collar and 2 iron scrolls. Origin at the finial top. STEEL anvil with a hammer.",
+     "flags": "wobble=False, grime=False",
+     "tris": 784,
+     "bbox": "1.12 x 0.22 x 2.22 (zmin -0.10)"
+    },
+    {
+     "name": "SM_VK_Emblem_Ridge_Pretzel",
+     "description": "BREAD pretzel (spline tube) with PAPER salt grains, on the mount.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1868,
+     "bbox": "1.32 x 0.26 x 1.92 (zmin -0.10)"
+    },
+    {
+     "name": "SM_VK_Emblem_Ridge_Tankard",
+     "description": "Wooden tankard with iron hoops, handle and foam, on the mount.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1444,
+     "bbox": "0.95 x 0.61 x 1.93 (zmin -0.10)"
+    },
+    {
+     "name": "SM_VK_Emblem_Ridge_Fish",
+     "description": "STEEL fish with BRONZE fins, eyes and gill lines, on the mount.",
+     "flags": "wobble=False, grime=False",
+     "tris": 796,
+     "bbox": "1.20 x 0.26 x 1.76 (zmin -0.10)"
+    },
+    {
+     "name": "SM_VK_Emblem_Ridge_Key",
+     "description": "BRONZE key with a ring bow and a bit, tilted 18 deg, on the mount.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1020,
+     "bbox": "0.62 x 0.16 x 1.98 (zmin -0.10)"
+    },
+    {
+     "name": "SM_VK_Emblem_Ridge_Sheaf",
+     "description": "HAY sheaf of 20 stalks with ears and a CLOTH_A tie, on the mount.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1864,
+     "bbox": "0.54 x 0.27 x 2.01 (zmin -0.10)"
+    },
+    {
+     "name": "SM_VK_Emblem_Ridge_Horseshoe",
+     "description": "STEEL horseshoe with nail holes, on the mount.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1112,
+     "bbox": "0.83 x 0.16 x 1.78 (zmin -0.10)"
+    },
+    {
+     "name": "SM_VK_Emblem_Ridge_Shield",
+     "description": "CLOTH_A heater shield with a PAPER cross and a BRONZE rim, on the mount. Recolours through the cloth style.",
+     "flags": "wobble=False, grime=False",
+     "tris": 872,
+     "bbox": "1.03 x 0.26 x 2.01 (zmin -0.10)"
+    },
+    {
+     "name": "SM_VK_Emblem_Ridge_Book",
+     "description": "Open book: HIDE covers, PAPER pages with iron text lines, a bronze clasp and a CLOTH_A bookmark, on the mount.",
+     "flags": "wobble=False, grime=False",
+     "tris": 964,
+     "bbox": "1.22 x 0.33 x 1.81 (zmin -0.10)"
+    },
+    {
+     "name": "SM_VK_Emblem_Ridge_Axe",
+     "description": "Two crossed bearded axes (STEEL heads with PAPER edge highlights), on the mount.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1036,
+     "bbox": "1.35 x 0.16 x 1.84 (zmin -0.10)"
+    },
+    {
+     "name": "SM_VK_Banner_Wall",
+     "description": "Wall-local bracket banner, origin on the wall line at the hang height. IRON bracket 1.2 m along -Y with a stay, and a double-sided CLOTH_A banner (0.9 x 2.2) in the YZ plane with a notched tail, YELLOW bands and a PAPER disc.",
+     "flags": "wobble=False, grime=False",
+     "tris": 584,
+     "bbox": "0.16 x 1.27 x 2.48 (zmin -2.30)"
+    },
+    {
+     "name": "SM_VK_Banner_Pole",
+     "description": "6 m WOOD pole on a STONE_BLOCK base with a skirt rock, and a waving 1.6 x 1.0 CLOTH_A flag with YELLOW bands.",
+     "flags": "wobble=False, grime=True",
+     "tris": 596,
+     "bbox": "2.13 x 0.91 x 7.14 (zmin -0.60)"
+    },
+    {
+     "name": "SM_VK_Banner_Roof",
+     "description": "Ridge pennant, origin at the ridge apex (place at RIDGE+0.08): iron saddle straps down both slopes, a 3 m pole and a 1.8 m tapering CLOTH_A pennant.",
+     "flags": "wobble=False, grime=False",
+     "tris": 332,
+     "bbox": "1.98 x 1.05 x 3.60 (zmin -0.59)"
+    },
+    {
+     "name": "SM_VK_Prop_Bunting_6",
+     "description": "Iron line on a 0.5 m sag catenary between hooks at x=+-3.0, with pennants every 0.35 m cycling CLOTH_A, CLOTH_B, YELLOW and LEAF.",
+     "flags": "wobble=False, grime=False",
+     "tris": 312,
+     "bbox": "6.12 x 0.19 x 0.87 (zmin -0.84)"
+    },
+    {
+     "name": "SM_VK_Prop_Bunting_9",
+     "description": "Same as Bunting_6, 9 m long with 0.8 m sag.",
+     "flags": "wobble=False, grime=False",
+     "tris": 328,
+     "bbox": "9.12 x 0.20 x 1.17 (zmin -1.15)"
+    }
+   ],
+   "builders": [
+    {
+     "signature": "build_skyline_street(coll, origin, seed=0)",
+     "description": "A street of 8 varied houses built from existing kit walls, corners, dressing and roofs plus every main skyline piece. North row (fronts face -Y onto the street): (1) a 1-cell cottage with Roof_Single in Shingle, Chimney_Gable_H30 and a Sheaf emblem; (2-5) a 4-unit terrace: T1 slate with a stepped street gable, a skylight and a Banner_Wall on its end wall; Chimney_Party on the T1|T2 boundary; T2 slate, 1 bay with a hatch; Roof_Firewall on the T2|T3 boundary (roofs differ); T3 red with Roof_Mid_CapR against the taller T4 and a Banner_Roof; T4, 3 storeys in blue, with Roof_Gable_Flush on the boundary, level-2 end walls above T3, a half-hip street end, a Roof_Bellcote and a Banner_Wall; (6) a thatched 3-cell house with RoofThatch_HalfHip at both ends and Chimney_Gable_H58. South row (fronts face +Y): (7) a 4-cell merchant house with Hip_Plain, Mid, CrossGable facing the street, Gable_Hoist, a Key emblem and Chimney_Gable_H58 on the hip end; (8) a 1-storey slate smithy with Roof_Gable ends, Roof_Vent, Chimney_Gable_H30, an Anvil emblem and Prop_Anvil. Dressing: MarketStall, Well and BarrelStack corner; a dirt road (own mesh WS_skyline_Road using the existing MC_WK_Dirt material); 2 Prop_Bunting_6 hung eave to eave across the street; a street gate of 2 Banner_Poles with Prop_Bunting_9; lamp posts. Styles (plaster, shutter, stone, cloth) shuffle with seed; the structure is fixed.",
+     "footprint": "Local frame: north wall line y=-3, south wall line y=-12, street centre y=-7.5. Houses span x 0..39; road runs x -6..42. Overall about x -6..42, y -18..3.5, i.e. 16 x 7 cells. North row cells y -3..3; south row cells y -18..-12."
+    },
+    {
+     "signature": "sky_unit(coll, O, n, stories, style, r, front=None, back=None, ends=(True,True), end_levels=(None,None), roofs=None, end_kinds=('W','W'))",
+     "description": "Helper, not a spec builder. Places one house or terrace unit n cells long through the kit's _assemble (walls, corners, upper timber storeys, dressing). ends=False drops the end wall on a terrace boundary. end_levels places upper-level end walls and corners only, for a taller unit beside a lower one. roofs is a list of (piece, rot) per bay at the wall top. Returns the wall top.",
+     "footprint": "n x 2 cells"
+    },
+    {
+     "signature": "sky_compose(origin, cx, cy, rot_deg=0.0) / sky_road(coll, origin, x0, x1, y, w=3.2)",
+     "description": "Helpers. sky_compose returns the origin of a sub-building placed inside a builder frame. sky_road builds a dirt road strip with the kit's road_strip; before re-creating it, it deletes its own orphan mesh WS_skyline_Road if one exists.",
+     "footprint": "-"
+    }
+   ],
+   "renders": [
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\skyline\\catalog_final.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\skyline\\hero_street_34.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\skyline\\hero_street_colony.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\skyline\\hero_street_gate.png"
+   ],
+   "integration_notes": "STATE\n- ws_skyline.py is byte-identical to the Blender text ws_skyline (checked after the last push).\n- In one fresh call, exec(ws_common); g=ws_ns('skyline'); ws_build('skyline', g=g) built all 35 WS_SPECS pieces with no error in about 3 s.\n- build_skyline_street(asm, (-18,40,0), seed=0) then ran without error and placed 246 instances in WS_skyline_Assembly.\n- The piece masters stay visible in WS_skyline_Pieces, laid out as the catalog at y -4..-38; each is lifted by its own -zmin for display only, so their z locations are not 0.\n- No .blend save, no bpy.ops except ws_shot renders, no new materials, and no shared texts or other agents' objects were touched.\n\nDEPENDENCIES\n- The module uses only vk_helpers kit pieces and functions: walls, corners, Roof_Mid/Gable, RoofThatch_Mid, Porch, props, MarketStall, Well, _assemble, _upper, place_v, road_strip, bell, arch_cut_panels, arch_soffit, thatch_* and eave_tabs.\n- It does not depend on any other agent's pieces. sky_pick(name, fallback) is defined for future swaps, e.g. humble's wattle walls under Chimney_Gable_H24.\n- road_strip needs the existing material MC_WK_Dirt.\n\nGRID AND JOIN RULES\n- Every bay piece is placed at z = wall top, bay centre x, rot 0 (feature at +X) or 180.\n- End pieces (Hip_Plain, HalfHip, RoofThatch_HalfHip, Gable_Flush, Gable_Stepped, Gable_Hoist) drop in wherever Roof_Gable / RoofThatch_Gable go.\n- Mid-type pieces (CrossGable, Mid_CapL/R, Mid_Hatch, Mid_Skylight) replace a Roof_Mid.\n- I checked the seam numerically: top-surface vertices at x=+-1.5 match the Roof_Mid slab exactly (same roof_z plus the kit's roof_sag). Note that the kit's roof_sag is at its maximum at x=+-1.5 and zero at x=0, not the other way round as its comment says; my pieces reproduce the kit's behaviour.\n- Tile UVs use the same slope_dist rows, so the courses run on across the seam.\n\nPLACEMENT RULES\n- Firewall: origin on the unit boundary at the wall top; both neighbouring bays stay Roof_Mid.\n- Chimney_Party: at (x_boundary, 0, top+RIDGE).\n- Roof_Vent: at top+RIDGE-0.15.\n- Bellcote: at top+RIDGE.\n- Banner_Roof: at top+RIDGE+0.08.\n- Chimney_Gable_*: at (end-wall x, 0, 0), with rot -90 on the -X end or +90 on the +X end. Pick the variant whose H matches the wall top.\n- Emblems: at (end x +-1.03, 0, top+RIDGE+0.9). This matches the Roof_Gable, Roof_Single and Gable_Hoist finial tops.\n- Do not combine a gable chimney with an emblem on the same end: the flue swallows the finial.\n- Banner_Wall origin: on a module seam post with the wall-local y offset -0.2 on timber storeys. The z must keep the 1.46 m bracket below the eave underside: storey top minus 1.0 on a top storey, or the full storey top on a gable end wall.\n- Bunting_6 fits exactly eave-to-eave across a 9 m street between 2-storey houses (z = 5.8 + roof_z(EAVE) - 0.12). Bunting_9 fits between 2 Banner_Poles 9 m apart at z about 4.9.\n\nSUGGESTED SOCKETS (not built)\n- Chimney_Gable_Hxx: SOCK_Smoke at (0, -0.6, H+RIDGE+1.5).\n- Chimney_Party: 3 x SOCK_Smoke at (-0.58/0/0.58, 0, 2.0).\n- Roof_Vent: SOCK_Smoke at (0, 0, 1.0).\n- Emblems: the origin is the mount point; SOCK_Emblem is on the Roof_Gable/Single/Hoist finial at (GX+0.08, 0, RIDGE+0.9).\n- Gable_Hoist: SOCK_Rope at (XF+1.39, 0, -1.6).\n- Banner_Pole: SOCK_Bunting at (0, 0, 4.9).\n- Roof_Bellcote: SOCK_Bell at (0, 0, 1.2).\n- Street builder: SOCK_Door at each 'D' module.\n\nTRIANGLE BUDGETS\n- Roof_Single is 9.0k: it is 1 bay with 2 full timber gables; the kit's Roof_Gable alone is 5.7k.\n- Hip_Plain 6.9k, HalfHip 6.6k and Gable_Hoist 6.5k are end pieces, comparable to the kit's Roof_Hip at 6.9k.\n- CrossGable is 3.9k and Mid_CapL/R are 3.0k, a little over the 3k-per-bay budget. The cause is the dense 0.25 m height-field grid needed for the valleys.\n- Everything else is within budget.",
+   "unfinished": [
+    "Sockets are not implemented as empties; the positions are listed in the integration notes.",
+    "Chimney_Gable_H86 from the spec was skipped (H24/H30/H58 are done). Emblem kinds scissors, mortar and saw from the spec are not built; the 10 manifest kinds are. Sign_<kind> small shop-sign variants (spec M2) were not built.",
+    "RoofThatch_Single and Chimney_Gable_H24 are not used in build_skyline_street. I dropped the thatch cottage to keep to 8 houses. H24 needs wattle walls (humble), which the street does not reference. Both are shown in the catalog only.",
+    "Corner_Party pilasters (spec M4) do not exist. On terrace boundaries the front walls simply run on, so plaster colour changes happen at a plain post.",
+    "The T1 Banner_Wall hangs on the stepped end wall in the 3 m alley beside the cottage. It shows in the colony view but not in the two street-level heroes.",
+    "Minor visual issues: gable chimneys push their flue through the verge, bargeboards and hip slope, as the spec intends; on hipped or half-hipped ends this reads as a stack rising through the roof. A thin dark wood line shows along some ridges between the kit's slabs and ridge roll; this comes from the kit's Roof_Mid, not my pieces. The Bellcote saddle only reads correctly on the standard 52-deg roof.",
+    "The street's sky_unit reuses the kit's random _dress(), so porches and lanterns at doors change with seed. The banner positions were chosen to avoid porch collisions for seed 0 and were not checked for every seed.",
+    "No terrain test: pieces that touch the ground have skirts to z -0.6 (chimneys, banner pole), but the street was only tested on flat ground."
+   ]
+  }
+ },
+ {
+  "agent": "town",
+  "report": {
+   "module_path": "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\ws_town.py",
+   "text_name": "ws_town",
+   "pieces": [
+    {
+     "name": "SM_VK_Wall_StoneUp",
+     "description": "Stone upper-floor wall (H2 = 2.8 m), coursed rubble with a dressed belt course that hides the storey seam, plus wall rocks. Uses its own flat wobble so it stacks on ground walls and on itself.",
+     "flags": "wobble=False, grime=False (flat wobble applied in the module)",
+     "tris": 732,
+     "bbox": "3.0 x 0.77 x 2.91 (zmin -0.11: the belt overlaps the storey seam)"
+    },
+    {
+     "name": "SM_VK_Wall_StoneUp_Window",
+     "description": "StoneUp wall with a 0.9 x 1.2 window (z 0.75-1.95), kit window_frame with shutters, dressed sill on corbels and a jack arch with a proud keystone.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1806,
+     "bbox": "3.0 x 1.1 x 2.91"
+    },
+    {
+     "name": "SM_VK_Wall_StoneUp_Twin",
+     "description": "Romanesque twin window: two round-headed lights with glass fans, voussoirs, a colonnette with base and capital, jambs, sill and hood mould.",
+     "flags": "wobble=False, grime=False",
+     "tris": 2284,
+     "bbox": "3.0 x 0.84 x 2.91"
+    },
+    {
+     "name": "SM_VK_Wall_StoneUp_Slit",
+     "description": "StoneUp wall with a cross arrow slit (VOID) in a dressed surround.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1436,
+     "bbox": "3.0 x 0.77 x 2.91"
+    },
+    {
+     "name": "SM_VK_Wall_StoneUp_Loading",
+     "description": "Loading door (x +/-0.65, z 0-2.1) with two plank leaves open 100 deg and iron straps, sill and lintel beams, dressed jambs, and a dark interior with a sack and a crate.",
+     "flags": "wobble=False, grime=False",
+     "tris": 2742,
+     "bbox": "3.0 x 1.22 x 2.91"
+    },
+    {
+     "name": "SM_VK_Wall_StoneUp_Door",
+     "description": "Round-arched upper door (hw 0.55, spring 1.8) on a 0.3 m threshold slab, voussoirs, jambs, and a studded plank door. Its threshold height of 3.3 matches the Stair_Stone_Ext landing. Trimmed this session from 3252 to 2348 tris.",
+     "flags": "wobble=False, grime=False",
+     "tris": 2348,
+     "bbox": "3.0 x 0.81 x 2.91"
+    },
+    {
+     "name": "SM_VK_Corner_StoneUp",
+     "description": "Outer corner for the StoneUp storey (faces -X/-Y): 0.8 m rubble core, the belt wraps the corner, alternating quoins.",
+     "flags": "wobble=False, grime=False",
+     "tris": 768,
+     "bbox": "1.11 x 1.16 x 2.86"
+    },
+    {
+     "name": "SM_VK_InnerCorner_StoneUp",
+     "description": "Inner-corner quoin column for the StoneUp storey.",
+     "flags": "wobble=False, grime=False",
+     "tris": 648,
+     "bbox": "0.63 x 0.63 x 2.58"
+    },
+    {
+     "name": "SM_VK_Wall_PlasterUp",
+     "description": "Rendered (plaster) upper-floor wall (face -0.24) with a wooden sole band and top plate, joist ends, and two patches where the plaster has fallen off to show stone.",
+     "flags": "wobble=False, grime=False (flat wobble)",
+     "tris": 1260,
+     "bbox": "3.0 x 0.72 x 2.92"
+    },
+    {
+     "name": "SM_VK_Wall_PlasterUp_Window",
+     "description": "PlasterUp wall with a 0.9 x 1.2 shuttered window, sill board and brackets.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1486,
+     "bbox": "3.0 x 1.05 x 2.92"
+    },
+    {
+     "name": "SM_VK_Wall_PlasterUp_Oxeye",
+     "description": "PlasterUp wall with an ox-eye window: glass disc (r 0.36) in a deep dressed ring with voussoirs and a glazing cross.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1328,
+     "bbox": "3.0 x 0.73 x 2.92"
+    },
+    {
+     "name": "SM_VK_Corner_PlasterUp",
+     "description": "Wooden corner post (0.34 sq, H2) with sole and head blocks, a capital, and a diagonal dragon-beam end.",
+     "flags": "wobble=False, grime=False",
+     "tris": 284,
+     "bbox": "0.74 x 0.74 x 3.03"
+    },
+    {
+     "name": "SM_VK_InnerCorner_PlasterUp",
+     "description": "Inner-corner wooden post for the PlasterUp storey.",
+     "flags": "wobble=False, grime=False",
+     "tris": 88,
+     "bbox": "0.3 x 0.3 x 2.82"
+    },
+    {
+     "name": "SM_VK_Wall_Stone_Shop",
+     "description": "Ground-floor stone shop front: opening x +/-1.1, z 0.93-2.35; lowered-shutter counter on brackets (top 0.95); canopy propped at 50 deg on iron stays; lintel and jack arch; dark interior with a shelf of wares; hidden skirt to -0.6.",
+     "flags": "std (wobble + grime)",
+     "tris": 2556,
+     "bbox": "3.04 x 1.25 x 3.63 (incl. skirt to -0.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Plaster_Shop",
+     "description": "Timber-framed and plaster version of the shop front, with posts at +/-1.25, braces, pegs, the same counter, canopy and interior, and a skirt.",
+     "flags": "std (wobble + grime)",
+     "tris": 2280,
+     "bbox": "3.13 x 1.27 x 3.6"
+    },
+    {
+     "name": "SM_VK_Prop_ShopGoods_Bread",
+     "description": "Counter goods, origin at the counter top: two baskets of rolls, long loaves and pretzels on pegs.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1984,
+     "bbox": "1.9 x 0.5 x 0.32"
+    },
+    {
+     "name": "SM_VK_Prop_ShopGoods_Produce",
+     "description": "Three crates of apples, cabbages and carrots, plus a pumpkin.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1312,
+     "bbox": "1.97 x 0.59 x 0.36"
+    },
+    {
+     "name": "SM_VK_Prop_ShopGoods_Cloth",
+     "description": "CLOTH_A/CLOTH_B bolts (they recolour with the style), a folded stack, standing bolts, and a cloth drape hanging 0.45 over the counter edge.",
+     "flags": "wobble=False, grime=True",
+     "tris": 472,
+     "bbox": "1.74 x 0.59 x 0.85 (zmin -0.45, the drape)"
+    },
+    {
+     "name": "SM_VK_Prop_ShopGoods_Pots",
+     "description": "Clay jugs and amphorae, stacked bowls, dishes and a paper-lidded pot.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1448,
+     "bbox": "1.88 x 0.49 x 0.42"
+    },
+    {
+     "name": "SM_VK_Prop_ShopGoods_Tools",
+     "description": "Axes, hammers, horseshoes, a knife block and a handle crate on burlap. New this session: an upright pegboard hung with a saw, sickles and hammers so the stall reads from the street.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1620,
+     "bbox": "1.85 x 0.49 x 0.45"
+    },
+    {
+     "name": "SM_VK_Prop_ShopGoods_Meat",
+     "description": "Hams, a cut roast, a sausage coil, links and a cleaver on a board.",
+     "flags": "wobble=False, grime=True",
+     "tris": 600,
+     "bbox": "1.8 x 0.44 x 0.26"
+    },
+    {
+     "name": "SM_VK_Prop_ShopGoods_Candles",
+     "description": "Candle rack (PAPER, some with GLOW flames), tallow bundles and an iron candlestick.",
+     "flags": "wobble=False, grime=True",
+     "tris": 768,
+     "bbox": "1.9 x 0.41 x 0.46"
+    },
+    {
+     "name": "SM_VK_Prop_ShopGoods_Fish",
+     "description": "Two fish boxes on paper with STEEL fish, one loose fish, and a bucket.",
+     "flags": "wobble=False, grime=True",
+     "tris": 522,
+     "bbox": "1.85 x 0.58 x 0.29"
+    },
+    {
+     "name": "SM_VK_Roof_Pent",
+     "description": "Pent roof over a shop: a 3.2 x 1.5 ROOF slab at 22 deg with a slight sag, scalloped kit eave tabs moved onto the pent plane, wooden underside and fascia, and two curved three-box brackets. Placed wall-local at z 3.35; it takes the unit's roof style.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1612,
+     "bbox": "3.24 x 1.72 x 1.05 (zmin -1.0, brackets)"
+    },
+    {
+     "name": "SM_VK_Wall_Stone_Passage",
+     "description": "Cart-passage wall: arch hw 1.2, spring 1.4, crown 2.6. New this session: a slimmed voussoir ring (twn_passage_ring) whose top is 2.97, under the 3.0 limit. Imposts, guard stones, split plinth, cobble strip with wheel kerbs, skirts.",
+     "flags": "std (wobble + grime)",
+     "tris": 1876,
+     "bbox": "3.21 x 1.0 x 3.6 (top exactly 3.0)"
+    },
+    {
+     "name": "SM_VK_Passage_Vault",
+     "description": "Barrel vault between the front and back passage walls (house-local y -2.75..2.75): plaster side walls on a stone dado, impost strings, three transverse ribs with pilasters, cobble floor with a central gutter, hanging GLOW lantern, skirt.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1828,
+     "bbox": "2.92 x 5.5 x 3.26"
+    },
+    {
+     "name": "SM_VK_Gallery_Timber",
+     "description": "First-floor timber gallery bay: deck top at H1 (3.0), y -0.2..-1.6, joists, edge beam and ledger, a post at local x -1.5 on a stone pad with a skirt, knee braces, handrail and balusters.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1256,
+     "bbox": "3.22 x 1.55 x 4.75"
+    },
+    {
+     "name": "SM_VK_Gallery_End",
+     "description": "Gallery bay with posts at both ends, a side rail at local +1.5 and a flower pot on the rail.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1808,
+     "bbox": "3.47 x 1.55 x 4.97"
+    },
+    {
+     "name": "SM_VK_Gallery_Side",
+     "description": "Helper piece: side rail that closes the open (local-left) end of a gallery run.",
+     "flags": "wobble=False, grime=False",
+     "tris": 144,
+     "bbox": "0.12 x 1.3 x 0.97 (sits at z 3.08-4.05)"
+    },
+    {
+     "name": "SM_VK_Turret_Corbel",
+     "description": "Moulded stone corbel for a corner turret: axis at corner-local (-0.6,-0.6), r 1.1, 12 sides, ASHLAR rings and a pendant boss. Its top sits at the first upper floor.",
+     "flags": "wobble=False, grime=False",
+     "tris": 476,
+     "bbox": "2.4 x 2.4 x 1.81 (zmin -1.67)"
+    },
+    {
+     "name": "SM_VK_Turret_Seg",
+     "description": "Timber-framed plaster turret storey (H2): 6 posts, sill, mid and head rings, 3 windows facing -X/-Y, braces.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1124,
+     "bbox": "2.58 x 2.4 x 2.8"
+    },
+    {
+     "name": "SM_VK_Turret_Seg_Stone",
+     "description": "Stone turret storey (H2) with one dressed arrow slit on the diagonal, a base ring and pop-out stones.",
+     "flags": "wobble=False, grime=False",
+     "tris": 552,
+     "bbox": "2.48 x 2.4 x 2.84"
+    },
+    {
+     "name": "SM_VK_Turret_Cap",
+     "description": "Conical ROOF cap (r 1.35, h 2.8) with a bell-cast skirt, fascia and soffit, a wooden finial and a bronze ball.",
+     "flags": "wobble=False, grime=False",
+     "tris": 440,
+     "bbox": "3.28 x 3.28 x 4.01 (zmin -0.24, skirt)"
+    },
+    {
+     "name": "SM_VK_Stoop_Stone",
+     "description": "Three dressed steps (rise 0.18, tread 0.35, top 0.54), 1.8 m wide, with capped cheek blocks and a skirt, set against a wall (outer -Y).",
+     "flags": "wobble=False, grime=True",
+     "tris": 448,
+     "bbox": "2.46 x 1.13 x 1.26 (incl. skirt)"
+    },
+    {
+     "name": "SM_VK_Stair_Stone_Ext",
+     "description": "External stone stair along a wall: 13 steps climbing +X to a landing at z 3.3; ASHLAR wedge, sloped and level parapet with a cap, newel with ball, arched VOID store under the landing, skirt. About 50 deg, so Unity needs a NavMeshLink.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1297,
+     "bbox": "5.45 x 1.36 x 4.74 (incl. skirt)"
+    },
+    {
+     "name": "SM_VK_Prop_CellarHatch",
+     "description": "Sloping cellar hatch against a wall: stone curb from z 0.58 at the wall down to 0.12, two plank leaves with iron straps, ring pull, skirt.",
+     "flags": "wobble=False, grime=True",
+     "tris": 852,
+     "bbox": "1.54 x 1.56 x 1.29 (incl. skirt)"
+    },
+    {
+     "name": "SM_VK_Prop_HoistBeam",
+     "description": "New helper piece this session. A hoist beam out of the cross-gable face (z 1.42 above the wall top) with an iron tie, pulley block and wheel, and a 5.1 m rope ending in a hook and sack in front of the level-1 loading door of a 3-storey house. Origin is on the wall line at the wall top.",
+     "flags": "wobble=False, grime=False",
+     "tris": 620,
+     "bbox": "0.59 x 1.7 x 7.0 (zmin -5.07)"
+    }
+   ],
+   "builders": [
+    {
+     "signature": "build_merchant_house(coll, origin, seed=0)",
+     "description": "Stone merchant house (T4). One stone storey and two StoneUp storeys (wall top 8.6), slate roof, stepped gables at both ends. The cross gable is over the middle bay, with the new Prop_HoistBeam whose rope lines up with the stacked loading doors: front strings SDS / TLT / WLW. Two shops with goods and pents; the left pent is dropped for the stone turret on the front-left corner, which appears at seed 0 and with p .5 otherwise. At the back: Stair_Stone_Ext up to the StoneUp_Door at level 1, a cellar hatch, and a walled 3x1 yard with a cart, barrels, crates and sacks. Returns footprint, lot and wall_top.",
+     "footprint": "house 3x2 cells centred on the origin (x -4.5..4.5, y -3..3), plus a 3x1 yard behind (+Y to 6): lot 3x3. The turret overhangs the front-left corner by about 1.7 m from z 1.6 up."
+    },
+    {
+     "signature": "build_townhouse_gablefront(coll, origin, seed=0)",
+     "description": "Gable-front townhouse (T3). One plaster and two timber storeys (wall top 8.6). The builder rotates internally so the steep 6 m gable faces -Y (the street). Street face: shop plus door, oriel, windows. Ends are Roof_Gable at the back and Roof_Gable_Hoist at the street, with a ridge emblem (Key, Pretzel or Tankard) and a sign that matches the goods. Plaster, roof and shutter colours come from the seed.",
+     "footprint": "2 cells wide (x -3..3) x 3 cells deep (y -4.5..4.5), street at -Y. Lot 4x3, keeping one empty alley cell on each side."
+    },
+    {
+     "signature": "build_corner_house(coll, origin, seed=0)",
+     "description": "Corner house (T3-4). L-plan with the 2x2 junction at the origin and one-cell wings to +X and +Y. One stone and two timber storeys (wall top 8.6). One shop on each street face (-Y and -X), using Roof_LCorner plus two Roof_Gable ends. Plaster turret stack on the convex corner: corbel at 3.0, segments at 3.0 / 5.8 / 8.6, cap at 11.4, tip about 14.2; it contains the eave corner (distance 1.06 < r 1.1). Also a Banner_Wall, a lamp post, and a first-floor Gallery_Timber plus Gallery_Side in the inner yard, with barrels and a woodpile.",
+     "footprint": "L within 3x3 cells (x -3..6, y -3..6), lot 4x4. The turret overhangs the (-3,-3) corner."
+    },
+    {
+     "signature": "build_terrace(coll, origin, units=4, seed=0)",
+     "description": "Rowhouse terrace (T3) along +X, fronts toward -Y. Unit width is 1/2/3 cells (p .2/.5/.3). Storeys are 2/3/4, changed by +/-1 with p .6 when equal to the previous unit. Families: Stone or Plaster ground with Timber, PlasterUp or StoneUp above. Plaster colour always differs from the neighbour; roofs vary more this session (Red/Slate/Shingle/Green/Blue, with repeats damped). Ground strings use S .45 / D .3 / W .25 with at least one D; shops get goods and pents. Every 4th unit with w>=2 gets a cart passage with a Passage_Vault behind it. Boundaries between equal-height units: Roof_Mid, with Firewall on even boundaries or when roofs differ, else Chimney_Party. Unequal boundaries: the taller unit places end walls only above the lower one and gets a Flush gable; the lower unit gets Roof_Mid_CapL/R. Street ends: stepped/flush/gable/halfhip. Party pilasters where families or styles differ; Banner_Wall on every 2nd unit. New this session: a back gallery on timber units (w>=2, p .45, never on two neighbours) with a level-1 back door, and no lanterns under it. Tested with 8 units and seeds 1, 2 and 3: no errors and no open roof sections seen.",
+     "footprint": "sum of unit widths x 2 cells, centred on the origin along X (y -3..3). The demo (units=6, seed=2) is 13x2; back galleries reach 1.6 m past +Y."
+    }
+   ],
+   "renders": [
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\town\\catalog_final.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\town\\hero_colony.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\town\\hero_street.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\town\\hero_merchant.png"
+   ],
+   "integration_notes": "STATE AT HANDOFF\n- ws_town.py is identical to the Blender text ws_town (76593 chars, checked).\n- In one fresh call, exec(ws_common); g=ws_ns(\"town\"); ws_build(\"town\", g=g) built all 37 WS_SPECS pieces with no error, in about 2 s.\n- All four builders then ran into WS_town_Assembly without error: build_terrace at (0,10,pi) with units=6, seed=2; build_merchant_house at (-20,26,0); build_townhouse_gablefront at (-3,26,0); build_corner_house at (14,26,0). This puts the terrace front and the three house fronts on either side of one street.\n- The assembly also holds WS_town_DemoPaving, a stand-in FIELDSTONE street slab created by twn_demo_paving(). It is not a kit piece; drop it when terrain arrives.\n- Pieces are laid out as a catalog at x -17..13, y -15..-43.\n- The catalog and hero renders briefly set hide_render on my own Pieces or Assembly collection and restored it afterwards.\n- No new materials; faces use kit slots only. Nothing saved, no shared texts touched.\n\nDEPENDENCIES ON OTHER AGENTS (all through twn_pick with a kit fallback)\n- Skyline:\n  - Roof_Gable_Stepped (falls back to Roof_Gable_Stone)\n  - Roof_Gable_Flush (falls back to Roof_Gable_Stone)\n  - Roof_Firewall (falls back to Chimney)\n  - Roof_HalfHip (falls back to Roof_Hip)\n  - Roof_Mid_CapL/R (fall back to Roof_Mid)\n  - Chimney_Party (falls back to Chimney)\n  - Roof_Gable_Hoist (falls back to Roof_Gable_Planks)\n  - Roof_CrossGable (falls back to Roof_Mid)\n  - Banner_Wall (optional)\n  - Emblem_Ridge_Key/Pretzel/Tankard (optional)\n- Roof_CrossGable_Hoist does not exist. The merchant house uses Roof_CrossGable and adds my SM_VK_Prop_HoistBeam, which is placed only when that exact cross gable exists. If skyline later adds CrossGable_Hoist, the builder picks it up and skips my beam.\n- Kit pieces used:\n  - Walls, corners and inner corners of the Stone, Plaster and Timber families, including Wall_Timber_X/K/Oriel/Door.\n  - Roof_Mid, Roof_Gable, Roof_LCorner, Chimney, LowWall, LowWall_Post.\n  - Props: Cart, BarrelStack, Crates, Sacks, Sign, BakerySign, Sign_Anvil, Sign_Potion, Lantern, Planter, FlowerBox(_Daisy), LampPost, Woodpile; plus Deco_Weeds.\n\nGRID FACTS\n- StoneUp and PlasterUp are upper-storey only (H2 = 2.8). Place them at z = 3.0 + 2.8*(level-1).\n- They carry a flat wobble matching a fade-wobbled ground wall at z 3.0, so they meet ground walls and each other without seams. They sit on cell edges exactly like kit walls; the corners follow the kit convention.\n- twn_lvz(lv) and twn_top(storeys) give the heights; the wall top of a 3-storey house is 8.6.\n- Shops, the passage, the vault, gallery posts, stoop, stair and hatch carry hidden skirts to -0.6.\n\nSUGGESTED SOCKETS (wall-local, outer face -Y, unless noted)\n- Stone and Plaster shop: Stock (0, -0.55, 0.95), where goods origins go; Pent (0, 0, 3.35).\n- StoneUp_Loading: Stock (0, -0.3, 0.16).\n- StoneUp_Door: Door (0, -0.25, 0.30). At level 1 that is z 3.3, exactly the Stair_Stone_Ext landing.\n- Stair_Stone_Ext: foot at (-1.35, -0.66, 0); landing x 1.35..3.65, z 3.3. Needs a NavMeshLink (about 50 deg).\n- Passage: Door at x +/-0.9; clear width 2.4, crown 2.6, ring top 2.97 (meets the 3.0 limit).\n- Gallery: deck top z 3.0 at y -0.2..-1.6.\n- Turret: axis at corner-local (-0.6, -0.6); corbel top at the first upper floor (3.0). Stack one segment per upper storey plus one above the wall top; the cap goes at the last segment top (11.4 on a 3-storey house).\n- HoistBeam: origin at (bay x, wall line, wall top); rope at local (0, -1.7).\n\nKNOWN LIMITATIONS\n- Kit STEEL is metallic and renders almost black in Blender, so tool blades and fish look dark here. Unity reflection probes should fix it.\n- The corner-house turret passes through the L-corner eave and gable bargeboard; there is no roof cut.\n- Goods use grime=True, which darkens their bases slightly.\n- The jettied Timber level-1 wall slightly intersects the gallery deck; it is hidden under the deck.\n- Builders do not rely on WS_SPECS order.\n- twn_clear_assembly(asm) also removes stale VAR_ style meshes of my own pieces only. Prefer it over ws_clear_assembly when rebuilding after a piece change.",
+   "unfinished": [
+    "Stoop_Stone is built but no builder places it: the kit has no raised ground-floor doors, so it only makes sense on a plateau or foundation 0.54 above the street.",
+    "Spec extras not built: Gallery_Top, Wall_Stone_Passage_Gated, Prop_CellarHatch_Open, ShopGoods Boots/Bottles, Corner_Party_Stone/Timber and Roof_LCorner_Mirror (not in my manifest list; the terrace uses my Corner_* pieces as party pilasters instead).",
+    "build_terrace uses (coll, origin, units, seed), not the spec signature (x0, x1, y_street, side, district); there are no district weights.",
+    "Terrace shops always get a Roof_Pent. Signs appear only where the pent is skipped (merchant turret shop, corner house); there is no awning alternative.",
+    "Prop_HoistBeam rope length is fixed for a 3-storey house (wall top 8.6); a 4-storey version would need a longer variant.",
+    "No courtyard inn, market hall or tower-house builders (other rows of spec \u00a77/\u00a78, not assigned to me).",
+    "Not yet tested on real terrain: only the skirts to -0.6 guard against uneven ground. The demo street is a stand-in FIELDSTONE slab."
+   ]
+  }
+ },
+ {
+  "agent": "water",
+  "report": {
+   "module_path": "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\ws_water.py",
+   "text_name": "ws_water",
+   "pieces": [
+    {
+     "name": "SM_VK_Pier_Deck",
+     "description": "3x3 pier module, centred on the cell, runs along local X. 13 PLANKS boards across, one of them short. Deck top +0.05. Stringers at y 0/\u00b11.2. The bent at x -1.5 belongs to the module: 2 piles (r 0.16, to -3.0, leaning, mossy at the waterline), walings and an X-brace.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1168,
+     "bbox": "3.26 x 3.30 x 3.38 (zmin -3.0)"
+    },
+    {
+     "name": "SM_VK_Pier_End",
+     "description": "Pier deck plus the closing bent at +1.5, 2 lathe bollards with a rope coil, a ladder down to -1.4, and a lantern pole with a kit lantern.",
+     "flags": "wobble=False, grime=True",
+     "tris": 2818,
+     "bbox": "3.52 x 3.30 x 5.52 (zmin -3.0)"
+    },
+    {
+     "name": "SM_VK_Pier_Stairs",
+     "description": "Side attachment using the deck's transform. 1.5 m wide, 4 plank steps from +0.05 down to -0.55 off the -Y edge, stringers, 2 piles and handrails.",
+     "flags": "wobble=False, grime=True",
+     "tris": 544,
+     "bbox": "1.68 x 1.52 x 4.05 (zmin -3.0)"
+    },
+    {
+     "name": "SM_VK_Pier_Rail",
+     "description": "Rope rail on the -Y deck edge: posts (0.12 square) at x -1.5 and 0, 1.0 m high, 2 sagging HAY ropes with wraps. The +1.5 post belongs to the next module.",
+     "flags": "wobble=False, grime=True",
+     "tris": 536,
+     "bbox": "3.09 x 0.18 x 1.15 (zmin -0.1)"
+    },
+    {
+     "name": "SM_VK_Prop_Rowboat",
+     "description": "4.2 x 1.35 lofted plank hull (pointed bow, transom). Gunwale strip in the recolourable SHUTTER slot, stem post, keel, ribs, 2 thwarts plus a stern bench, bottom boards, rowlocks, 2 oars, rope coil. Origin at the waterline.",
+     "flags": "wobble=False, grime=False",
+     "tris": 2148,
+     "bbox": "4.28 x 1.42 x 0.93 (local zmin -0.25)"
+    },
+    {
+     "name": "SM_VK_Prop_Barge",
+     "description": "7.5 x 2.6 hull with square raked ends and a SHUTTER gunwale. Plank end decks, 5.5 m mast, yard, furled CLOTH_B sail with gaskets, stays, cargo crates, barrels, sacks, and a steering sweep oar. Origin at the waterline.",
+     "flags": "wobble=False, grime=False",
+     "tris": 2956,
+     "bbox": "9.85 x 3.60 x 5.58 (local zmin -0.38)"
+    },
+    {
+     "name": "SM_VK_Bridge_Wood_Mid",
+     "description": "3 m wooden bridge bay along local X. Deck top +0.35, 12 cross planks 3.4 m long, 5 stringers, posts at x -1.5 and 0 (y \u00b11.62), top and mid rails, knee braces, edge fascia.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1284,
+     "bbox": "3.10 x 3.51 x 1.69 (zmin -0.25)"
+    },
+    {
+     "name": "SM_VK_Bridge_Wood_End",
+     "description": "Bank end. The deck eases from +0.05 at x -1.5 (bank) up to +0.35. Rock abutment with a sill beam; the rails flare out 0.3 to thick end posts.",
+     "flags": "wobble=False, grime=True",
+     "tris": 2200,
+     "bbox": "3.24 x 4.07 x 2.28 (zmin -0.79)"
+    },
+    {
+     "name": "SM_VK_Bridge_Wood_Bent",
+     "description": "Seam support: 3 piles (r 0.14) at y -1.3/0/1.3 from -3.0 to 0, cap 3.6 x 0.3 x 0.3, X-brace, walings, iron straps. Goes at every seam between wooden bridge modules.",
+     "flags": "wobble=False, grime=True",
+     "tris": 608,
+     "bbox": "0.46 x 3.60 x 2.98 (zmin -3.0)"
+    },
+    {
+     "name": "SM_VK_Bridge_Stone_Span",
+     "description": "6 m (2-cell) segmental arch span. Springs at -0.6, apex +0.8 (R 2.51). ASHLAR soffit, alternating STONE_BLOCK voussoirs with a keystone, half-piers with quoins (mossy below the waterline), string course, 0.35 parapets with coping. The crowned ASHLAR road runs from +1.2 at the ends to +1.3 in the middle.",
+     "flags": "wobble=False, grime=True (ends at \u00b13, so no wobble)",
+     "tris": 7480,
+     "bbox": "6.00 x 4.26 x 3.86 (zmin -1.6)"
+    },
+    {
+     "name": "SM_VK_Bridge_Stone_Ramp",
+     "description": "3 m approach. Deck falls from +1.2 (span side, x -1.5) to 0 (bank). Parapet and coping, rubble newels with pyramid caps, wing walls splayed 30 deg with capstones and an end boulder.",
+     "flags": "wobble=False, grime=True",
+     "tris": 2304,
+     "bbox": "4.71 x 5.72 x 2.73 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Bridge_Stone_Pier",
+     "description": "Cutwater pier for the seam between two spans: footing, pointed noses 1.2 m out (mossy -2.0..-0.35), sloped caps leaning on the spandrels, stacked nose blocks.",
+     "flags": "wobble=False, grime=True",
+     "tris": 466,
+     "bbox": "1.90 x 6.72 x 3.00 (zmin -2.0)"
+    },
+    {
+     "name": "SM_VK_Bridge_Log",
+     "description": "Squared oak log (r 0.3 x 4.5) with a flat WOOD walking face, plus a birch-pole handrail on 3 posts tied with rope. Pairs with the kit's Rock_StepStones.",
+     "flags": "wobble=False, grime=True",
+     "tris": 344,
+     "bbox": "4.51 x 0.88 x 1.98 (zmin -0.9)"
+    },
+    {
+     "name": "SM_VK_Quay_Straight",
+     "description": "3 m contour quay, face -Y at local y -0.45. STONE face from 0 down, battered ROCK_MOSSY toe to -2.0, jittered STONE_BLOCK coping (top about 0), iron mooring ring.",
+     "flags": "wobble=False, grime=True",
+     "tris": 720,
+     "bbox": "3.00 x 1.01 x 2.03 (zmin -2.0)"
+    },
+    {
+     "name": "SM_VK_Quay_Post",
+     "description": "Stone mooring post: rock base, dressed shaft, cap and pyramid top, iron ring. Hidden skirt down to -0.6.",
+     "flags": "wobble=False, grime=False",
+     "tris": 384,
+     "bbox": "0.67 x 0.70 x 1.78 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Quay_Stair",
+     "description": "Quay module with 4 steps (0.15 rise), 1.2 m wide, cut down to a landing at -0.6. Cheek blocks and a mooring ring.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1040,
+     "bbox": "3.00 x 1.30 x 2.08 (zmin -2.0)"
+    },
+    {
+     "name": "SM_VK_WaterWheel",
+     "description": "Animated undershot wheel, R 2.4, width 1.0, axle along local X, origin at the hub. 2 rims with 8 spokes each, 16 PLANKS paddles (r 2.1-2.6) with cleats, hub (r 0.35) with iron bands, axle from x -1.1 to 1.2. Instances carry spin_axis='local X' and rpm=6.",
+     "flags": "wobble=False, grime=False; Spin",
+     "tris": 3248,
+     "bbox": "2.30 x 5.20 x 5.20 (local zmin -2.6)"
+    },
+    {
+     "name": "SM_VK_Wall_Stone_Axle",
+     "description": "Wall_Stone variant for the mill's wheel end. Masonry runs down to -1.6 into the race, with a mossy wet band and footing rocks. STONE_BLOCK bearing block and corbel, VOID axle hole with an iron ring at z 1.3, closed ends below ground.",
+     "flags": "std (wobble=True, grime=True)",
+     "tris": 1136,
+     "bbox": "3.04 x 0.89 x 4.60 (zmin -1.6)"
+    },
+    {
+     "name": "SM_VK_Mill_WheelPier",
+     "description": "Free-standing outer bearing pier, 0.8 x 1.0, z -1.6..1.6. Small cutwaters, quoins, capstone, bearing block facing -X at z 1.3 with a VOID hole.",
+     "flags": "wobble=False, grime=True",
+     "tris": 2086,
+     "bbox": "1.19 x 1.96 x 3.23 (zmin -1.6)"
+    },
+    {
+     "name": "SM_VK_Prop_Millstone",
+     "description": "Pair of millstones (lathe r 0.65 x 0.3, eye, dressing grooves, rynd): one lying flat, one leaning on a chock.",
+     "flags": "wobble=False, grime=True",
+     "tris": 724,
+     "bbox": "2.22 x 1.67 x 1.33"
+    },
+    {
+     "name": "SM_VK_Prop_NetRack",
+     "description": "2 posts about 2.4 m high with forked tops and a birch pole carrying a sagging, double-sided NET alpha card (3.0 x 1.8) with BREAD floats and iron weights. Rope coils and a float bucket at the foot.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1396,
+     "bbox": "3.70 x 1.04 x 2.81"
+    },
+    {
+     "name": "SM_VK_Prop_FishRack",
+     "description": "3 m A-frame drying rack: 2 rows of hanging lofted fish (pale belly, STEEL or BREAD back) plus split fish on the ridge pole.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1640,
+     "bbox": "3.20 x 1.61 x 2.18"
+    },
+    {
+     "name": "SM_VK_Prop_Creels",
+     "description": "3 hooped lobster pots (plank base, wood hoops, NET cover, entrance funnel), a wattle basket of fish, a rope coil and a CLOTH_A buoy.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1970,
+     "bbox": "2.02 x 1.52 x 0.67"
+    },
+    {
+     "name": "SM_VK_Pile_Fish_1",
+     "description": "One plank fish crate filled with fish on paper.",
+     "flags": "wobble=False, grime=True",
+     "tris": 572,
+     "bbox": "0.86 x 0.74 x 0.37"
+    },
+    {
+     "name": "SM_VK_Pile_Fish_2",
+     "description": "Two fish crates plus a plank.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1188,
+     "bbox": "1.77 x 1.16 x 0.37"
+    },
+    {
+     "name": "SM_VK_Pile_Fish_3",
+     "description": "Three stacked fish crates plus loose fish.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1922,
+     "bbox": "1.80 x 1.59 x 0.68"
+    },
+    {
+     "name": "SM_VK_Prop_LavoirBasin",
+     "description": "5.4 x 2.0 ASHLAR basin (curb 0.45) with STONE_BLOCK capstones, WATER surface at 0.3 and 4 washing slabs tilted 20 deg. Wet laundry on the curb, a beater and a laundry basket.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1378,
+     "bbox": "5.44 x 2.69 x 1.19 (zmin -0.35)"
+    },
+    {
+     "name": "SM_VK_Prop_WallFountain",
+     "description": "Wall-mounted fountain using the wall-module transform (outer face at y -0.25). Arched STONE_BLOCK back slab, bronze mask and spout, WATER stream tube and ripple, half-lathe basin r 0.8 with a water surface, base slab.",
+     "flags": "wobble=False, grime=True",
+     "tris": 872,
+     "bbox": "1.80 x 1.09 x 2.08"
+    },
+    {
+     "name": "SM_VK_Prop_HandPump",
+     "description": "1.6 m WOOD pump body with IRON bands, cap, spout and lever handle toward +Y, on a stone slab. Wooden trough with water under the spout, and a bucket.",
+     "flags": "wobble=False, grime=True",
+     "tris": 870,
+     "bbox": "1.39 x 1.95 x 2.17"
+    },
+    {
+     "name": "SM_VK_WatRoofS_Gable",
+     "description": "Fallback helper (used only if frontier's SM_VK_RoofS_Gable is missing): S-family gable roof bay, 3 m deep with ridge 2.27, barge boards, finial post, plank gable with a vent.",
+     "flags": "wobble=False, grime=False",
+     "tris": 4460,
+     "bbox": "3.86 x 5.10 x 3.56"
+    },
+    {
+     "name": "SM_VK_WatRoofS_Single",
+     "description": "Fallback helper for frontier's SM_VK_RoofS_Single: 1-cell S roof with gables at both ends.",
+     "flags": "wobble=False, grime=False",
+     "tris": 6414,
+     "bbox": "4.66 x 5.10 x 3.56"
+    },
+    {
+     "name": "SM_VK_WatPosts",
+     "description": "Fallback helper for frontier's SM_VK_Wall_Posts: open-bay module with a post at x -1.5 on a pad (skirt to -0.6), a top beam and 2 knee braces.",
+     "flags": "wobble=False, grime=True",
+     "tris": 392,
+     "bbox": "3.66 x 0.56 x 3.60 (zmin -0.6)"
+    }
+   ],
+   "builders": [
+    {
+     "signature": "build_watermill(coll, origin, seed=0, roof=\"Red\")",
+     "description": "3x2 two-storey stone/timber mill built with kit walls via _assemble. The +X end wall is Wall_Stone_Axle under a Wall_Timber_Window, with gable roofs and a chimney. WaterWheel sits at house (5.85,-1.5,1.3), rot 0, axle along X. It gets a frame driver (half a turn per 120 frames) plus spin_axis/rpm props. Mill_WheelPier stands at (7.6,-1.5). 4 Quay_Straight run in front of the end wall with their faces at x 5.35, plus a Quay_Post. Also a millstone, sacks, cart, crates and barrels. Returns dict(wall_top, footprint, water_strip, wheel).",
+     "footprint": "3x2 house plus a 1-cell wheel strip on +X that must be water (x 5.35..6.35, y -3.9..0.9). The lot with props is about 4x3."
+    },
+    {
+     "signature": "build_fisher_hut(coll, origin, seed=0)",
+     "description": "2x1 shed hut on the bank (y 3..6), door at x -1.5 facing the water. It uses frontier's Wall_Shed*, Corner_Shed and RoofS_Gable at 2.6; without them it falls back to kit plaster walls and WatRoofS_Gable at 3.0. The pier sits on the door cell's centre line x -1.5: 2 Pier_Deck, Pier_End, 2 Pier_Rail and Pier_Stairs, with a rowboat moored at the stairs. Also creels, fish piles, a net rack, a fish rack, crates and barrels. Returns dict(wall_top, footprint, pier).",
+     "footprint": "2x1 hut plus a 1x3 pier over water (x -3..0, y 0..-9). The land lot with racks is about 4x2."
+    },
+    {
+     "signature": "build_smokehouse(coll, origin, seed=0)",
+     "description": "1x1 Wall_Stone hut (Dark stone) with a door on -Y and Corner_Stone corners. Roof is RoofS_Single at H1 (fallback WatRoofS_Single), plus skyline's Roof_Vent on the ridge when it exists. Woodpile, fish rack, fish crate and barrels around it. Returns dict(wall_top, footprint, smoke=(0,0,5.62)).",
+     "footprint": "1x1 (lot with props about 3x3)"
+    },
+    {
+     "signature": "build_lavoir(coll, origin, seed=0)",
+     "description": "2x1 open wash-house: Wall_Posts on all sides (fallback WatPosts), 2 RoofS_Gable at 3.0 (fallback WatRoofS_Gable), Prop_LavoirBasin centred. Laundry line, hand pump and bench alongside. Returns dict(wall_top, footprint).",
+     "footprint": "2x1 (lot with laundry and pump about 3x3)"
+    },
+    {
+     "signature": "build_riverside_demo(coll, origin, seed=0, terrain=True, dress=True)",
+     "description": "Riverside village demo. A river runs along local X (banks y \u00b16, water -0.6, bed -1.5) on a stand-in terrain mesh with sloped soil banks. Along it: a 12 m stone bridge (Ramp+Span+Pier+Span+Ramp) with lamp posts at x 0; the grid-aligned watermill on the north bank (x 12..18); a barge quay (Straight/Stair/Post) with a moored barge; the fisher hut and pier on the south bank; the smokehouse; the lavoir; an 18 m wooden bridge (End + 4 Mid + End, 5 Bents) at x 34; and a spare rowboat. A brook at x 44..47 is crossed by Bridge_Log and a Rock_StepStones ford. Reeds, willows, trees, bushes and flowers dress it. It calls all 4 builders above.",
+     "footprint": "about 40x30 cells (120 x 90 m)"
+    },
+    {
+     "signature": "wat_catalog_stage(coll, origin=(150,-150,0))",
+     "description": "Render helper, not a game builder. Places one instance of every water piece around a 12 m channel: pier, barge quay, mill end with a spinning wheel, both bridges, the props in two rows, and the fallback roofs on the fallback posts. Used for catalog_final.",
+     "footprint": "about 16x10 cells"
+    }
+   ],
+   "renders": [
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\water\\catalog_final.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\water\\hero_colony.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\water\\hero_riverside.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\water\\hero_mill.png"
+   ],
+   "integration_notes": "STATE AND VERIFICATION\n- The session resumed after an interruption. The local ws_water.py was newer than the Blender text, so the file was pushed into Blender.\n- Final checks:\n  - (a) Text ws_water is identical to the file (md5-checked).\n  - (b) One fresh call ran exec(ws_common); g=ws_ns(\"water\"); ws_build(\"water\",g=g) and built 32/32 WS_SPECS pieces in about 2 s, no errors.\n  - (c) build_riverside_demo ran into WS_water_Assembly without error. It calls build_watermill, build_fisher_hut, build_smokehouse and build_lavoir once each. The fallback path (no frontier/skyline pieces) was also tested for fisher hut, lavoir and smokehouse, then cleaned up.\n  - (d) Final renders are at 1600x900.\n- The assembly holds the riverside demo (origin 200,0) and the catalog stage (origin 150,-150).\n- The .blend was not saved. No shared texts, scenes or objects of other agents were touched. No new materials.\n\nDATUM AND GRID\n- Heights: bank 0, water -0.6, bed -1.5, piles to -3.0, quay face to -2.0. This matches vk_terrain WATER_Z/BED_Z.\n- Pier modules are 3x3, centred on the cell, and run along local X. The bent at x -1.5 belongs to the module; Pier_End adds the +1.5 bent.\n- Wooden bridge (local X): End sits on the bank, with its bank end at local -X and the deck rising from +0.05 to +0.35. Mid bays go over water. Put a Bent at every seam, including the one on the bank edge.\n- Stone bridge: Ramp (3 m) + Span (6 m, centred) + Ramp. Put Bridge_Stone_Pier on the seam between two spans.\n- Quays are contour pieces, face -Y at local y -0.45, pivot mid-segment. Diagonal quays are not built.\n- Watermill: the builder puts its own Quay_Straight 0.85 m out in front of the end wall, so the spec \u00a79.7 rectangle stays water. In the demo the house is grid-aligned with its end wall on the bank line.\n\nWATER WHEEL\n- The instance has custom props spin_axis=\"local X\" and rpm=6. For Blender preview it also has a SCRIPTED driver on rotation_euler.x (\"phase - frame*0.02618\", which evaluates without Python).\n- In Unity, replace the driver with a rotator around local X, and strip the driver on export.\n- Wheel rot 0 in house space, so the axle is perpendicular to the end wall (the P3 fix).\n\nDEPENDENCIES (all through wat_pick/wat_place, so missing pieces are skipped or fall back)\n- frontier:\n  - SM_VK_RoofS_Gable and SM_VK_RoofS_Single; fallbacks are my SM_VK_WatRoofS_Gable/_Single, same S-family values as fro_roof_family.\n  - SM_VK_Wall_Shed, _Door, _Window and SM_VK_Corner_Shed; fallback is kit Wall_Plaster* with the wall top at 3.0 instead of 2.6.\n  - SM_VK_Wall_Posts; fallback is SM_VK_WatPosts.\n  - If frontier ships, the integrator can drop the 3 Wat* fallback pieces.\n- skyline: SM_VK_Roof_Vent on the smokehouse; skipped if absent.\n- Kit:\n  - Buildings: Wall_Stone*, Corner_Stone, Wall_Timber_Window, Roof_Mid/Gable, Chimney.\n  - Props: Sacks, Cart, Crates, BarrelStack, Woodpile, Laundry, Bench, LampPost.\n  - Nature (demo dressing only): Plant_Reeds, Tree_Willow/Oak/Birch/Apple, Bush_*, Rock_StepStones, Rock_Cluster/Boulder_Flat, Plant_TallGrass/Wildflowers.\n- wat_family_S switches HALF/EAVE/RIDGE/GX through globals() and restores them in finally.\n- Module globals are prefixed: WAT_*, wat_*, build_*, WS_SPECS. The old unprefixed _nw/_ng were renamed WAT_NW/WAT_NG.\n\nSTAND-IN TERRAIN\n- The demo and catalog meshes are render-only and must not be exported as kit: WS_water_DemoTerrain_200_0 and WS_water_CatalogTerrain.\n- They are boxes with sloped soil banks. They carry a Col layer, because kit shaders multiply by it and the banks rendered black without one.\n- They use M_VKT_Water (terrain track) when it exists, else M_VK_Water. Replace them with the terrain track's river/shore tiles in the game.\n\nSUGGESTED SOCKETS (local coordinates)\n- Pier and boats:\n  - Pier_End: Moor at the bollards (1.05, \u00b10.9, 0.55); Light at the lantern (1.5, 1.44, 2.33); Ladder/Board at (1.72, 0, -0.6).\n  - Pier_Stairs: BoatBoard at (0, -2.7, -0.55).\n  - Rowboat: Seats at the thwarts (x -0.94 / 0.40, z about 0.2); Moor at the bow (2.05, 0, 0.4).\n  - Barge: Cargo in the hold (0, 0, -0.2); Helm at the sweep (-3.6, 0.35, 0.5).\n- Quays:\n  - Quay_Straight: Moor ring at (0, -0.52, -0.5).\n  - Quay_Post: Moor at (0, -0.3, 0.55).\n  - Quay_Stair: BoatLanding at (0, -0.5, -0.6).\n- Mill:\n  - WaterWheel: Spin pivot at the origin, axis local X, 6 rpm.\n  - Wall_Stone_Axle: AxleIn at (0, -0.6, 1.3).\n  - Mill_WheelPier: Bearing at (-0.68, 0, 1.3).\n  - Prop_Millstone: Work at (0, -0.9, 0).\n- Washing and water supply:\n  - LavoirBasin: 4 Work (kneel) sockets at (\u00b11.2, \u00b11.4, 0), facing the basin.\n  - WallFountain: Fetch at (0, -1.3, 0).\n  - HandPump: Work at the handle (0, 1.3, 0); Fetch at the trough (0, -1.0, 0).\n- Fishing: NetRack Work at (0, -0.9, 0); FishRack Work at (0, \u00b11.0, 0).\n- Buildings:\n  - Smokehouse: Smoke at (0, 0, 5.62); Door at (0, -1.8, 0).\n  - Watermill: Door at house (0, -3.6, 0).\n  - Fisher hut: Door at (-1.5, 2.4, 0).\n- Bridges: NavLink along local X. Deck heights are +0.35 (wooden Mid), +0.05 to +0.35 (wooden End), 1.2 to 1.3 (stone span) and 1.2 down to 0 (stone ramp).\n\nSCALE CHECK\n- Renders used temporary instances of the MedievalColony Colonist_Villager meshes (1.68 m) as scale references. They were removed from the assembly afterwards.\n- Checked against them: the pier rope rail is about hip height, the bridge parapets reach 0.8 above the deck, the shed door is about 2 m, and the fish rack bar is just above head height.",
+   "unfinished": [
+    "Quay_Diag (2.121 m, spec M5) was not built because the manifest did not assign it. Curved or diagonal shorelines have no quay piece yet.",
+    "Sockets are only recorded in this report; no socket empties or markers exist on the pieces.",
+    "There are no real VFX: the smokehouse has only a Smoke socket position, the fountain stream is a static WATER tube, and river flow and wheel spray are not animated.",
+    "Over budget: Prop_Barge is 2956 tris (prop budget 2k; it is a 7.5 m vessel), WaterWheel is 3248, and the fallback WatRoofS_Gable/Single are 4460/6414. The fallback roofs are in line with frontier's RoofS (4202/6116) and the kit's Roof_Gable (5688).",
+    "The terrain is a stand-in only: vertical boxes plus flat soil slopes. It is not the terrain track's shore tiles, and the soil bank strip reads dark from low angles.",
+    "The spec's M5 test 'wood bridge End + Bent + End over a 2-cell river' does not match my End design. My End sits on the bank, so a 6 m river needs End + 2 Mid + End with 3 Bents. End+Bent+End leaves only about 3.6 m of water.",
+    "The watermill has no interior or gearing. The house is the standard kit _assemble, with only the bearing and axle hole at the end wall.",
+    "Pier and bridge pieces use grime=True, which darkens toward z 0. That is meant for ground pieces, so the decks read slightly dark.",
+    "Fisher hut wall height depends on the wall set: 2.6 with frontier's sheds, 3.0 with the plaster fallback. Props are not re-spaced between the two.",
+    "Final renders were made before the WAT_NW/WAT_NG rename. The rename changes no geometry or flags, and pieces and assembly were rebuilt afterwards without error."
+   ]
+  }
+ },
+ {
+  "agent": "industry",
+  "report": {
+   "module_path": "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\ws_industry.py",
+   "text_name": "ws_industry (identical to the local file, md5 e0404d547b1df19073a9b6f457305b8b, 92,499 chars). Final check in one fresh call: exec(ws_common); g=ws_ns(\"industry\"); ws_build(\"industry\", g=g) built all 49 WS_SPECS pieces with no error in about 3.6 s. Every builder was then run into WS_industry_Assembly without error (170 objects). The .blend was not saved.",
+   "pieces": [
+    {
+     "name": "SM_VK_Mine_Portal",
+     "description": "Mine entrance cut into a mossy boulder mound. Chunky timber portal set with a pick sign and a lantern, lagged tunnel 2.5 m wide x 2.6 m high x 3 m deep running +Y, soil floor and dark back wall, pick and tufts, hidden skirt. The hill is now opened cleanly with ind_carve; the tunnel mouth was previously filled with moss.",
+     "flags": "wobble=False, grime=True",
+     "tris": 3976,
+     "bbox": "8.94 x 7.91 x 5.75 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Rail_Straight",
+     "description": "3 m track along X (ends at x=+-1.5): rock ballast bed down to z -0.3, 6 sleepers, 2 swept steel rails, gauge 0.8.",
+     "flags": "wobble=False, grime=True",
+     "tris": 324,
+     "bbox": "3.0 x 1.6 x 0.53"
+    },
+    {
+     "name": "SM_VK_Rail_Curve",
+     "description": "90-degree curve with radius 3. Enters at (-1.5,0) heading +X and leaves at (1.5,3) heading +Y.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1056,
+     "bbox": "3.84 x 3.84 x 0.53"
+    },
+    {
+     "name": "SM_VK_Rail_End",
+     "description": "3 m straight with a timber buffer stop (iron plate, raked struts) and a dirt heap at +X.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1104,
+     "bbox": "3.59 x 1.69 x 1.2"
+    },
+    {
+     "name": "SM_VK_Prop_Minecart",
+     "description": "Plank ore tub with iron straps, rim and push handle on 4 flanged wheels, filled with ore. Origin at the wheel bottom; place at z=IND_RAIL_TOP (0.225) on rails.",
+     "flags": "wobble=False, grime=False",
+     "tris": 1780,
+     "bbox": "1.79 x 0.98 x 1.24"
+    },
+    {
+     "name": "SM_VK_Pile_Ore_1/2/3",
+     "description": "Ore heaps, reworked this session: a lumpy rock mound with medium faceted lumps and low-poly ROCK/CLAY/COAL/STONE_BLOCK chunks dropped onto its surface, plus loose stones. Size 3 adds a leaning spade.",
+     "flags": "wobble=False, grime=True",
+     "tris": 3320,
+     "bbox": "1: 1.89x1.55x0.68 (776 tris); 2: 2.65x2.08x0.81 (1064); 3: 3.16x2.62x1.23 (1480)"
+    },
+    {
+     "name": "SM_VK_Pile_Coal_1/2/3",
+     "description": "Faceted COAL heaps covered in COAL/IRON chunks, reworked this session. Size 1 has a wicker basket; size 2 a plank bin wall; size 3 a three-sided bin.",
+     "flags": "wobble=False, grime=True",
+     "tris": 3668,
+     "bbox": "1: 2.09x1.43x0.68 (736); 2: 2.75x2.15x0.93 (1140); 3: 3.39x2.72x1.03 (1792)"
+    },
+    {
+     "name": "SM_VK_Quarry_Face_Straight",
+     "description": "Quarry contour piece, 3 m wide and 3.0 m (2 terrain levels) high, facing -Y. Lower bench of cut blocks at y -0.8 (z 0..1.5), tread at z 1.5, upper face at y 0 (z 1.5..2.7), soil band and turf to z 3.0, drill marks, pulled and missing blocks, rubble. ROCK core goes down to -0.6.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1096,
+     "bbox": "3.0 x 3.17 x 4.15 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Quarry_Face_Corner",
+     "description": "Outer (convex) contour corner facing -X/-Y like the wall corners. Joins a Straight at (3,0) rot 0 and at (0,3) rot -90.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1244,
+     "bbox": "3.08 x 3.21 x 4.12"
+    },
+    {
+     "name": "SM_VK_Quarry_Face_InnerCorner",
+     "description": "Inner (concave) contour corner with the pit at x,y < -0.8. Joins a Straight at (-3,0) rot 0 and at (0,-3) rot -90.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1104,
+     "bbox": "3.07 x 3.12 x 4.06"
+    },
+    {
+     "name": "SM_VK_Quarry_Floor",
+     "description": "One 3x3 m cell of quarried slab floor (top z 0.03): a block being split by iron wedges, a scored block, pick, chips and tufts.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1252,
+     "bbox": "2.98 x 2.98 x 1.37 (zmin -0.61)"
+    },
+    {
+     "name": "SM_VK_Prop_Banker",
+     "description": "Mason's banker: slab on ashlar blocks, a column drum half-dressed, mallet and chisel, chips.",
+     "flags": "wobble=False, grime=True",
+     "tris": 860,
+     "bbox": "1.73 x 1.36 x 1.46"
+    },
+    {
+     "name": "SM_VK_Prop_TreadwheelCrane",
+     "description": "Treadwheel crane frame: sill cross, A-frames carrying the axle, 5.5 m mast, 7 m jib at 40 degrees (top about 9.3 m), rope run, hook and a hanging ashlar block at local x about 6.6, back stays. The wheel is a separate piece.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1892,
+     "bbox": "9.74 x 4.03 x 9.26"
+    },
+    {
+     "name": "SM_VK_Prop_TreadwheelCrane_Wheel",
+     "description": "Treadwheel, radius 1.8, with 16 tread planks and iron tyres. Origin on the axle; spins about local Y. Place it at IND_CRANE_AXLE (-1,0,2.2) of the crane.",
+     "flags": "wobble=False, grime=False",
+     "tris": 2376,
+     "bbox": "3.6 x 1.4 x 3.6 (origin at the centre)"
+    },
+    {
+     "name": "SM_VK_Prop_CharcoalMound",
+     "description": "Charcoal clamp: earth dome (radius about 2, 2.2 m high) with turf sods, 4 shoulder vents and a top vent (GLOW), two rings of log ends round the foot, ladder, rake, skirt.",
+     "flags": "wobble=False, grime=True",
+     "tris": 3628,
+     "bbox": "4.59 x 4.24 x 2.19 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Prop_Bloomery",
+     "description": "Squat clay shaft furnace on a rubble base. Iron bands and clay daub patches, flames at the throat, glowing tap arch at -Y with a slag run and blooms, clay tuyere at +X for the bellows, charging ladder at +Y.",
+     "flags": "wobble=False, grime=True",
+     "tris": 2401,
+     "bbox": "3.26 x 4.14 x 4.22 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Prop_Bellows",
+     "description": "Pleated leather bellows on a trestle with the nozzle toward -X (meets the bloomery tuyere when placed 2.75 m to its +X) and a pump lever.",
+     "flags": "wobble=False, grime=True",
+     "tris": 700,
+     "bbox": "1.96 x 0.81 x 1.21"
+    },
+    {
+     "name": "SM_VK_Prop_BottleKiln",
+     "description": "Clay bottle kiln about 6.9 m tall on a stone plinth: 6 iron bonts, 5 glowing arched fire mouths with brick surrounds, a planked clammins door with brick arch and step at -Y, dark flue top.",
+     "flags": "wobble=False, grime=True",
+     "tris": 3640,
+     "bbox": "5.0 x 5.66 x 6.9 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Prop_ClayPit",
+     "description": "One 3x3 cell clay digging, reworked this session to read as a dug hollow: dished clay floor with a ragged outline, clay and soil spoil banks, turf lips on the other edges, puddles, cut clay blocks, plank walkway, spade, basket of lumps.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1484,
+     "bbox": "3.7 x 3.6 x 1.7 (zmin -0.59)"
+    },
+    {
+     "name": "SM_VK_Prop_PottersWheel",
+     "description": "Kick wheel with seat and work table, a pot being thrown on the wheel head, finished pots on a side board, a lump of clay.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1020,
+     "bbox": "1.69 x 1.2 x 1.1"
+    },
+    {
+     "name": "SM_VK_Pile_Bricks_1/2/3",
+     "description": "Pallet stacks of cross-bonded bricks plus loose bricks. Tris cut this session (size 3 went from 2812 to 1552) by merging hidden inner courses and dropping the bevel on the pallet.",
+     "flags": "wobble=False, grime=True",
+     "tris": 3228,
+     "bbox": "1: 1.33x1.2x0.64 (600); 2: 1.83x1.29x0.73 (1076); 3: 3.28x1.29x0.73 (1552)"
+    },
+    {
+     "name": "SM_VK_Prop_TanningPit",
+     "description": "Stone-kerbed 1.2 x 1.2 m pit of dark tan liquor (BRONZE quad over a VOID well), a hide soaking and hanging over the kerb, stirring pole, tufts, skirt.",
+     "flags": "wobble=False, grime=True",
+     "tris": 726,
+     "bbox": "2.34 x 2.35 x 1.07 (zmin -0.7)"
+    },
+    {
+     "name": "SM_VK_Prop_HideFrame",
+     "description": "Lashed pole frame, 1.4 x 1.8 m, leaning back on props, with a laced stretched hide facing -Y.",
+     "flags": "wobble=False, grime=True",
+     "tris": 556,
+     "bbox": "1.7 x 0.95 x 2.04"
+    },
+    {
+     "name": "SM_VK_Prop_DyeVat",
+     "description": "Stave vat with iron hoops on bearers. Dye liquor and draped cloth in CLOTH_A, so the style {'cloth':'Blue'} and similar recolour it. Stirring pole and dye splashes.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1216,
+     "bbox": "1.62 x 1.5 x 1.61"
+    },
+    {
+     "name": "SM_VK_Prop_ClothRack",
+     "description": "Dyers' drying rack: 3.2 m posts, 3 poles and 7 folded waving strips in CLOTH_A, CLOTH_B, YELLOW and PAPER.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1012,
+     "bbox": "3.4 x 1.67 x 3.22"
+    },
+    {
+     "name": "SM_VK_Prop_Loom",
+     "description": "Floor loom: breast and warp beams, a CLOTH_A cloth roll and woven cloth, 20 warp threads, heddles, beater, treadles, weaver's bench at -Y.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1522,
+     "bbox": "1.8 x 2.11 x 1.83"
+    },
+    {
+     "name": "SM_VK_Prop_SpinningWheel",
+     "description": "Saxony spinning wheel on a slanted bench with flyer, treadle and a distaff carrying wool.",
+     "flags": "wobble=False, grime=True",
+     "tris": 856,
+     "bbox": "1.08 x 0.52 x 1.41"
+    },
+    {
+     "name": "SM_VK_Pile_Hides_1/2/3",
+     "description": "Stacks of folded hides (HIDE, MUSH_BROWN, PIGSKIN) with a draped pelt over each stack.",
+     "flags": "wobble=False, grime=True",
+     "tris": 3060,
+     "bbox": "1: 1.19x1.0x0.37 (492); 2: 2.28x0.97x0.49 (984); 3: 3.26x1.09x0.59 (1584)"
+    },
+    {
+     "name": "SM_VK_Pile_Wool_1/2/3",
+     "description": "Rope-tied wool bales (CLOTH_B) stacked 1, 3 and 5 high, with loose fleeces.",
+     "flags": "wobble=False, grime=True",
+     "tris": 2484,
+     "bbox": "1: 1.02x1.31x0.62 (356); 2: 1.92x1.3x1.21 (828); 3: 2.76x1.23x1.2 (1300)"
+    },
+    {
+     "name": "SM_VK_Kiln_Oast",
+     "description": "Round oast kiln: STONE roundel (radius 2.2, 5 m high) on a plinth, bell-cast ROOF cone, white PLASTER cowl with a vane (top about 10.7 m), planked door at -Y, loading hatch and a vent slit.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1452,
+     "bbox": "5.3 x 5.57 x 11.27 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Prop_MashTun",
+     "description": "Brewer's mash tun on a stone plinth: hooped stave tun, mash surface, paddle, spout into an underback trough, side step, malt sacks.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1206,
+     "bbox": "3.09 x 2.7 x 2.03"
+    },
+    {
+     "name": "SM_VK_Prop_CiderPress",
+     "description": "Twin-post screw press with a layered pomace-and-straw cheese, pressing board, threaded screw and capstan bar, juice spout into a tub, basket of apples.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1860,
+     "bbox": "2.24 x 1.6 x 2.27"
+    },
+    {
+     "name": "SM_VK_Prop_Skep",
+     "description": "Coiled straw beehive (HAY lathe) on a round board, with an entrance slot.",
+     "flags": "wobble=False, grime=True",
+     "tris": 296,
+     "bbox": "0.66 x 0.66 x 0.5"
+    },
+    {
+     "name": "SM_VK_Prop_BeeBench",
+     "description": "Three skeps on a shelf under a small pent roof (ROOF slot, so roof styles apply), open to -Y, with lavender tufts.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1580,
+     "bbox": "2.77 x 1.35 x 1.81"
+    },
+    {
+     "name": "SM_VK_Prop_HerbBundles",
+     "description": "Drying pole on two posts with 7 bundles of herbs hanging head-down (foliage cards). Bundles made bigger this session so they read from the colony camera.",
+     "flags": "wobble=False, grime=True",
+     "tris": 596,
+     "bbox": "2.5 x 0.86 x 2.1"
+    },
+    {
+     "name": "SM_VK_Prop_Cauldron",
+     "description": "Iron cauldron of green brew on a tripod over a stone-ringed log fire with GLOW flames.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1320,
+     "bbox": "1.75 x 1.72 x 2.12"
+    },
+    {
+     "name": "SM_VK_Prop_DryingRack_Meat",
+     "description": "A-frame rack with 4 hams, sausage strings and strips of dried meat. Recoloured this session to CLAY and MUSH_RED; they were pale before.",
+     "flags": "wobble=False, grime=True",
+     "tris": 1460,
+     "bbox": "2.7 x 1.19 x 2.21"
+    },
+    {
+     "name": "SM_VK_Prop_DryingRack_Herbs",
+     "description": "Four-post rack with three slatted trays of herbs, flowers and seeds, and bundles hanging from the top rail.",
+     "flags": "wobble=False, grime=True",
+     "tris": 2168,
+     "bbox": "1.68 x 0.88 x 1.93"
+    },
+    {
+     "name": "SM_VK_Prop_Dovecote",
+     "description": "Round stone dovecote (radius 2, 5 m high): 3 rows of nest holes with landing ledges, string courses, ROOF cone, open lantern with finial (about 9.3 m), planked door at -Y, doves, skirt.",
+     "flags": "wobble=False, grime=True",
+     "tris": 5202,
+     "bbox": "4.8 x 5.12 x 9.95 (zmin -0.6)"
+    }
+   ],
+   "builders": [
+    {
+     "signature": "build_mine(coll, origin, seed=0)",
+     "description": "Mine yard. Portal at local (0,1.5) facing -Y; 2 straights run out of the tunnel into a curve and on to a buffer (Rail_End) at +X. Two minecarts, Ore_3/Ore_1 and Coal_2 piles, a thatched LeanTo with crates and barrels, a kit woodpile and a DryingRack_Meat.",
+     "footprint": "~5x4 cells (x -7.5..8.4, y -6..7.5); the portal mound runs about 6 m back from local y 1.5"
+    },
+    {
+     "signature": "build_quarry_yard(coll, origin, seed=0, standin=True)",
+     "description": "Quarry pit cut 2 terrain levels (3 m) into a plateau and open to -Y. Back Straight plus 2 InnerCorners, side Straights, front outer Corners and hill-front Straights at x=+-6; 2 Quarry_Floor cells; treadwheel crane on the back rim with its wheel (instance props spin_axis='local Y', rpm=4); banker, stone pallets, wheelbarrow, grindstone and a LeanTo. With standin=True it adds demo-only plateau boxes IND_Standin_* (ground top, kit ROCK cliff sides).",
+     "footprint": "5x5.5 cells including the stand-in plateau (x -7.5..7.5, y -4.5..11); the pit is 2x2 cells"
+    },
+    {
+     "signature": "build_charcoal_burner(coll, origin, seed=0)",
+     "description": "Charcoal clamp with cordwood and kit woodpile, logs pile and coal (x<0); bloomery with bellows at its tuyere, coal bin, ore pile and anvil (x>0). Layout reworked this session: the log pile and woodpile no longer run into the mound.",
+     "footprint": "5x2 cells (15 x 6 m)"
+    },
+    {
+     "signature": "build_pottery(coll, origin, seed=0)",
+     "description": "Bottle kiln, clay pit, potter's wheel by a work table, finished pots (town's ShopGoods_Pots if present), brick pallets, coal pile, woodpile.",
+     "footprint": "~4x3 cells (x -6..4.5, y -4.5..4.5)"
+    },
+    {
+     "signature": "build_tannery(coll, origin, seed=0)",
+     "description": "3-cell daub/thatch workshop (build_house_v) at the back, with a thatch vent on the middle bay (humble's RoofThatch_Vent, else skyline's Roof_Vent, else none) and two LeanTo sheds on the +X gable. Four tanning pits in the yard, leaving a path to the door; hide frames, hide piles, trough, barrels, cauldron. Reworked this session: the vent used to float over a hip and pits sat under the eaves.",
+     "footprint": "~5x4 cells (x -7.5..6.5, y -5..5.5)"
+    },
+    {
+     "signature": "build_dyers_yard(coll, origin, seed=0)",
+     "description": "Four dye vats in shuffled cloth colours, two cloth racks, a laundry line, a loom (added this session), wool bales, spinning wheel with stool, dye cauldron.",
+     "footprint": "~4x2 cells (x -6..5, y -3..3.5)"
+    },
+    {
+     "signature": "build_brewery(coll, origin, seed=0)",
+     "description": "3x2 stone and timber brew-house (build_house_v) with its chimney placed on a fixed bay and a Tankard ridge emblem (skyline, optional) on the middle bay. Oast kiln moved clear of the +X gable, mash tun beside (not in front of) the oast door, cider press, barrels, malt sacks, cart. The hop-field fallback (wheat) was dropped.",
+     "footprint": "5x3 cells (x -7.5..7.5, y -5..4)"
+    },
+    {
+     "signature": "build_apiary(coll, origin, seed=0)",
+     "description": "Apiary and herb garden (expanded this session): lavender bed, two bee benches, 3 skeps on stools, round dovecote with its door at -Y, herb drying rack, herb bundles, bench.",
+     "footprint": "3x3 cells"
+    },
+    {
+     "signature": "build_industry_quarter(coll, origin, seed=0)",
+     "description": "Extra demo builder: runs all 8 yards once in two rows using the IND_QUARTER offsets (mine, quarry, charcoal, pottery / tannery, dyers, brewery, apiary). This is the current WS_industry_Assembly content, at origin (4,26,0).",
+     "footprint": "~22x10 cells (about 64 x 30 m)"
+    }
+   ],
+   "renders": [
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\industry\\catalog_final.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\industry\\hero_colony.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\industry\\hero_mine_quarry.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\industry\\hero_workshops.png"
+   ],
+   "integration_notes": "State recovery: the local file and the Blender text were already identical when this run started, all 49 pieces existed, and the work continued from there. All 4 final renders are 1600x900; hero_colony is the high colony-camera view (50-degree pitch, about 44 m from the target).\n\nMaterials and styles:\n- No new materials. Pieces use only kit slots 0-51.\n- The demo-only stand-in plateau (IND_Standin_*, made by ind_ground_block in build_quarry_yard) reuses the scene ground material plus the kit ROCK material taken from SM_VK_Quarry_Floor. It has a 'Col' layer because kit materials multiply by it and render black without it. The integrator should replace it with a real 2-level terrain plateau.\n- Recolour slots: CLOTH_A on DyeVat, ClothRack and Loom ({'cloth':...}); ROOF on the Oast, Dovecote and BeeBench roofs; PLASTER on the oast cowl; STONE on the oast and dovecote walls and the bloomery base.\n- GLOW is used for all fires (bloomery throat and tap, bottle kiln fire mouths, charcoal vents, cauldron). Switch that material to toggle a 'working' state.\n\nOther agents' pieces, used only through ind_pick/ind_opt (placed only if they exist, otherwise a kit fallback or skipped):\n- construction: SM_VK_Pile_Stone_3 (fallback Prop_Crates), SM_VK_Prop_Wheelbarrow (fallback Prop_Cart), SM_VK_Pile_Logs_3 (skipped).\n- humble: SM_VK_RoofThatch_Vent.\n- skyline: SM_VK_Roof_Vent (vent fallback), SM_VK_Emblem_Ridge_Tankard.\n- town: SM_VK_Prop_ShopGoods_Pots.\n\nKit pieces used: LeanTo, Prop_Crates, BarrelStack, Woodpile, Grindstone, Cart, Anvil, Table, Trough, Laundry, Stool, Sacks, Bench, Crop_Lavender, Chimney, plus build_house_v walls and roofs.\n\nModule constants:\n- IND_GAUGE=0.8; IND_RAIL_TOP=0.225 (minecart z on rails).\n- IND_CRANE_AXLE=(-1,0,2.2) (wheel position on the crane).\n- IND_QUARTER (demo layout).\n\nGrid and contour rules:\n- Rails: Straight has its ends at x=+-1.5 along X. Curve has radius 3, entering at (-1.5,0) heading +X and leaving at (1.5,3) heading +Y. Beds go down to z -0.3.\n- Quarry contour: faces -Y, 3.0 m high = 2 terrain levels of 1.5. Bench tread at z 1.5, top at z 3.0. Corner joins a Straight at (3,0) rot 0 and (0,3) rot -90. InnerCorner joins at (-3,0) rot 0 and (0,-3) rot -90. The ROCK core reaches -0.6.\n- Hidden skirts to -0.6 on MinePortal, quarry pieces, ClayPit, CharcoalMound, Bloomery, BottleKiln, Oast, Dovecote and TanningPit.\n\nSuggested sockets (piece-local coordinates, not implemented):\n- Mine_Portal: Entrance (0,-0.4,0) facing -Y; RailIn (0,-0.5,0) along Y; Light (-1.62,-0.97,2.33).\n- Minecart: Cargo (0,0,0.95).\n- TreadwheelCrane: WheelPivot at IND_CRANE_AXLE (spin local Y); Hook (6.56,0,2.5); Walker inside the wheel bottom.\n- CharcoalMound: Smoke at the 4 vents (r 0.95, angles 0.5 rad + k*90 degrees, z about 1.2) and at the top (0,0,1.5).\n- Bloomery: Fire (0,-1.3,0.5); Smoke (0,0,3.3); BellowsPort (1.7,0,0.62).\n- BottleKiln: Smoke (0,0,6.3); Fire at the 5 mouths (r 2.33, z 0.7, angles -90+60k degrees for k=1..5); Door (0,-2.7,0).\n- Kiln_Oast: Smoke (0,0.3,9.3); Door (0,-2.6,0). The cowl could later be split off as a spinning part.\n- Dovecote: Door (0,-2.4,0); BirdSpawn at the nest rows (z 2.75 / 3.65 / 4.55).\n- Work sockets:\n  - TanningPit (0,-1.2,0) and DyeVat (0,-0.9,0)\n  - PottersWheel seat (0,0.45,0.5) and Loom bench (0,-1.2,0.52)\n  - SpinningWheel (0,-0.5,0) and Cauldron (0,-1.1,0)\n  - MashTun step (1.35,0.2,0.5) and CiderPress (0,-1.2,0)\n  - BeeBench bee effects at the skeps (x -0.7/0/0.7, y 0, z 0.8).\n\nReusable module helpers: ind_heap (with jit), ind_ore_fill, ind_chunks, ind_boulder, ind_carve (opens a clean tunnel hole in a shell), ind_sweep, ind_beam/ind_rod, ind_lathe/ind_cyl_uv, ind_cone_roof, ind_pelt, ind_strip, ind_skirt, ind_sub_origin, ind_pick/ind_opt.",
+   "unfinished": [
+    "Two pieces are over the 2k prop budget: SM_VK_Prop_DryingRack_Herbs (2168) and SM_VK_Prop_TreadwheelCrane_Wheel (2376, a large moving part). Crane frame is 1892, Minecart 1780.",
+    "The crane's hook block hangs at a fixed 2.5 m above the crane base. In the quarry demo it therefore floats about 4.5 m above the pit floor instead of being lifted from it. There is no separate hook/rope piece to lower.",
+    "Smoke/fire FX, sockets and the oast's spinning cowl are not implemented; socket positions are only documented in the notes.",
+    "No hop field in the brewery: SM_VK_Crop_Hops does not exist, and the wheat fallback was dropped.",
+    "The quarry stand-in plateau (IND_Standin_*) is a demo-only box with sheer rock sides. The quarry contour pieces have not been tested against the real marching-squares terrain tiles.",
+    "Only seed=0 layouts were checked visually. build_house_v roofs in the tannery and brewery vary with the seed (hip or gable); the vent and emblem placement was made seed-safe, but other seeds were not rendered.",
+    "Style details left as they are: the mine mound is a fairly uniform MOSS dome; the charcoal-mound turf sods are boxy and its vent glows are small; the tanning-pit liquor uses BRONZE (glossy metal), which may look metallic in some lighting; the dye-vat cloth drape is a thick slab.",
+    "In hero_colony, the quarry stand-in's +X cliff face reads as a thin dark line (in shadow, seen nearly edge-on). In hero_workshops, the quarry crane is in the foreground.",
+    "Old test renders are still in renders2\\industry next to the final ones (cat_check_a, catalog_test, colony_test, g_*, top_*, a_*_v1..v3, mine_front, mine_high)."
+   ]
+  }
+ },
+ {
+  "agent": "defence",
+  "report": {
+   "module_path": "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\code\\ws_defence.py",
+   "text_name": "ws_defence",
+   "pieces": [
+    {
+     "name": "SM_VK_Palisade_Straight",
+     "description": "3 m stockade: 10 seeded sharpened logs (BARK_OAK/PINE, ENDGRAIN tips) with heights U(3.3,3.9), sunk to -0.8; inner rails at z 1.0 and 2.6 on +Y with BURLAP lashings; outer face -Y",
+     "flags": "wobble=False, grime=True",
+     "tris": 1338,
+     "bbox": "3.0 x 0.5 x 4.68 (zmin -0.8)"
+    },
+    {
+     "name": "SM_VK_Palisade_Diag",
+     "description": "45-degree palisade, 4.243 m long with 14 logs; place at rot 45 between grid vertices",
+     "flags": "wobble=False, grime=True",
+     "tris": 1838,
+     "bbox": "4.27 x 0.51 x 4.7 (zmin -0.8)"
+    },
+    {
+     "name": "SM_VK_Palisade_Post",
+     "description": "3-log lashed bundle (up to 4.2 m) for a grid vertex: corners, run ends, T joints",
+     "flags": "wobble=False, grime=True",
+     "tris": 654,
+     "bbox": "1.0 x 1.0 x 5.0 (zmin -0.8)"
+    },
+    {
+     "name": "SM_VK_Palisade_Walk",
+     "description": "Catwalk behind one palisade module: plank deck top at z 2.3, y 0.25..1.25, log posts at x -1.5 and 0 sunk to -0.6, knee braces to the rail",
+     "flags": "wobble=False, grime=True",
+     "tris": 816,
+     "bbox": "3.11 x 1.1 x 2.9 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Palisade_Ladder",
+     "description": "Ladder from the ground (y 2.05) to the catwalk deck edge (y 1.25, z 2.3)",
+     "flags": "wobble=False, grime=True",
+     "tris": 248,
+     "bbox": "0.64 x 0.87 x 2.91"
+    },
+    {
+     "name": "SM_VK_Palisade_Gate",
+     "description": "Gate frame: 5.2 m posts at x +-1.5, lintel log at 4.4, cross-beam, knee braces, 2 torches (GLOW), 2 painted shields (CLOTH_A), crossed-log emblem, half-buried threshold log; leaves are separate",
+     "flags": "wobble=False, grime=True",
+     "tris": 2372,
+     "bbox": "4.12 x 0.94 x 6.1 (zmin -0.9)"
+    },
+    {
+     "name": "SM_VK_Palisade_GateLeaf",
+     "description": "Separate gate leaf, 1.45 x 3.4: 5 pointed logs, battens, Z-brace, iron hinges. Hinge at the origin; the leaf runs along +X; the hinge axis is local Z. Symmetric, so the opposite leaf is the same piece rotated 180",
+     "flags": "wobble=False, grime=True",
+     "tris": 820,
+     "bbox": "1.51 x 0.55 x 3.35"
+    },
+    {
+     "name": "SM_VK_Palisade_Tower",
+     "description": "Stilt watchtower on a grid vertex: 4 log legs at +-1.25, X-bracing, plank platform at 4.5, log-cabin parapet, hatch + ladder (+X+Y), 4-sided bell-cast ROOF pyramid (restyle roof=Shingle/Thatch) with hip rolls, flag, torch, pad stones",
+     "flags": "wobble=False, grime=True",
+     "tris": 4842,
+     "bbox": "4.38 x 4.38 x 11.66 (zmin -0.9)"
+    },
+    {
+     "name": "SM_VK_Prop_Beacon",
+     "description": "Signal beacon: 5 m log pole on 3 raking struts, peg rungs, iron fire basket with coal + GLOW embers and stylised flame tongues",
+     "flags": "wobble=False, grime=True",
+     "tris": 2027,
+     "bbox": "2.7 x 2.57 x 7.65 (zmin -0.8)"
+    },
+    {
+     "name": "SM_VK_TownWall_Straight",
+     "description": "3 m town wall module, 2.0 thick (outer face -Y at y -1): batter 0.35 fading out by z 1.8, STONE panels + wall_rocks, left-seam two-stage buttress, ASHLAR string course at 5.6, breastwork to 7.1, coping, 2 merlons at x +-0.75 to 7.9 with VOID slits, ASHLAR walk at 6.2 with corbelled inner lip, plinth rocks, skirt to -1.5. Hand-made bulge is zero at x=+-1.5 so seams are exact",
+     "flags": "wobble=False (own seam-safe wobble), grime=True",
+     "tris": 2308,
+     "bbox": "3.45 x 2.82 x 9.45 (zmin -1.5)"
+    },
+    {
+     "name": "SM_VK_TownWall_Corner_Out",
+     "description": "Convex corner at the grid vertex, outer faces -X/-Y (runs leave along +X at rot 0 and along +Y at rot -90): battered core, big corner merlon with 2 slits, quoins following the batter, raised walk slab, string course, plinth",
+     "flags": "wobble=False, grime=True",
+     "tris": 1304,
+     "bbox": "2.69 x 2.68 x 9.66 (zmin -1.5)"
+    },
+    {
+     "name": "SM_VK_TownWall_Corner_In",
+     "description": "Concave corner at the grid vertex, outside is the +X+Y quadrant (runs leave along +X at rot 180 and along +Y at rot 90): core, walk slab, lips, corbels, dressed inner pier",
+     "flags": "wobble=False, grime=True",
+     "tris": 1036,
+     "bbox": "1.68 x 1.68 x 7.75 (zmin -1.5)"
+    },
+    {
+     "name": "SM_VK_TownWall_Stair",
+     "description": "Stone stair on the inner face (y 1.0..2.1), climbing +X: 8 steps, 2.067 rise over 3 m, solid to local -4.2, sloped coping. Stack 3 on consecutive cells at z 0 / 2.067 / 4.133 to reach the 6.2 walk (34.6 deg, NavMesh-safe)",
+     "flags": "wobble=False, grime=True",
+     "tris": 446,
+     "bbox": "3.07 x 1.17 x 6.43 (zmin -4.2)"
+    },
+    {
+     "name": "SM_VK_TownWall_Step",
+     "description": "Straight module whose base, walk and parapet rise by LVL 1.5 over 3 m along +X; merlons stay vertical and are stepped. The next module goes at z+1.5",
+     "flags": "wobble=False, grime=True",
+     "tris": 2336,
+     "bbox": "3.45 x 2.82 x 10.57 (zmin -1.5)"
+    },
+    {
+     "name": "SM_VK_TownWall_Ruin",
+     "description": "Breached module: ragged top between 3.8 and 5.25, broken stones on top, broken buttress, string-course remnants, rubble heaps (some ROCK_MOSSY) on both sides",
+     "flags": "wobble=False, grime=True",
+     "tris": 2540,
+     "bbox": "3.53 x 5.28 x 6.99 (zmin -1.5)"
+    },
+    {
+     "name": "SM_VK_TownWall_Tower_Round",
+     "description": "Round flanking tower, r 3.0 on a grid vertex: battered foot, plinth rocks, string course, corbel table with a projecting parapet, top walk at 8.5, 16 merlons, 3 levels of slits, flag. 2.0 m walk doors at z 6.2 on +-X (centred on the walk, y +0.3), with the machicolation opened above them; plank ground door on +Y (town side)",
+     "flags": "wobble=False, grime=True",
+     "tris": 9271,
+     "bbox": "7.16 x 7.14 x 13.97 (zmin -1.5)"
+    },
+    {
+     "name": "SM_VK_Gatehouse_Block",
+     "description": "3x2-cell gatehouse masonry centred on the wall line (x -4.5..4.5, y -3..3) up to 6.2. Passage along Y (hw 1.6, spring 2.8, crown 4.4) with ASHLAR vault and paving, portcullis slots at y -2.4, dressed voussoirs and imposts on both faces, corbel courses, landings for the end-wall doors, quoins, 2 half-round towers r 1.8 at (+-3,-3) up to 9.0 (cap with Roof_Cone_R2), slits, 2 torches. The timber storey and roofs are kit pieces placed by the builder",
+     "flags": "wobble=False, grime=True",
+     "tris": 11956,
+     "bbox": "10.64 x 8.57 x 10.5 (zmin -1.5)"
+    },
+    {
+     "name": "SM_VK_Gatehouse_Portcullis",
+     "description": "Separate IRON portcullis, 3.3 x 4.6: 12 spiked bars at 0.3 pitch, 15 cross bars, WOOD head beam. Origin at the bottom centre; slides on local Z",
+     "flags": "wobble=False, grime=False",
+     "tris": 1392,
+     "bbox": "3.55 x 0.21 x 4.74"
+    },
+    {
+     "name": "SM_VK_Gatehouse_GateLeaf",
+     "description": "Separate oak (PLANKS) leaf for the passage, 1.6 wide with the arched top of the passage (spring 2.8, crown 4.4): iron straps, studs, brace, ring pull. Hinge at the origin; the leaf runs along +X; hinge axis local Z; the other leaf is the same piece rotated 180",
+     "flags": "wobble=False, grime=True",
+     "tris": 2012,
+     "bbox": "1.64 x 0.42 x 4.34"
+    },
+    {
+     "name": "SM_VK_Parapet_Crenel",
+     "description": "3 m tower parapet on 6 corbels, placed at the wall top (local z 0, wall face at y -0.25): breast 0.9 at y -0.6..-0.25, merlons at x +-0.75 with slits, coping, ASHLAR walk slab 3.0 x 1.2",
+     "flags": "wobble=False, grime=False",
+     "tris": 932,
+     "bbox": "3.0 x 1.68 x 2.37 (zmin -0.63)"
+    },
+    {
+     "name": "SM_VK_Parapet_Corner",
+     "description": "Parapet corner at the grid vertex (outer faces -X/-Y): tall corner merlon with cap, corbel stack, corner walk slab",
+     "flags": "wobble=False, grime=False",
+     "tris": 424,
+     "bbox": "1.4 x 1.39 x 2.81 (zmin -0.88)"
+    },
+    {
+     "name": "SM_VK_Roof_Pyramid_6",
+     "description": "Square pyramid for a 2x2-cell tower: r 2.83 x h 2.86 (4-segment cone rotated 45 deg), bell-cast kick, hip rolls, finial, stone curb. ROOF slot restyles",
+     "flags": "wobble=False, grime=False",
+     "tris": 772,
+     "bbox": "4.21 x 4.21 x 4.14 (zmin -0.25)"
+    },
+    {
+     "name": "SM_VK_Roof_Cone_R2",
+     "description": "16-segment cone for round towers up to r 1.8 (eave r 2.2, h 1.9r), bell-cast skirt, concave profile, finial with bronze ball, WOOD ring plate",
+     "flags": "wobble=False, grime=False",
+     "tris": 532,
+     "bbox": "4.4 x 4.4 x 5.37 (zmin -0.16)"
+    },
+    {
+     "name": "SM_VK_Prop_TrainingDummy",
+     "description": "Straw quintain: post on a cross foot, crossbar arms, BURLAP body and head with a stitched face, painted shield (CLOTH_A), wooden practice sword stuck in",
+     "flags": "wobble=False, grime=True",
+     "tris": 984,
+     "bbox": "1.85 x 1.16 x 2.12"
+    },
+    {
+     "name": "SM_VK_Prop_ArcheryButt",
+     "description": "HAY target disc r 0.6 x 0.3 tilted on an A-frame, rings in YELLOW/CLOTH_A/CLOTH_B, 4 fletched arrows; faces -Y",
+     "flags": "wobble=False, grime=True",
+     "tris": 1176,
+     "bbox": "1.33 x 1.73 x 1.87"
+    },
+    {
+     "name": "SM_VK_Prop_ArmorStand",
+     "description": "Mannequin stand: STEEL helm with plume, breastplate, pauldrons, bronze gorget/rims, CLOTH_A tabard, HIDE belt, shield and spear leaning on it",
+     "flags": "wobble=False, grime=True",
+     "tris": 1520,
+     "bbox": "1.64 x 0.94 x 2.36"
+    },
+    {
+     "name": "SM_VK_Prop_MarketCross",
+     "description": "3 octagonal steps (r 1.8/1.4/1.0; the bottom one continues down to -0.6 as a skirt), plinth, tapering shaft with a bronze band, lantern head with 4 arched niches, stone pyramid cap, wheel cross, plaque, candles and flowers",
+     "flags": "wobble=False, grime=True",
+     "tris": 1320,
+     "bbox": "3.4 x 3.4 x 6.64 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Prop_Maypole",
+     "description": "9 m pole with spiral CLOTH_A/B stripes, LEAF wreath at 7.0 with PINK/YELLOW flowers and ivy cards, 8 two-sided ribbons (sag 0.3) to stakes at r 3.2, pennant",
+     "flags": "wobble=False, grime=True",
+     "tris": 1896,
+     "bbox": "6.09 x 6.09 x 9.73 (zmin -0.4)"
+    },
+    {
+     "name": "SM_VK_Prop_Stage",
+     "description": "Festival stage: 6 x 3 x 0.8 plank platform (front -Y) on posts sunk to -0.6, scalloped cloth skirt, 3 side steps, striped CLOTH_A/B canopy with valance, back curtain, barrel and stool",
+     "flags": "wobble=False, grime=True",
+     "tris": 2224,
+     "bbox": "6.3 x 4.08 x 4.63 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Prop_Stocks",
+     "description": "Ankle stocks: 2 posts (sunk to -0.6), holed plank pair with iron hasps, bench behind, flat stone plate",
+     "flags": "wobble=False, grime=True",
+     "tris": 804,
+     "bbox": "2.27 x 1.27 x 1.65 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Prop_Pillory",
+     "description": "Pillory on a plank platform (hidden stone footing to -0.6): post, neck + wrist board with 3 holes, iron hasps, little ROOF hood on braces, posted notice",
+     "flags": "wobble=False, grime=True",
+     "tris": 836,
+     "bbox": "1.52 x 1.91 x 3.46 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_LowWall_GateArch",
+     "description": "Single-cell gate arch for SM_VK_LowWall runs (3 m, centred on y 0): rubble piers with hidden skirts, arch_ring, crest with pinnacles, two iron gate leaves baked in ajar",
+     "flags": "wobble=False, grime=True",
+     "tris": 2608,
+     "bbox": "3.38 x 0.77 x 4.25 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Deco_Hedge",
+     "description": "Trimmed hedge 3.0 x 0.8 x 1.2 on a cell edge (like LowWall): MOSS core with a wavy footprint, dense tilted ivy leaf cards on all faces, soil bed down to -0.6",
+     "flags": "wobble=False, grime=True",
+     "tris": 840,
+     "bbox": "3.34 x 1.1 x 1.92 (zmin -0.6)"
+    },
+    {
+     "name": "SM_VK_Def_StoneUp",
+     "description": "Fallback helper: plain 2.8 m stone upper storey (used only if the town agent's Wall_StoneUp is missing)",
+     "flags": "wobble=False, grime=False",
+     "tris": 324,
+     "bbox": "3.0 x 0.68 x 2.8"
+    },
+    {
+     "name": "SM_VK_Def_StoneUp_Slit",
+     "description": "Fallback helper: stone upper storey with an arrow slit",
+     "flags": "wobble=False, grime=False",
+     "tris": 458,
+     "bbox": "3.0 x 0.68 x 2.8"
+    },
+    {
+     "name": "SM_VK_Def_StoneUp_Window",
+     "description": "Fallback helper: stone upper storey with a kit window frame",
+     "flags": "wobble=False, grime=False",
+     "tris": 1146,
+     "bbox": "3.0 x 1.1 x 2.8"
+    },
+    {
+     "name": "SM_VK_Def_StoneUp_Door",
+     "description": "Fallback helper: stone upper storey with an arched plank door",
+     "flags": "wobble=False, grime=False",
+     "tris": 1211,
+     "bbox": "3.0 x 1.01 x 2.8"
+    },
+    {
+     "name": "SM_VK_Def_CornerUp",
+     "description": "Fallback helper: stone upper-storey corner with quoins",
+     "flags": "wobble=False, grime=False",
+     "tris": 320,
+     "bbox": "1.17 x 1.19 x 2.82"
+    },
+    {
+     "name": "SM_VK_Def_Bartizan",
+     "description": "Corbelled corner turret r 0.85 with slits and a cone cap. Origin at the tower corner vertex at wall-top height; the axis is at local (-0.25,-0.25). Used on the fortified tower house",
+     "flags": "wobble=False, grime=False",
+     "tris": 1362,
+     "bbox": "2.24 x 2.24 x 7.03 (zmin -1.7)"
+    },
+    {
+     "name": "SM_VK_Def_Standin_Plateau",
+     "description": "Demo only: one 3x3 cell of a 1.5 m terrain plateau (FIELDSTONE terrace faces, MOSS turf top, top at local z 0; place at z=1.5). The terrain kit replaces it",
+     "flags": "wobble=False, grime=False",
+     "tris": 408,
+     "bbox": "3.59 x 3.56 x 1.55 (zmin -1.55)"
+    },
+    {
+     "name": "SM_VK_Def_Standin_Ramp",
+     "description": "Demo only: 3x3 cell slope rising 1.5 along +X (place at z=1.5). Used under TownWall_Step in the demo",
+     "flags": "wobble=False, grime=False",
+     "tris": 8,
+     "bbox": "3.0 x 3.0 x 1.55 (zmin -1.55)"
+    }
+   ],
+   "builders": [
+    {
+     "signature": "build_palisade_demo(coll, origin, seed=0)",
+     "description": "Palisade fort with a gate on the middle south cell (2 separate leaves, open inward, hinge_axis prop), stilt towers on the SW and NE vertices (roof=Shingle), a diagonal across the SE cell, posts at the joints, 5 catwalk modules with 2 ladders, beacon, and props (weapon rack, barrels, woodpile, crates, trough, 2 training dummies, cart outside)",
+     "footprint": "6x4 cells (x -9..9, y -6..6), plus a cart about 4 m outside"
+    },
+    {
+     "signature": "build_townwall_demo(coll, origin, seed=0, style=None)",
+     "description": "Town-wall circuit, outer face -Y. Convex corner at x -12 with a +Y return that hands over to an old palisade (upgrade story). Three stacked Stair modules climb to the gatehouse. The gatehouse (x -3..6) has a portcullis (slide_axis/travel props), 2 leaves (hinge_axis), a kit timber storey (Wall_Timber*, Timber_Door onto both walks), Roof_Hip/Mid/Hip in Slate and Roof_Cone_R2 caps on the half-towers. Round flanking tower on vertex 12, a breach (Ruin), concave corner at x 21, and a -Y run with a Step onto a stand-in plateau capped by a second round tower. Dressed with ivy, lamp posts, props and a cart",
+     "footprint": "about 11x10 cells (x -12..21, y -15..+15, including the palisade tail and stand-in terrain); the main run is 11 cells"
+    },
+    {
+     "signature": "build_tower_house(coll, origin, kind=\"fortified\", seed=0)",
+     "description": "Four-storey 2x2 stone tower house (walls to 11.4): kit Wall_Stone ground floor plus 3 StoneUp storeys (town pieces, with Def_* fallbacks), corners, and a Stair_Stone_Ext up to the level-1 door. 'fortified': 8 Parapet_Crenel + 4 Parapet_Corner on corbels at 11.4, 4 Def_Bartizan, an inner Roof_Pyramid_6 and a Banner_Roof. 'domestic': Roof_Hip + Roof_Hip_Plain in slate and 4 town stone turrets (corbel at 8.6, segs 8.6-14.2, cap). Yard dressing",
+     "footprint": "2x2 cells for the tower; about a 3x3 lot with the stair and props"
+    },
+    {
+     "signature": "build_training_yard(coll, origin, seed=0)",
+     "description": "4x2 two-storey barracks (build_house_v, stone ground floor, white plaster, slate) on the north edge, with the town's timber gallery on the yard front and red Banner_Wall pieces. Fenced yard in front: 3 training dummies, 2 archery butts facing -X, 2 armor stands, 2 weapon racks, trough, barrels, Banner_Pole, fence gate",
+     "footprint": "lot 4x5 cells (x -6.3..6.3, y -7.6..7.5)"
+    },
+    {
+     "signature": "build_festival_green(coll, origin, seed=0)",
+     "description": "Village green: maypole in the centre, stage on the north edge, market cross, stocks and pillory. Hedges close the east, west and north sides; the south side is a LowWall with LowWall_GateArch and posts. Benches, table and stools, barrels, lamp posts, skyline Bunting_6 (Festoon fallback), and festoon lights over the stage",
+     "footprint": "4x4 cells (x -6..6, y -6..6)"
+    }
+   ],
+   "renders": [
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\defence\\catalog_final.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\defence\\hero_town.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\defence\\hero_frontier.png",
+    "C:\\Users\\danie\\AppData\\Roaming\\Claude\\scratch-workspaces\\ec03f06b-60f5-4d5d-94a9-dff3a56c5f56\\f8ddc2b6-f8a4-41c6-98db-14b97d4348ea\\scratch-2026-09-23-d49817\\renders2\\defence\\hero_colony.png"
+   ],
+   "integration_notes": "STATE: code\\ws_defence.py is identical to the Blender text ws_defence (84,981 chars, md5 b50b44cb2ce9ca44cfe69a9b94373362). In one fresh call, exec(ws_common); g=ws_ns(\"defence\"); ws_build(\"defence\", g=g) built all 41 WS_SPECS pieces with no error (71,661 tris in total). All 5 builders ran without error into WS_defence_Assembly (6 runs, 367 instances; the tower house runs twice, fortified and domestic). Origins: palisade (-40,36), townwall (8,26), tower house fortified (4,42), training yard (-19,31), festival green (17,42), tower house domestic seed 3 (36,38). The catalog rows are at y -19..-50. No new materials; only kit slots 0-51 are used. The .blend was not saved.\n\nDEPENDENCIES on other agents' pieces (all go through def_pick with a fallback, or are skipped when missing; all were present at build time):\n- town: Wall_StoneUp / _Slit / _Window / _Door and Corner_StoneUp (fallback: my SM_VK_Def_StoneUp* and Def_CornerUp); Stair_Stone_Ext (fallback: kit Stair_Ext); Turret_Corbel / Turret_Seg_Stone / Turret_Cap (fallback: Def_Bartizan). The turrets are placed on the corner vertex because the town turret axis is already at local (-0.6,-0.6). Gallery_Timber / _End / _Side on the barracks (skipped if missing).\n- skyline: Banner_Wall (gatehouse town side, barracks), Banner_Roof (fortified tower house), Banner_Pole (training yard), Prop_Bunting_6 (fallback: kit Prop_Festoon), Roof_Hip_Plain (fallback: Roof_Hip).\n- kit: Wall_Timber* / Corner_Timber / Roof_Hip / Roof_Mid (gatehouse storey), Wall_Stone* / Corner_Stone, LowWall / LowWall_Post, Prop_* dressing, build_house_v, fence_run.\n\nGRID CONVENTIONS: 3 m modules, outer face -Y, origin on the ground. The town wall is 2 m thick, centred on the cell edge (y -1..1), walk at 6.2, merlons to 7.9, skirts to -1.5. The palisade line is at y 0 with logs sunk to -0.8. Corner_Out: runs leave along +X (rot 0) and along +Y (rot -90). Corner_In: rot 180 and rot 90 in the demo. Tower_Round and Palisade_Tower sit on grid vertices; the Gatehouse is centred on the wall line and replaces 3 modules. Parapet_Crenel / Parapet_Corner / Roof_Pyramid_6 / Def_Bartizan go at z = wall top. Roof_Cone_R2 goes on the gatehouse half-towers at (+-3,-3) relative to the gatehouse, z 9.0. TownWall_Stair: 3 modules at z 0 / 2.067 / 4.133 on consecutive cells climbing +X; the top lands at the gatehouse end-wall door. TownWall_Step: the next module sits at z+1.5.\n\nSUGGESTED SOCKETS (not implemented; piece-local coordinates):\n- Palisade_GateLeaf and Gatehouse_GateLeaf: hinge at (0,0,0), axis local Z; instances carry hinge_axis=\"local Z\". Palisade leaves are placed at gate x +-1.45, y +0.35. Gatehouse leaves are placed at gx +-1.6, y -1.2, rotated 78 deg when open.\n- Gatehouse_Portcullis: slide along local Z, travel 4.4, closed at z 0; placed at y -2.4 z 2.2 (half raised) with slide_axis/travel props.\n- Beacon: fire light (0,0,5.6), smoke (0,0,6.3). Torches: Palisade_Gate (+-1.5,-0.5,3.1); Gatehouse_Block (+-1.2,-3.45,3.6); Palisade_Tower (0,-1.75,5.9). All flames are GLOW, so they can be toggled.\n- Guard spots: Palisade_Walk deck (x -1.5..1.5, y 0.75, z 2.3); Palisade_Tower platform z 4.5 (ladder at x 0.6, y 0.8); TownWall walk z 6.2 (y -0.5..1.0); Tower_Round top z 8.5; tower-house parapet walk at top+0.\n- Doors: Tower_Round walk doors (+-3.0, 0.3, 6.2) and ground door (0, +3.3, 0); tower house level-1 door via Stair_Stone_Ext, ground door on the back face.\n- Flags: Tower_Round (0,0,11.5); Palisade_Tower top.\n- Interaction: ArcheryButt target centre (0,-0.16,1.15) facing -Y; TrainingDummy hit point (0,-0.3,1.3); Stocks prisoner seat (0,0.55,0.46) facing -Y, feet at (+-0.35,0,0.43); Pillory stand (0,-0.35,0.4) facing -Y; Stage performer area top z 0.8 (6 x 3); Maypole dancer ring r 3.2; MarketCross plaque on -Y.\n\nKNOWN LIMITATIONS:\n- TownWall_Tower_Round is a mid-wall piece. Where it caps a run end (demo east end) its outer walk door opens onto nothing.\n- TownWall_Step shears its masonry, so the courses slope. This keeps its seams matched with the modules on both sides.\n- The next module's left-edge buttress overlaps the Corner_Out quoins. It reads as a clasping buttress.\n- The Gatehouse half-towers end in a WOOD disc at 9.0 and need Roof_Cone_R2.\n- place_v caches VAR_ variant meshes by (piece, style). If a piece is rebuilt in the same session, its style-variant instances (for example the Slate-roofed parapets and cones on the tower house, and the Shingle palisade towers) keep the old geometry until those VAR meshes are removed. I checked this session and none were stale.\n- Def_Standin_* are demo-only stand-in terrain. Drop them once the terrain kit exists. The Step in the townwall demo climbs onto them.\n- STEEL armour on the ArmorStand reads dark at distance.\n- The iron gate on LowWall_GateArch is baked into the piece, not separate leaves.",
+   "unfinished": [
+    "Spec items that were not assigned in the manifest were not built: TownWall_Diag, GuardTower_Wall2/WallL, Roof_Pyramid_9, Roof_Cone_R1.2/R3.4, LowWall_Diag, hedge 4.243 diagonal.",
+    "No sockets are built into the pieces; the positions are only recorded in the integration notes.",
+    "Barracks: it is a kit build_house_v with a gallery and banners, and has no arrow-slit walls because the kit has no ground-floor slit wall. The tower-house ground floor front is plain, not the spec's 'XX' slits, for the same reason.",
+    "Palisade_Tower roof is r 2.95 x h 2.4, not the spec's 2.6 x 2.2 (chosen for silhouette).",
+    "The Tower_Round walk-door gap in the machicolation has flat STONE_BLOCK jamb and soffit faces, not modelled voussoirs.",
+    "No 1.8 m person reference was rendered because the kit has no figure piece. Scale was checked by dimensions: doors are 2.0 to 2.3 m and the wall breastwork is 0.9 m.",
+    "The palisade -> town wall upgrade is only shown as a handover in the townwall demo. There is no stage-by-stage upgrade builder.",
+    "LowWall_GateArch gate leaves are not separate animatable objects."
+   ]
+  }
+ }
+]

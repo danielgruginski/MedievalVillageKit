@@ -1,0 +1,12 @@
+# Large binaries stay on disk but out of git (see README.md > Repository).
+# The .blend is 370+ MB (GitHub rejects files over 100 MB); renders and generated textures are ~1.9 GB together.
+/blender/*.blend
+/blender/*.blend[0-9]*
+/renders/
+/assets/textures/
+/assets/texture_dev/
+/archive/backups/*.png
+/archive/dev_data/*.png
+
+__pycache__/
+*.pyc

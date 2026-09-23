@@ -1,0 +1,140 @@
+#1 [high] (ground, play) Main gate is 1.5 m east of the road axis: the west tower sits on the road, the passage is only about 2.2 m wide, and the ramp ends under the gate floor with a step of about 0.8 m
+  LOC: SM_VK_Gatehouse_Block_inst centred on world x 1627.5 (vk_town_map.py:118, gx=3*GATE_I+1.5). Its bbox is x 1622.19-1632.83, y 69.68-78.25. The road and ramp are on cells i 41-42 (x 1623-1629, centre 1626), and the ramp at row 23 spans y 70.5-73.5, z 1.5 to 3.0. Gate leaves are at x 1625.68-1626.43 and 1628.57-1629.32.
+  FIX: In town_walls, set gx=3*GATE_I (world 1626) and change the skip test to abs(x-gx)>3, so the wall segments at local x 124.5 and 127.5 are dropped and the gap is exactly columns 41-42. Then move the ramp one row south so it tops out before the gatehouse front: L[23,40:44]=2 (a level-2 apron) and G.ramp[22,41:43]=1. Also update the stiff marks. Re-run a ray-cast check that the gate floor (z 3.04) meets terrain at about z 3.0 with no step over 0.3 m, and that the clear passage is at least 3 m wide with the leaves open.
+
+#2 [high] (build, play) Buildings are built into wall towers and the gatehouse: corner-house turret in tower .002, terrace in towers .004/.006, blacksmith in tower .007, first infill house in the gatehouse
+  LOC: Tower_Round_inst.002 (1608,75): Turret_Seg_inst/.001 and Wall_Stone_Shop_inst.002. Tower .004 (1650,75): Wall_Stone_inst.188, Wall_Stone_Window_inst.173. Tower .006 (1671,75): Wall_Plaster_Door_inst.024, Roof_Gable_Stepped_inst.003, Roof_Mid_inst.039. Tower .007 (1671,138): blacksmith Wall_Stone_inst.195/.196, Roof_Gable_inst.084/.085. Gatehouse_Block_inst: infill0 Corner_Stone_inst.185, Wall_Stone_inst.206/.200, Wall_Timber_inst.054, Roof_Hip_inst.015 (Roof_Hip.015 also hits the gatehouse's Wall_Timber_K_inst.046).
+  FIX: In town_walls, rasterize every tower and gatehouse footprint into T.occ: for a south tower on vertex column i, cells (i-2..i+1, WALL_S-1..WALL_S+1), and the same pattern on the other sides; for the gatehouse, cells (40..44, 23..26). This makes town_infill's free() reject the cells in front of the gate. Because T.build does not reject clashes, also move the fixed builds: corner_house and the terrace to a y origin of 3*28 (one row north), and the blacksmith to fp_origin(56,42,2,2,0). Make T.build undo the build (delete the new objects and return None) when `bad` contains an 'occ' entry, so later clashes fail loudly.
+
+#3 [high] (ground, build, art) Trees, bushes and flowers grow out of the town-wall masonry, ridge pines grow through the north towers, and blossom trees clip into the gatehouse and blacksmith
+  LOC: Trunks inside TownWall or Tower bboxes: Tree_Oak_B_inst.023 (1601.3,74.4), Tree_Apple_inst.009 (1619.4,74.0), Birch_inst.014 (1655.0,73.4), Birch_inst.016 (1670.2,74.0), Oak_A_inst.036 (1567.5,117.5), Oak_A_inst.042 (1570.3,139.2), Oak_A_inst.043 (1592.6,138.8), Birch_inst.033 (1679.4,139.2), Oak_A_inst.044 (1687.8,138.9), plus 14 bushes, flowers and ferns (Bush_Round .038/.043/.045/.075, Bush_Hydrangea .007, Wildflowers .044/.046/.060/.062/.063, and others). Ridge row 47: Pine_A .157/.158 into tower .001, Pine_B .170 into tower .007, Pine_A .161 into tower .005. Inside town: Blossom .009 into blacksmith Roof_Gable .084, Blossom .005 into the gatehouse, Blossom .007 into Porch .032. The finding also covers the LipGrass tufts inside tower bases.
+  FIX: After registering the wall footprints in T.occ (see the tower finding), also mark as occupied the full wall band: rows WALL_S-1..WALL_S (24-25) and WALL_N-1..WALL_N (45-46), and columns WALL_W-1..WALL_W (22-23) and WALL_E-1..WALL_E (62-63). The scatter then skips them. For forest row 47 (j=WALL_N+1), use an inset of at least 3 m on the wall side and skip trees within 7 m of each north-tower centre (x 1587/1608/1650/1671, y 138). In the inside_town branch (line 307-310), reject Blossom and Apple trees whose 2.5 m canopy radius touches any occupied cell. In the lip-grass pass (line 332), also skip borders under a tower footprint.
+
+#4 [high] (ground, play) The quarry is a free-standing stone box on flat grass, with a raw 3.5 m rock side, a 1.5 m grass trench in front of the ridge cliff, and the crane sill overhanging the trench
+  LOC: SM_VK_Quarry_Face_* pieces at x 1537.5-1552.5, y 91.3-100.5, z 2.4-6.55 (T.build 'quarry' at local (45,96), vk_town_map.py:208). The level-4 ridge cliff is at y=102 (row 34). SM_VK_Prop_TreadwheelCrane_inst is at (1544.4,102.9,6.0), rot -90, on the unreachable level-4 ridge.
+  FIX: Move the quarry origin from (45,96) to (45,97.5) so its back face lies on the cliff line y=102, and set z so its rim is at 6.0 (0.55 m lower). Hide the exposed east and west rock sides by raising the terrain beside them: add level-3/4 shoulder cells at i 11 and i 18, rows 30-33, or add earth-berm pieces. Move the crane down onto the pit floor, e.g. (1545, 98.5, z 3.0) facing the face. Alternatively keep it on the ridge but at y≥103.5 so both pads rest on the top, and add a stair to the ridge.
+
+#5 [high] (build, play) The west-quarter showcase houses (merchant, gablefront, corner house) face their shopfronts and main doors onto a 1.8 m alley against the south wall, so the town sees only their backs
+  LOC: The merchant (3*26+1.5, 3*27, rot 0), gablefront (3*32, 3*27+1.5, rot 0) and corner_house (3*37, 3*27, rot 0) are built at vk_town_map.py:213-215. They have Wall_Stone_Shop at (1576.5,78) and (1582.5,78), Wall_Stone_Door_inst.038 (1579.5,78), Wall_Plaster_Shop (1594.5,78), Wall_Plaster_Door_inst.019 (1597.5,78), Wall_Stone_Shop_inst.002 (1609.5,78) and Wall_Stone_Door_inst.039 (1612.5,78). All are at rot 0 (facing -Y), with shop goods at y 77.45. The wall's inner face is at y 76.18.
+  FIX: Build merchant, gablefront and corner_house with rot=180 and the y origin moved north by 3 (rows 27-28), so the fronts face north. Pave a west-quarter street on row 29 (G.ground[29,24:41]=2 and stiff), mirroring the terrace street at row 29 (line 50). This also clears the tower .002 clash. Remove or relocate the terrace's rear door Wall_Plaster_Door_inst.024, which opens onto tower .006.
+
+#6 [high] (ground, play) The wooden footbridge dead-ends on sand strips enclosed by 1.5 m cliffs, and the west road stops at the meadow cliff west of the bridge
+  LOC: The footbridge is at wx=3*12+1.5 (world x 1537.5), vk_town_map.py:152-156, and lands on bank cells (12,11) and (12,16). The west road (ground=1, columns 9-10, rows 18-33) ends at the level-1 cliff at y=54. No ramps exist at rows 10 or 17 away from columns 41-42.
+  FIX: Align the bridge with the west road and ramp both banks. Set wx=3*10 (world 1530, over columns 9-10), G.ramp[10,9:11]=3 (bank up to the south land) and G.ramp[17,9:11]=1 (bank up to the meadow), plus stiff on the ramp cells, and extend G.ground[9:18,9:11]=1 so the road visibly reaches the bridge. Before committing, check that the pigsty and crop plots at rows 5-9 leave row 9 clear at columns 9-10.
+
+#7 [medium] (art) Lawns are flat, saturated lime green and dominate the colony view; houses sit on open lawn with no yards or worn ground
+  LOC: All level-1/2 grass (M_VK_TerrainTown, T_VK_Grass_BC): the south land, the north meadow and especially the inside of the walls, e.g. x 1635-1665, y 95-130 around the chapel and x 1575-1605, y 84-100 behind the west quarter.
+  FIX: In M_VK_TerrainTown, pass T_VK_Grass_BC through a Hue/Saturation node (saturation ×0.7, slight shift toward blue-green). Mix in a low-frequency world-space noise (about 25-40 m) between warmer/yellower and cooler/darker tints, using the TerrainMacro channel. Add a 'worn' ground-control value (trampled dirt or grass) painted at door fronts, around wells, stalls and the camp, and along desire lines. Inside the walls, fill leftover free cells from town_infill with kitchen gardens, fenced yards or hedges instead of bare lawn.
+
+#8 [medium] (art) Roof colours form a saturated patchwork: orange-red, royal blue, green, slate, thatch and shingle side by side on the same streets
+  LOC: The infill roof choice at vk_town_map.py:269 (random per house from Red/Blue/Green/Slate/Shingle/Thatch). It is worst on the skyline street (row 43, x 1586-1624) and the SE terrace (x 1648-1672, y 78-84). Materials M_VK_RoofRed and M_VK_RoofBlue.
+  FIX: Choose the roof colour per district, not per house: for example terracotta plus slate in the west quarter, slate plus shingle in the east, Thatch only outside the walls, and Blue reserved for landmarks (chapel, gatehouse). Implement it in town_infill with a district lookup on (i0,j0) instead of rng.choice. Desaturate RoofRed toward terracotta (S≈0.5, V≈0.5) and RoofBlue toward slate-blue (S≈0.3). Add a ±5% per-instance value jitter so roofs of the same colour do not look identical.
+
+#9 [medium] (art) Water is emissive, milky turquoise with a cloud-noise pattern and no depth or shoreline
+  LOC: Material M_VKT_Water on VKV_Water_*: the river (rows 12-15), the lake (i 58-71) and the mill inlet.
+  FIX: Set Emission Strength to 0 and raise Alpha to about 0.92 (or darken the bed). Replace the cloud Noise with stretched ripple streaks aligned to the river's X direction. Drive the colour from depth, using the bed height or a baked distance-to-shore attribute: darker blue-green in the channel and lighter at the shallows. Add a 0.3-0.6 m foam or sparkle band along the shores, piers, bridge pier and mill wheel.
+
+#10 [medium] (art, build, play, ground) Willows read as dark hairy domes and are planted on the bridge approach and the quay; the barge clips the quay stair and reeds grow on the quay
+  LOC: There are 18 SM_VK_Tree_Willow instances on the banks. Placement problems: Willow_inst.005 (1622.3,30.8) over the stone-bridge south ramp and the west road lane. Willow_inst.013 (1606.9,49.6) at the head of SM_VK_Quay_Stair_inst. Willow .015/.016 (1553.0,51.7)/(1554.3,52.3) are 1.4 m apart. SM_VK_Plant_Reeds_inst.046 (x 1606.7-1609.8, y 50.0-53.1) is on the quay apron. SM_VK_Prop_Barge_inst (vk_town_map.py:163, placed at 3*35,46.25, rot 3) intersects Quay_Stair_inst.
+  FIX: In the bank branch of town_scatter (lines 311-314), exclude Willow from cells within 2 cells of ground 1/2, G.ramp, the bridge columns (i 40-43 and 11-13) and the quay cells (i 32-38, row 16), and enforce at least 12 m between willows. Mark the quay cells in T.occ so reeds skip them. Move the barge to (3*35, 45.8) with rot 0. On the mesh side, rebuild the willow foliage as fewer, broader drooping clumps with the oak's leaf-card style and spherical custom normals, so the underside is not near-black.
+
+#11 [medium] (build, play) Props block the doors of the barracks, blacksmith, brewery, a skyline house and the watermill
+  LOC: Barracks door Wall_Stone_Door_inst.036 (1686,4.5) with Prop_WeaponRack_inst.007 (1686.65,4.5). Blacksmith door Wall_Stone_Door_inst.050 (1669.5,~128.7) with Prop_Woodpile_inst.016 (1669.5,127.1) across Porch_inst.032. Brewery door Wall_Stone_Door_inst.049 (1672.5,113.5) with Prop_BarrelStack_inst.023 and Prop_CiderPress_inst in Porch_inst.031. Skyline door Wall_Stone_Door_inst.046 (1603.5,117) with Prop_Anvil_inst.004 (1603.2,118.2). Watermill door Wall_Stone_Door_inst.034 (1584,55.5) with BarrelStack_inst.007.
+  FIX: Add a door keep-clear rule to the builders' prop dressing: reject or shift any prop whose bbox enters a 1.2 m wide by 2.0 m deep corridor along a *_Door module's outward normal. Concretely: WeaponRack.007 to y≈8.5 along the wall; Woodpile.016 to x≤1666 or onto the side wall; BarrelStack.023 and the CiderPress to x≈1676-1677; Anvil.004 about 2 m east, beside the porch post; watermill BarrelStack.007 to y≈57.
+
+#12 [medium] (ground) Ramp sides render as black untextured triangles, with a black slot where the ramp meets the cliff end
+  LOC: West-bench ramp at cells i 9-10, row 23 (x 1527-1533, y 70.5-73.5): a slot at the west top corner and a dark vertical triangle on the east side. The same skirt appears on the east side of the gate ramp (x≈1628.5, y 70.5-73.5).
+  FIX: In vk_terrain's ramp tile, give the side triangles the cliff/strata material with box-projected UVs, and extend or weld the adjacent cliff end-caps to the ramp profile so the top-corner slot closes. Alternatively, flare the ramp edges into 45° sloped banks with turf material instead of vertical side triangles.
+
+#13 [medium] (art) Construction scaffolding uses white birch bark and reads as white metal pipe scaffolding
+  LOC: The SM_VK_Scaffold_Wall, SM_VK_Scaffold_Wall_Top and Scaffold_Corner(_Top) meshes, 15+ instances on the meadow construction sites (i 45-58, x about 1635-1677, y about 54-69).
+  FIX: On the Scaffold_* meshes, reassign the faces in the M_VK_BarkBirch slot to M_VK_BarkOak or M_VK_Wood (debarked grey-brown poles). It is a one-line material-slot swap in the kit mesh.
+
+#14 [medium] (build, play) Merchant yard props are placed on the yard's low wall, and the cart blocks the only gap to the rear stair
+  LOC: Merchant yard at y≈84-87, x 1575-1585: Prop_Crates_inst.014 (1576.1,86.2) in LowWall_inst.030; Prop_Sacks_inst.013 (1581.4,86.3) and Prop_BarrelStack_inst.017 (1582.8,86.2) in LowWall_inst.031; Prop_Cart_inst.014 (1578.9,86.1) through LowWall_Post_inst.019. The external stair is Stair_Stone_Ext_inst (x 1578.8-1584.25, y 84.2-85.6).
+  FIX: In build_merchant_house, place the yard props inside the low wall at y≈84.8-85.2, away from the stair foot. Park the cart outside the yard, turned 90° so it lines up with the 2.2 m opening, or remove it. Move BarrelStack.017 to x≈1575.5.
+
+#15 [medium] (art) Two large oaks cover the settler camp and hide the tents and fire from the colony camera
+  LOC: SM_VK_Tree_Oak_A_inst.017 (1602.8,6.9), canopy bbox x 1596.1-1608.4, y 1.2-13.7. SM_VK_Tree_Oak_B_inst.015 (1595.2,4.9), canopy x 1590.2-1600.1, y 0.7-10.1. SM_VK_Tent_Bell_inst bbox x 1594.0-1600.5, y 7.7-14.3. The camp is T.build 'camp' at i 29-33, rows 0-9.
+  FIX: In the south-land branch of town_scatter (lines 315-319), reject large trees (Oak/Apple/Birch/Bush_Large) whose canopy radius (about 5 m) reaches any T.build footprint cell, or allow only bushes and young trees next to occupied cells. Concretely, drop or move Oak_A.017 and Oak_B.015 at least 5 m away from the camp and keep one tree at the edge for framing.
+
+#16 [medium] (build, play) The chapel's only entrance faces the empty lawn by the north wall, away from the plaza
+  LOC: The chapel is built via fp_origin(48,39,4,2,0) at vk_town_map.py:225-226, at x 1644-1656, y 117-123. The only door, SM_VK_Chapel_Wall_Door_inst.003 at (1648.5,123) with rot 180, faces +Y onto rows 41-45, which lead only to the north wall.
+  FIX: Build the chapel with rot=180: ox,oy,orz=fp_origin(48,39,4,2,180) and T.build(...,ox,oy,180). Then pave a short cobbled path from the door to the plaza's NE corner, G.ground[36:39,47:50]=2, with stiff.
+
+#17 [low] (ground, play) Riverside props straddle the bank-to-meadow cliff (laundry line, fish rack, mill cart and crates), and the mill pad has no ramp to the meadow
+  LOC: Prop_Laundry_inst.002 (x 1638.6-1643.8, y 53.3-54.1), Prop_FishRack_inst (x 1655.2-1658.6, y 52.9-54.7), Prop_Cart_inst.008 (x 1576.1-1579.8, y 57.7-60.5) and Prop_Crates_inst.007 (x 1583.0-1585.6, y 58.2-60.2). The bank cliff is at y=54, the inlet cliff at y=60, and the mill inlet pad is at i 24-29, rows 16-19.
+  FIX: Move Laundry.002 and the FishRack 1.5 m south (y≈52), and the mill Cart.008 and Crates.007 to y≤57, or rotate the cart so its shafts run parallel to the cliff. Add G.ramp[19,26]=G.ramp[19,27]=1 so the mill inlet climbs to the meadow.
+
+#18 [low] (build) Forester's tree-nursery pen runs into the shed's east wall
+  LOC: Forester hut (T.build 'forester' at 37.5,78): SM_VK_Crop_TreeNursery_inst (bbox x 1536.0-1538.98), Prop_Fence_inst.183 and Prop_FenceGate_inst.024 (x 1535.9-1539.1) against Wall_Shed_Window_inst.003 (x 1535.76-1536.53) and the adjacent Corner_Shed pieces.
+  FIX: In build_forester_hut, offset the nursery, fence and gate by +0.75 m in x (pen starting at x≥1536.6), or drop the pen's west fence and let the shed wall form that side.
+
+#19 [low] (ground, art) West-bench road ends at the ridge cliff one cell east of the stone stair
+  LOC: Road G.ground[24:34,9:11]=1 (x 1527-1533) ends at the level-3 cliff y=102. The stair is G.ramp[33,8]/G.stair[33,8] at x 1524-1527 (vk_town_map.py:58-59).
+  FIX: Put the stair on the road: G.ramp[33,9]=1; G.stair[33,9]=True; and clear (8,33). Alternatively add G.ground[31:34,8]=1 as a dog-leg onto the existing stair. Leave one or two treeless cells above the stair top.
+
+#20 [low] (build) Plaza lamp posts clip a porch roof, a roof eave and the town wall
+  LOC: LampPost_inst.033 (1642.5,96) inside infill5's Porch_inst.036. LampPost_inst.034 (1609.5,105) against infill4's Roof_Mid_inst.048. LampPost_inst.027 (1606.4,76.1), from the corner-house dressing, inside TownWall_Straight_inst.024. The lamp positions come from vk_town_map.py:235 (px±16.5, py±4.5).
+  FIX: Place the four plaza lamps after town_infill and test them against building bboxes, or use px±15.0 and a y inset of 0.8 m. Move LampPost.027 to y≥77.2 (or drop it once the corner house is rotated or moved).
+
+#21 [low] (ground, art) Water planes end in open cut faces at the map boundary (lake east edge, river west end)
+  LOC: Lake at x=1716 (y about 15-57) and river at x=1500 (y 36-48). The terrain chunk border vertices are horizontally displaced (chunks span x 1498.3-1717.7).
+  FIX: In make_displace, zero the horizontal displacement for vertices on the map border (x∈{0,216}, y∈{0,168}). Clip the water quads to the terrain border and add a dark skirt or rock rim along boundary edges that touch water. Alternatively, end the lake with one shore cell at i 71.
+
+#22 [low] (ground, build) Barracks and training yard hang over the south map edge (y<0)
+  LOC: T.build('training', build_training_yard, 187.5, 6.0, 90) at vk_town_map.py:188. Wall_Stone_inst.150/.151, Corner_Stone_inst.137/.140, Wall_Timber_X_inst.036 and the fence reach y -0.5 to -0.6, and Roof_Gable_inst.078 reaches y -1.2.
+  FIX: Change the origin to (187.5, 9.0), which puts the south wall at y=3 and the fence at about 2.7. Make T.build log 'out' footprints (it already detects them, line 97) as errors.
+
+#23 [low] (ground) The fisher-hut rowboat passes through the pier stairs
+  LOC: SM_VK_Prop_Rowboat_inst (x 1689.6-1691.5, y 28.0-32.4) and SM_VK_Pier_Stairs_inst (x 1690.6-1692.1, y 27.7-29.3), from build_fisher_hut.
+  FIX: In build_fisher_hut, move the rowboat about 1.2 m west or 1.5 m north so it moors alongside the stairs.
+
+#24 [low] (build) Minor prop clipping in the hamlet, outpost, stockpiles and tannery
+  LOC: Prop_ChickenCoop_Wattle_inst.002 (1549.6,3.45) through the eave of RoofThatch_Hip_inst.006. Prop_Crates_inst.012 inside the Palisade_Tower_inst.001 legs. Pile_Planks overlap Stockpile_Border .001/.004/.008. Prop_Trough_inst.013 (1506,60.15) sunk into Wall_Plaster_inst.083. Prop_Cauldron_inst on the tannery door axis.
+  FIX: Coop x≈1548.3 or scale 0.85. Palisade crates x≈1662.5. Inset the plank piles 0.4 m from the borders. Trough y≈59.6. Cauldron x≈1512.5, beside the door.
+
+#25 [low] (ground) The lake is a hard rectangle with square notches where the river banks meet it
+  LOC: Lake mask at vk_town_map.py:21, rectangle term `(ii>=60)&(jj>=8)&(jj<=17)`. Junctions at i 58-60, rows 16-18 and rows 8-11.
+  FIX: Drop the rectangle term and widen the ellipse as needed. Round the level-0 mask corners at (58-60,16-18) and (58-59,8-11) before contouring. Afterwards, re-check the fisher-hut and pier footprints.
+
+#26 [low] (play) The fisher hut is reachable only along a willow-choked sand neck, with no ramp from the south land
+  LOC: The lake's south shore (level 0, rows 5-7, i 58-71) around the fisher hut door Wall_Shed_Door_inst (1693.5,21). The south land (level 1) sits directly above it with no ramp. Willows .001/.006/.007/.011 fill the bank neck at i 55-59.
+  FIX: Add G.ramp[5,66]=G.ramp[5,67]=3 (shore up to the south land, clear of the barracks at i 60-64), with stiff. The willow-spacing rule in the willow finding clears the neck.
+
+#27 [low] (play) No west postern: the west-bench industries are about 170 m from the plaza by path, although the bench and plateau share level 2
+  LOC: West wall x=1569 (column 23), rows 25-45. The west bench (level 2, i 0-19, rows 24-33) and the plateau (level 2) meet at columns 19-22, so no ramp is needed.
+  FIX: In town_walls, skip the west TownWall_Straight at j=28 and 29 (y 85.5 and 88.5), add a small gate piece, and pave G.ground[28:30,11:24]=1 as a lane to the bench road at columns 9-10. Mark the lane cells stiff and occupied so no trees or houses land on it.
+
+#28 [low] (art) Dirt roads are straight, cell-aligned strips with an even fine speckle that reads as a carpet
+  LOC: The main road (i 41-42) and the west road (i 9-10). Ground control is T_VK_GroundCtl_Town at 72x56 px (one texel per cell).
+  FIX: Warp the ground-control UV lookup with low-frequency noise (0.5-1 m amplitude), or bake a higher-resolution road mask (at least 8 px per cell) with wobbly edges and a worn-grass fade. Paint two cart ruts into T_VK_Dirt_BC and scatter a few edge stones.
+
+#29 [low] (art) Tree mesh artifacts: white birch twig slashes and brown pine branch sticks through the canopies, plus 43 same-model tree pairs under 1 m apart
+  LOC: SM_VK_Tree_Birch (52 instances), SM_VK_Tree_Pine_A/B (ridge forests). Duplicate pairs are mostly SM_VK_Tree_Pine_Young, e.g. inst.152/.153 0.39 m apart and inst.157/.158 0.38 m apart.
+  FIX: On the birch mesh, move the upper twig faces to a grey bark slot or tuck them inside the leaf clumps. On the pine meshes, tint or shorten the branch-axis geometry to match the needles. In town_scatter, enforce a minimum spacing of 1.5 m between any trees and 2.5 m between same-model trees.
+
+#30 [low] (art) Over-saturated accent materials: peach bottle kiln, glowing rainbow stained glass, vivid blue hydrangeas
+  LOC: M_VK_Clay on SM_VK_Prop_BottleKiln_inst (1543.0,63.1). M_VK_Stained (chapel windows, Emission Strength 1.4). SM_VK_Bush_Hydrangea instances in town.
+  FIX: M_VK_Clay to a fired-brick brown-orange (S≈0.45, V≈0.5) with soot toward the top. M_VK_Stained emission 1.4 to about 0.4. Reduce hydrangea flower saturation or mix in pink and white variants.
+
+#31 [low] (art) Two identical red-roofed wells are 12.6 m apart in the plaza area
+  LOC: SM_VK_Prop_Well_inst.003 (1620,102), the plaza well at vk_town_map.py:232. SM_VK_Prop_Well_inst.002 (1615,114), from the skyline builder.
+  FIX: Replace the plaza well (line 232) with a horse trough, notice board or cart, or use a different well variant.
+
+#32 [low] (play) Conflicting smithy cues: an anvil sign on the merchant house and an anvil emblem and anvil on a skyline house, while the real forge is hidden behind the NE blacksmith
+  LOC: SM_VK_Sign_Anvil (1577.8,77.8) on the merchant house. SM_VK_Emblem_Ridge_Anvil (1598,114) and Prop_Anvil_inst.004 on a skyline house. The forge is SM_VK_Prop_Forge_inst.003 (1675.6,133.2), behind the blacksmith.
+  FIX: Swap the merchant's Sign_Anvil for a merchant or key sign and the skyline emblem for Key or Sheaf. Move Anvil.004 away (see the doors finding).
+
+#33 [low] (build) The tannery and brewery are off the 3 m cell grid
+  LOC: The tannery is T.build at (3*4, 3*20+1.5) and its walls sit on y 61.0/67.0, e.g. Wall_Plaster_inst.083 (1506,61). The brewery is at (3*58+1.5, 3*38+1.5) and its walls sit on y 113.5/119.5, e.g. Wall_Stone_Door_inst.049 (1672.5,113.5) and Wall_Stone_inst.190 (1669.5,119.5).
+  FIX: Change the tannery y origin from 61.5 to 60.5 and the brewery y origin from 115.5 to 116.0, or derive both from fp_origin() as the chapel and blacksmith do.
+
+REJECTED:
+- Cliff faces are blurry and swirly rather than painted strata (art): This is a subjective texture-quality call. In my renders (verify_10, verify_27, verify_28) the cliffs read acceptably as stylised stone bands. The fix is a full albedo repaint, so it is not cheap, and
+- The river is a straight canal with parallel equal-width banks (art): It is real (verify_15_overview), but it is not cheap. Meandering the river mask would force re-placing the stone bridge, footbridge, watermill inlet, quay, lavoir and smokehouse. That is a layout rede
+- Hamlet hovels are copy-pasted identical cottages (art): The code (vk_town_map.py:176-178) already builds three different hovel variants (default gable, 'hip' and 'leanto') at different rows. The claimed duplication is weak, and there is no defect to fix.
+- Smokehouse and mill southern corners sit on the bank crest with air beneath (ground): The footprint samples do dip to -0.78 to -1.04 under the south half of the pieces, but in my river-level render (verify_32_smokehouse_corner.png) the corner plinth stones meet the slope with no visibl
+- Large trees are planted at cliff toes with trunks against cliff faces (ground): The willow cases (.005 at the bridge, .017) are covered by the merged willow-placement finding. The remaining cases (gully oaks at x≈1529, y≈140, deep in the west-ridge forest) are not visible from th
+- Ridge forests are a monotone dark mass without clearings (art, subjective part): The overall forest tone and massing is an art preference, not a defect. The concrete, cheap parts (duplicate trees under 1 m apart, pine branch sticks) are kept in the merged tree-mesh-artifacts findi
+- Lip grass and seam rocks inside tower bases, as a separate issue (ground): This is not rejected on substance. It is merged into the vegetation-through-walls finding, because it has the same root cause (the P() footprints are never registered) and the same fix (skip the lip-g
