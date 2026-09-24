@@ -445,6 +445,7 @@ class TGrid:
         s.level=np.zeros((H,W),np.int32); s.water=np.zeros((H,W),bool)
         s.ground=np.zeros((H,W),np.int32); s.ramp=np.zeros((H,W),np.int32)   # ramp dir 0 none 1N 2E 3S 4W
         s.stair=np.zeros((H,W),bool); s.stiff=np.zeros((H,W),bool); s.wear=np.zeros((H,W),np.int32)
+        s.wear_marks=[]      # soft worn-ground patches (x, y, rx, ry, rot, strength) in map metres, painted by tk_ground_ctl
     def cell(s,i,j):
         i=min(max(i,0),s.W-1); j=min(max(j,0),s.H-1); return i,j
     def corners(s,I,J):
@@ -887,15 +888,44 @@ def terrain_material(name="M_VK_Terrain",W=32,H=24,ctl="T_VK_GroundCtl"):
     B.link(bsdf.outputs[0],out.inputs[0])
     return m
 
-def tk_ground_ctl(G,name="T_VK_GroundCtl",paved=False):
-    """RGBA8 one texel per cell: R dirt(+wear) G cobble B sand(water forced) A rock.
+CTL_RES=5      # control-map texels per cell. Odd, so the fine texel centres include the cell centres: the cell data,
+               # upsampled bilinearly, looks exactly as it did at one texel per cell
+def _upsample(a,k):
+    """bilinear samples of a per-cell array (values at the cell centres, clamped at the edges) at k x k texels per cell"""
+    H,W=a.shape; a=np.asarray(a,np.float64)
+    x=np.clip((np.arange(W*k)+0.5)/k-0.5,0,W-1); y=np.clip((np.arange(H*k)+0.5)/k-0.5,0,H-1)
+    x0=np.floor(x).astype(int); y0=np.floor(y).astype(int); x1=np.minimum(x0+1,W-1); y1=np.minimum(y0+1,H-1)
+    fx=(x-x0)[None,:]; fy=(y-y0)[:,None]
+    return (a[y0][:,x0]*(1-fx)+a[y0][:,x1]*fx)*(1-fy)+(a[y1][:,x0]*(1-fx)+a[y1][:,x1]*fx)*fy
+
+def _wear_field(G,k,seed=5):
+    """G.wear_marks painted at k texels per cell: ellipses whose outline is broken up by world-space noise, full
+    strength inside and a ragged fade outside, so trampled ground has no trace of the cell grid"""
+    Hf,Wf=G.H*k,G.W*k; out=np.zeros((Hf,Wf)); cs=3.0/k
+    X=(np.arange(Wf)+0.5)*cs; Y=(np.arange(Hf)+0.5)*cs
+    for (x,y,rx,ry,rot,st) in G.wear_marks:
+        r=1.4*max(rx,ry)+1.0
+        i0=max(0,int((x-r)/cs)); i1=min(Wf,int((x+r)/cs)+1); j0=max(0,int((y-r)/cs)); j1=min(Hf,int((y+r)/cs)+1)
+        if i0>=i1 or j0>=j1: continue
+        xx,yy=np.meshgrid(X[i0:i1],Y[j0:j1]); c,s=math.cos(rot),math.sin(rot)
+        u=((xx-x)*c+(yy-y)*s)/rx; v=(-(xx-x)*s+(yy-y)*c)/ry
+        n=vnoise(xx/1.7,yy/1.7,np.zeros_like(xx),seed)+0.5*vnoise(xx/0.8,yy/0.8,np.full_like(xx,3.0),seed)
+        w=st*np.clip((1.15-np.hypot(u,v)-0.28*n)/0.7,0,1)
+        out[j0:j1,i0:i1]=np.maximum(out[j0:j1,i0:i1],w)
+    return out
+
+def tk_ground_ctl(G,name="T_VK_GroundCtl",paved=False,k=CTL_RES):
+    """RGBA8, k texels per cell: R dirt(+wear) G cobble B sand(water forced) A rock.
     paved=True: cobble cells are covered by the separate paving mesh (tk_build_paving), so the terrain under them is
-    painted as dirt (it shows through the patches of missing stones)"""
-    Wd,Hd=G.W,G.H
+    painted as dirt (it shows through the patches of missing stones). Worn ground: G.wear (per cell) and the soft
+    G.wear_marks, which only wear grass"""
+    Wd,Hd=G.W*k,G.H*k
     arr=np.zeros((Hd,Wd,4),np.float32)
     gnd=G.ground
     cob=(gnd==2)
-    arr[...,0]=np.maximum(np.maximum(gnd==1,cob*paved),G.wear/255.0); arr[...,1]=cob*(not paved); arr[...,2]=np.maximum(gnd==3,G.water); arr[...,3]=(gnd==4)
+    grass=_upsample((gnd==0)&~G.water,k)
+    arr[...,0]=np.maximum(_upsample(np.maximum(np.maximum(gnd==1,cob*paved),G.wear/255.0),k),_wear_field(G,k)*grass)
+    arr[...,1]=_upsample(cob*(not paved),k); arr[...,2]=_upsample(np.maximum(gnd==3,G.water),k); arr[...,3]=_upsample(gnd==4,k)
     img=bpy.data.images.get(name)
     if img is None: img=bpy.data.images.new(name,Wd,Hd,alpha=True,float_buffer=False,is_data=True)
     elif tuple(img.size)!=(Wd,Hd):
@@ -1057,19 +1087,6 @@ RAMP_T=(1.0,0.0,0.0,0.0)
 CHEEK_T=(0.88,1.0,0.0,0.0)     # ramp/stair cheeks: rock, light AO (they often face away from the sun)
 def _ramp_z(y): return (y-1.5)*0.5
 def _ramp_n(y): return TUP if (abs(y-1.5)<1e-6 or abs(y+1.5)<1e-6) else RAMP_N
-def _poly_yz(tb,pts,x,normal,tcol,mi=0):
-    """triangulate a planar polygon in the plane x=const given as [(y,z)...] CCW as seen from +normal"""
-    L=[]
-    for p in pts:
-        if not L or math.hypot(p[0]-L[-1][0],p[1]-L[-1][1])>1e-6: L.append(p)
-    if math.hypot(L[0][0]-L[-1][0],L[0][1]-L[-1][1])<1e-6: L.pop()
-    res=delaunay_2d_cdt([Vector(p) for p in L],[],[list(range(len(L)))],1,1e-7)
-    omap=[o_[0] for o_ in res[3]]; ids=[tb.vert((x,p[0],p[1])) for p in L]
-    for f in res[2]:
-        q=[ids[omap[k]] for k in f]
-        V=[Vector(tb.v[k]) for k in q]
-        if (V[1]-V[0]).cross(V[2]-V[0]).dot(Vector(normal))<0: q=q[::-1]
-        tb.face(q,[normal]*3,[tcol]*3,mi=mi)
 def _ramp_surface(tb,x0,x1,ncol):
     xs=[x0+(x1-x0)*j/(ncol-1) for j in range(ncol)]; ys=[-1.5+0.5*i for i in range(7)]
     ids=[[tb.vert((x,y,_ramp_z(y))) for y in ys] for x in xs]
@@ -1222,68 +1239,15 @@ def tk_build_lipgrass():
         k.lcard((x,0.12,-0.03),(1,0,0),U,0.3,rng.uniform(0.18,0.26),"tallgrass",flip=rng.random()<0.5,rows=1,cols=2,nfn=nf,aofn=ao)
     return nk_finish(k,"SM_VKT_LipGrass",tk_pieces_coll(),bark_ao=None)
 
-def cliff_rock_material(name="M_VKT_CliffRock"):
-    """the terrain's cliff stone for separate rock pieces: cliff albedo + height bump (object-space box projection),
-    moss on up-facing parts like the terrain cliffs"""
-    m=bpy.data.materials.get(name) or bpy.data.materials.new(name)
-    m.use_nodes=True; nt=m.node_tree; nt.nodes.clear(); B=_NB(nt)
-    out=B.n("ShaderNodeOutputMaterial"); bsdf=B.n("ShaderNodeBsdfPrincipled")
-    tc=B.n("ShaderNodeTexCoord"); p=B.scale(tc.outputs["Object"],1/6.0)
-    bc=B.img("T_VK_Cliff_BC",p,box=True); hh=B.img("T_VK_Cliff_H",p,data=True,box=True)
-    geo=B.n("ShaderNodeNewGeometry"); nz=B.n("ShaderNodeSeparateXYZ"); B.link(geo.outputs["Normal"],nz.inputs[0])
-    mo=B.img("T_VK_Moss_BC",B.scale(tc.outputs["Object"],1.0),box=True)
-    hs=B.n("ShaderNodeHueSaturation"); hs.inputs["Saturation"].default_value=0.55; hs.inputs["Value"].default_value=0.92
-    B.link(bc.outputs[0],hs.inputs["Color"])                  # the terrain darkens/greys its cliffs (AO, macro)
-    col=B.mix(B.smoothstep(nz.outputs[2],0.62,0.85),hs.outputs[0],mo.outputs[0])
-    vc=B.n("ShaderNodeVertexColor",layer_name="Col")
-    col=B.mix(1.0,col,vc.outputs[0],blend="MULTIPLY")
-    B.link(col,bsdf.inputs["Base Color"]); bsdf.inputs["Roughness"].default_value=0.88; bsdf.inputs["Specular IOR Level"].default_value=0.25
-    bump=B.n("ShaderNodeBump"); B.link(hh.outputs[0],bump.inputs["Height"]); bump.inputs["Strength"].default_value=0.6
-    B.link(bump.outputs[0],bsdf.inputs["Normal"]); B.link(bsdf.outputs[0],out.inputs[0])
-    return m
-
-def tk_build_ramp_shoulder():
-    """SM_VKT_RampShoulder: rock shoulder where a cliff ends beside a ramp or stair (hides the cliff's end cap and
-    steps down along the ramp side). Local frame: origin on the cliff line at the cap, +Y uphill, the cliff on -X,
-    the ramp on +X, z=0 = the lower level, the cliff top at z=TIER."""
-    k=NK()
-    # the ramp runs from y=-1.5 (foot, z 0) to y=+1.5 (top, z TIER) and cuts 1.5 m into the upper terrace, so the
-    # rocks cover the whole side: the cut wall above the ramp (y 0..1.5) and the cheek below it (y -1.5..0)
-    boulder(k,(0.05,1.05,0.6),(1.35,1.35,1.1),407,mi=ROCK,cuts=7,sub=2,rot=0.8)
-    boulder(k,(-0.15,0.25,-0.05),(1.45,1.55,TIER+0.22),401,mi=ROCK,cuts=8,sub=2,rot=0.3)
-    boulder(k,(0.0,-0.65,-0.05),(1.15,1.2,1.1),403,mi=ROCK,cuts=7,sub=2,rot=1.1)
-    boulder(k,(0.1,-1.35,-0.05),(0.8,0.85,0.6),405,mi=ROCK,cuts=6,sub=2,rot=2.0)
-    o=nk_finish(k,"SM_VKT_RampShoulder",tk_pieces_coll(),bark_ao=(0.72,1.4))
-    o.data.materials[0]=cliff_rock_material()
-    return o
-
-def tk_ramp_shoulders(G,coll,origin=MAP_ORIGIN,name="SM_VKT_RampShoulder"):
-    """place a rock shoulder at both ends of every stair run in the open (where the cliff is cut by the flight).
-    Stairs on paved (cobble) cells keep their plain dressed-stone cheeks, like built town steps."""
-    src=bpy.data.objects.get(name) or tk_build_ramp_shoulder()
-    out=[]
-    for (j,i) in zip(*np.nonzero(G.ramp)):
-        d=int(G.ramp[j,i]); fx,fy=((0,1),(1,0),(0,-1),(-1,0))[d-1]
-        for sx,sy in ((fy,-fx),(-fy,fx)):
-            ni,nj=i+sx,j+sy
-            if 0<=ni<G.W and 0<=nj<G.H and G.ramp[nj,ni]==d: continue          # not an end of the run
-            if not G.stair[j,i] or G.ground[j,i]==2: continue                     # ramps blend in their own tile
-            x=3*i+1.5+sx*1.0+fx*1.5; y=3*j+1.5+sy*1.0+fy*1.5; z=float(G.level[j,i])*TIER
-            o=bpy.data.objects.new(name+"_inst",src.data); coll.objects.link(o)
-            o.location=(origin[0]+x,origin[1]+y,origin[2]+z)
-            o.rotation_euler=(0.0,0.0,math.atan2(fy,fx)-math.pi/2)
-            if (fy,-fx)!=(-sx,-sy): o.scale=(-1.0,1.0,1.0)                        # mirrored for the other side
-            out.append(o)
-    return out
-
 def tk_ramp_dress(G,coll,origin=MAP_ORIGIN,seed=7):
-    """a few plants and stones where each ramp run meets the cliffs (breaks up the joint line)"""
+    """a few plants and stones where each ramp or stair run meets the cliffs (breaks up the joint line); beside a
+    stair they move out past its flanking wall"""
     rng=random.Random(seed); out=[]
     picks=(("SM_VK_Rock_Small_A",(-0.95,-1.05),0.9),("SM_VK_Plant_Fern",(-0.55,-0.55),0.8),
            ("SM_VK_Plant_TallGrass",(-1.25,-0.25),1.0),("SM_VK_Rock_Small_B",(0.05,-1.35),0.6))
     for (j,i) in zip(*np.nonzero(G.ramp)):
-        if G.stair[j,i]: continue
-        d=int(G.ramp[j,i]); fx,fy=((0,1),(1,0),(0,-1),(-1,0))[d-1]
+        d=int(G.ramp[j,i]); fx,fy=((0,1),(1,0),(0,-1),(-1,0))[d-1]; wall=STAIR_WALL if G.stair[j,i] else 0.0
+        if wall and G.ground[j,i]==2: continue                                   # paved town steps stay clean
         for sx,sy in ((fy,-fx),(-fy,fx)):
             ni,nj=i+sx,j+sy
             if 0<=ni<G.W and 0<=nj<G.H and G.ramp[nj,ni]==d: continue
@@ -1291,6 +1255,8 @@ def tk_ramp_dress(G,coll,origin=MAP_ORIGIN,seed=7):
             for (nm,(lx,ly),sc) in picks:
                 src=bpy.data.objects.get(nm)
                 if src is None or rng.random()<0.2: continue
+                lx=lx-wall
+                if wall and lx>-wall-0.15: continue
                 # local x points to the ramp (-side vector), local y uphill
                 wx=cx-sx*lx+fx*ly; wy=cy-sy*lx+fy*ly
                 o=bpy.data.objects.new(nm+"_inst",src.data); coll.objects.link(o)
@@ -1385,8 +1351,8 @@ def tk_build_paving(G,coll,origin=MAP_ORIGIN,name="VK_Paving",lift=0.06,step=0.2
     """Cobbled cells (ground==2) as a separate mesh: stones `lift` m above the terrain, a curb of dressed stones
     where the cobbles meet grass (not towards dirt roads or ramps), and patches of missing stones that show the
     dirt painted under the paving. Hole edges are irregular and get a small side face (the paving's thickness).
-    A ramp or stair climbs half a cell into the cell above it: that part is left unpaved, and curbs run along the
-    cut walls beside the flight instead of across it."""
+    A ramp or stair climbs half a cell into the cell above it: that part is left unpaved (with a stair's flanking
+    walls), and curbs run along the cut walls beside a ramp instead of across it."""
     from mathutils import noise as mnoise
     rng=random.Random(seed)
     cob=(G.ground==2)&(~G.water)
@@ -1398,7 +1364,8 @@ def tk_build_paving(G,coll,origin=MAP_ORIGIN,name="VK_Paving",lift=0.06,step=0.2
         if not (0<=hi_<G.W and 0<=hj_<G.H) or not cob[hj_,hi_]: continue
         tx,ty=abs(fy),abs(fx)
         run=lambda s: 0<=ri+s*tx<G.W and 0<=rj+s*ty<G.H and G.ramp[rj+s*ty,ri+s*tx]==d
-        a0=0.0 if run(-1) else RAMP_X; a1=3.0 if run(1) else 3.0-RAMP_X
+        edge=RAMP_X-(STAIR_WALL if G.stair[rj,ri] else 0.0)      # a flight's flanking walls stay unpaved too
+        a0=0.0 if run(-1) else edge; a1=3.0 if run(1) else 3.0-edge
         side={(0,1):2,(0,-1):3,(1,0):0,(-1,0):1}[(fx,fy)]
         cut.setdefault((hi_,hj_),[]).append((side,a0,a1))
     def in_cut(i,j,lx,ly):
@@ -1599,28 +1566,35 @@ def gen_stair_half_e():
     top+=side_ents(P,RN,3,3,T3)
     region(tb,top,0.0,FLAT_T)
     _stairs(tb,xr,1.5)
-    prof=[(1.5-P[i][0],P[i][1]) for i in range(TOP_ROW,CLIFF_LAST+1)]
-    ci=None
-    for i in range(len(prof)-1):
-        (y0,z0),(y1,z1)=prof[i],prof[i+1]
-        f0=z0-_stair_z(y0); f1=z1-_stair_z(y1)
-        if f0>=0 and f1<0:
-            lo_,hi_=0.0,1.0
-            for _ in range(40):
-                m=(lo_+hi_)/2; ym=y0+(y1-y0)*m; zm=z0+(z1-z0)*m
-                if zm-_stair_z(ym)>=0: lo_=m
-                else: hi_=m
-            t=lo_; cp=(y0+(y1-y0)*t,_stair_z(y0+(y1-y0)*t)); ci=i; break
-    upper=[p for p in STAIR_OUT if p[0]>cp[0]+1e-6 and p[1]<-1e-9]
-    ytop=min(p[0] for p in STAIR_OUT if p[1]>=-1e-9)
-    up=[(ytop,0.0)]+[(y,0.0) for y in (1.0,0.5) if prof[0][0]+1e-6<y<ytop-1e-6]
-    up+=prof[:ci+1]+[cp]+upper
-    _poly_yz(tb,up,xr,(1.0,0.0,0.0),(0.88,1.0,0.0,0.0),mi=1)          # the cut wall beside the flight: dressed stone
-    # lower cheek: the flight's side wall under the stair outline (the part inside the cliff is enclosed and never seen)
-    under=[p for p in STAIR_OUT if -1.5+1e-9<p[1]<-1e-9]
-    lo=[(y,-1.5) for y in (under[0][0],-1.0,-0.5,0.0,0.5,1.0,under[-1][0])]+under[::-1]
-    _poly_yz(tb,lo,xr,(-1.0,0.0,0.0),(0.88,1.0,0.0,0.0),mi=1)
+    _stair_wall(tb,xr-STAIR_WALL,xr)
     return tb
+STAIR_WALL=0.5   # flanking wall on the cliff side of a flight: wall + 2 m flight + wall fill one 3 m cell
+def _stone_block(tb,x0,x1,y0,y1,zb0,zt0,zb1,zt1,bottom=False):
+    """dressed-stone block (stair material, TCol stone) whose top and bottom may slope along y (z at y0 / y1).
+    Faces are wound to their normals; the loop AO darkens towards the bottom."""
+    def quad(pts,n,aos):
+        q=[tb.vert(p,share=False) for p in pts]; V=[Vector(tb.v[i]) for i in q]
+        if (V[1]-V[0]).cross(V[2]-V[0]).dot(Vector(n))<0: q=q[::-1]; aos=aos[::-1]
+        tb.face(q,[tuple(Vector(n).normalized())]*4,[(a,1.0,0.0,0.0) for a in aos],mi=1)
+    lo,hi=0.72,0.95
+    st=(zt1-zt0)/(y1-y0); sb=(zb1-zb0)/(y1-y0)
+    quad([(x0,y0,zt0),(x1,y0,zt0),(x1,y1,zt1),(x0,y1,zt1)],(0.0,-st,1.0),[hi]*4)
+    if bottom: quad([(x0,y0,zb0),(x1,y0,zb0),(x1,y1,zb1),(x0,y1,zb1)],(0.0,sb,-1.0),[lo]*4)
+    for x,nx in ((x0,-1.0),(x1,1.0)):
+        quad([(x,y0,zb0),(x,y1,zb1),(x,y1,zt1),(x,y0,zt0)],(nx,0.0,0.0),[lo,lo,hi,hi])
+    for y,ny,zb,zt in ((y0,-1.0,zb0,zt0),(y1,1.0,zb1,zt1)):
+        quad([(x0,y,zb),(x1,y,zb),(x1,y,zt),(x0,y,zt)],(0.0,ny,0.0),[lo,lo,hi,hi])
+def _stair_wall(tb,x0,x1):
+    """built transition between a flight (on +x of x1) and the natural cliff (on -x of x0): a cheek wall with a sloped
+    coping along the part of the flight in front of the cliff, a capped pier where the cliff meets the flight (it
+    swallows the cliff's end), and a kerb at terrace height along the upper flight. It stops 5 cm short of the tile's
+    top side, so the tile's seam with the terrace behind it is unchanged."""
+    zb=-1.55; zc=lambda y: -1.1+(y+1.5)*0.5           # coping line: 0.4 m above the treads, parallel to the pitch
+    _stone_block(tb,x0,x1,-1.5,-0.5,zb,zc(-1.5),zb,zc(-0.5))
+    _stone_block(tb,x0-0.04,x1+0.04,-1.5,-0.5,zc(-1.5)-0.02,zc(-1.5)+0.09,zc(-0.5)-0.02,zc(-0.5)+0.09,bottom=True)
+    _stone_block(tb,x0-0.04,x1+0.03,-0.5,0.45,zb,0.30,zb,0.30)
+    _stone_block(tb,x0-0.08,x1+0.07,-0.54,0.49,0.28,0.40,0.28,0.40,bottom=True)
+    _stone_block(tb,x0,x1,0.45,1.45,zb,0.14,zb,0.14)
 def gen_stair_mid():
     tb=TB(); _stairs(tb,-1.5,1.5); return tb
 def tk_build_stairs():

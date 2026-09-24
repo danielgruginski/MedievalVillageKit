@@ -1,4 +1,4 @@
-# HANDOFF — Medieval Village Kit (state at the end of 2026-09-23)
+# HANDOFF — Medieval Village Kit (state at the end of 2026-09-24)
 
 Read this first when continuing the work (new session: *"Read MedievalVillageKit/HANDOFF.md and continue"*).
 Project root: `E:\Unity\Projects\GameArtGeneration\MedievalVillageKit` (git repo, branch `main`).
@@ -80,7 +80,7 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
   plants, mushrooms, rocks, stump, log, pond. Leaf atlas `T_VK_Leaves_*` (cherry cell repainted in hero-oak style).
 - **Terrain (`vk_terrain`):** dual-grid marching squares, 3 m cells, 1.5 m levels; cliff/shore tiles with A/B/C
   variants; ramps whose half tile blends the cliff down and has an earth bank (plus `tk_ramp_dress` props); built
-  stairs (cobble treads, dressed-stone risers, nosings and side walls; rock shoulders only outside paved areas);
+  stairs (cobble treads, dressed-stone risers and nosings, flanking walls with sloped copings and piers);
   separate cobble paving mesh with curbs and missing-stone patches (left out where a stair climbs into a cell).
   - `make_displace` (position-only, seam-safe) does all of this:
     - wobbles the contours;
@@ -102,11 +102,19 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
 2. ~~A smithy crate touches the gatehouse.~~ Done 2026-09-24: `town_inside` moves it to the yard by the wall, next to
    the woodpile. Also fixed: `town_fix_levels` had dropped the hanging `SM_VK_Prop_SmithSign` on every build (its
    height read as level 4); it is now in `WALL_MOUNTED`.
-3. River's west end is open at the map edge; the lake still reads as a rounded rectangle.
-4. Worn-ground pads follow cell squares (the ground-control map has one texel per cell).
+3. ~~River's west end is open at the map edge; the lake reads as a rounded rectangle.~~ Done 2026-09-24: the river
+   rises from a spring pool a few cells in from the west edge (`town_spring` dresses it), and the lake has an irregular
+   outline (`_blob` in `town_grid`). No water touches the map border any more; the rest of the border is still a
+   thin sheet (a closed diorama edge was offered and not chosen).
+4. ~~Worn-ground pads follow cell squares.~~ Done 2026-09-24: the ground-control map has 5 texels per cell and wear is
+   painted from soft marks (`TGrid.wear_marks`). The old per-cell wear (0.35–0.39) was also below the dirt layer's
+   0.45 threshold, so it hardly showed; the marks are 0.8–0.85. Wall-walk and upper-storey doors no longer get a
+   worn patch on the ground below them.
 5. Fishmonger's ice tray reads very white from above.
-6. Stairs in the open have no transition tile yet (they use `SM_VKT_RampShoulder` rocks). Stairs on cobble have
-   plain dressed-stone side walls.
+6. ~~Stairs in the open have no transition tile yet (they use `SM_VKT_RampShoulder` rocks). Stairs on cobble have
+   plain dressed-stone side walls.~~ Done 2026-09-24: the half-stair tile builds flanking walls (sloped coping, a pier
+   where the cliff meets the flight, a kerb up top) on grass and cobble alike; the rock shoulders and
+   `SM_VKT_RampShoulder` are gone. T1/T3/T3r pass and T4 keeps its known hits.
 7. Cliffs seen head-on at eye level still read as a band with a straight toe line. The cliff texture's painted grass
    tufts look flat on vertical faces. Up-facing rock gets bright moss, so the middle ledges show as a thin green line
    from above.

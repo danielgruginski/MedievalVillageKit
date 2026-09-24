@@ -2,7 +2,7 @@
 
 Generated from the .blend on 2026-09-23 (`docs/PIECES.md`). Dimensions are the master's bounding box in metres (x × y × z).
 Every piece is a hidden master; the maps place instances that share its mesh.
-Total: 482 masters.
+Total: 481 masters.
 
 ## Building kit (`SM_VK_*`): 417 pieces
 
@@ -528,7 +528,6 @@ Total: 482 masters.
 | `SM_VKT_Cliff_Outer_Sq` | 1.80 × 1.80 × 3.00 | 264 | 2 |
 | `SM_VKT_Cliff_Saddle_A` | 3.00 × 3.00 × 3.00 | 348 | 2 |
 | `SM_VKT_LipGrass` | 1.57 × 0.41 × 0.31 | 64 | 1 |
-| `SM_VKT_RampShoulder` | 1.30 × 3.39 × 1.68 | 320 | 1 |
 | `SM_VKT_Ramp_HalfE_A` | 3.00 × 3.00 × 3.00 | 225 | 2 |
 | `SM_VKT_Ramp_HalfW_A` | 3.00 × 3.00 × 3.00 | 225 | 2 |
 | `SM_VKT_Ramp_Mid_A` | 3.00 × 3.00 × 1.50 | 72 | 2 |
@@ -538,8 +537,8 @@ Total: 482 masters.
 | `SM_VKT_Shore_Inner_A` | 3.00 × 3.00 × 1.50 | 194 | 2 |
 | `SM_VKT_Shore_Outer_A` | 3.00 × 3.00 × 1.50 | 174 | 2 |
 | `SM_VKT_Shore_Saddle_A` | 3.00 × 3.00 × 1.50 | 304 | 2 |
-| `SM_VKT_Stair_HalfE_A` | 3.00 × 3.00 × 3.00 | 268 | 2 |
-| `SM_VKT_Stair_HalfW_A` | 3.00 × 3.00 × 3.00 | 268 | 2 |
-| `SM_VKT_Stair_Mid_A` | 3.00 × 3.00 × 1.50 | 156 | 2 |
+| `SM_VKT_Stair_HalfE_A` | 3.00 × 3.00 × 3.40 | 318 | 2 |
+| `SM_VKT_Stair_HalfW_A` | 3.00 × 3.00 × 3.40 | 318 | 2 |
+| `SM_VKT_Stair_Mid_A` | 3.00 × 3.00 × 1.50 | 228 | 2 |
 | `SM_VKT_WaterQuad` | 3.00 × 3.00 × 0.00 | 2 | 2 |
 

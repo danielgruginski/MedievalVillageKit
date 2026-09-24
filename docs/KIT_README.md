@@ -13,7 +13,7 @@ Every piece can be rebuilt from code at any time. The same texts are kept as fil
 |---|---|
 | `VK_Pieces` | All piece masters `SM_VK_*` (hidden): core pieces, 8 expansion modules, landmark pieces (smithy, inn), stall variants. Instances share their meshes. |
 | `VK_NaturePieces` | 39 trees, bushes, rocks, plants and mushrooms (hidden masters), rebuilt from `NATURE_SPECS`. |
-| `VK_TerrainTiles` | Marching-squares tile masters `SM_VKT_*` (hidden), incl. the ramp/cliff transition half tiles and `SM_VKT_RampShoulder`. |
+| `VK_TerrainTiles` | Marching-squares tile masters `SM_VKT_*` (hidden), incl. the ramp and stair transition half tiles. |
 | `VK_ValleyTerrain` + `VK_ValleyTown` | The big showcase map: 72×56 cells at world (1500, 0). Terrain chunks, water, `VKV_Paving` + all placed pieces. |
 | `VK_Terrain` + `VK_TerrainVillage` | The small terrain demo: 32×24 cells at world (1200, 0), with `VKT_Paving`. |
 | `VK_TerrainBoard` | A catalogue of every terrain tile. |
@@ -65,14 +65,19 @@ The valley generator (`build_valley_town`) runs these checks and clean-up passes
 - **Occupancy:** walls, towers, gatehouse, bridges and quay are marked occupied. Trees keep one free cell from any building; big broadleaf trees keep two. Trees are at least 1.5 m apart (2.5 m for the same model). Willows are at least 12 m apart and stay off roads, ramps, bridges and the quay. No trees on the map border or on ramp/stair tops.
 - **`town_door_clear`:** slides props, bushes and rocks out of the corridor in front of every `*_Door` module (1.3 m wide, porch width when there is a porch) to a spot that clashes with nothing, else drops them. Removes weed strips from door steps.
 - **`town_fix_levels`:** moves a prop that straddles a cliff, stands on a ramp or over water by up to 2 m, or deletes it if no nearby spot fits.
-- **`town_wear`:** worn ground in front of doors and around busy yards (`TGrid.wear`, the R channel of the ground-control map).
+- **`town_wear`:** trampled ground over the busy yards, and (in `town_door_clear`) in front of every ground-floor door.
+  Both are soft ellipses in map metres (`TGrid.wear_marks`) with noise-broken outlines, painted into the R channel of
+  the ground-control map on grass only. The per-cell `TGrid.wear` still works but is no longer used by the valley.
 - **Paving:** cobbled cells become a separate mesh (`tk_build_paving`): stones 6 cm above the terrain, dressed-stone curbs towards grass, patches of missing stones showing dirt. Props on cobbles are lifted onto it.
 - **Ramps:** the half-ramp tile blends the cliff down into the ramp surface and turns the side into an earth bank; `tk_ramp_dress` adds a stone, grass and a fern at each ramp end.
 - **Stairs:** built steps.
   - The treads are cobbles, with the paving's texture and mapping.
   - The risers, the nosing strip on each tread and the side walls are dressed stone (`M_VKT_Stair`; TCol G = 1 marks stone, R is AO).
-  - Stairs in the open get `SM_VKT_RampShoulder` rocks at their ends; stairs on cobble cells don't.
-  - The paving leaves out the half cell a ramp or stair climbs into, and runs its curbs along the stair's side walls.
+  - The half-stair tile is the transition to the cliff (`_stair_wall`): a 0.5 m flanking wall (wall + 2 m flight + wall
+    fill one cell) with a sloped coping along the part of the flight in front of the cliff, a capped pier where the
+    cliff meets the flight, and a kerb at terrace height along the upper flight. Same on grass and on cobble.
+  - The paving leaves out the half cell a ramp or stair climbs into (with a stair's flanking walls), and runs its
+    curbs along a ramp's cut walls. `tk_ramp_dress` puts its plants outside the walls of unpaved stairs.
 - **Cliffs:**
   - `make_displace` gives the cliff faces chunky rock relief. The displacement depends only on world position, so the duplicated vertices of neighbouring tiles move together and no seam opens.
   - Where a tier top is the middle ledge of a taller cliff, the relief runs through the ledge, and the upper layer drops its skirt (`tk_cache_noskirt`).
@@ -110,7 +115,9 @@ Lighting: `VK_Sun` is the key light (from the south-west). `VK_Fill` is a shadow
   - Tiles: Cliff (Full, Edge A/B/C, Outer A/B/Sq, Inner A/B/Sq, Saddle), Shore (Edge A/B, Outer, Inner, Saddle, Bed), Ramp and Stair (HalfE, HalfW, Mid), and WaterQuad.
   - Tile sides are quantised to 1/1024 m, so neighbours match bit for bit.
   - Terrain vertex colour `TCol` holds: R = AO, G = rock mask, B = rim, A = wet/sand.
-  - The ground type per cell comes from `T_VK_GroundCtl*`: R dirt, G cobble, B sand, A rock (with `paved=True` cobble cells are painted as dirt under the paving mesh).
+  - The ground type comes from `T_VK_GroundCtl*`: R dirt, G cobble, B sand, A rock (with `paved=True` cobble cells are painted as dirt under the paving mesh).
+    It has `CTL_RES` = 5 texels per cell: the cell data is upsampled bilinearly (it looks exactly as at one texel per cell),
+    and the extra resolution carries the worn-ground marks.
 
 ## 5. Expansion modules (builders)
 

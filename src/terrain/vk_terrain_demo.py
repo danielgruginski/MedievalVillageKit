@@ -242,6 +242,6 @@ def build_terrain_demo(seed=5,village=True,scatter=True):
     _CACHE.clear()
     tk_ground_ctl(G,paved=True); terrain_material(W=G.W,H=G.H)
     objs=tk_build_chunks(G,prefix="VKT",coll=tcoll,displace=disp)
-    tk_ramp_shoulders(G,vcoll); tk_ramp_dress(G,vcoll)
+    tk_ramp_dress(G,vcoll)
     tk_build_paving(G,tcoll,name="VKT_Paving")
     return G,errs,objs

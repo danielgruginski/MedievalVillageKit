@@ -12,18 +12,35 @@ GATE_I=42                                  # gatehouse centred on vertex column 
 ROAD_I=(41,42)                             # main road cell columns
 POSTERN_J=30                               # west postern: cell row of the opening in the west wall
 
+def _blob(ii,jj,cx,cy,rx,ry,harm=()):
+    """cells whose centre lies inside an ellipse with a wavy radius (harmonics (k, amp, phase)): organic outlines"""
+    dx=(ii+0.5-cx)/rx; dy=(jj+0.5-cy)/ry; a=np.arctan2(dy,dx)
+    return np.hypot(dx,dy)<1.0+sum(A*np.cos(k*a+p) for (k,A,p) in harm)
+
+def _grow(m):
+    """the cell mask grown by one cell, diagonals included (the one-cell shore around water)"""
+    g=m.copy(); H,W=m.shape
+    for dj in (-1,0,1):
+        for di in (-1,0,1):
+            g[max(dj,0):H+min(dj,0),max(di,0):W+min(di,0)]|=m[max(-dj,0):H+min(-dj,0),max(-di,0):W+min(-di,0)]
+    return g
+
 def town_grid(seed=11):
     rng=np.random.default_rng(seed); W,H=TOWN_W,TOWN_H
     G=TGrid(W,H); L=np.ones((H,W),np.int32)
     jj,ii=np.mgrid[0:H,0:W]
-    # --- river (level 0): water rows 12..15, sandy banks 10..11 and 16..17
-    L[10:18,:60]=0; G.water[12:16,:60]=True
-    # --- lake to the east: rounded (superellipse) level-0 basin and water, so no square notches where the banks meet it
-    basin=(np.abs((ii-65.5)/8.5)**4+np.abs((jj-11.8)/7.2)**4)<1.0
-    L[basin]=0
-    lake=(np.abs((ii-64.5)/6.5)**4+np.abs((jj-12.5)/5.0)**4)<1.0     # ends one sand cell short of the map edge
+    # --- river (level 0): water rows 12..15, sandy banks 10..11 and 16..17. It rises from a spring pool a few cells in
+    #     from the west edge: the head of the valley stays level 1, so no water reaches the map border
+    L[10:18,6:60]=0; G.water[12:16,6:60]=True
+    pool=_blob(ii,jj,5.9,13.9,2.9,3.0,((2,0.12,1.3),(3,0.07,0.2)))&(ii<=7)
+    L[(_grow(pool)|_blob(ii,jj,6.0,14.0,4.0,4.3,((3,0.08,1.7),)))&(jj>=10)&(jj<=17)&(ii>=2)]=0
+    G.water[pool]=True
+    # --- lake to the east: an irregular outline (ellipse with a wavy radius) one sand cell short of the east edge, and a
+    #     beach on its south shore for the fisher hut and the shore ramp (row 5)
+    lake=_blob(ii,jj,64.3,13.2,5.6,5.3,((2,0.10,0.9),(3,0.13,2.4),(4,0.05,0.2),(5,0.04,1.3)))&(ii<=W-2)
+    beach=_blob(ii,jj,64.6,6.6,5.6,2.0,((3,0.10,0.5),))
+    L[(_grow(lake)|_blob(ii,jj,64.8,11.8,7.4,6.6,((2,0.08,0.9),(3,0.10,2.4)))|beach)&(ii<=W-1)]=0
     G.water[lake]=True
-    G.water[12:16,58:60]=True
     # mill inlet (level-0 pad north of the river; col 23 keeps the ramp at cols 24-25 legal)
     L[16:20,23:30]=0
     # --- town plateau (level 2) and the west bench
@@ -282,6 +299,21 @@ def town_river(T):
     T.build("fisher_hut",build_fisher_hut,3*64,24.0,180,level=0,allow_water=True,seed=7)
     T.P("SM_VK_Prop_Rowboat",3*62,36.0,20,z=-0.6,style={"shutter":"Green"})
     T.P("SM_VK_Prop_Rowboat",3*68,42.0,-70,z=-0.6,style={"shutter":"Blue"})
+
+def town_spring(T,disp=None):
+    """where the river rises (west end): a rock outcrop at the valley head over the pool, boulders where the water
+    wells up, reeds and ferns on the sand. The spot is kept free of scatter and cliff dressing."""
+    def put(n,x,y,z,r,s=1.0):
+        if disp is not None: d=disp(np.array([[x,y,z]],float))[0]; x,y=x+d[0],y+d[1]
+        T.P(n,x,y,r,z=z,scale=s)
+    put("SM_VK_Rock_Outcrop",4.6,42.5,0.0,90)
+    for (n,x,y,z,r,s) in (("SM_VK_Rock_Boulder_B",8.4,45.8,-0.4,20,1.0),("SM_VK_Rock_Boulder_A",8.9,39.6,-0.3,-35,1.0),
+                          ("SM_VK_Rock_Boulder_Flat",10.3,42.8,-0.45,75,0.9),("SM_VK_Rock_Small_A",11.6,40.6,-0.5,0,1.3),
+                          ("SM_VK_Rock_Small_B",11.2,46.7,-0.45,40,1.2),("SM_VK_Plant_Reeds",11.0,34.3,0.0,10,1.0),
+                          ("SM_VK_Plant_Reeds",19.8,50.0,0.0,70,0.9),("SM_VK_Plant_Reeds",7.3,49.3,0.0,-20,1.0),
+                          ("SM_VK_Plant_Fern",6.8,36.4,0.0,30,1.0),("SM_VK_Plant_Fern",6.9,50.4,0.0,-60,0.9)):
+        put(n,x,y,z,r,s)
+    T.occupy((3.0,12.0,33.0,51.0))
 
 def town_south(T):
     G=T.G
@@ -554,9 +586,11 @@ def town_door_clear(T,depth=2.3,half=0.65):
     movable=[o for o in objs if o.type=="MESH" and (PROP_RE.match(base_name(o)) or base_name(o).startswith(("SM_VK_Bush_","SM_VK_Plant_","SM_VK_Rock_","SM_VK_Mushrooms_")))
              and not any(w in o.name for w in WALL_MOUNTED+FLOATING+DOOR_PARTS+SPANNING+("LampPost",))]
     G=T.G; moved=[]; dropped=[]
-    for d in doors:
+    for d in doors:                                    # a worn patch on the grass in front of every door
         i,j=door_front_cell(T,d)
-        if 0<=i<G.W and 0<=j<G.H and G.ground[j,i]==0 and not G.water[j,i]: G.wear[j,i]=max(G.wear[j,i],90)
+        if 0<=i<G.W and 0<=j<G.H and G.ground[j,i]==0 and not G.water[j,i] and abs(d.location.z-G.level[j,i]*TIER)<0.5:
+            r=d.rotation_euler.z                       # (ground doors only: not the gatehouse's wall-walk doors)
+            G.wear_marks.append((d.location.x-TOWN_ORIGIN[0]+math.sin(r)*1.3,d.location.y-TOWN_ORIGIN[1]-math.cos(r)*1.3,1.0,1.7,r,0.8))
     for o in movable:
         for it in range(3):
             hit=None
@@ -615,12 +649,11 @@ def town_fix_levels(T,disp=None,margin=0.3):
     return moved,dropped
 
 def town_wear(T):
-    """trampled ground around the busy places: camp, plaza stalls, the market cross, well-used yards"""
+    """trampled ground in the busy yards: a ragged patch over each yard's footprint (painted by tk_ground_ctl)"""
     G=T.G
     for (label,x0,x1,y0,y1) in T.boxes:
         if label in ("camp","sawpit","stockpile","training","site0","site1","site2","charcoal","quarry","mine"):
-            for (i,j) in T.cells_of_bbox(x0,x1,y0,y1,shrink=0.8):
-                if 0<=i<G.W and 0<=j<G.H and G.ground[j,i]==0: G.wear[j,i]=max(G.wear[j,i],100)
+            G.wear_marks.append((0.5*(x0+x1),0.5*(y0+y1),0.5*(x1-x0),0.5*(y1-y0),0.0,0.85))
 
 def town_lift_on_paving(T,lift=0.06):
     """props standing on cobbled cells go up onto the paving"""
@@ -644,6 +677,7 @@ def build_valley_town(seed=11,districts=("walls","river","south","meadow","west"
     if "inside" in districts:
         T.infilled=town_infill(T); town_plaza_lamps(T)
     disp=make_displace(G)
+    town_spring(T,disp=disp.D)
     if scatter: town_scatter(T,disp=disp.D)
     town_door_clear(T); town_fix_levels(T,disp=disp.D); town_wear(T)
     _CACHE.clear()
@@ -652,6 +686,6 @@ def build_valley_town(seed=11,districts=("walls","river","south","meadow","west"
     objs=tk_build_chunks(G,prefix="VKV",origin=TOWN_ORIGIN,coll=tcoll,displace=disp)
     for o in objs:
         if "Chunk" in o.name: o.data.materials[0]=bpy.data.materials["M_VK_TerrainTown"]
-    tk_ramp_shoulders(G,vcoll,origin=TOWN_ORIGIN); tk_ramp_dress(G,vcoll,origin=TOWN_ORIGIN)
+    tk_ramp_dress(G,vcoll,origin=TOWN_ORIGIN)
     tk_build_paving(G,tcoll,origin=TOWN_ORIGIN,name="VKV_Paving"); town_lift_on_paving(T)
     return G,T,objs
