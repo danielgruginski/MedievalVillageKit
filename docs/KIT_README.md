@@ -67,7 +67,12 @@ The valley generator (`build_valley_town`) runs these checks and clean-up passes
 - **`town_fix_levels`:** moves a prop that straddles a cliff, stands on a ramp or over water by up to 2 m, or deletes it if no nearby spot fits.
 - **`town_wear`:** worn ground in front of doors and around busy yards (`TGrid.wear`, the R channel of the ground-control map).
 - **Paving:** cobbled cells become a separate mesh (`tk_build_paving`): stones 6 cm above the terrain, dressed-stone curbs towards grass, patches of missing stones showing dirt. Props on cobbles are lifted onto it.
-- **Ramps:** the half-ramp tile blends the cliff down into the ramp surface and turns the side into an earth bank; `tk_ramp_dress` adds a stone, grass and a fern at each ramp end. Stairs still get `SM_VKT_RampShoulder` rocks.
+- **Ramps:** the half-ramp tile blends the cliff down into the ramp surface and turns the side into an earth bank; `tk_ramp_dress` adds a stone, grass and a fern at each ramp end.
+- **Stairs:** built steps.
+  - The treads are cobbles, with the paving's texture and mapping.
+  - The risers, the nosing strip on each tread and the side walls are dressed stone (`M_VKT_Stair`; TCol G = 1 marks stone, R is AO).
+  - Stairs in the open get `SM_VKT_RampShoulder` rocks at their ends; stairs on cobble cells don't.
+  - The paving leaves out the half cell a ramp or stair climbs into, and runs its curbs along the stair's side walls.
 - **Cliffs:**
   - `make_displace` gives the cliff faces chunky rock relief. The displacement depends only on world position, so the duplicated vertices of neighbouring tiles move together and no seam opens.
   - Where a tier top is the middle ledge of a taller cliff, the relief runs through the ledge, and the upper layer drops its skirt (`tk_cache_noskirt`).

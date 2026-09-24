@@ -70,8 +70,9 @@ touches a tower (the road strip is deleted right after), one smithy crate touche
 - **Nature (`VK_NaturePieces`, 39):** oaks, apple, cherry blossom, birches, willow, pines, dead tree, sapling, bushes,
   plants, mushrooms, rocks, stump, log, pond. Leaf atlas `T_VK_Leaves_*` (cherry cell repainted in hero-oak style).
 - **Terrain (`vk_terrain`):** dual-grid marching squares, 3 m cells, 1.5 m levels; cliff/shore tiles with A/B/C
-  variants; ramps whose half tile blends the cliff down and has an earth bank (plus `tk_ramp_dress` props); stairs
-  with rock shoulders; separate cobble paving mesh with curbs and missing-stone patches.
+  variants; ramps whose half tile blends the cliff down and has an earth bank (plus `tk_ramp_dress` props); built
+  stairs (cobble treads, dressed-stone risers, nosings and side walls; rock shoulders only outside paved areas);
+  separate cobble paving mesh with curbs and missing-stone patches (left out where a stair climbs into a cell).
   - `make_displace` (position-only, seam-safe) does all of this:
     - wobbles the contours;
     - gives cliff faces rock relief;
@@ -91,7 +92,8 @@ touches a tower (the road strip is deleted right after), one smithy crate touche
 3. River's west end is open at the map edge; the lake still reads as a rounded rectangle.
 4. Worn-ground pads follow cell squares (the ground-control map has one texel per cell).
 5. Fishmonger's ice tray reads very white from above.
-6. Stairs have no transition tile yet (they still use `SM_VKT_RampShoulder` rocks).
+6. Stairs in the open have no transition tile yet (they use `SM_VKT_RampShoulder` rocks). Stairs on cobble have
+   plain dressed-stone side walls.
 7. Cliffs seen head-on at eye level still read as a band with a straight toe line. The cliff texture's painted grass
    tufts look flat on vertical faces. Up-facing rock gets bright moss, so the middle ledges show as a thin green line
    from above.
@@ -115,6 +117,8 @@ touches a tower (the road strip is deleted right after), one smithy crate touche
   (`os.chdir` in Blender to release it).
 - Blender's BOX image projection rotates the texture on X-facing faces; the terrain uses its own biplanar
   `side_sample` instead.
+- `Mesh.materials.clear()` resets every face's material index to 0. Fill the material slots first, then write the
+  indices. Doing it the other way round had hidden the stair and curb materials behind the terrain material.
 - Never `raise SystemExit` in code run through MCP. Don't keep references to objects/bmesh elements you delete in
   the same call (`StructRNA ... removed` / `BMesh data ... removed`).
 - `vk_tex` creates `TEXDIR` when executed; generated textures are saved there *and* packed.
