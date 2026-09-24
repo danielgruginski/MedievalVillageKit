@@ -434,9 +434,9 @@ Total: 482 masters.
 | `SM_VK_Def_StoneUp_Door` | 3.00 × 1.01 × 2.80 | 1,211 | 52 |
 | `SM_VK_Def_StoneUp_Slit` | 3.00 × 0.68 × 2.80 | 458 | 52 |
 | `SM_VK_Def_StoneUp_Window` | 3.00 × 1.10 × 2.80 | 1,146 | 52 |
-| `SM_VK_Gatehouse_Block` | 10.64 × 8.57 × 10.50 | 11,956 | 52 |
-| `SM_VK_Gatehouse_GateLeaf` | 1.64 × 0.42 × 4.34 | 2,012 | 52 |
-| `SM_VK_Gatehouse_Portcullis` | 3.55 × 0.21 × 4.74 | 1,392 | 52 |
+| `SM_VK_Gatehouse_Block` | 13.50 × 8.57 × 10.50 | 13,852 | 52 |
+| `SM_VK_Gatehouse_GateLeaf` | 1.79 × 0.42 × 4.49 | 2,012 | 52 |
+| `SM_VK_Gatehouse_Portcullis` | 3.72 × 0.21 × 4.94 | 1,392 | 52 |
 | `SM_VK_LowWall_GateArch` | 3.38 × 0.77 × 4.25 | 2,608 | 52 |
 | `SM_VK_Palisade_Diag` | 4.27 × 0.51 × 4.70 | 1,838 | 52 |
 | `SM_VK_Palisade_Gate` | 4.12 × 0.94 × 6.10 | 2,372 | 52 |

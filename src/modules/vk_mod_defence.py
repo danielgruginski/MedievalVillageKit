@@ -748,13 +748,19 @@ def def_townwall_tower_round(k):
     _ico(k,(0,0,12.35),0.12,BRONZE,sub=1)
 
 # ---------------------------------------------------------------- gatehouse
+GH_HX=6.0        # half width of the gatehouse block (4 cells)
+GH_HW=1.75       # half width of the passage (3.5 m vault, 3.3 m clear between the open leaves)
+GH_SP=2.8        # arch spring height (crown GH_SP+GH_HW)
+GH_TX=4.4        # flanking tower centres at x +-GH_TX: clear of the passage, overhanging the block ends a little
+GH_RAISE=3.6     # raised portcullis: its bottom bars show under the arch, 3.5 m above the road
+
 def def_gatehouse_block(k):
-    """3x2-cell gatehouse centred on the wall line: masonry to 6.2 (x -4.5..4.5, y -3..3), passage along Y
-       (hw 1.6, spring 2.8, crown 4.4), portcullis slot at y -2.4, half-round towers r 1.8 at (+-3,-3) to 9.0
-       (cap them with Roof_Cone_R2). Timber upper storey + roofs are placed by build_townwall_demo."""
-    hw=1.6; sp=2.8; top=6.05; Y0,Y1=-3.0,3.0
+    """4x2-cell gatehouse centred on the wall line: masonry to 6.2 (x -6..6, y -3..3), passage along Y
+       (hw 1.75, spring 2.8, crown 4.55), portcullis slot at y -2.4, half-round towers r 1.8 at (+-4.4,-3) to 9.0
+       (cap them with Roof_Cone_R2). Timber upper storey + roofs are placed by def_dress_gatehouse."""
+    hw=GH_HW; sp=GH_SP; top=6.05; Y0,Y1=-3.0,3.0; HX=GH_HX; TX=GH_TX
     b=set(k.bm.verts)
-    stone_panel(k,-4.5,-hw,-1.5,top,Y0,Y1); stone_panel(k,hw,4.5,-1.5,top,Y0,Y1)
+    stone_panel(k,-HX,-hw,-1.5,top,Y0,Y1); stone_panel(k,hw,HX,-1.5,top,Y0,Y1)
     arch_cut_panels(k,hw,sp,top,Y0,Y1,STONE)
     def_tw_batter(def_new_verts(k,b),face=Y0,amt=0.3)
     arch_soffit(k,hw,sp,Y0,Y1,ASHLAR)
@@ -771,35 +777,35 @@ def def_gatehouse_block(k):
         k.box((math.cos(a)*r,Y1+0.05+(0.04 if ks else 0),sp+math.sin(a)*r),(0.36 if ks else 0.3,0.24,0.56 if ks else 0.42),
               STONE_BLOCK,rot=(0,-(a-math.pi/2),0),bevel=0.05,segs=2)
     for s in (-1,1): k.box((s*(hw+0.2),Y1+0.05,sp-0.1),(0.5,0.26,0.2),STONE_BLOCK,bevel=0.04)       # imposts
-    # outer face arch: only the voussoirs clear of the flanking towers
+    # outer face arch (the flanking towers stand clear of it)
     for i in range(11):
         a=math.pi*(i+0.5)/11; r=hw+0.19
-        if abs(math.cos(a)*r)>1.05: continue
         k.box((math.cos(a)*r,Y0-0.04,sp+math.sin(a)*r),(0.3 if i!=5 else 0.36,0.2,0.42 if i!=5 else 0.56),STONE_BLOCK,rot=(0,-(a-math.pi/2),0),bevel=0.05,segs=2)
+    for s in (-1,1): k.box((s*(hw+0.2),Y0-0.05,sp-0.1),(0.5,0.26,0.2),STONE_BLOCK,bevel=0.04)
     # corbel course under the jettied timber storey (front and back)
     for yy,sg in ((Y0,-1),(Y1,1)):
-        for i in range(18):
-            x=-4.25+0.5*i
+        for i in range(int(4*HX)):
+            x=-HX+0.25+0.5*i
             if abs(x)>hw+0.3 or yy>0:
                 k.box((x,yy+sg*0.12,5.85),(0.26,0.26,0.3),STONE_BLOCK,bevel=0.03)
-        k.box((0,yy+sg*0.05,5.62),(9.0,0.12,0.16),ASHLAR,bevel=0.02)
+        k.box((0,yy+sg*0.05,5.62),(2*HX,0.12,0.16),ASHLAR,bevel=0.02)
     # landings for the end-wall doors of the timber storey (door at y 1..2 above the 6.2 walk)
     for s in (-1,1):
-        k.box((s*4.85,1.5,6.12),(0.8,1.3,0.16),ASHLAR,bevel=0.03)
+        k.box((s*(HX+0.35),1.5,6.12),(0.8,1.3,0.16),ASHLAR,bevel=0.03)
         for yy in (1.05,1.95):
-            k.box((s*4.7,yy,5.85),(0.5,0.24,0.3),STONE_BLOCK,bevel=0.03)
+            k.box((s*(HX+0.2),yy,5.85),(0.5,0.24,0.3),STONE_BLOCK,bevel=0.03)
     # quoins on the front corners
     for s in (-1,1):
         z=0.1; i=0; rnd=random.Random(40+s)
         while z<5.4:
             h=rnd.uniform(0.42,0.55); zc=z+h/2; bt=0.3*max(0.0,min(1.0,(1.8-zc)/1.8))
             sx,sy=(0.9,0.5) if i%2==0 else (0.5,0.9)
-            rock(k,(s*(4.5-sx/2+0.06),Y1-sy/2+0.06,zc),(sx,sy,h-0.04),seed=960+i+s*50,tilt=0.015,segs=1)
+            rock(k,(s*(HX-sx/2+0.06),Y1-sy/2+0.06,zc),(sx,sy,h-0.04),seed=960+i+s*50,tilt=0.015,segs=1)
             z+=h; i+=1
-    def_tw_plinth(k,-4.5,-1.65,face=Y0-0.3,seed=41); def_tw_plinth(k,1.65,4.5,face=Y0-0.3,seed=43)
+    def_tw_plinth(k,-HX,-hw-0.05,face=Y0-0.3,seed=41); def_tw_plinth(k,hw+0.05,HX,face=Y0-0.3,seed=43)
     # flanking half-round towers
     for s in (-1,1):
-        cx,cy=s*3.0,Y0
+        cx,cy=s*TX,Y0
         def rf(z): return 1.8+0.25*max(0.0,min(1.0,(1.8-z)/1.8))
         zs=[-1.5,0.0,0.6,1.2,1.8,3.0,4.4,5.8,7.2,8.2,8.8]
         # half cylinder toward -Y (angles pi..2pi) built as a full ring of 16 (back half hidden in the block)
@@ -813,13 +819,14 @@ def def_gatehouse_block(k):
                 a=math.radians(d if s<0 else -180-d); def_slit(k,a,rf(z),z,h=0.8,c=(cx,cy))
         for i in range(12):
             a=math.pi+math.pi*(i+0.5)/12; rock(k,(cx+math.cos(a)*2.1,cy+math.sin(a)*2.1,0.12),(0.42,0.8,0.42),seed=990+i+s*20,rot_z=a,tilt=0.05,segs=1)
-    for s in (-1,1): def_torch(k,s*1.12,Y0-0.35,3.2,out=(-s*0.3,-1,0))
+    for s in (-1,1): def_torch(k,s*(hw+0.45),Y0-0.35,3.2,out=(-s*0.3,-1,0))
 
 def def_gatehouse_portcullis(k):
-    """IRON portcullis for the gatehouse passage (3.3 wide x 4.6), origin at the bottom centre; slides on local Z"""
-    W=3.3; H=4.6
-    for i in range(12):
-        x=-W/2+0.15+i*0.3
+    """IRON portcullis for the gatehouse passage (3.6 wide x 4.8), origin at the bottom centre; slides on local Z"""
+    W=2*GH_HW+0.1; H=4.8
+    nb=int(round((W-0.3)/0.3))+1
+    for i in range(nb):
+        x=-(nb-1)*0.15+i*0.3
         k.box((x,0,H/2+0.12),(0.08,0.08,H-0.24),IRON,bevel=0.012)
         _cyl(k,(x,0,0.08),0.045,0.0,0.24,4,IRON,rot=Matrix.Rotation(math.pi,4,"X"))
     for j in range(15):
@@ -829,9 +836,9 @@ def def_gatehouse_portcullis(k):
     for x in (-W/2,W/2): k.box((x,0,H/2),(0.12,0.14,H),IRON,bevel=0.015)
 
 def def_gatehouse_gateleaf(k):
-    """one oak gate leaf for the gatehouse passage; hinge at the origin, leaf along +X (1.6), arched top
-       (spring 2.8, crown 4.4). Symmetric front/back: the other leaf is the same piece rotated 180."""
-    hw=1.6; sp=2.8; th=0.16
+    """one oak gate leaf for the gatehouse passage; hinge at the origin, leaf along +X (1.75), arched top
+       (spring 2.8, crown 4.55). Symmetric front/back: the other leaf is the same piece rotated 180."""
+    hw=GH_HW; sp=GH_SP; th=0.16
     n=6; w=(hw-0.04)/n
     for i in range(n):
         x0=0.02+i*w; x1=x0+w-0.012; xm=(x0+x1)/2
@@ -1313,56 +1320,59 @@ def build_palisade_demo(coll,origin,seed=0):
     P("SM_VK_Prop_TrainingDummy",2.0,-1.0,0,-20); P("SM_VK_Prop_TrainingDummy",4.2,0.4,0,15)
 
 def def_dress_gatehouse(P,gx,st):
-    """timber storey (6.2 -> 9.0), hip/mid/hip roof, cone caps, portcullis + leaves for a Gatehouse_Block at x=gx"""
-    Z=DEF_WALK
-    P("SM_VK_Gatehouse_Portcullis",gx,-2.4,2.2,0,slide_axis="local Z",travel=4.4)
-    P("SM_VK_Gatehouse_GateLeaf",gx-1.6,-1.2,0,78,hinge_axis="local Z")
-    P("SM_VK_Gatehouse_GateLeaf",gx+1.6,-1.2,0,180-78,hinge_axis="local Z")
-    P("SM_VK_Wall_Timber_Window",gx,-3,Z,0,st)
-    for i,x in enumerate((gx-3,gx,gx+3)):
-        P(("SM_VK_Wall_Timber_X","SM_VK_Wall_Timber_Window","SM_VK_Wall_Timber_K")[i],x,3,Z,180,st)
-    P("SM_VK_Wall_Timber_Door",gx-4.5,1.5,Z,-90,st); P("SM_VK_Wall_Timber",gx-4.5,-1.5,Z,-90,st)
-    P("SM_VK_Wall_Timber_Door",gx+4.5,1.5,Z,90,st); P("SM_VK_Wall_Timber",gx+4.5,-1.5,Z,90,st)
-    P("SM_VK_Corner_Timber",gx-4.5,3,Z,-90,st); P("SM_VK_Corner_Timber",gx+4.5,3,Z,180,st)
+    """timber storey (6.2 -> 9.0), hip/mid/mid/hip roof, cone caps, portcullis (raised) + leaves (open flat against
+       the vault) for a Gatehouse_Block at x=gx. travel = how far the portcullis drops to close."""
+    Z=DEF_WALK; HX=GH_HX
+    P("SM_VK_Gatehouse_Portcullis",gx,-2.4,GH_RAISE,0,slide_axis="local Z",travel=GH_RAISE)
+    P("SM_VK_Gatehouse_GateLeaf",gx-GH_HW,-1.2,0,90,hinge_axis="local Z")
+    P("SM_VK_Gatehouse_GateLeaf",gx+GH_HW,-1.2,0,90,hinge_axis="local Z")
+    for x in (gx-1.5,gx+1.5): P("SM_VK_Wall_Timber_Window",x,-3,Z,0,st)
+    for i,x in enumerate((gx-4.5,gx-1.5,gx+1.5,gx+4.5)):
+        P(("SM_VK_Wall_Timber_X","SM_VK_Wall_Timber_Window","SM_VK_Wall_Timber_Window","SM_VK_Wall_Timber_X")[i],x,3,Z,180,st)
+    P("SM_VK_Wall_Timber_Door",gx-HX,1.5,Z,-90,st); P("SM_VK_Wall_Timber",gx-HX,-1.5,Z,-90,st)
+    P("SM_VK_Wall_Timber_Door",gx+HX,1.5,Z,90,st); P("SM_VK_Wall_Timber",gx+HX,-1.5,Z,90,st)
+    P("SM_VK_Corner_Timber",gx-HX,3,Z,-90,st); P("SM_VK_Corner_Timber",gx+HX,3,Z,180,st)
     RT=Z+H2
-    P("SM_VK_Roof_Hip",gx-3,0,RT,180,st); P("SM_VK_Roof_Mid",gx,0,RT,0,st); P("SM_VK_Roof_Hip",gx+3,0,RT,0,st)
-    for s in (-1,1): P("SM_VK_Roof_Cone_R2",gx+3*s,-3,RT,0,st)
+    P("SM_VK_Roof_Hip",gx-4.5,0,RT,180,st); P("SM_VK_Roof_Mid",gx-1.5,0,RT,0,st)
+    P("SM_VK_Roof_Mid",gx+1.5,0,RT,0,st); P("SM_VK_Roof_Hip",gx+4.5,0,RT,0,st)
+    for s in (-1,1): P("SM_VK_Roof_Cone_R2",gx+GH_TX*s,-3,RT,0,st)
     ban=def_pick("SM_VK_Banner_Wall",None)          # projecting banners on the town side, at the module seams
-    for bx in (gx-1.5,gx+1.5): P(ban,bx,3.18,Z+H2,180,{"cloth":"Red"})
+    for bx in (gx-3,gx+3): P(ban,bx,3.18,Z+H2,180,{"cloth":"Red"})
 
 def build_townwall_demo(coll,origin,seed=0,style=None):
     """town-wall section (outer face -Y): convex corner + return, 3 stacked stair modules landing on the
-       gatehouse (x -3..6), timber-storey gatehouse with portcullis and leaves, round flanking tower on vertex 12,
-       a breach (ruin), concave corner at vertex 21 and a run going -Y with a terrain Step."""
+       gatehouse (x -3..9), timber-storey gatehouse with portcullis and leaves, round flanking tower on vertex 15,
+       a breach (ruin), concave corner at vertex 24 and a run going -Y with a terrain Step."""
     st=style or {"roof":"Slate"}
     P=def_placer(coll,origin)
     W="SM_VK_TownWall_Straight"
+    gx=-3+GH_HX; E=gx+GH_HX-6.0           # gatehouse axis; E shifts everything east of it (the block ended at x 6 when it was 3 cells)
     P("SM_VK_TownWall_Corner_Out",-12,0,0,0)
     for y in (1.5,4.5): P(W,-12,y,0,-90)
     for i,x in enumerate((-10.5,-7.5,-4.5)):
         P(W,x,0,0,0); P("SM_VK_TownWall_Stair",x,0,i*2.067,0)
-    P("SM_VK_Gatehouse_Block",1.5,0,0,0)
-    def_dress_gatehouse(P,1.5,st)
-    for x in (7.5,10.5,13.5,19.5): P(W,x,0,0,0)
-    P("SM_VK_TownWall_Tower_Round",12,0,0,0)
-    P("SM_VK_TownWall_Ruin",16.5,0,0,0)
-    P("SM_VK_TownWall_Corner_In",21,0,0,180)
-    P(W,21,-1.5,0,-90); P("SM_VK_TownWall_Step",21,-4.5,0,-90); P(W,21,-7.5,DEF_LVL,-90)
+    P("SM_VK_Gatehouse_Block",gx,0,0,0)
+    def_dress_gatehouse(P,gx,st)
+    for x in (7.5,10.5,13.5,19.5): P(W,x+E,0,0,0)
+    P("SM_VK_TownWall_Tower_Round",12+E,0,0,0)
+    P("SM_VK_TownWall_Ruin",16.5+E,0,0,0)
+    P("SM_VK_TownWall_Corner_In",21+E,0,0,180)
+    P(W,21+E,-1.5,0,-90); P("SM_VK_TownWall_Step",21+E,-4.5,0,-90); P(W,21+E,-7.5,DEF_LVL,-90)
     # circuit ends: a round tower caps the raised east run (walk doors on +-Y, ground door toward the town, +X);
     # the west return hands over to the old palisade it replaces (upgrade story palisade -> town wall)
-    P("SM_VK_TownWall_Tower_Round",21,-9,DEF_LVL,-90)
+    P("SM_VK_TownWall_Tower_Round",21+E,-9,DEF_LVL,-90)
     # demo-only stand-in terrain: the Step climbs a 1.5 m slope onto a plateau (the terrain kit replaces these)
     for x in (16.5,19.5,22.5,25.5):
-        P("SM_VK_Def_Standin_Ramp",x,-4.5,DEF_LVL,-90)
-        for y in (-7.5,-10.5,-13.5): P("SM_VK_Def_Standin_Plateau",x,y,DEF_LVL,0)
+        P("SM_VK_Def_Standin_Ramp",x+E,-4.5,DEF_LVL,-90)
+        for y in (-7.5,-10.5,-13.5): P("SM_VK_Def_Standin_Plateau",x+E,y,DEF_LVL,0)
     P("SM_VK_Palisade_Post",-12,6.1,0,0)
     for y in (7.5,10.5,13.5): P("SM_VK_Palisade_Straight",-12,y,0,-90)
     P("SM_VK_Palisade_Post",-12,15,0,90)
     # dressing
-    P("SM_VK_Deco_Ivy_B",7.5,-0.78,0,0); P("SM_VK_Deco_Ivy_A",-7.5,-0.78,0,0); P("SM_VK_Deco_Ivy_A",19.5,-0.78,0,0)
+    P("SM_VK_Deco_Ivy_B",7.5+E,-0.78,0,0); P("SM_VK_Deco_Ivy_A",-7.5,-0.78,0,0); P("SM_VK_Deco_Ivy_A",19.5+E,-0.78,0,0)
     P("SM_VK_Prop_WeaponRack",-10.4,3.0,0,180); P("SM_VK_Prop_BarrelStack",-8.0,3.2,0,0)
-    P("SM_VK_Prop_Cart",3.2,-8.5,0,-25); P("SM_VK_Prop_LampPost",-2.4,4.3,0,180); P("SM_VK_Prop_LampPost",5.4,4.3,0,180)
-    P("SM_VK_Prop_Crates",8.2,2.6,0,10)
+    P("SM_VK_Prop_Cart",gx+1.7,-8.5,0,-25); P("SM_VK_Prop_LampPost",gx-3.9,4.3,0,180); P("SM_VK_Prop_LampPost",gx+3.9,4.3,0,180)
+    P("SM_VK_Prop_Crates",8.2+E,2.6,0,10)
 
 def build_tower_house(coll,origin,kind="fortified",seed=0):
     """2x2-cell stone tower house, 4 storeys (walls to 11.4). kind="fortified": crenellated parapet on corbels,

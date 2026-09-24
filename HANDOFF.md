@@ -64,7 +64,7 @@ Common commands: [docs/KIT_README.md §3](docs/KIT_README.md). Quick checks afte
 relief faces (face normal z between −0.1 and 0), plus the same small downward face on five ramps (open issue 13).
 A first hit with normal z below about −0.2 anywhere else would be a real hole.
 Valley build log (`T.log`) known entries: watermill and smokehouse overhang the bank slightly, `WS_skyline_Road`
-touches a tower (the road strip is deleted right after), one smithy crate touches the gatehouse.
+touches a tower (the road strip is deleted right after). `fix_levels dropped` lists a cart and the creels.
 
 ## 4. What exists (state at handoff)
 
@@ -74,6 +74,8 @@ touches a tower (the road strip is deleted right after), one smithy crate touche
   industry, defence; town-wall postern; landmarks `build_smithy` (9 m forge stack, glowing hearth, open workshop,
   bellows, tool wall, sign) and `build_inn` (3 storeys, lit windows, tankard sign, ale cask, beer garden); 8 market
   stall trades; lit-window style; worn/fresh shutter styles; roof palette + per-instance brightness jitter.
+  Gatehouse (`SM_VK_Gatehouse_*`, sizes in the `GH_*` constants of `vk_mod_defence`): 4 cells wide, 3.5 m passage
+  (3.3 m clear between the open leaves), flanking towers at ±4.4 m, portcullis raised to 3.5 m above the road.
 - **Nature (`VK_NaturePieces`, 39):** oaks, apple, cherry blossom, birches, willow, pines, dead tree, sapling, bushes,
   plants, mushrooms, rocks, stump, log, pond. Leaf atlas `T_VK_Leaves_*` (cherry cell repainted in hero-oak style).
 - **Terrain (`vk_terrain`):** dual-grid marching squares, 3 m cells, 1.5 m levels; cliff/shore tiles with A/B/C
@@ -92,10 +94,14 @@ touches a tower (the road strip is deleted right after), one smithy crate touche
   the terrain demo (`vk_terrain_demo`, 32×24 at 1200,0). Both are rebuilt entirely by code.
 - **Lighting (renders only):** `VK_Sun` key light + shadowless `VK_Fill`.
 
-## 5. Open issues and ideas (none started)
+## 5. Open issues and ideas (none started unless marked done)
 
-1. Gatehouse passage is only ~2.1 m clear (needs a wider `SM_VK_Gatehouse_Block`).
-2. A smithy crate (`SM_VK_Prop_Crates` from `build_smithy`) touches the gatehouse — move it.
+1. ~~Gatehouse passage is only ~2.1 m clear.~~ Done 2026-09-24: the block is 4 cells wide and the towers stand clear
+   of the passage (ray casts: ≥ 3.34 m clear at every height, 3.5 m headroom under the portcullis). The gate apron is
+   now cols 39–44, so the construction sites moved 3 m east.
+2. ~~A smithy crate touches the gatehouse.~~ Done 2026-09-24: `town_inside` moves it to the yard by the wall, next to
+   the woodpile. Also fixed: `town_fix_levels` had dropped the hanging `SM_VK_Prop_SmithSign` on every build (its
+   height read as level 4); it is now in `WALL_MOUNTED`.
 3. River's west end is open at the map edge; the lake still reads as a rounded rectangle.
 4. Worn-ground pads follow cell squares (the ground-control map has one texel per cell).
 5. Fishmonger's ice tray reads very white from above.

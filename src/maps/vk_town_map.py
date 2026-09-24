@@ -29,7 +29,7 @@ def town_grid(seed=11):
     # --- town plateau (level 2) and the west bench
     L[24:47,20:64]=2
     L[24:34,0:20]=2
-    L[23,40:44]=2                                     # level-2 apron under the gatehouse front
+    L[23,GATE_I-3:GATE_I+3]=2                         # level-2 apron under the gatehouse front and its flanking towers
     # --- west ridge: level 3 (quarry hill level 4 at i 11..18)
     L[34:47,0:20]=3
     L[34:47,11:19]=4
@@ -77,12 +77,12 @@ def town_grid(seed=11):
     for (j,i) in zip(*np.nonzero(G.ramp)):
         G.stiff[j,i]=True; di,dj=((0,1),(1,0),(0,-1),(-1,0))[G.ramp[j,i]-1]; G.stiff[j+dj,i+di]=True
     G.stiff[G.ground==2]=True
-    G.stiff[23,40:44]=True; G.stiff[POSTERN_J,11:WALL_W]=True
+    G.stiff[23,GATE_I-3:GATE_I+3]=True; G.stiff[POSTERN_J,11:WALL_W]=True
     return G
 
 # ---------------------------------------------------------------- placement with footprint checks
 PROP_RE=re.compile(r"^SM_VK_(Prop_|Pile_)")
-WALL_MOUNTED=("Prop_Sign","Prop_Lantern","Prop_Festoon","Prop_Banner","Prop_Bunting","Prop_Wreath","Prop_Shelf","FlowerBox","Window","Hanging","Awning","Chimney")
+WALL_MOUNTED=("Prop_Sign","SmithSign","Prop_Lantern","Prop_Festoon","Prop_Banner","Prop_Bunting","Prop_Wreath","Prop_Shelf","FlowerBox","Window","Hanging","Awning","Chimney")
 DOOR_PARTS=("Step","Stair","Doormat","Porch","Mat","Planter","FlowerPot")      # belong in front of a door: never slid away
 SPANNING=("TreadwheelCrane","Crane","Bridge","Pier","Jetty","Chute","Sluice")   # deliberately span levels
 FLOATING=("Barge","Rowboat","Boat","Buoy","Raft")
@@ -220,7 +220,7 @@ def town_walls(T):
     towers_x=[3*i for i in (29,36,50,57)]; towers_y=[3*j for j in (33,39)]
     for i in range(WALL_W,WALL_E):
         x=3*i+1.5
-        if abs(x-gx)>3: T.P(Wm,x,ys,0,z=zt,occupy=True)
+        if abs(x-gx)>GH_HX: T.P(Wm,x,ys,0,z=zt,occupy=True)
         T.P(Wm,x,yn,180,z=zt,occupy=True)
     for j in range(WALL_S,WALL_N):
         y=3*j+1.5
@@ -309,7 +309,7 @@ def town_meadow(T):
     T.build("apiary",build_apiary,3*23+1.5,3*21+1.5,0,seed=4)
     T.build("windmill",build_windmill,3*33,3*22,0)
     T.build("granary",build_granary,3*38,3*21,0,seed=5)
-    for k,(x,stage) in enumerate(((138.0,0),(153.5,1),(169.0,2))):
+    for k,(x,stage) in enumerate(((141.0,0),(156.5,1),(172.0,2))):      # site0 clears the gate apron (cols 39-44)
         T.build(f"site{stage}",build_construction_site,x,3*22,0,stage=stage,seed=10+k)
 
 def town_west(T):
@@ -348,7 +348,11 @@ def town_inside(T):
     doors=sorted((o for o in new if is_door(o)),key=lambda o: math.dist(door_front_cell(T,o),(47,35)))
     if doors: pave(T,door_front_cell(T,doors[0]),(47,35),own="chapel")
     # landmarks: the smithy's glowing forge greets you right inside the gate, the inn fronts the plaza
-    T.build("smithy",build_smithy,135.0,83.5,-90,seed=33)
+    def smithy(c,o,**kw):                              # its crate stack goes to the yard by the wall, next to the woodpile:
+        before=set(c.all_objects); build_smithy(c,o,**kw)   # at the canopy's front corner it touched the gatehouse
+        for ob in set(c.all_objects)-before:
+            if base_name(ob)=="SM_VK_Prop_Crates": ob.location.x=TOWN_ORIGIN[0]+133.4; ob.location.y=77.9; ob.rotation_euler.z=math.radians(4)
+    T.build("smithy",smithy,135.0,83.5,-90,seed=33)
     T.build("inn",build_inn,102.0,97.5,90,seed=34)
     # plaza dressing (lamps come after the infill so they can dodge porches and eaves)
     px,py=3*GATE_I,3*33+1.5
