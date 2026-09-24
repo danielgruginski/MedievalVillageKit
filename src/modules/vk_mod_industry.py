@@ -825,7 +825,7 @@ def ind_pelt(k,w,h,mi,seed=0,z_fn=None,thick=0.014,M=None):
     """hide as a small radial mesh (centre + 2 rings) in the XY plane, draped by z_fn(x,y); two-sided"""
     out=ind_pelt_outline(w,h,seed); rings=[[(0.0,0.0)],[(x*0.55,y*0.55) for x,y in out],out]
     zf=z_fn or (lambda x,y: 0.0)
-    sub=Kit(); n=len(out)
+    sub=Kit(); n=len(out); allf=[]
     for side in(0,1):
         dz=-thick if side else 0.0
         V=[[sub.bm.verts.new((x,y,zf(x,y)+dz)) for (x,y) in r] for r in rings]
@@ -838,7 +838,10 @@ def ind_pelt(k,w,h,mi,seed=0,z_fn=None,thick=0.014,M=None):
         for f in fs:
             f.material_index=mi
             for l in f.loops: l[sub.uv].uv=(l.vert.co.x*0.8,l.vert.co.y*0.8)
+        allf+=fs
     sub.bm.normal_update()
+    cell={HIDE:"hide",PIGSKIN:"hide",MUSH_BROWN:"fur"}.get(mi)
+    if cell: goods_map(sub,allf,cell,plane=((1,0,0),(0,1,0)),c=(0,0,0))       # goods atlas, spread over the pelt
     merge_kit(k,sub,M or Matrix.Identity(4))
 def ind_tanning_pit(k):
     """one tanning pit: stone-kerbed 1.2x1.2 pit of tan liquor (HIDE), a hide soaking, pole across. Work socket at -Y"""
@@ -870,7 +873,7 @@ def ind_hide_frame(k):
     for x in(-W/2,W/2):
         for z in(0.0,H): _cyl(sub,(x,0,z),0.065,0.065,0.1,6,HAY,rot=Matrix.Rotation(math.pi/2,4,"X"))
     pts=[(x,-0.02,z+H/2) for (x,z) in ind_pelt_outline(W*0.82,H*0.8,seed=5)]
-    ind_ngon(sub,pts,HIDE,off=(0,0.015,0),uv_scale=0.8)
+    goods_map(sub,ind_ngon(sub,pts,HIDE,off=(0,0.015,0),uv_scale=0.8),"hide",plane=((1,0,0),(0,0,1)))
     # lacing: from every 3rd outline point to the nearest frame member
     for i,(x,y,z) in enumerate(pts):
         if i%2: continue
@@ -1006,7 +1009,8 @@ def ind_pile_hides(k,size=1):
     for si,(sx,sy,n) in enumerate(stacks):
         for i in range(n):
             mi=(HIDE,MUSH_BROWN,HIDE,PIGSKIN)[(i+si+size)%4]
-            k.box((sx+rnd.uniform(-.06,.06),sy+rnd.uniform(-.06,.06),0.06+i*0.1),(0.9,0.66,0.09),mi,rot=(0,0,rnd.uniform(-0.25,0.25)),bevel=0.04,segs=2,jitter=0.025,seed=size*20+i+si*7)
+            vs=k.box((sx+rnd.uniform(-.06,.06),sy+rnd.uniform(-.06,.06),0.06+i*0.1),(0.9,0.66,0.09),mi,rot=(0,0,rnd.uniform(-0.25,0.25)),bevel=0.04,segs=2,jitter=0.025,seed=size*20+i+si*7)
+            goods_map(k,vs,"fur" if mi==MUSH_BROWN else "hide",plane=((1,0,0),(0,1,0)))
         top=0.06+n*0.1+0.02
         def zf(x,y,top=top):
             ov=max(abs(x)-0.42,0.0); ovy=max(abs(y)-0.3,0.0)
@@ -1093,7 +1097,7 @@ def ind_mash_tun(k):
     k.box((0,0,0.14),(2.0,2.0,0.28),STONE_BLOCK,bevel=0.05,segs=1)
     lathe(k,[(R*0.94,0.28),(R,0.75),(R*0.97,1.21),(R*0.89,1.21),(R*0.87,0.7)],segs=n,mi=WOOD)
     for z in(0.36,0.78,1.14): ring(k,(0,0,z),(R*0.95 if z<0.5 else R*0.985)-0.01,(R*0.95 if z<0.5 else R*0.985)+0.05,0.07,IRON,n=n,axis="Z")
-    ind_heap(k,(0,0,0.98),0.8,0.8,0.1,BREAD,seed=4,sub=2,rough=0.1)
+    goods_map(k,ind_heap(k,(0,0,0.98),0.8,0.8,0.1,BREAD,seed=4,sub=2,rough=0.1),"pomace",plane=((1,0,0),(0,1,0)))   # the mash
     ind_beam(k,(-0.3,-0.2,1.0),(0.5,0.5,2.0),0.06,0.06,WOOD,bevel=0.01)
     k.box((-0.37,-0.26,0.95),(0.22,0.05,0.35),WOOD,rot=(0,0,0.7),bevel=0.01)
     # spout + underback trough
@@ -1117,7 +1121,8 @@ def ind_cider_press(k):
     # cheese: layers of pomace and straw
     for i in range(5):
         mi=HAY if i%2 else BREAD
-        k.box((0,0,0.66+i*0.1),(0.8-i*0.01,0.7-i*0.01,0.1),mi,bevel=0.03,jitter=0.01,seed=i)
+        vs=k.box((0,0,0.66+i*0.1),(0.8-i*0.01,0.7-i*0.01,0.1),mi,bevel=0.03,jitter=0.01,seed=i)
+        if mi==BREAD: goods_map(k,vs,"pomace",plane=((1,0,0),(0,0.6,0.8)))       # apple pulp, shown on the sides too
     k.box((0,0,1.2),(0.9,0.78,0.08),PLANKS,bevel=0.01)                 # pressing board
     k.box((0,0,1.3),(0.5,0.3,0.12),WOOD,bevel=0.02)
     # screw with thread rings + capstan bar
@@ -1134,8 +1139,9 @@ def ind_cider_press(k):
     _cyl(k,(1.05,-0.45,0.17),0.25,0.3,0.34,10,WATTLE)
     rnd=random.Random(3)
     for i in range(8):
-        _ico(k,(1.05+rnd.uniform(-.17,.17),-0.45+rnd.uniform(-.17,.17),0.36+rnd.uniform(0,0.06)),0.075,APPLE,sub=1)
-    for i in range(3): _ico(k,(0.8+i*0.15,-0.9+rnd.uniform(-.1,.1),0.07),0.07,APPLE,sub=1)
+        goods_map(k,_ico(k,(1.05+rnd.uniform(-.17,.17),-0.45+rnd.uniform(-.17,.17),0.36+rnd.uniform(0,0.06)),0.075,APPLE,sub=2),"apple",
+                  ref=(math.cos(i*2.3),math.sin(i*2.3),0))
+    for i in range(3): goods_map(k,_ico(k,(0.8+i*0.15,-0.9+rnd.uniform(-.1,.1),0.07),0.07,APPLE,sub=2),"apple",axis=(math.cos(i),0.3,0.9))
 def ind_skep(k,c=(0,0,0),s=1.0,board=True):
     """coiled straw beehive (HAY lathe r 0.28 x 0.45) with an entrance"""
     cx,cy,cz=c; prof=[]
@@ -1209,15 +1215,15 @@ def ind_drying_rack_meat(k):
     for i in range(4):   # hams
         x=-0.85+i*0.56
         ind_rod(k,(x,0,2.06),(x,0,1.82),0.012,HAY,segs=3)
-        ind_lathe(k,[(0.0,1.24),(0.1,1.26),(0.19,1.36),(0.2,1.52),(0.12,1.72),(0.03,1.8)],c=(x,0,0),segs=10,mi=CLAY,smooth=True)
+        goods_map(k,ind_lathe(k,[(0.0,1.24),(0.1,1.26),(0.19,1.36),(0.2,1.52),(0.12,1.72),(0.03,1.8)],c=(x,0,0),segs=10,mi=CLAY,smooth=True),"ham")
         _cyl(k,(x,0,1.84),0.035,0.03,0.1,6,PAPER)
     for y in(-0.28,0.28):   # sausage strings and strips of dried meat
         for i in range(6):
             x=-1.0+i*0.4+rnd.uniform(-.05,.05)
             if (i+int(y*10))%2:
-                for j in range(3): _ico(k,(x,y,1.2-j*0.17),0.07,MUSH_RED if j%2 else CLAY,(0.9,0.9,1.6),sub=1)
+                for j in range(3): goods_map(k,_ico(k,(x,y,1.2-j*0.17),0.07,MUSH_RED if j%2 else CLAY,(0.9,0.9,1.6),sub=2),"sausage")
             else:
-                k.box((x,y,1.02),(0.13,0.03,0.5),MUSH_RED,rot=(0,rnd.uniform(-.1,.1),0),bevel=0.012)
+                goods_map(k,k.box((x,y,1.02),(0.13,0.03,0.5),MUSH_RED,rot=(0,rnd.uniform(-.1,.1),0),bevel=0.012),"meat",plane=((1,0,0),(0,0,1)))
 def ind_drying_rack_herbs(k):
     """four-post rack with three slatted trays of herbs and flowers, bundles hanging from the top rail"""
     W,D=1.6,0.8
@@ -1229,7 +1235,7 @@ def ind_drying_rack_herbs(k):
         rnd=random.Random(zi)
         for i in range(6):
             x=-W/2+0.25+i*(W-0.5)/5+rnd.uniform(-0.06,0.06); y=rnd.uniform(-0.2,0.2)
-            if (i+zi)%3==0: _ico(k,(x,y,z+0.1),0.1,LEAF,(1.4,1,0.5),sub=1,jit=0.02,seed=i)
+            if (i+zi)%3==0: goods_map(k,_ico(k,(x,y,z+0.1),0.1,LEAF,(1.4,1,0.5),sub=1,jit=0.02,seed=i),"herbs",plane=((1,0,0),(0,1,0)))
             elif (i+zi)%3==1:
                 for j in range(4): _ico(k,(x+rnd.uniform(-.08,.08),y+rnd.uniform(-.08,.08),z+0.09),0.045,PINK if zi!=1 else YELLOW,sub=0)
             else: _ico(k,(x,y,z+0.09),0.09,BREAD,(1.5,1,0.4),sub=1,jit=0.02,seed=i+20)

@@ -29,6 +29,7 @@ Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README
     dark blotches or thin dark lines that look like hairs. Dirt has pebbles and clods (`gen_dirt_v2`); grass is dense
     painted tufts over darker gaps (`gen_grass_v2`).
   - Cliffs are natural, never trim-like.
+  - Small goods (food, hides, fish) are textured from the goods atlas (`M_VK_Goods`, 27 pieces), not flat colours.
 
 ## 2. Opening the project
 

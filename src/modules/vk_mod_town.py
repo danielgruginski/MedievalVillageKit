@@ -425,14 +425,16 @@ def twn_goods_bread(k):
         twn_basket(k,(cx,0,0.04),0.24,0.14)
         for i in range(5):
             a=i*1.26+rnd.uniform(-0.2,0.2); rr=0.0 if i==0 else 0.12
-            _ico(k,(cx+math.cos(a)*rr,math.sin(a)*rr,0.2+(0.04 if i==0 else 0)),0.1,BREAD,(1.2,0.9,0.65),sub=2,jit=0.01,seed=i)
+            goods_map(k,_ico(k,(cx+math.cos(a)*rr,math.sin(a)*rr,0.2+(0.04 if i==0 else 0)),0.1,BREAD,(1.2,0.9,0.65),sub=2,jit=0.01,seed=i),"bread")
     for i in range(3):                                   # long loaves
-        _ico(k,(-0.12+i*0.12,-0.02,0.1),0.075,BREAD,(0.9,3.0,0.8),sub=2,seed=i+7)
+        goods_map(k,_ico(k,(-0.12+i*0.12,-0.02,0.1),0.075,BREAD,(0.9,3.0,0.8),sub=2,seed=i+7),"bread",ref=(0,1,0))
         for j in range(3): k.box((-0.12+i*0.12,-0.02-0.14+j*0.14,0.155),(0.06,0.02,0.015),PAPER,rot=(0,0,0.5),bevel=0)
     for (x,y) in ((0.3,0.12),(-0.3,0.14)):               # pretzels standing on a peg
         k.box((x,y,0.14),(0.02,0.02,0.24),WOOD,bevel=0)
+        fs=[]
         for (dx,dz,r) in ((-0.05,0.2,0.07),(0.05,0.2,0.07),(0,0.13,0.08)):
-            ring(k,(x+dx,y,dz+0.05),r-0.03,r,0.05,BREAD,n=12,axis="Y")
+            fs+=ring(k,(x+dx,y,dz+0.05),r-0.03,r,0.05,BREAD,n=12,axis="Y")
+        goods_map(k,fs,"bread",plane=((1,0,0),(0,0,1)))
 
 def twn_goods_produce(k):
     rnd=random.Random(2)
@@ -442,17 +444,20 @@ def twn_goods_produce(k):
         if kind=="apple":
             for i in range(12):
                 x=cx-0.18+(i%4)*0.12; y=-0.12+(i//4)*0.12
-                _ico(k,(x+rnd.uniform(-.02,.02),y,0.2+rnd.uniform(0,.03)),0.065,APPLE if i%5 else YELLOW,sub=1)
+                vs=_ico(k,(x+rnd.uniform(-.02,.02),y,0.2+rnd.uniform(0,.03)),0.065,APPLE if i%5 else YELLOW,sub=2)
+                if i%5: goods_map(k,vs,"apple",ref=(math.cos(i*2.1),math.sin(i*2.1),0))
         elif kind=="cabbage":
             for i in range(4):
                 x=cx-0.12+(i%2)*0.24; y=-0.09+(i//2)*0.18
-                _ico(k,(x,y,0.24),0.12,LEAF,(1,1,0.85),sub=2,jit=0.015,seed=i)
+                goods_map(k,_ico(k,(x,y,0.24),0.12,LEAF,(1,1,0.85),sub=2,jit=0.015,seed=i),"cabbage",ref=(math.cos(i),math.sin(i),0))
         else:
             for i in range(9):
                 x=cx-0.16+(i%3)*0.16; y=-0.12+(i//3)*0.12
-                _cyl(k,(x,y,0.2),0.035,0.004,0.26,6,PUMPKIN,rot=Matrix.Rotation(math.pi/2,4,"X")@Matrix.Rotation(rnd.uniform(-0.3,0.3),4,"Y"))
+                R_=Matrix.Rotation(math.pi/2,4,"X")@Matrix.Rotation(rnd.uniform(-0.3,0.3),4,"Y")
+                vs=_cyl(k,(x,y,0.2),0.035,0.004,0.26,6,PUMPKIN,rot=R_)
+                goods_map(k,vs,"carrot",axis=-(R_.to_3x3()@Vector((0,0,1))),c=(x,y,0.2))           # tip -> crown (leaves at +y)
                 for j in range(3): k.box((x+(j-1)*0.02,y+0.16,0.22+j*0.01),(0.02,0.12,0.02),LEAF,rot=(0.6,0,(j-1)*0.4),bevel=0)
-    _ico(k,(-0.95,0.1,0.12),0.13,PUMPKIN,(1,1,0.8),sub=2,seed=4)
+    goods_map(k,_ico(k,(-0.95,0.1,0.12),0.13,PUMPKIN,(1,1,0.8),sub=2,seed=4),"pumpkin")
 
 def twn_goods_cloth(k):
     for i,(x,mi) in enumerate(((-0.72,CLOTH_A),(-0.52,CLOTH_B),(-0.32,CLOTH_A))):     # bolts lying across
@@ -516,13 +521,14 @@ def twn_goods_tools(k):
 def twn_goods_meat(k):
     k.box((0,0,0.03),(1.8,0.44,0.06),WOOD,bevel=0.015)
     for i,(x,a) in enumerate(((-0.62,0.3),(-0.25,-0.4))):
-        _ico(k,(x,0.0,0.16),0.12,PIGSKIN,(1.5,1.0,0.85),sub=2,seed=i)
+        goods_map(k,_ico(k,(x,0.0,0.16),0.12,PIGSKIN,(1.5,1.0,0.85),sub=2,seed=i),"ham",axis=(1,0,0),ref=(0,0,1))
         _cyl(k,(x+math.cos(a)*0.2,math.sin(a)*0.2,0.15),0.035,0.03,0.12,8,PAPER,rot=Matrix.Rotation(math.pi/2,4,"Y")@Matrix.Rotation(a,4,"X"))
-    lathe(k,[(0.0,0.0),(0.14,0.0),(0.15,0.05),(0.0,0.07)],center=(0.1,0.05,0.06),segs=12,mi=APPLE)   # cut roast
+    goods_map(k,lathe(k,[(0.0,0.0),(0.14,0.0),(0.15,0.05),(0.0,0.07)],center=(0.1,0.05,0.06),segs=12,mi=APPLE),"meat",
+              plane=((1,0,0),(0,1,0)))                                                            # cut roast
     for j in range(5):                                                                            # sausage coil
-        a0=j*1.25; r=0.05+0.018*j
-        _cyl(k,(0.55+math.cos(a0)*r,math.sin(a0)*r,0.1),0.03,0.03,0.12,6,APPLE,rot=Matrix.Rotation(math.pi/2,4,"X")@Matrix.Rotation(a0,4,"Y"))
-    for i in range(4): _ico(k,(0.82,-0.12+i*0.08,0.1),0.035,APPLE,(2.5,1,1),sub=1)
+        a0=j*1.25; r=0.05+0.018*j; R_=Matrix.Rotation(math.pi/2,4,"X")@Matrix.Rotation(a0,4,"Y")
+        goods_map(k,_cyl(k,(0.55+math.cos(a0)*r,math.sin(a0)*r,0.1),0.03,0.03,0.12,6,APPLE,rot=R_),"sausage",axis=R_.to_3x3()@Vector((0,0,1)))
+    for i in range(4): goods_map(k,_ico(k,(0.82,-0.12+i*0.08,0.1),0.035,APPLE,(2.5,1,1),sub=1),"sausage",axis=(1,0,0))
     k.box((0.3,-0.14,0.07),(0.22,0.08,0.015),STEEL,bevel=0.004); k.box((0.45,-0.14,0.07),(0.12,0.03,0.025),WOOD,bevel=0.006)  # cleaver
 
 def twn_goods_candles(k):
@@ -544,9 +550,12 @@ def twn_goods_fish(k):
     rnd=random.Random(9)
     def fish(x,y,z,a,L=0.3):
         R=Matrix.Translation((x,y,z))@Matrix.Rotation(a,4,"Z")
-        sub=Kit(); _ico(sub,(0,0,0),L/2,STEEL,(1,0.3,0.18),sub=1,seed=int(x*100))
+        sub=Kit(); vs=_ico(sub,(0,0,0),L/2,STEEL,(1,0.3,0.18),sub=2,seed=int(x*100))
         v=[sub.bm.verts.new(p) for p in ((-L*0.45,0,0),(-L*0.72,0.07,0.0),(-L*0.72,-0.07,0.0))]
         f=sub.bm.faces.new(v); f.material_index=STEEL; v2=[sub.bm.verts.new(q.co+Vector((0,0,-0.004))) for q in v]; f2=sub.bm.faces.new(v2[::-1]); f2.material_index=STEEL
+        sub.bm.normal_update()
+        # lying on its side (flat in z): the back points to +y, so the flank faces up; head at +x
+        goods_map(sub,list({ff for vv in vs for ff in vv.link_faces})+[f,f2],"fish",axis=(1,0,0),ref=(0,1,0),c=(0,0,0))
         merge_kit(k,sub,R)
     for cx in (-0.55,0.35):
         k.box((cx,0,0.06),(0.62,0.42,0.12),PLANKS,bevel=0.015)

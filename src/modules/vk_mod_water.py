@@ -783,9 +783,9 @@ def wat_fish(k,M,L=0.42,mi=STEEL,belly=PAPER):
     c=M@Vector((0,0,0))
     for f in fs:
         if f.normal.dot(f.calc_center_median()-c)<0: f.normal_flip()
-    for f in fs+[ft,fb,ff,ff2]:
-        f.smooth=True
-        for l in f.loops: l[k.uv].uv=(l.vert.co.x*2.0,l.vert.co.z*2.0)
+    # goods atlas: head at local +X, back at local +Z; smoked fish (mi BREAD) get the smoked cell
+    M3=M.to_3x3()
+    goods_map(k,fs+[ft,fb,ff,ff2],"fish_smoked" if mi==BREAD else "fish",axis=M3@Vector((1,0,0)),ref=M3@Vector((0,0,1)),c=c)
 
 def wat_net_rack(k):
     rnd=random.Random(2)

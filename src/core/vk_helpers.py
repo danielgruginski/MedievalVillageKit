@@ -48,8 +48,51 @@ def kit_mats():
             tex_mat("M_VK_MushStem",None,0.7,flat=(0.93,0.89,0.78)), tex_mat("M_VK_MushGlow",None,0.4,flat=(0.35,0.85,1.0),emit=(0.25,0.8,1.0)),
             tex_mat("M_VK_StoneBlock","T_VK_StoneBlock"), tex_mat("M_VK_FieldStone","T_VK_FieldStone"), tex_mat("M_VK_Wattle","T_VK_Wattle"),
             tex_mat("M_VK_Hide",None,0.8,flat=(0.50,0.33,0.20)), tex_mat("M_VK_Pigskin",None,0.7,flat=(0.90,0.62,0.56)),
-            tex_mat("M_VK_Coal",None,0.95,flat=(0.045,0.043,0.050)), bpy.data.materials["M_VK_Net"]]
-STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET=range(52)
+            tex_mat("M_VK_Coal",None,0.95,flat=(0.045,0.043,0.050)), bpy.data.materials["M_VK_Net"],
+            tex_mat("M_VK_Goods","T_VK_Goods_BC",0.5)]
+STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS=range(53)
+# ---- goods atlas (T_VK_Goods, painted by vk_goods; keep the cell order in sync with vk_goods.GOODS_CELLS) ----
+GOODS_CELLS=("cabbage","pumpkin","carrot","apple","bread","cheese","fish","fish_smoked",
+             "hide","fur","meat","ham","sausage","turnip","herbs","pomace")
+GOODS_PAD=14/512
+def goods_uv(cell,u,v):
+    """cell-local (u, v) in 0..1 -> atlas uv (4 x 4 cells, row 0 at the top, inset against mip bleeding)"""
+    i=GOODS_CELLS.index(cell); c_,r_=i%4,i//4; s_=1-2*GOODS_PAD
+    return ((c_+GOODS_PAD+min(max(u,0.0),1.0)*s_)/4,(3-r_+GOODS_PAD+min(max(v,0.0),1.0)*s_)/4)
+def goods_map(k,geom,cell,axis=(0,0,1),ref=None,c=None,plane=None,caps=False):
+    """put an item on the goods atlas: material GOODS, smooth, UVs in `cell`. geom: its verts or faces.
+    Default: v along `axis` over the item's extent (0 = bottom / tail / tip), u = the unsigned angle around the axis
+    from `ref` (0..pi -> 0..1, mirrored so there is no seam). plane=(A, B): planar u along A, v along B over the bbox.
+    caps=True (cylinders): flat end faces get a top-down planar mapping instead of one stretched row."""
+    fs=[g_ for g_ in geom if isinstance(g_,bmesh.types.BMFace)] or list({f for v in geom for f in v.link_faces})
+    if not fs: return fs
+    vs={v for f in fs for v in f.verts}
+    c=sum((v.co for v in vs),Vector())/len(vs) if c is None else Vector(c)
+    if plane:
+        A=Vector(plane[0]).normalized(); B=Vector(plane[1]).normalized()
+        a=[(v.co-c).dot(A) for v in vs]; b=[(v.co-c).dot(B) for v in vs]; a0,a1,b0,b1=min(a),max(a),min(b),max(b)
+        for f in fs:
+            f.material_index=GOODS; f.smooth=True
+            for l in f.loops:
+                p=l.vert.co-c; l[k.uv].uv=goods_uv(cell,(p.dot(A)-a0)/max(a1-a0,1e-6),(p.dot(B)-b0)/max(b1-b0,1e-6))
+        return fs
+    ax=Vector(axis).normalized()
+    ref=Vector(ref) if ref is not None else (Vector((1,0,0)) if abs(ax.x)<0.9 else Vector((0,1,0)))
+    ref=(ref-ax*ref.dot(ax)).normalized()
+    t=[(v.co-c).dot(ax) for v in vs]; t0,t1=min(t),max(t)
+    side=ax.cross(ref); rmax=max(((v.co-c)-ax*(v.co-c).dot(ax)).length for v in vs) or 1.0
+    for f in fs:
+        f.material_index=GOODS; f.smooth=True
+        if caps and abs(f.normal.dot(ax))>0.85:
+            f.smooth=False
+            for l in f.loops:
+                p=l.vert.co-c; l[k.uv].uv=goods_uv(cell,0.5+0.45*p.dot(ref)/rmax,0.5+0.45*p.dot(side)/rmax)
+            continue
+        for l in f.loops:
+            p=l.vert.co-c; hh=p.dot(ax); r=p-ax*hh
+            u=0.5 if r.length<1e-7 else math.acos(max(-1.0,min(1.0,r.normalized().dot(ref))))/math.pi
+            l[k.uv].uv=goods_uv(cell,u,(hh-t0)/max(t1-t0,1e-6))
+    return fs
 VARIANT_MATS={
  "plaster":{"Cream":None,"White":("T_VK_Plaster",(1.10,1.12,1.18)),"Ochre":("T_VK_Plaster",(1.05,0.86,0.58)),"Rose":("T_VK_Plaster",(1.05,0.84,0.78)),
             "Daub":("T_VK_Plaster",(0.80,0.65,0.47)),"Sage":("T_VK_Plaster",(0.90,1.02,0.84)),"Sky":("T_VK_Plaster",(0.88,0.97,1.12))},
@@ -178,7 +221,7 @@ class Kit:
                 if f.normal.z<-0.6: g*=0.72    # undersides darker (painted AO)
                 l[s.cl]=(g,g*0.98,g*0.95,1)
         me=bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
-        for p in me.polygons: p.use_smooth=p.material_index in (APPLE,PUMPKIN,BREAD,CLOTH_A,CLOTH_B,LEAF)
+        for p in me.polygons: p.use_smooth=p.material_index in (APPLE,PUMPKIN,BREAD,CLOTH_A,CLOTH_B,LEAF) or (p.material_index==GOODS and p.use_smooth)
         old=bpy.data.objects.get(name)
         if old: bpy.data.objects.remove(old)
         o=bpy.data.objects.new(name,me); coll.objects.link(o); o.location=loc
@@ -713,39 +756,41 @@ def stall_wares(k,trade,W_,D_):
             top=crate(cx,h=0.26)
             for n_ in range(9 if g=="APPLE" else (4 if g=="PUMPKIN" else 6)):
                 if g=="APPLE":
-                    vs=_ico(k,(cx-0.28+(n_%3)*0.28+rnd.uniform(-.03,.03),-0.62+(n_//3)*0.17,top+0.05+rnd.uniform(0,.03)),0.09,APPLE)
+                    goods_map(k,_ico(k,(cx-0.28+(n_%3)*0.28+rnd.uniform(-.03,.03),-0.62+(n_//3)*0.17,top+0.05+rnd.uniform(0,.03)),0.09,APPLE),"apple")
                 elif g=="PUMPKIN":
                     vs=bmesh.ops.create_icosphere(k.bm,subdivisions=2,radius=0.19)["verts"]
                     for v in vs:
                         ang=math.atan2(v.co.y,v.co.x); v.co.z*=0.72; v.co*=(1+0.06*math.cos(8*ang))
                         v.co+=Vector((cx-0.2+(n_%2)*0.4,-0.58+(n_//2)*0.3,top+0.14))
-                    _mat(vs,PUMPKIN)
+                    goods_map(k,vs,"pumpkin",ref=(math.cos(math.pi/8),math.sin(math.pi/8),0))   # atlas grooves on the lobes' grooves
                 else:
-                    vs=_ico(k,(cx-0.25+(n_%3)*0.25,-0.58+(n_//3)*0.25,top+0.08),0.14,BREAD,scale=(0.9,1.4,0.6))
-                _mat(vs,{"APPLE":APPLE,"PUMPKIN":PUMPKIN,"BREAD":BREAD}[g])
+                    goods_map(k,_ico(k,(cx-0.25+(n_%3)*0.25,-0.58+(n_//3)*0.25,top+0.08),0.14,BREAD,scale=(0.9,1.4,0.6)),"bread",ref=(0,1,0))
     elif trade=="greengrocer":
         top=crate(-1.05)
-        for n_ in range(6): _mat(_ico(k,(-1.3+(n_%3)*0.25,-0.6+(n_//3)*0.28,top+0.11),0.15,LEAF,scale=(1,1,0.85),jit=0.015,seed=n_),LEAF)
+        for n_ in range(6): goods_map(k,_ico(k,(-1.3+(n_%3)*0.25,-0.6+(n_//3)*0.28,top+0.11),0.15,LEAF,scale=(1,1,0.85),jit=0.015,seed=n_),"cabbage")
         top=crate(0.0)
         for n_ in range(12):
             x=-0.3+(n_%6)*0.12; y=-0.58+(n_//6)*0.26; a=rnd.uniform(-0.25,0.25)
-            vs=_cyl(k,(x,y,top+0.04),0.035,0.0,0.24,6,PUMPKIN,rot=Matrix.Rotation(math.pi/2+a,4,"Z")@Ry@Rx); _mat(vs,PUMPKIN)
+            R_=Matrix.Rotation(math.pi/2+a,4,"Z")@Ry@Rx
+            vs=_cyl(k,(x,y,top+0.04),0.035,0.0,0.24,6,PUMPKIN,rot=R_)
+            goods_map(k,vs,"carrot",axis=-(R_.to_3x3()@Vector((0,0,1))),c=(x,y,top+0.04))           # tip -> crown
             _mat(_ico(k,(x,y+0.14,top+0.05),0.045,LEAF,scale=(1,1.6,0.7),sub=1),LEAF)
         top=crate(1.05)
-        for n_ in range(12): _mat(_ico(k,(0.78+(n_%4)*0.18,-0.66+(n_//4)*0.2,top+0.06),0.075,PAPER if n_%3 else PINK,scale=(1,1,0.9)),PAPER if n_%3 else PINK)
+        for n_ in range(12): goods_map(k,_ico(k,(0.78+(n_%4)*0.18,-0.66+(n_//4)*0.2,top+0.06),0.075,PAPER,scale=(1,1,0.9)),"turnip")
         for cx in (-0.9,0.0,0.9):
             t=basket(cx,0.62,0.22,0.12,shelf)
-            for n_ in range(5): _mat(_ico(k,(cx+rnd.uniform(-.1,.1),0.62+rnd.uniform(-.08,.08),t+0.03),0.08,APPLE),APPLE)
+            for n_ in range(5): goods_map(k,_ico(k,(cx+rnd.uniform(-.1,.1),0.62+rnd.uniform(-.08,.08),t+0.03),0.08,APPLE),"apple")
     elif trade=="baker":
         t=basket(-1.0,-0.45,0.36,0.14)
-        for n_ in range(5): _mat(_ico(k,(-1.18+(n_%3)*0.18,-0.55+(n_//3)*0.2,t+0.05),0.14,BREAD,scale=(0.75,1.3,0.55)),BREAD)
+        for n_ in range(5): goods_map(k,_ico(k,(-1.18+(n_%3)*0.18,-0.55+(n_//3)*0.2,t+0.05),0.14,BREAD,scale=(0.75,1.3,0.55)),"bread",ref=(0,1,0))
         k.box((0.05,-0.45,z0+0.03),(0.85,0.6,0.05),WOOD,bevel=0.015)
-        for n_ in range(4): _mat(_ico(k,(-0.15+(n_%2)*0.38,-0.6+(n_//2)*0.3,z0+0.11),0.14,BREAD,scale=(1,1,0.62)),BREAD)
+        for n_ in range(4): goods_map(k,_ico(k,(-0.15+(n_%2)*0.38,-0.6+(n_//2)*0.3,z0+0.11),0.14,BREAD,scale=(1,1,0.62)),"bread")
         t=basket(1.05,-0.4,0.2,0.36)
         for n_ in range(6):
-            a=n_*1.05; vs=_cyl(k,(1.05+0.07*math.cos(a),-0.4+0.07*math.sin(a),t+0.12),0.04,0.035,0.72,8,BREAD,
-                               rot=Matrix.Rotation(0.18,4,"X")@Matrix.Rotation(a,4,"Z")); _mat(vs,BREAD)
-        for n_ in range(7): _mat(_ico(k,(-1.3+n_*0.43,0.62,shelf+0.07),0.12,BREAD,scale=(1.3,0.8,0.6)),BREAD)
+            a=n_*1.05; R_=Matrix.Rotation(0.18,4,"X")@Matrix.Rotation(a,4,"Z")
+            vs=_cyl(k,(1.05+0.07*math.cos(a),-0.4+0.07*math.sin(a),t+0.12),0.04,0.035,0.72,8,BREAD,rot=R_)
+            goods_map(k,vs,"bread",axis=R_.to_3x3()@Vector((0,0,1)))
+        for n_ in range(7): goods_map(k,_ico(k,(-1.3+n_*0.43,0.62,shelf+0.07),0.12,BREAD,scale=(1.3,0.8,0.6)),"bread")
         for n_,(x,y) in enumerate(((W_/2+0.5,-0.3),(W_/2+0.45,0.35),(W_/2+0.95,0.05))): _stall_sack(k,x,y,BURLAP,0.95)
         _stall_sack(k,-W_/2-0.45,-0.4,BURLAP)
         return
@@ -754,11 +799,13 @@ def stall_wares(k,trade,W_,D_):
         k.box((0,-0.45,z0+0.105),(2.55,0.6,0.03),PAPER,bevel=0.01)
         for n_ in range(10):
             x=-1.1+n_*0.245; y=-0.45+rnd.uniform(-0.12,0.12); a=rnd.uniform(0.6,1.1)*(1 if n_%2 else -1)
-            vs=_ico(k,(x,y,z0+0.16),1.0,STEEL,scale=(0.25,0.075,0.065)); _rot_vs(vs,(x,y,z0+0.16),a); _mat(vs,STEEL)
+            vs=_ico(k,(x,y,z0+0.16),1.0,STEEL,scale=(0.25,0.075,0.065)); _rot_vs(vs,(x,y,z0+0.16),a)
             tx,ty=x-0.27*math.cos(a),y-0.27*math.sin(a)
-            k.box((tx,ty,z0+0.16),(0.1,0.02,0.12),STEEL,rot=(0,0,a),bevel=0.0)
+            tv=k.box((tx,ty,z0+0.14),(0.1,0.12,0.02),STEEL,rot=(0,0,a),bevel=0.0)                 # tail fin, flat on the slab
+            # lying on its side, back half turned up: from above the dark back runs along the silver flank
+            goods_map(k,list(vs)+list(tv),"fish",axis=(math.cos(a),math.sin(a),0),ref=(-math.sin(a)*0.7,math.cos(a)*0.7,0.7),c=(x,y,z0+0.16))
         for n_,x in enumerate((-1.1,-0.4,0.4,1.1)):
-            vs=_ico(k,(x,-(D_/2-0.1),2.1),1.0,STEEL,scale=(0.07,0.055,0.26)); _mat(vs,STEEL)
+            goods_map(k,_ico(k,(x,-(D_/2-0.1),2.1),1.0,STEEL,scale=(0.07,0.055,0.26)),"fish",axis=(0,0,-1),ref=(1,0,0))   # hung by the tail
             k.box((x,-(D_/2-0.1),2.42),(0.012,0.012,0.12),WOOD,bevel=0)
         for n_ in range(3): _mat(_ico(k,(-1.0+n_*0.9,0.62,shelf+0.1),0.13,BURLAP,scale=(1.2,0.9,0.8)),BURLAP)
     elif trade=="potter":
@@ -789,14 +836,14 @@ def stall_wares(k,trade,W_,D_):
         return
     elif trade=="cheese":
         for st,(x,y) in enumerate(((-1.15,-0.45),(-0.6,-0.5))):
-            for n_ in range(3-st): _cyl(k,(x,y,z0+0.065+n_*0.13),0.22,0.22,0.12,20,YELLOW)
+            for n_ in range(3-st): goods_map(k,_cyl(k,(x,y,z0+0.065+n_*0.13),0.22,0.22,0.12,20,YELLOW),"cheese",caps=True)
         k.box((0.3,-0.45,z0+0.025),(0.8,0.55,0.045),WOOD,bevel=0.015)
-        for n_ in range(4): _cyl(k,(0.08+(n_%2)*0.4,-0.58+(n_//2)*0.26,z0+0.1),0.12,0.12,0.1,16,YELLOW)
-        for n_ in range(3): _cyl(k,(1.15,-0.45,z0+0.04+n_*0.075),0.26-n_*0.05,0.26-n_*0.05,0.07,20,YELLOW)
-        for n_,x in enumerate((-1.2,-0.85,-0.5,0.5,0.85,1.2)):
-            vs=_ico(k,(x,-(D_/2-0.1),2.13),1.0,HIDE,scale=(0.045,0.045,0.2)); _mat(vs,HIDE)
+        for n_ in range(4): goods_map(k,_cyl(k,(0.08+(n_%2)*0.4,-0.58+(n_//2)*0.26,z0+0.1),0.12,0.12,0.1,16,YELLOW),"cheese",caps=True)
+        for n_ in range(3): goods_map(k,_cyl(k,(1.15,-0.45,z0+0.04+n_*0.075),0.26-n_*0.05,0.26-n_*0.05,0.07,20,YELLOW),"cheese",caps=True)
+        for n_,x in enumerate((-1.2,-0.85,-0.5,0.5,0.85,1.2)):                                   # hanging sausages
+            goods_map(k,_ico(k,(x,-(D_/2-0.1),2.13),1.0,HIDE,scale=(0.045,0.045,0.2)),"sausage")
             k.box((x,-(D_/2-0.1),2.4),(0.01,0.01,0.12),BURLAP,bevel=0)
-        for n_ in range(6): _cyl(k,(-1.3+n_*0.52,0.62,shelf+0.06),0.12,0.12,0.1,16,YELLOW)
+        for n_ in range(6): goods_map(k,_cyl(k,(-1.3+n_*0.52,0.62,shelf+0.06),0.12,0.12,0.1,16,YELLOW),"cheese",caps=True)
     elif trade=="tinker":
         for n_,x in enumerate((-1.3,-0.95)): _cyl(k,(x,-0.5,z0+0.08),0.15,0.12,0.16,16,IRON); k.box((x,-0.5,z0+0.2),(0.3,0.02,0.02),IRON,bevel=0)
         for n_ in range(3):
@@ -1320,7 +1367,7 @@ def rebuild(n,fn,**kw):
     for f in k.bm.faces:
         if all(l[k.uv].uv.length==0 for l in f.loops): k.project([f],f.material_index)
     o=k.finish(n,P,**kw)
-    for p in o.data.polygons: p.use_smooth=p.material_index in (HAY,APPLE,PUMPKIN,BREAD,CLOTH_A,CLOTH_B,LEAF,BURLAP,FOLIAGE,CROPS)
+    for p in o.data.polygons: p.use_smooth=p.material_index in (HAY,APPLE,PUMPKIN,BREAD,CLOTH_A,CLOTH_B,LEAF,BURLAP,FOLIAGE,CROPS) or (p.material_index==GOODS and p.use_smooth)
     o.hide_render=o.hide_viewport=True; return o
 
 def all_specs():
@@ -1365,7 +1412,7 @@ def full_rebuild(names=None):
         for f in k.bm.faces:
             if all(l[k.uv].uv.length==0 for l in f.loops): k.project([f],f.material_index)
         tmp=k.finish("__tmp__",vcol("VK_Pieces"),**kw)
-        for p in tmp.data.polygons: p.use_smooth=p.material_index in (HAY,APPLE,PUMPKIN,BREAD,CLOTH_A,CLOTH_B,LEAF,BURLAP,FOLIAGE,CROPS)
+        for p in tmp.data.polygons: p.use_smooth=p.material_index in (HAY,APPLE,PUMPKIN,BREAD,CLOTH_A,CLOTH_B,LEAF,BURLAP,FOLIAGE,CROPS) or (p.material_index==GOODS and p.use_smooth)
         base=bpy.data.objects.get(n)
         if base is None:
             tmp.name=n; tmp.data.name=n; tmp.hide_render=tmp.hide_viewport=True; continue
@@ -2916,8 +2963,7 @@ def crop_cabbage(k):
         y=-1.45+(i+0.5)*2.9/7
         for j in range(7):
             x=-1.45+(j+0.5)*2.9/7+rnd.uniform(-0.05,0.05)
-            vs=_ico(k,(x,y,0.3),0.19,LEAF,(1,1,0.85),sub=1,jit=0.02,seed=i*9+j)
-            for f in {f for v in vs for f in v.link_faces}: f.smooth=True
+            goods_map(k,_ico(k,(x,y,0.3),0.19,LEAF,(1,1,0.85),sub=1,jit=0.02,seed=i*9+j),"cabbage",ref=(math.cos(i+j),math.sin(i+j),0))
             for a in range(4):
                 aa=a*1.57+rnd.uniform(-0.3,0.3)
                 card(k,(x+math.cos(aa)*0.16,y+math.sin(aa)*0.16,0.24),(math.cos(aa+1.57),math.sin(aa+1.57),0),(math.cos(aa)*0.8,math.sin(aa)*0.8,0.6),0.3,0.3,"ivy",flip=a%2==0)
@@ -2935,8 +2981,7 @@ def pumpkin(k,c,r,seed=0):
     for a_,b_ in zip(rings[:-1],rings[1:]):
         for i in range(n): j=(i+1)%n; fs.append(k.bm.faces.new((a_[i],a_[j],b_[j],b_[i])))
     k.bm.normal_update()
-    for f in fs: f.material_index=PUMPKIN; f.smooth=True
-    k.project(fs,PUMPKIN)
+    goods_map(k,fs,"pumpkin",c=c)                    # the atlas grooves (u = k/4) sit on the modelled ribs (a = k*pi/4)
     _cyl(k,(cx,cy,cz+r*0.75),0.035,0.025,0.16,6,LEAF)
 def crop_pumpkin(k):
     soil_bed(k,rows=4); rnd=random.Random(5)
@@ -3057,17 +3102,17 @@ def bread_rack(k):
         k.box((0,0,z),(1.5,0.5,0.05),PLANKS,bevel=0.01)
         for i in range(6):
             x=-0.6+i*0.24
-            _ico(k,(x,0,z+0.08),0.1,BREAD,(1.2 if i%2 else 0.9,0.8,0.55),sub=2)
+            goods_map(k,_ico(k,(x,0,z+0.08),0.1,BREAD,(1.2 if i%2 else 0.9,0.8,0.55),sub=2),"bread")
     k.box((0,0.23,1.85),(1.5,0.05,0.12),WOOD,bevel=0.01)
 def bakery_sign(k):
     k.box((0,0.03,0),(0.16,0.1,0.6),IRON,bevel=0.02)
     k.box((0,-0.7,0.22),(0.07,1.4,0.07),IRON,bevel=0.015)
     for yy in(-0.45,-1.15): k.box((0,yy,0.02),(0.02,0.02,0.36),IRON,bevel=0)
     # pretzel: three bread rings
+    fs=[]
     for (dy,dz,r) in ((-0.62,-0.35,0.2),(-0.98,-0.35,0.2),(-0.8,-0.58,0.24)):
-        ring(k,(0,dy,dz),r-0.07,r,0.09,BREAD,n=18,axis="Y")
-    for f in k.bm.faces:
-        if f.material_index==BREAD: f.smooth=True
+        fs+=ring(k,(0,dy,dz),r-0.07,r,0.09,BREAD,n=18,axis="Y")
+    goods_map(k,fs,"bread",plane=((1,0,0),(0,0,1)))
 def wall_stall(k):
     """stable front module (3 m, barn height): posts, half door (top half open), hay inside"""
     k.box((0,-0.02,0.35),(CELL,0.4,0.7),STONE,bevel=0)

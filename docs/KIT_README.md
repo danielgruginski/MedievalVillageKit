@@ -92,8 +92,13 @@ Lighting: `VK_Sun` is the key light (from the south-west). `VK_Fill` is a shadow
 - **Grid:** 3 m cells.
 - **Wall modules:** 3 m wide, outer face toward −Y, centred on the cell edge. Corners sit at the origin and face −X/−Y.
 - **Heights:** ground storey 3.0, upper storeys 2.8, wattle walls 2.4, sheds 2.6. Roofs are placed at the wall top.
-- **Materials:** 52 kit slots.
+- **Materials:** 53 kit slots.
   - Added 2026-09-23: `STONE_BLOCK` (dressed stone), `FIELDSTONE`, `WATTLE`, `HIDE`, `PIGSKIN`, `COAL`, `NET`.
+  - `GOODS` (slot 52, `M_VK_Goods`) is the goods atlas `T_VK_Goods`.
+    - It holds 4 × 4 hand-painted cells, painted by `gen_goods_atlas` in `vk_goods`: cabbage, pumpkin, carrot, apple, bread, cheese, fish, smoked fish, hide, fur, meat, ham, sausage, turnip, dried herbs and pulp.
+    - Builders put an item on it with `goods_map(k, verts_or_faces, cell, axis=..., ref=...)`. By default the UVs wrap around the item's axis, mirrored so there is no seam: v runs along the axis from bottom, tail or tip, and u is the angle from `ref`. `plane=(A, B)` maps flat things; `caps=True` maps the ends of cylinders top-down.
+    - To add a cell: add the name to `GOODS_CELLS` in both `vk_goods` and `vk_helpers` (same order) and write a painter.
+    - The flat colour slots (`APPLE`, `PUMPKIN`, `BREAD`, `LEAF`, `HIDE`, ...) remain for everything else that shares them (gate flames, bunting, tents, animals).
   - Recolour styles per instance, via the `style` dict of `place_v`:
     - plaster: Cream, White, Ochre, Rose, Daub, Sage, Sky
     - shutter: Teal, Red, Green, Blue, Natural, and the chipped `TealWorn/RedWorn/GreenWorn/BlueWorn` (≈1 in 5 random houses)
