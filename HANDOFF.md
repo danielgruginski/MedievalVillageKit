@@ -53,7 +53,9 @@ Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README
 
 Common commands: [docs/KIT_README.md §3](docs/KIT_README.md). Quick checks after terrain changes:
 `tk_test_T1()` → `[]`; `tk_test_T3(30)` / `tk_test_T3r(30)` → no failures (≈26k / 16k checks);
-`tk_test_T4(G, chunks, step=0.5)` → 2 known grazing hits on vertical cliff faces (not holes).
+`tk_test_T4(G, chunks, step=0.25)`: the demo gives 2 known hits, the valley 10. They are grazing rays on near-vertical
+relief faces (face normal z between −0.1 and 0), plus the same small downward face on five ramps (open issue 13).
+A first hit with normal z below about −0.2 anywhere else would be a real hole.
 Valley build log (`T.log`) known entries: watermill and smokehouse overhang the bank slightly, `WS_skyline_Road`
 touches a tower (the road strip is deleted right after), one smithy crate touches the gatehouse.
 
@@ -69,7 +71,15 @@ touches a tower (the road strip is deleted right after), one smithy crate touche
   plants, mushrooms, rocks, stump, log, pond. Leaf atlas `T_VK_Leaves_*` (cherry cell repainted in hero-oak style).
 - **Terrain (`vk_terrain`):** dual-grid marching squares, 3 m cells, 1.5 m levels; cliff/shore tiles with A/B/C
   variants; ramps whose half tile blends the cliff down and has an earth bank (plus `tk_ramp_dress` props); stairs
-  with rock shoulders; horizontal displacement; separate cobble paving mesh with curbs and missing-stone patches.
+  with rock shoulders; separate cobble paving mesh with curbs and missing-stone patches.
+  - `make_displace` (position-only, seam-safe) does all of this:
+    - wobbles the contours;
+    - gives cliff faces rock relief;
+    - makes stacked tiers read as one face: the relief runs through their middle ledges and the upper layer has no skirt;
+    - sags the turf lip in patches;
+    - bakes rock on middle ledges and eroded lip patches.
+  - `tk_cliff_dress` adds boulders, rubble, plants and ledge grass.
+  - The cliff texture is `gen_cliff_v2`.
 - **Maps:** valley town (`vk_town_map`, 72×56 cells at world 1500,0 — see [docs/VALLEY_MAP.md](docs/VALLEY_MAP.md)) and
   the terrain demo (`vk_terrain_demo`, 32×24 at 1200,0). Both are rebuilt entirely by code.
 - **Lighting (renders only):** `VK_Sun` key light + shadowless `VK_Fill`.
@@ -82,7 +92,9 @@ touches a tower (the road strip is deleted right after), one smithy crate touche
 4. Worn-ground pads follow cell squares (the ground-control map has one texel per cell).
 5. Fishmonger's ice tray reads very white from above.
 6. Stairs have no transition tile yet (they still use `SM_VKT_RampShoulder` rocks).
-7. The dark ledge line in the cliff strata can read as a crack.
+7. Cliffs seen head-on at eye level still read as a band with a straight toe line. The cliff texture's painted grass
+   tufts look flat on vertical faces. Up-facing rock gets bright moss, so the middle ledges show as a thin green line
+   from above.
 8. The old small `build_blacksmith` is no longer placed (the landmark smithy replaced it); the skyline street still
    has a small smithy house.
 9. Willow slightly wispy from above; a few pine bark flecks at distance.
@@ -91,6 +103,8 @@ touches a tower (the road strip is deleted right after), one smithy crate touche
     drive the ground-type map from cell data, replace the Object-Info roof jitter.
 12. `E:\Unity\Projects\GameArtGeneration\unity\DualGridTerrain` exists in the parent folder (not inspected) — may be
     relevant to the terrain export.
+13. Ramp tops have a small face pointing down, coincident with the ramp surface. `tk_test_T4` flags it at five valley
+    ramps and one demo ramp. It is probably in `ramp_blend_shoulder`.
 
 ## 6. Gotchas
 
@@ -106,6 +120,11 @@ touches a tower (the road strip is deleted right after), one smithy crate touche
 - `vk_tex` creates `TEXDIR` when executed; generated textures are saved there *and* packed.
 - The valley generator deletes and rebuilds `VK_ValleyTown` / `VK_ValleyTerrain` completely: never hand-edit them;
   change the code instead.
+- **Never publish the .blend as-is:** its `SpriteRig` scene holds third-party character assets. The repo is public;
+  keep the .blend, renders and anything from that scene out of git.
+- Blender cannot create folders under the long scratchpad path (Windows `MAX_PATH`); render into `renders/` instead.
+- README gallery: `tools/render_showcase.py` → `render_showcase()` re-renders `docs/images/*.jpg` (cameras in
+  `SHOWCASE`); rebuild the valley and the demo first.
 
 ## 7. History (where the details are)
 
