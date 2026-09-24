@@ -500,6 +500,19 @@ def tk_cache(o):
     else: tc[:]=1
     d=dict(co=co,vi=vi,ls=ls,lt=lt,mi=mi,cn=cn,tc=tc.reshape(-1,4))
     _CACHE[key]=d; return d
+def tk_cache_noskirt(o):
+    """the cached piece without its skirt (the faces below the toe, down to SKIRT_Z). A cliff layer standing on an
+    identical layer has that layer's face right under its toe: the skirt is not needed there, and with the relief
+    running through the seam it could poke out of the face below."""
+    key=o.name+"|noskirt"
+    if key in _CACHE: return _CACHE[key]
+    c=tk_cache(o)
+    keep=np.minimum.reduceat(c["co"][c["vi"],2],c["ls"])>SKIRT_Z+0.5
+    lk=np.repeat(keep,c["lt"]); vi=c["vi"][lk]
+    used=np.unique(vi); remap=np.full(len(c["co"]),-1,np.int64); remap[used]=np.arange(len(used))
+    lt=c["lt"][keep]; ls=np.concatenate([[0],np.cumsum(lt)[:-1]]).astype(np.int64)
+    d=dict(co=c["co"][used],vi=remap[vi],ls=ls,lt=lt,mi=c["mi"][keep],cn=c["cn"][lk],tc=c["tc"][lk])
+    _CACHE[key]=d; return d
 
 def _rot(a,r):
     a=a.copy()
@@ -513,12 +526,17 @@ def piece_name(set_,case,var="A"):
 
 def tk_assemble(records,displace=None):
     """records: iterable of (I,J,level,set,case,r,var). Returns dict of arrays for terrain and water."""
-    parts={"T":[],"W":[]}
-    for (I,J,l,set_,case,r,var) in records:
+    parts={"T":[],"W":[]}; prev=None
+    for rec in records:
+        (I,J,l,set_,case,r,var)=rec
+        # a cliff layer right on top of an identical one (same tile, same case and rotation) drops its skirt
+        stacked=(prev is not None and set_=="Cliff" and prev[3]=="Cliff" and case not in (EMPTY,FULL)
+                 and (prev[0],prev[1],prev[2]+1,prev[4],prev[5])==(I,J,l,case,r))
+        prev=rec
         if set_=="Cliff" and case==EMPTY: continue
         o=bpy.data.objects.get(piece_name(set_,case,var))
         if o is None: raise KeyError(piece_name(set_,case,var))
-        parts["W" if set_=="Water" else "T"].append((tk_cache(o),I,J,l,r))
+        parts["W" if set_=="Water" else "T"].append((tk_cache_noskirt(o) if stacked else tk_cache(o),I,J,l,r))
     out={}
     for key,lst in parts.items():
         if not lst: out[key]=None; continue
@@ -810,10 +828,21 @@ def terrain_material(name="M_VK_Terrain",W=32,H=24,ctl="T_VK_GroundCtl"):
     col,hgt=layer(col,hgt,"T_VK_Dirt",cs[0],0.45,outline=True)
     col,hgt=layer(col,hgt,"T_VK_Cobble",cs[1],0.45,outline=True)
     # rim highlight on the turf crest
-    col=B.mix(B.math("MULTIPLY",RIM,0.2),col,(0.78,0.86,0.42))
+    col=B.mix(B.math("MULTIPLY",RIM,0.1),col,(0.66,0.76,0.38))
     # cliff (box projection in map space)
     clC,_,_=B.side_sample("T_VK_Cliff_BC",p,1/6.0)
     _,clH,_=B.side_sample("T_VK_Cliff_H",p,1/6.0,data=True)
+    # a second, offset sample at another scale blended in by world noise, plus slow brightness/hue drift,
+    # so the rock pattern does not repeat visibly along long cliffs
+    po=B.n("ShaderNodeVectorMath",operation="ADD"); B.link(p,po.inputs[0]); po.inputs[1].default_value=(17.3,5.9,11.1)
+    clC2,_,_=B.side_sample("T_VK_Cliff_BC",po.outputs[0],1/9.3)
+    _,clH2,_=B.side_sample("T_VK_Cliff_H",po.outputs[0],1/9.3,data=True)
+    cn_=B.n("ShaderNodeTexNoise"); cn_.inputs["Scale"].default_value=0.11; cn_.inputs["Detail"].default_value=1.5; B.link(p,cn_.inputs["Vector"])
+    cbl=B.smoothstep(cn_.outputs["Fac"],0.4,0.6)
+    clC=B.mix(cbl,clC,clC2); clH=B.fmix(cbl,clH,clH2)
+    tn_=B.n("ShaderNodeTexNoise"); tn_.inputs["Scale"].default_value=0.045; tn_.inputs["Detail"].default_value=1.0; B.link(p,tn_.inputs["Vector"])
+    tv=B.smoothstep(tn_.outputs["Fac"],0.3,0.7)
+    clC=B.mix(1.0,clC,B.mix(tv,(0.84,0.84,0.86),(1.08,1.03,0.95)),blend="MULTIPLY")
     rockW=B.math("MAXIMUM",RK,B.smoothstep(Nz,0.80,0.55))
     rockW=B.math("MAXIMUM",rockW,B.smoothstep(cA,0.45,0.65))
     # moss on up-facing rock
@@ -891,15 +920,81 @@ def _bilinear_cells(arr,x,y):
     i0=np.floor(u).astype(int); j0=np.floor(v).astype(int); i1=np.minimum(i0+1,Ww-1); j1=np.minimum(j0+1,Hh-1)
     fu=u-i0; fv=v-j0
     return (arr[j0,i0]*(1-fu)+arr[j0,i1]*fu)*(1-fv)+(arr[j1,i0]*(1-fu)+arr[j1,i1]*fu)*fv
-def make_displace(G,amp=1.0):
+def _ss(e0,e1,x):
+    t=np.clip((x-e0)/(e1-e0),0.0,1.0); return t*t*(3-2*t)
+def make_displace(G,amp=1.0,relief=0.36,relief_v=0.22,sag=0.12):
+    """world-space displacement of the assembled terrain (a function of position only, so the duplicated vertices of
+    neighbouring tiles move together and no seam opens):
+    - horizontal wobble of the contours (amp; zero on stiff cells and at the map border)
+    - cliff relief (relief, relief_v): chunky 3D rock noise on the cliff faces. Zero on every flat top, at the lip and
+      at the toe (it only acts between the tier heights), and switched off on ramps/stairs and next to water, whose
+      surfaces also sit between tiers. Where a tier top is an intermediate ledge of a taller cliff (a cliff line
+      above and below it at the same spot) the relief runs on through the seam, so stacked tiers read as one face.
+    - lip sag: the lower edge of the turf lip on cliff tops droops in patches (not on intermediate ledges)
+    apply() also bakes TCol: relief cavities, and rock instead of turf on intermediate ledges and eroded lip patches."""
     stiff=G.stiff.astype(np.float64); XM,YM=3.0*G.W,3.0*G.H
+    rampm=np.zeros(G.level.shape,np.float64)
+    for (j,i) in zip(*np.nonzero(G.ramp)):
+        rampm[j,i]=1.0; di,dj=((0,1),(1,0),(0,-1),(-1,0))[G.ramp[j,i]-1]
+        rampm[min(max(j+dj,0),G.H-1),min(max(i+di,0),G.W-1)]=1.0      # the cell the ramp climbs to
+    wetm=G.water.astype(np.float64)
+    Lhi=int(G.level.max())+1
+    ind={L:(G.level>=L).astype(np.float64) for L in range(1,Lhi+1)}
+    def phi(L,x,y):
+        """bilinear indicator of level >= L (L: int array); 0.5 on the tier-L cliff line"""
+        out=np.where(L<=0,1.0,0.0)
+        for Lv in np.unique(L):
+            if 0<Lv<=Lhi:
+                m=L==Lv; out[m]=_bilinear_cells(ind[int(Lv)],x[m],y[m])
+        return out
+    def on_line(f): return 1.0-_ss(0.12,0.25,np.abs(f-0.5))
+    def fades(x,y):
+        """1, falling to 0 on ramps/stairs, next to water and at the map border"""
+        f=(1.0-np.clip(_bilinear_cells(rampm,x,y)/0.35,0,1))*(1.0-np.clip(_bilinear_cells(wetm,x,y)/0.3,0,1))
+        e=np.clip(np.minimum(np.minimum(x,XM-x),np.minimum(y,YM-y))/3.0,0,1)
+        return f*e*e*(3-2*e)
+    def tiers(x,y,z):
+        """d: depth below the tier top above the point (0 on flat tops); st / sb: how much that tier top / the tier
+        bottom is an intermediate ledge here (the cliff lines of the tiers above and below both pass this spot)"""
+        Lt=np.ceil(z/TIER-1e-6).astype(np.int64); d=Lt*TIER-z
+        gt=on_line(phi(Lt,x,y))
+        return d,gt*on_line(phi(Lt+1,x,y)),gt*on_line(phi(Lt-1,x,y))
+    def relief_w(x,y,z):
+        d,st,sb=tiers(x,y,z)
+        top=_ss(0.12,0.4,d); bot=1.0-_ss(1.18,1.46,d)   # 0 at the lip and at the toe, 1 on the face between
+        top=top+st*(1.0-top)*(d>0.005); bot=bot+sb*(1.0-bot)   # ... unless the seam is an intermediate ledge
+        return top*bot*fades(x,y)
+    def sag_z(x,y,z):
+        d,st,_=tiers(x,y,z)
+        b=_ss(0.1,0.16,d)*(1.0-_ss(0.3,0.6,d))          # the lip edge and root recess, not the crest line above
+        out=np.zeros_like(x); m=b*(1.0-st)>1e-6
+        if sag>0 and m.any():
+            n=_ss(0.05,0.55,vnoise(x[m]/1.3,y[m]/1.3,np.zeros(m.sum()),37))
+            out[m]=-sag*n*b[m]*(1.0-st[m])*fades(x[m],y[m])
+        return out
+    def terrace(n,k=2.5,a=0.6):                          # soft staircase: flattish facets with steeper steps
+        return n+a*np.sin(2*np.pi*k*n)/(2*np.pi*k)
+    def R(x,y,z):
+        """relief offset (rx,ry,rz) before weighting; the envelope makes some stretches much rougher than others"""
+        zz=np.zeros_like(x); env=0.55+0.45*vnoise(x/9.0,y/9.0,zz,36)
+        f=lambda s1,s2: terrace(0.75*vnoise(x/1.35,y/1.35,z/0.55,s1)+0.25*vnoise(x/0.55,y/0.55,z/0.35,s2))
+        return relief*env*f(31,32),relief*env*f(33,34),relief_v*vnoise(x/2.2,y/2.2,zz,35)
+    def Rw(p):
+        """weighted relief offsets for points p (N,3)"""
+        out=np.zeros((len(p),3))
+        if relief<=0 and relief_v<=0: return out
+        x,y,z=p[:,0],p[:,1],p[:,2]
+        w=relief_w(x,y,z); m=w>1e-6
+        if m.any():
+            rx,ry,rz=R(x[m],y[m],z[m]); out[m,0]=rx*w[m]; out[m,1]=ry*w[m]; out[m,2]=rz*w[m]
+        return out
     def D(p):
         x,y,z=p[:,0],p[:,1],p[:,2]
         s=_bilinear_cells(stiff,x,y); t=np.clip(s/0.5,0,1); A=amp*(1-t*t*(3-2*t))
         e=np.clip(np.minimum(np.minimum(x,XM-x),np.minimum(y,YM-y))/3.0,0,1); A=A*e*e*(3-2*e)
         dx=0.28*vnoise(x/6,y/6,z/4,11)+0.08*vnoise(x/1.6,y/1.6,z/1.6,13)
         dy=0.28*vnoise(x/6,y/6,z/4,12)+0.08*vnoise(x/1.6,y/1.6,z/1.6,14)
-        return np.stack([A*dx,A*dy,np.zeros_like(x)],1)
+        return np.stack([A*dx,A*dy,sag_z(x,y,z)],1)+Rw(p)
     def apply(arr):
         co=arr["co"]; e=0.02
         J=np.zeros((len(co),3,3))
@@ -907,15 +1002,35 @@ def make_displace(G,amp=1.0):
             dp=np.zeros(3); dp[a]=e
             J[:,:,a]=(D(co+dp)-D(co-dp))/(2*e)
         J+=np.eye(3)[None]
+        rel=Rw(co)
         co2=co+D(co)
         # loop normals: n' = normalize(J^-T n)
         JiT=np.linalg.inv(J).transpose(0,2,1)
-        n=np.einsum("lij,lj->li",JiT[arr["vi"]],arr["cn"])
+        cn0=arr["cn"]
+        n=np.einsum("lij,lj->li",JiT[arr["vi"]],cn0)
         n/=np.linalg.norm(n,axis=1,keepdims=True)+1e-12
+        tc=arr["tc"].copy()
+        # baked cavity: recesses of the relief darker, bulges a touch lighter (TCol R = AO)
+        if relief>0:
+            s=np.einsum("lj,lj->l",rel[arr["vi"],:2],cn0[:,:2])/relief
+            tc[:,0]=np.clip(tc[:,0]*(1.0+0.3*np.clip(s,-1.0,0.6)),0.0,1.0)
+        # lips: rock instead of turf (G) and no rim light (B) on intermediate ledges and in eroded patches along the tops
+        x,y,z=co[:,0],co[:,1],co[:,2]
+        d,st,_=tiers(x,y,z)
+        er=_ss(0.25,0.55,vnoise(x/1.7,y/1.7,np.zeros_like(x),38))
+        r=np.maximum(st,er)*fades(x,y)
+        rim=((d>0.005)&(d<0.3))*r; rock=((d>0.03)&(d<0.3))*r
+        tc[:,1]=np.maximum(tc[:,1],rock[arr["vi"]]); tc[:,2]*=1.0-rim[arr["vi"]]
+        arr["tc"]=tc
         arr["co"]=co2; arr["cn"]=n
         arr["detJ"]=float(np.min(J[:,0,0]*J[:,1,1]-J[:,0,1]*J[:,1,0]))
-    apply.D=D
+    apply.D=D; apply.relief_w=relief_w; apply.tiers=tiers
     return apply
+
+def lip_pos(D,x,y,zt):
+    """where a prop standing on a cliff lip at border point (x, y), tier top zt, goes after displacement D"""
+    if D is None: return x,y,zt
+    d=D(np.array([[x,y,zt-0.12]],float))[0]; return x+d[0],y+d[1],zt+d[2]
 
 # ---------------------------------------------------------------- ramps (canonical Edge, N high; ramp on E / W / both crossing sides)
 RAMP_X=0.5            # half-ramp spans x in [RAMP_X, 1.5]  (2.0 m ramp centred on the side)
@@ -1164,6 +1279,67 @@ def tk_ramp_dress(G,coll,origin=MAP_ORIGIN,seed=7):
                 o.rotation_euler=(0.0,0.0,rng.uniform(0,6.283)); s_=sc*rng.uniform(0.85,1.15); o.scale=(s_,s_,s_)
                 out.append(o)
     return out
+
+def tk_cliff_dress(G,place,D=None,seed=5,free=None,density=1.0):
+    """Natural dressing along straight cliff runs (level-change borders without water or ramps): boulders half sunk
+    into the face, rubble and plants at the toe.
+    place(name, x, y, z, rot_deg, scale) puts one piece (map-local coordinates); D is the terrain's displacement
+    field, so pieces follow the displaced face; free(i, j) -> False skips borders next to that cell."""
+    rng=random.Random(seed); n=0
+    def disp(x,y,z):
+        if D is None: return x,y
+        d=D(np.array([[x,y,z]],float))[0]; return x+d[0],y+d[1]
+    face=("SM_VK_Rock_Boulder_A","SM_VK_Rock_Boulder_B","SM_VK_Rock_Boulder_Flat")
+    rubble=("SM_VK_Rock_Small_A","SM_VK_Rock_Small_B","SM_VK_Rock_Pebbles","SM_VK_Rock_Small_A","SM_VK_Rock_Cluster")
+    plants=("SM_VK_Plant_Fern","SM_VK_Plant_TallGrass","SM_VK_Bush_Round","SM_VK_Plant_Fern","SM_VK_Plant_TallGrass")
+    lip=(("SM_VK_Plant_Fern",(0.6,0.85)),("SM_VK_Bush_Round",(0.35,0.5)),("SM_VK_Rock_Small_A",(0.6,0.95)),
+         ("SM_VK_Plant_TallGrass",(0.75,1.0)),("SM_VK_Rock_Small_B",(0.6,0.9)))
+    lipgrass="SM_VK_LipGrass" if bpy.data.objects.get("SM_VK_LipGrass") else "SM_VKT_LipGrass"
+    for j in range(G.H):
+        for i in range(G.W):
+            for (di,dj) in ((1,0),(0,1)):
+                ii,jj=i+di,j+dj
+                if ii>=G.W or jj>=G.H: continue
+                la,lb=int(G.level[j,i]),int(G.level[jj,ii])
+                if la==lb or G.water[j,i] or G.water[jj,ii] or G.ramp[j,i] or G.ramp[jj,ii]: continue
+                hi_i,hi_j,lo_i,lo_j=(i,j,ii,jj) if la>lb else (ii,jj,i,j)
+                if free is not None and not (free(hi_i,hi_j) and free(lo_i,lo_j)): continue
+                ox,oy=(lo_i-hi_i),(lo_j-hi_j); tx,ty=abs(oy),abs(ox)
+                cx=1.5*(hi_i+lo_i)+1.5; cy=1.5*(hi_j+lo_j)+1.5
+                def straight(sgn):
+                    a_=G.cell(hi_i+sgn*tx,hi_j+sgn*ty); b_=G.cell(lo_i+sgn*tx,lo_j+sgn*ty)
+                    return G.level[a_[1],a_[0]]==G.level[hi_j,hi_i] and G.level[b_[1],b_[0]]==G.level[lo_j,lo_i] and not G.water[b_[1],b_[0]]
+                sl,sr=straight(-1),straight(1)
+                def t_along(lim=1.1):
+                    return rng.uniform(-lim if sl else -0.2,lim if sr else 0.2)
+                zl=G.level[lo_j,lo_i]*TIER; H=(G.level[hi_j,hi_i]-G.level[lo_j,lo_i])*TIER
+                if rng.random()<0.35*density:                              # boulder sunk into the face
+                    t=t_along(); off=rng.uniform(-0.05,0.2); zb=zl+H*rng.uniform(0.12,0.4)
+                    x,y=disp(cx+tx*t+ox*off,cy+ty*t+oy*off,zb+0.3)
+                    place(rng.choice(face),x,y,zb,rng.uniform(0,360),rng.uniform(0.42,0.72)*(1.0 if H<=TIER else 1.35)); n+=1
+                if rng.random()<0.3*density:                               # plants and stones on the lip, over the edge
+                    zt=G.level[hi_j,hi_i]*TIER
+                    for _ in range(rng.randint(1,2)):
+                        t=t_along(); off=rng.uniform(-0.25,0.05); x,y,z=lip_pos(D,cx+tx*t+ox*off,cy+ty*t+oy*off,zt)
+                        nm,(s0,s1)=lip[rng.randrange(len(lip))]
+                        place(nm,x,y,z-0.03,rng.uniform(0,360),rng.uniform(s0,s1)); n+=1
+                if G.level[hi_j,hi_i]-G.level[lo_j,lo_i]>=2:                # grass tufts on the middle ledges of stacked cliffs
+                    rot=math.degrees(math.atan2(oy,ox))+90
+                    for Lm in range(int(G.level[lo_j,lo_i])+1,int(G.level[hi_j,hi_i])):
+                        for t in (-1.1,-0.4,0.3,1.0):
+                            if (t<-0.2 and not sl) or (t>0.2 and not sr) or rng.random()<0.45: continue
+                            tt=t+rng.uniform(-0.15,0.15); x,y,z=lip_pos(D,cx+tx*tt,cy+ty*tt,Lm*TIER)
+                            place(lipgrass,x,y,z,rot+rng.uniform(-8,8),rng.uniform(0.8,1.2)); n+=1
+                if rng.random()<0.6*density:                               # rubble at the toe
+                    for _ in range(rng.randint(2,4)):
+                        t=t_along(); off=rng.uniform(0.35,0.95); x,y=disp(cx+tx*t+ox*off,cy+ty*t+oy*off,zl)
+                        nm=rng.choice(rubble)
+                        place(nm,x,y,zl-0.05,rng.uniform(0,360),rng.uniform(0.35,0.55) if nm.endswith("Cluster") else rng.uniform(0.6,1.2)); n+=1
+                if rng.random()<0.45*density:                              # plants at the toe
+                    t=t_along(); off=rng.uniform(0.5,1.0); x,y=disp(cx+tx*t+ox*off,cy+ty*t+oy*off,zl)
+                    nm=rng.choice(plants)
+                    place(nm,x,y,zl,rng.uniform(0,360),rng.uniform(0.45,0.65) if nm.endswith("Round") else rng.uniform(0.7,1.05)); n+=1
+    return n
 
 def paving_materials():
     """M_VKT_Paving: the terrain's cobble texture (same object-space mapping as the terrain) + height bump.

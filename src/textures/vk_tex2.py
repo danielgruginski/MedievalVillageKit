@@ -819,6 +819,92 @@ def gen_cliff(S=2048,seed=421,T=6.0,depth=0.10,out_prefix="T_VK_Cliff",write=Tru
         write_set(out_prefix,bc,h1,R1,depth,T,ao=ao,ao_in_albedo=0.35); PBR_SETS[out_prefix]=dict(depth=depth,tile=T)
     return bc*(0.65+0.35*ao)[...,None]
 
+def _per1d(S,rng,amp=1.0,freqs=(1,2,3,5,8),decay=1.3):
+    """periodic 1D noise along x (S samples, repeats at x=1), peak amplitude ~amp"""
+    x=np.arange(S,dtype=f32)/S; out=np.zeros(S,f32)
+    for fq in freqs: out+=np.sin(2*np.pi*(fq*x+rng.uniform(0,1)))*(fq**-decay)*rng.uniform(0.6,1.0)
+    return (out/(np.abs(out).max()+1e-6)*amp).astype(f32)
+
+def gen_cliff_v2(S=2048,seed=431,T=6.0,depth=0.18,out_prefix="T_VK_Cliff",write=True):
+    """natural layered rock for the terrain cliffs (6 m repeat = 4 tiers of 1.5 m; tier tops at world z = 1.5k).
+    Per tier: 1-3 wavy strata of varying thickness whose grooves pinch out, angular faceted blocks (1-2 rows per
+    stratum), joints that run across the strata, weathering streaks, moss on up-facing ledges, and a thin soil/root
+    strip with a ragged lower edge under the lip. Replaces gen_cliff (two rows of domed blocks per tier)."""
+    rng=np.random.default_rng(seed)
+    x,y=grid(S); vz=(1-y)*4.0
+    band=np.minimum(vz.astype(np.int32),3); b=(vz-band).astype(f32)          # 0 = toe, 1 = lip of each tier
+    pals=[hx(c) for c in ("#A38A68","#8E8A84","#AE9C7E","#807B82","#9A8672","#B3A488","#8A8175")]
+    h=np.full((S,S),0.5,f32); col=np.zeros((S,S,3),f32); crack=np.zeros((S,S),f32); soil=np.zeros((S,S),f32)
+    fbm_c=fbm(S,2.0,seed+21,fmin=20,fmax=160); grain=0.45*fbm(S,2.2,seed+22,fmin=10,fmax=120)
+    for k in range(4):
+        mk=band==k
+        # thin soil strip under the lip: ragged lower edge, and gone where rock reaches the turf
+        se=(0.945+0.035*_per1d(S,rng)+0.015*_per1d(S,rng,freqs=(9,13,21))+0.05*smooth(0.3,0.8,_per1d(S,rng,freqs=(2,3,5))))[None,:]
+        soil=np.where(mk,smooth(se-0.005,se+0.005,b),soil)
+        nb=int(rng.integers(1,4)); bases=np.sort(rng.uniform(0.14,0.8,nb))
+        for q in range(1,nb):                                                  # keep strata at least 0.12 apart
+            bases[q]=max(bases[q],bases[q-1]+0.12)
+        bases=bases[bases<0.84]; nb=len(bases)
+        bounds=[(bi+0.075*_per1d(S,rng)+0.025*_per1d(S,rng,freqs=(6,10,15)),smooth(-0.3,0.35,_per1d(S,rng))) for bi in bases]
+        li=np.zeros((S,S),np.int32)
+        for (wav,_) in bounds: li+=(b>wav[None,:]).astype(np.int32)
+        for L in range(nb+1):
+            m=mk&(li==L)
+            if not m.any(): continue
+            lo=0.0 if L==0 else float(bases[L-1]); hi=1.0 if L==nb else float(bases[L])
+            thick=max(0.08,hi-lo); wblk=rng.uniform(0.6,1.5)
+            n=max(4,int(round(6.0/wblk))); rows=1 if thick*1.5<0.6 else 2
+            pts=[]
+            for r in range(rows):
+                for c_ in range(n):
+                    px_=(c_+rng.uniform(-0.35,0.35)+0.5*(r%2))/n
+                    bb=lo+(r+0.5)/rows*thick+rng.uniform(-0.18,0.18)*thick/rows
+                    pts.append((px_%1,(1-(k+bb)/4.0)%1))
+            pts=np.array(pts,f32); nP=len(pts)
+            ID1,ID2,E,ox,oy=voronoi_edge(x[m],y[m],pts)
+            base=rng.uniform(0.45,0.72,nP).astype(f32)
+            gx=rng.uniform(-4.5,4.5,nP).astype(f32); gy=rng.uniform(-2.5,5.5,nP).astype(f32)
+            hh=base[ID1]+gx[ID1]*ox+gy[ID1]*oy                                  # one tilted plane per block: facets
+            Ej=E+0.004*fbm_c[m]                                                  # chipped, uneven block edges
+            hh=hh*(0.55+0.45*smooth(0.0,0.011,Ej))+0.02*grain[m]                # chiselled edge + a little surface grain
+            h[m]=hh
+            crack[m]=np.maximum(crack[m],1-smooth(0.0,0.0022,Ej))
+            pal=pals[int(rng.integers(0,len(pals)))]
+            vv=rng.uniform(0.88,1.12,nP).astype(f32)
+            grad=np.clip(1.0-2.2*oy,0.8,1.14)                                     # lighter top, darker base of each block
+            col[m]=pal*(vv[ID1]*grad*(1+0.05*grain[m]))[:,None]
+        for (wav,pinch) in bounds:                                             # strata grooves, pinching out
+            g=(1-smooth(0.0,0.035,np.abs(b-wav[None,:])*1.5))*pinch[None,:]*mk
+            h=h-0.3*g; crack=np.maximum(crack,0.85*g)
+    # joints running down across the strata
+    joints=draw_segments(S,crack_segments(S,rng,n=7,steps=(10,26),step_px=(S/180,S/110),w0=S/800,branch=0.0,dirbias=math.pi/2,jit=0.12))
+    h=h-0.25*joints; crack=np.maximum(crack,0.8*joints)
+    h=np.where(soil>0.5,0.3+0.06*fbm(S,2.0,seed+5,fmin=10,fmax=120),h*(1-0.4*soil))
+    h=blur(np.clip(h,0,1).astype(f32),1.0)
+    roots=draw_segments(S,crack_segments(S,rng,n=70,steps=(5,12),step_px=(4,8),w0=2.0,branch=0.25,dirbias=math.pi/2,jit=0.4))
+    col=np.where((soil>0.5)[...,None],hx("#584030")*(1+0.12*fbm(S,2.0,seed+6,fmin=10)[...,None]),col)
+    col=lerp(col,hx("#4A3322"),(roots*soil*0.85)[...,None])
+    # painted light (no lateral component: the terrain's biplanar mapping flips u on some faces)
+    n_=normal_from_height(blur(h,2.5),depth*2.2,T)
+    lt=painted_light(n_,(0.0,0.85,0.5))
+    col=col*(0.68+0.46*lt[...,None])
+    top=smooth(0.25,0.6,n_[...,1])*(1-soil); col=lerp(col,col*1.16+0.035,0.65*top[...,None])
+    und=smooth(0.15,0.5,-n_[...,1]); col=col*(1-0.28*und[...,None])
+    col=col*(1-0.6*crack[...,None]*(1-soil[...,None]))
+    streak=smooth(0.4,1.6,fbm(S,2.0,seed+7,fmin=6,fmax=70,ay=9))*(1-soil)
+    col=col*(1-0.14*streak[...,None])
+    moss=smooth(0.4,0.75,n_[...,1])*smooth(0.2,1.3,fbm(S,2.6,seed+8,fmin=3,fmax=40))*(1-soil)
+    moss=np.maximum(moss,smooth(0.84,0.9,b)*(1-soil)*smooth(0.3,1.2,fbm(S,2.2,seed+11,fmin=4,fmax=50)))   # under the lip
+    mc=ramp3(fbm(S,1.6,seed+9,fmin=60)*0.5+0.5,hx(MOSS_C[0]),hx(MOSS_C[1]),hx(MOSS_C[2]))
+    col=lerp(col,mc,np.clip(moss*1.05,0,1)[...,None])
+    col=col*(1+0.06*fbm(S,2.0,seed+10,fmin=1.5,fmax=6))[...,None]
+    R=np.clip(0.86+0.05*soil+0.05*moss-0.06*top,0,1).astype(f32)
+    bc,h1,R1=down2(np.clip(col,0,1).astype(f32)),down2(h),down2(R)
+    ao=cavity_ao(h1,radii=(3,10,30),k=(2.0,1.5,0.9),floor=0.4)
+    if write:
+        write_set(out_prefix,bc,h1,R1,depth,T,ao=ao,ao_in_albedo=0.35); PBR_SETS[out_prefix]=dict(depth=depth,tile=T)
+    return bc*(0.65+0.35*ao)[...,None]
+
 def gen_terrain_macro(S=512,seed=441,out="T_VK_TerrainMacro",write=True):
     r=fbm(S,2.6,seed,fmin=1,fmax=24)*0.5+0.5
     g=fbm(S,2.4,seed+1,fmin=1,fmax=12)*0.5+0.5

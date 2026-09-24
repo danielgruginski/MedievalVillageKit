@@ -523,13 +523,11 @@ def town_scatter(T,seed=19,disp=None):
                 for t in (-1.2,-0.6,0.0,0.6,1.2):
                     if (t<-0.2 and not straight(-1)) or (t>0.2 and not straight(1)): continue
                     if rng.random()<0.3: continue
-                    tt=t+rng.uniform(-0.12,0.12); x,y=D(cx+tx*tt,cy+ty*tt,zt)
-                    T.P("SM_VK_LipGrass" if bpy.data.objects.get("SM_VK_LipGrass") else "SM_VKT_LipGrass",x,y,rot+rng.uniform(-6,6),z=zt,scale=rng.uniform(0.9,1.25))
-                if rng.random()<0.4:
-                    t=rng.uniform(-0.9,0.9)
-                    if (t<-0.2 and not straight(-1)) or (t>0.2 and not straight(1)): t=0.0
-                    zl=G.level[lo_j,lo_i]*TIER; x,y=D(cx+tx*t+ox*0.55,cy+ty*t+oy*0.55,zl)
-                    T.P(rng.choice(["SM_VK_Rock_Small_A","SM_VK_Rock_Small_B","SM_VK_Rock_Pebbles","SM_VK_Plant_Fern"]),x,y,rng.uniform(0,360),z=zl-0.05,scale=rng.uniform(0.8,1.3))
+                    tt=t+rng.uniform(-0.12,0.12); x,y,z=lip_pos(disp,cx+tx*tt,cy+ty*tt,zt)
+                    T.P("SM_VK_LipGrass" if bpy.data.objects.get("SM_VK_LipGrass") else "SM_VKT_LipGrass",x,y,rot+rng.uniform(-6,6),z=z,scale=rng.uniform(0.9,1.25))
+    # boulders sunk into the cliff faces, rubble and plants at the toes
+    tk_cliff_dress(G,lambda n,x,y,z,r,s: T.P(n,x,y,r,z=z,scale=s),D=disp,seed=seed+3,
+                   free=lambda i,j: not T.occ[j,i] and not roads[j,i])
 
 # ---------------------------------------------------------------- post passes
 def town_door_clear(T,depth=2.3,half=0.65):

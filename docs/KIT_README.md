@@ -68,6 +68,14 @@ The valley generator (`build_valley_town`) runs these checks and clean-up passes
 - **`town_wear`:** worn ground in front of doors and around busy yards (`TGrid.wear`, the R channel of the ground-control map).
 - **Paving:** cobbled cells become a separate mesh (`tk_build_paving`): stones 6 cm above the terrain, dressed-stone curbs towards grass, patches of missing stones showing dirt. Props on cobbles are lifted onto it.
 - **Ramps:** the half-ramp tile blends the cliff down into the ramp surface and turns the side into an earth bank; `tk_ramp_dress` adds a stone, grass and a fern at each ramp end. Stairs still get `SM_VKT_RampShoulder` rocks.
+- **Cliffs:**
+  - `make_displace` gives the cliff faces chunky rock relief. The displacement depends only on world position, so the duplicated vertices of neighbouring tiles move together and no seam opens.
+  - Where a tier top is the middle ledge of a taller cliff, the relief runs through the ledge, and the upper layer drops its skirt (`tk_cache_noskirt`).
+  - The turf lip of cliff tops sags in patches.
+  - `apply()` bakes rock instead of turf on the middle ledges and in eroded patches along the lips.
+  - `tk_cliff_dress` sinks boulders into the faces and puts rubble, plants and grass tufts at the toes, the lips and the middle ledges.
+  - The rock texture comes from `gen_cliff_v2` in `vk_tex2`: angular blocks, strata and a soil strip under each lip.
+  - The terrain material blends two cliff samples at different scales, so long cliffs don't repeat.
 - **Kitchen gardens, roof palette:** crop beds next to houses; roofs chosen per district (Blue for landmarks), ±6 % per-instance brightness jitter.
 
 Landmarks: `build_smithy` (9 m forge stack with glowing hearth, open workshop, point light) and `build_inn` (3 storeys, lit windows, big tankard sign, beer garden). Market stalls: `SM_VK_MarketStall` + `_Greengrocer/_Baker/_Fishmonger/_Potter/_Draper/_Cheese/_Tinker`.

@@ -194,15 +194,11 @@ def demo_scatter(G,coll,seed=77):
                     if (t<-0.2 and not straight(-1)) or (t>0.2 and not straight(1)): continue
                     if rng.random()<0.25: continue
                     tt=t+rng.uniform(-0.12,0.12)
-                    x=cx+tx*tt; y=cy+ty*tt
-                    x,y=disp(x,y,zt)
-                    P("SM_VKT_LipGrass",x,y,zt,rot=rot+rng.uniform(-6,6),s=rng.uniform(0.9,1.25))
-                if G.level[hi_j,hi_i]-G.level[lo_j,lo_i]>=1 and hash32(i*2+di,j*2+dj,int(min(la,lb)),9)%100<40:
-                    t=rng.uniform(-0.9,0.9)
-                    if (t<-0.2 and not straight(-1)) or (t>0.2 and not straight(1)): t=0.0
-                    x=cx+tx*t+ox*0.55; y=cy+ty*t+oy*0.55; zl=cell_z(G,lo_i,lo_j)
-                    x,y=disp(x,y,zl)
-                    P(rng.choice(["SM_VK_Rock_Small_A","SM_VK_Rock_Small_B","SM_VK_Rock_Pebbles","SM_VK_Plant_Fern"]),x,y,zl-0.05,s=rng.uniform(0.8,1.3))
+                    x,y,z=lip_pos(Dfn,cx+tx*tt,cy+ty*tt,zt)
+                    P("SM_VKT_LipGrass",x,y,z,rot=rot+rng.uniform(-6,6),s=rng.uniform(0.9,1.25))
+    # boulders sunk into the cliff faces, rubble and plants at the toes
+    tk_cliff_dress(G,lambda n,x,y,z,r,s: P(n,x,y,z,rot=r,s=s),D=Dfn,seed=seed+3,
+                   free=lambda i,j: not G.stiff[j,i] and G.ground[j,i] not in (1,2))
     return
     # (legacy) edge-owned seam rocks at cliff toes (one candidate per level-change border)
     for j in range(G.H):
