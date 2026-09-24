@@ -763,6 +763,61 @@ def gen_grass(S=1024,seed=401,T=4.0,depth=0.02,out_prefix="T_VK_Grass",write=Tru
         write_set(out_prefix,col,h,R,depth,T,ao_in_albedo=0.35); PBR_SETS[out_prefix]=dict(depth=depth,tile=T)
     return col
 
+def gen_grass_v2(S=2048,seed=402,T=4.0,depth=0.025,out_prefix="T_VK_Grass",write=True):
+    """hand-painted turf: dense tufts of tapered, slightly curved blades (dark at the base, light at the tip, leaning
+    roughly one way) painted over darker gaps. The colour only drifts slightly over the tile (no blotches); some tips
+    turn a little yellow; a few small flower clusters. Generated at S, stored at S/2."""
+    rng=np.random.default_rng(seed); px=T/S
+    lo=smooth(-1.8,1.8,fbm(S,2.6,seed,fmin=1.5,fmax=8))
+    col=lerp(hx("#3B621B"),hx("#436E1F"),lo[...,None])*(1+0.04*fbm(S,2.0,seed+1,fmin=10,fmax=80))[...,None]
+    h=np.full((S,S),0.2,f32)
+    warm=smooth(0.0,1.6,fbm(S,2.4,seed+2,fmin=1.5,fmax=6))
+    BASE=[hx("#4A7922"),hx("#528324"),hx("#4B7B2B")]; TIP=[hx("#86B23C"),hx("#92BB44"),hx("#7EAD40")]; DRY=hx("#B9B55C")
+    lean=-math.pi/2; offs=(-S,0,S)
+    n_under=int((T/0.06)**2); n_top=int((T/0.058)**2)
+    for q in range(n_under+n_top):
+        under=q<n_under                                   # first a darker, longer layer, then the lit top layer
+        cx,cy=rng.uniform(0,S,2); w_=float(warm[int(cy)%S,int(cx)%S])
+        nb=int(rng.integers(6,11)); Lm=rng.uniform(0.05,0.09 if under else 0.075)/px
+        ang=lean+rng.uniform(-2.0,2.0,nb); L=Lm*(0.55+0.45*np.cos(ang-lean))*rng.uniform(0.8,1.1,nb)
+        wid=rng.uniform(0.007,0.011)/px; bend=rng.uniform(-0.18,0.18,nb)
+        ci=int(rng.integers(0,3)); k_=0.8 if under else 1.0
+        bc=BASE[ci]*rng.uniform(0.94,1.06)*k_; tc=lerp(TIP[ci],DRY,0.55*w_*rng.random())*(0.86 if under else 1.0)
+        R=float(L.max()+wid+2)
+        for ox in offs:
+            for oy in offs:
+                ax,ay=cx+ox,cy+oy
+                lx=max(0,int(ax-R)); hx_=min(S,int(ax+R)+1); ly=max(0,int(ay-R)); hy_=min(S,int(ay+R)+1)
+                if lx>=hx_ or ly>=hy_: continue
+                yy,xx=np.mgrid[ly:hy_,lx:hx_].astype(f32); du=xx+0.5-ax; dv=yy+0.5-ay
+                cw=col[ly:hy_,lx:hx_]; hw=h[ly:hy_,lx:hx_]
+                for b in range(nb):
+                    dx,dy=math.cos(ang[b]),math.sin(ang[b])
+                    t=(du*dx+dv*dy)/L[b]; tc_=np.clip(t,0,1)
+                    perp=np.abs(-du*dy+dv*dx-bend[b]*L[b]*tc_*tc_)
+                    m=np.clip(wid*(1-0.85*tc_)*0.5-perp+0.5,0,1)*((t>=-0.05)&(t<=1.0))
+                    if not m.any(): continue
+                    cb=lerp(bc,tc,(tc_**0.8)[...,None])
+                    cw[:]=lerp(cw,cb,m[...,None]); np.maximum(hw,m*(0.45+0.4*tc_),out=hw)
+    # a few small flower clusters
+    segs=[[],[],[]]
+    for _ in range(34):
+        bx,by=rng.uniform(0,S,2); k=int(rng.integers(0,3))
+        for _d in range(int(rng.integers(3,8))):
+            fx,fy=bx+rng.normal(0,14),by+rng.normal(0,10); segs[k].append((fx,fy,fx+0.01,fy,rng.uniform(4.5,7.0)))
+    fl=np.zeros((S,S),f32)
+    for k,c_ in enumerate(("#F1ECD8","#F0D24E","#C7A6DC")):
+        if segs[k]:
+            m=draw_segments(S,segs[k]); col=lerp(col,hx(c_),m[...,None]); fl=np.maximum(fl,m)
+    h=np.clip(h+0.15*fl,0,1).astype(f32)
+    lt=painted_light(normal_from_height(blur(h,1.2),depth*3,T)); col=col*(0.86+0.26*lt[...,None])
+    R=np.clip(0.9-0.05*fl,0,1).astype(f32)
+    bc_,h1,R1=down2(np.clip(col,0,1).astype(f32)),down2(h),down2(R)
+    ao=cavity_ao(h1,radii=(2,6,18),k=(1.6,1.0,0.5),floor=0.55)
+    if write:
+        write_set(out_prefix,bc_,h1,R1,depth,T,ao=ao,ao_in_albedo=0.3); PBR_SETS[out_prefix]=dict(depth=depth,tile=T)
+    return bc_*(0.7+0.3*ao)[...,None]
+
 def gen_cliff(S=2048,seed=421,T=6.0,depth=0.10,out_prefix="T_VK_Cliff",write=True):
     """layered natural rock: 4 bands per 6 m repeat, band boundaries at world z = 1.5k (tier boundaries)"""
     rng=np.random.default_rng(seed); px=T/S
@@ -937,6 +992,95 @@ def gen_dirt(S=1024,seed=451,T=4.0,depth=0.03,out_prefix="T_VK_Dirt",write=True)
     R=np.clip(0.95-0.1*peb,0,1).astype(f32)
     if write: write_set(out_prefix,np.clip(col,0,1).astype(f32),h,R,depth,T,ao_in_albedo=0.4); PBR_SETS[out_prefix]=dict(depth=depth,tile=T)
     return col
+
+def _stamp_domes(S,items,wrap=True,flat=0.5,irr=0.0,rng=None):
+    """items: (cx, cy, rx, ry, angle, peak) in pixels -> elliptic domes, max-blended, tileable. flat: profile exponent
+    (0.5 = round dome, lower = flatter top, steeper sides); irr: outline irregularity (random low harmonics per item).
+    Returns height (max of the domes), anti-aliased coverage (0..1) and the id of the topmost item (-1 = none)."""
+    H=np.zeros((S,S),f32); C=np.zeros((S,S),f32); ID=np.full((S,S),-1,np.int32)
+    offs=(-S,0,S) if wrap else (0,)
+    rng=rng or np.random.default_rng(0)
+    for k,(cx,cy,rx,ry,ang,peak) in enumerate(items):
+        hm=[(n_,rng.uniform(0,2*math.pi),irr*rng.uniform(0.3,1.0)/n_) for n_ in (2,3,5)] if irr>0 else []
+        R=max(rx,ry)*(1+irr)+1.5; c,s=math.cos(ang),math.sin(ang)
+        for ox in offs:
+            for oy in offs:
+                ax,ay=cx+ox,cy+oy
+                lx=max(0,int(math.floor(ax-R))); hx_=min(S,int(math.ceil(ax+R)))
+                ly=max(0,int(math.floor(ay-R))); hy_=min(S,int(math.ceil(ay+R)))
+                if lx>=hx_ or ly>=hy_: continue
+                yy,xx=np.mgrid[ly:hy_,lx:hx_].astype(f32)
+                du=xx+0.5-ax; dv=yy+0.5-ay
+                u=(du*c+dv*s)/rx; v=(-du*s+dv*c)/ry; r=np.sqrt(u*u+v*v)
+                if hm:
+                    th=np.arctan2(v,u); r=r/(1+sum(a_*np.cos(n_*th+p_) for (n_,p_,a_) in hm))
+                dome=(np.clip(1-r*r,0,1)**flat*peak).astype(f32)
+                cov=np.clip((1-r)*min(rx,ry)+0.5,0,1).astype(f32)
+                hs=H[ly:hy_,lx:hx_]; m=dome>hs; hs[m]=dome[m]; ID[ly:hy_,lx:hx_][m]=k
+                cs=C[ly:hy_,lx:hx_]; np.maximum(cs,cov,out=cs)
+    return H,C,ID
+
+def gen_dirt_v2(S=2048,seed=452,T=4.0,depth=0.035,out_prefix="T_VK_Dirt",write=True):
+    """hand-painted earth. The base is a calm warm brown (a small value range, so it never reads as stains); the detail
+    is small-scale: grit, soft clods, irregular flat-topped pebbles and a few bigger stones (partly soiled), lit like
+    the cobbles, a few grass sprigs and straw bits. No cracks: thin dark lines read as hairs at game distance.
+    Generated at S, stored at S/2."""
+    rng=np.random.default_rng(seed); px=T/S
+    lo=fbm(S,2.6,seed,fmin=1.5,fmax=8); mid=fbm(S,2.2,seed+1,fmin=8,fmax=48)
+    loose=smooth(-0.4,0.9,fbm(S,2.4,seed+2,fmin=2,fmax=10))              # 0 packed .. 1 loose (grit, clods, pebbles)
+    col=lerp(hx("#7A593B"),hx("#8E6C46"),smooth(-1.6,1.6,lo)[...,None])
+    col=col*(1+0.035*mid[...,None])
+    col=lerp(col,col*np.array([0.94,0.955,1.0],f32),0.45*(1-loose)[...,None])     # packed: a touch darker, cooler
+    # soft clods of mixed sizes, fading out where the soil is packed
+    items=[]
+    for _ in range(800):
+        cx,cy=rng.uniform(0,S,2); l_=loose[int(cy)%S,int(cx)%S]
+        if rng.random()>0.2+0.8*l_: continue
+        r=rng.uniform(0.018,0.075)/px
+        items.append((cx,cy,r*rng.uniform(0.85,1.35),r*rng.uniform(0.5,0.9),rng.uniform(0,math.pi),rng.uniform(0.12,0.4)*(0.5+0.5*l_)))
+    Hc,Cc,_=_stamp_domes(S,items,flat=0.8,irr=0.35,rng=rng)
+    h=0.35+0.04*mid+0.3*blur(Hc,2.0)
+    # grit: light and dark specks
+    g=fbm(S,0.8,seed+3,fmin=180,fmax=1000)
+    lite=smooth(1.7,2.4,g)*(0.5+0.5*loose); dark=smooth(1.8,2.6,-g)
+    col=lerp(col,hx("#B89C74"),0.6*lite[...,None]); col=lerp(col,hx("#553B27"),0.55*dark[...,None])
+    h=h+0.05*lite-0.04*dark
+    # pebbles and a few bigger stones, more of them where the soil is loose
+    peb=[]
+    for _ in range(620):
+        cx,cy=rng.uniform(0,S,2)
+        if rng.random()>0.12+0.88*loose[int(cy)%S,int(cx)%S]: continue
+        big=rng.random()<0.09; r=(rng.uniform(0.028,0.05) if big else rng.uniform(0.011,0.026))/px
+        peb.append((cx,cy,r*rng.uniform(0.95,1.35),r*rng.uniform(0.6,0.9),rng.uniform(0,math.pi),0.55 if big else 0.42))
+    Hp,Cp,IDp=_stamp_domes(S,peb,flat=0.3,irr=0.28,rng=rng)
+    PAL=np.stack([hx(c_) for c_ in ("#9A9082","#A89E8C","#8C8174","#A0876A","#B2A48A","#8A7258","#A6906F","#7D776E")])
+    pid=rng.integers(0,len(PAL),len(peb)); val=rng.uniform(0.9,1.08,len(peb)).astype(f32)
+    buried=rng.uniform(0.0,0.45,len(peb)).astype(f32)                      # dust / soil left on each stone
+    ide=np.maximum(IDp,0)
+    pc=(PAL[pid]*val[:,None])[ide]*(1+0.06*fbm(S,1.5,seed+4,fmin=60))[...,None]
+    pc=lerp(pc,col,(buried[ide]*(1-smooth(0.1,0.5,Hp/0.5)))[...,None])     # soil creeps up the stone's sides
+    col=lerp(col,pc,Cp[...,None]); h=h+0.5*Hp
+    # grass sprigs (in small clusters) and straw bits
+    segs=[]
+    for _ in range(26):
+        bx,by=rng.uniform(0,S,2)
+        for _b in range(rng.integers(5,14)):
+            a=rng.uniform(-2.6,-0.5); L=rng.uniform(10,22); x0,y0=bx+rng.normal(0,9),by+rng.normal(0,6)
+            segs.append((x0,y0,x0+math.cos(a)*L,y0+math.sin(a)*L,rng.uniform(2.2,3.2)))
+    sp=draw_segments(S,segs); col=lerp(col,lerp(hx("#5F7F2A"),hx("#8CAB3E"),rng.random()),0.9*sp[...,None]); h=h+0.2*sp
+    segs=[]
+    for _ in range(45):
+        bx,by=rng.uniform(0,S,2); a=rng.uniform(0,math.pi); L=rng.uniform(10,20)
+        segs.append((bx,by,bx+math.cos(a)*L,by+math.sin(a)*L,2.0))
+    st=draw_segments(S,segs); col=lerp(col,hx("#BFA266"),0.8*st[...,None]); h=h+0.1*st
+    h=np.clip(h,0,1).astype(f32)
+    col,_=paint_form_light(np.clip(col,0,1).astype(f32),h,depth,T,hig=0.16,log=0.24,post=0.3,ex=2.0)
+    R=np.clip(0.94-0.12*Cp-0.03*lite,0,1).astype(f32)
+    bc,h1,R1=down2(np.clip(col,0,1).astype(f32)),down2(h),down2(R)
+    ao=cavity_ao(h1,radii=(2,6,18),k=(2.2,1.6,0.8),floor=0.45)
+    if write:
+        write_set(out_prefix,bc,h1,R1,depth,T,ao=ao,ao_in_albedo=0.4); PBR_SETS[out_prefix]=dict(depth=depth,tile=T)
+    return bc*(0.6+0.4*ao)[...,None]
 
 def gen_cobble(S=1024,seed=461,T=4.0,depth=0.05,out_prefix="T_VK_Cobble",write=True):
     rng=np.random.default_rng(seed); x,y=grid(S)

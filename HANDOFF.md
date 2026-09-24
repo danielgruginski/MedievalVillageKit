@@ -23,6 +23,12 @@ Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README
   few missing-stone patches; market stalls sell different goods; landmark buildings (smithy, inn) must stand out;
   shutters mostly have fresh paint (about 1 in 5 worn); the user likes Unity-style camera controls
   (`blender_addons/unity_nav.py`, installed).
+  More taste notes:
+  - Built things look man-made: stairs are cobble with dressed stone, not dirt and cliff rock.
+  - Ground textures must read as the material, not grime: a calm base colour with small-scale structure, never big
+    dark blotches or thin dark lines that look like hairs. Dirt has pebbles and clods (`gen_dirt_v2`); grass is dense
+    painted tufts over darker gaps (`gen_grass_v2`).
+  - Cliffs are natural, never trim-like.
 
 ## 2. Opening the project
 

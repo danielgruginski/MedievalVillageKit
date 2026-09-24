@@ -29,7 +29,7 @@ Other scenes: `MedievalColony` (first colony diorama, `mc_helpers`), `StoneWallK
 | `vk_helpers` | `src/core/` | Core kit: the `Kit` bmesh builder, 52 material slots, core pieces, `full_rebuild()`, `place_v()`, variant styles, market stalls (`STALL_TRADES`), landmarks (`build_smithy`, `build_inn`), lit windows. |
 | `vk_mat` | `src/core/` | PBR material builder, `MAT_MAP`, `apply_pbr_all()`, `TONE_MAP`. Executed by `vk_helpers`. |
 | `vk_render` | `src/core/` | `shot(name, cam_loc, target, lens, res, ...)` render helper (default output `renders/wip/`). |
-| `vk_tex`, `vk_texgen`, `vk_tex2` | `src/textures/` | Procedural PBR texture generators (`_BC/_N/_H/_R/_AO`), written to `assets/textures/` and packed. `vk_tex2`: stone rework, wattle, net, slate/shingle roofs, terrain textures. |
+| `vk_tex`, `vk_texgen`, `vk_tex2` | `src/textures/` | Procedural PBR texture generators (`_BC/_N/_H/_R/_AO`), written to `assets/textures/` and packed. `vk_tex2`: stone rework, wattle, net, slate/shingle roofs, terrain textures (current: `gen_grass_v2`, `gen_dirt_v2`, `gen_cliff_v2`; the older generators are kept). |
 | `vk_leafgen` | `src/textures/` | Leaf/flower atlas `T_VK_Leaves_*` (one cell per plant), `repaint_leaf_cell(cell)`. |
 | `vk_mod_humble` … `vk_mod_defence` | `src/modules/` | 8 expansion modules: pieces (`WS_SPECS` → `EXTRA_SPECS`) and builders `build_*`. |
 | `vk_nature` | `src/nature/` | Nature kit (trees, bushes, rocks…), `NATURE_SPECS` + `rebuild_nature()` + `check_nature_specs()`. |
