@@ -360,9 +360,9 @@ def tk_mats():
     a=bpy.data.materials.get("M_VKT_Stair") or stair_material()
     return [t,a]
 def stair_material(name="M_VKT_Stair"):
-    """cobbled steps without UVs (object space; chunks sit unrotated at the map origin): cobble treads with the paving's
-    texture and mapping (so they run on into M_VKT_Paving), dressed stone (the curb's texture) on risers, nosings and
-    cheeks. TCol: R = AO, G = 1 for dressed stone. Risers get a joint every half metre or so."""
+    """stair stone without UVs (object space; chunks sit unrotated at the map origin): dressed stone (the curb's
+    texture) where TCol G = 1, which is every stair face; G = 0 would give the paving's cobbles. TCol R = AO.
+    Vertical faces get a joint every half metre or so."""
     m=bpy.data.materials.get(name) or bpy.data.materials.new(name)
     m.use_nodes=True; nt=m.node_tree; nt.nodes.clear(); B=_NB(nt)
     out=B.n("ShaderNodeOutputMaterial"); b=B.n("ShaderNodeBsdfPrincipled")
@@ -849,7 +849,7 @@ def terrain_material(name="M_VK_Terrain",W=32,H=24,ctl="T_VK_GroundCtl"):
     # rim highlight on the turf crest
     col=B.mix(B.math("MULTIPLY",RIM,0.1),col,(0.66,0.76,0.38))
     # cliff (box projection in map space)
-    clC,_,_=B.side_sample("T_VK_Cliff_BC",p,1/6.0)
+    clC,_,(vT,az)=B.side_sample("T_VK_Cliff_BC",p,1/6.0)
     _,clH,_=B.side_sample("T_VK_Cliff_H",p,1/6.0,data=True)
     # a second, offset sample at another scale blended in by world noise, plus slow brightness/hue drift,
     # so the rock pattern does not repeat visibly along long cliffs
@@ -859,6 +859,9 @@ def terrain_material(name="M_VK_Terrain",W=32,H=24,ctl="T_VK_GroundCtl"):
     cn_=B.n("ShaderNodeTexNoise"); cn_.inputs["Scale"].default_value=0.11; cn_.inputs["Detail"].default_value=1.5; B.link(p,cn_.inputs["Vector"])
     cbl=B.smoothstep(cn_.outputs["Fac"],0.4,0.6)
     clC=B.mix(cbl,clC,clC2); clH=B.fmix(cbl,clH,clH2)
+    # up-facing rock (ledges, eroded lips) gets the rock from above instead of the side projection's streaks
+    wz=B.smoothstep(az,0.6,0.85)
+    clC=B.mix(wz,clC,B.img("T_VK_Cliff_BC",vT).outputs[0]); clH=B.fmix(wz,clH,B.img("T_VK_Cliff_H",vT,data=True).outputs[0])
     tn_=B.n("ShaderNodeTexNoise"); tn_.inputs["Scale"].default_value=0.045; tn_.inputs["Detail"].default_value=1.0; B.link(p,tn_.inputs["Vector"])
     tv=B.smoothstep(tn_.outputs["Fac"],0.3,0.7)
     clC=B.mix(1.0,clC,B.mix(tv,(0.84,0.84,0.86),(1.08,1.03,0.95)),blend="MULTIPLY")
@@ -867,7 +870,10 @@ def terrain_material(name="M_VK_Terrain",W=32,H=24,ctl="T_VK_GroundCtl"):
     # moss on up-facing rock
     mo=B.img("T_VK_Moss_BC",B.scale(p,1.0)); moH=B.img("T_VK_Moss_H",B.scale(p,1.0),data=True).outputs[0]
     mz=B.smoothstep(B.math("ADD",Nz,B.math("MULTIPLY",B.math("SUBTRACT",moH,0.5),0.75)),0.54,0.78)
-    ccol=B.mix(mz,clC,mo.outputs[0])
+    # ... in patches (about a third of it) and toned towards the rock, so ledges never read as a green line
+    mp=B.n("ShaderNodeTexNoise"); mp.inputs["Scale"].default_value=0.55; mp.inputs["Detail"].default_value=3.0; B.link(p,mp.inputs["Vector"])
+    mz=B.math("MULTIPLY",mz,B.smoothstep(mp.outputs["Fac"],0.52,0.6))
+    ccol=B.mix(mz,clC,B.mix(0.3,mo.outputs[0],clC))
     col=B.mix(rockW,col,ccol); hgt=B.fmix(rockW,hgt,clH)
     # AO, wet, macro tint
     col=B.mix(1.0,col,B.n("ShaderNodeCombineColor").outputs[0],blend="MULTIPLY") if False else col
@@ -970,7 +976,7 @@ def _bilinear_cells(arr,x,y):
     return (arr[j0,i0]*(1-fu)+arr[j0,i1]*fu)*(1-fv)+(arr[j1,i0]*(1-fu)+arr[j1,i1]*fu)*fv
 def _ss(e0,e1,x):
     t=np.clip((x-e0)/(e1-e0),0.0,1.0); return t*t*(3-2*t)
-def make_displace(G,amp=1.0,relief=0.36,relief_v=0.22,sag=0.12):
+def make_displace(G,amp=1.0,relief=0.36,relief_v=0.22,sag=0.12,talus=1.0):
     """world-space displacement of the assembled terrain (a function of position only, so the duplicated vertices of
     neighbouring tiles move together and no seam opens):
     - horizontal wobble of the contours (amp; zero on stiff cells and at the map border)
@@ -979,7 +985,11 @@ def make_displace(G,amp=1.0,relief=0.36,relief_v=0.22,sag=0.12):
       surfaces also sit between tiers. Where a tier top is an intermediate ledge of a taller cliff (a cliff line
       above and below it at the same spot) the relief runs on through the seam, so stacked tiers read as one face.
     - lip sag: the lower edge of the turf lip on cliff tops droops in patches (not on intermediate ledges)
-    apply() also bakes TCol: relief cavities, and rock instead of turf on intermediate ledges and eroded lip patches."""
+    - talus (talus): the bottom ~0.9 m of each cliff flares out into a scree apron whose size wanders along the
+      run, so the turf climbs the foot to varying heights and the toe is no longer one level line. Not where the
+      bottom is an intermediate ledge, on stiff cells (buildings, paving), ramps/stairs, water or the map border.
+    apply() also bakes TCol: relief cavities, rock instead of turf on intermediate ledges and eroded lip patches,
+    and lets the flared foot take turf (the shader then picks turf or rock by slope)."""
     stiff=G.stiff.astype(np.float64); XM,YM=3.0*G.W,3.0*G.H
     rampm=np.zeros(G.level.shape,np.float64)
     for (j,i) in zip(*np.nonzero(G.ramp)):
@@ -1012,6 +1022,38 @@ def make_displace(G,amp=1.0,relief=0.36,relief_v=0.22,sag=0.12):
         top=_ss(0.12,0.4,d); bot=1.0-_ss(1.18,1.46,d)   # 0 at the lip and at the toe, 1 on the face between
         top=top+st*(1.0-top)*(d>0.005); bot=bot+sb*(1.0-bot)   # ... unless the seam is an intermediate ledge
         return top*bot*fades(x,y)
+    def talus_off(x,y,z):
+        """(offsets (N,3), amount (N,)): the foot of each tier pushed outward, most at the toe; the apron size h
+        wanders along the run (2-3 m noise), from a plain rock foot to a wide turfed slope"""
+        off=np.zeros((len(x),3)); amt=np.zeros(len(x))
+        if talus<=0: return off,amt
+        # the toe row lies 2 cm below the floor, so depth is measured 5 cm higher up; points exactly on a floor plane
+        # (the flat ground tiles) never move, or their grid would fold
+        d0=np.ceil(z/TIER-1e-6)*TIER-z
+        d,_,_=tiers(x,y,z+0.05); t=np.clip((d-0.6)/0.87,0.0,1.0); m=(t>0)&(d0>0.004)
+        if not m.any(): return off,amt
+        xm,ym,zm,tm=x[m],y[m],z[m]+0.05,t[m]; Lt=np.ceil(zm/TIER-1e-6).astype(np.int64); e=0.05
+        f=phi(Lt,xm,ym); gt=1.0-_ss(0.25,0.45,np.abs(f-0.5))    # only around this tier's own cliff line
+        gx=(phi(Lt,xm+e,ym)-phi(Lt,xm-e,ym))/(2*e); gy=(phi(Lt,xm,ym+e)-phi(Lt,xm,ym-e))/(2*e); gl=np.hypot(gx,gy)
+        # every fade below is read at the vertex's projection onto that line, so all rows of one column of the face get
+        # the same strength (a flare weaker at the toe than one row up would tuck the toe under), and each changes over a
+        # metre or more along the run (sharp changes shear neighbouring columns into folds where the face turns)
+        glc=np.maximum(gl,1e-6); sd=np.clip((f-0.5)/glc,-0.6,0.6)          # distance to the line, at most 0.6 m
+        px=xm-sd*gx/glc; py=ym-sd*gy/glc
+        F=_ss(0.15,0.5,np.abs(phi(Lt-1,px,py)-0.5))              # not on intermediate ledges, nor near the next lip down
+        sf=np.clip(_bilinear_cells(stiff,px,py)/0.5,0,1); F*=fades(px,py)*(1.0-sf*sf*(3-2*sf))
+        h=_ss(0.2,0.8,0.5+0.9*vnoise(px/2.6,py/2.6,np.zeros_like(px),39))
+        # concave corners: the outward pushes converge and would cross. Curvature of the cliff line = divergence of the
+        # level map's unit gradient, over 1 m (about 0.65 in an inner corner, 0 on a straight run, negative on convex
+        # ones): the talus fades out before the line bends inward
+        def unit(qx,qy):
+            ux=(phi(Lt,qx+e,qy)-phi(Lt,qx-e,qy))/(2*e); uy=(phi(Lt,qx,qy+e)-phi(Lt,qx,qy-e))/(2*e); ul=np.maximum(np.hypot(ux,uy),1e-6)
+            return ux/ul,uy/ul
+        k=1.0; kap=(unit(px+k,py)[0]-unit(px-k,py)[0]+unit(px,py+k)[1]-unit(px,py-k)[1])/(2*k)
+        F*=1.0-_ss(0.05,0.25,kap)
+        a=talus*F*(h*tm*tm+0.45*tm**3)*gt*_ss(0.004,0.012,d0[m])*(gl>1e-3)
+        gl=np.maximum(gl,1e-9); off[m,0]=-gx/gl*a; off[m,1]=-gy/gl*a; amt[m]=a
+        return off,amt
     def sag_z(x,y,z):
         d,st,_=tiers(x,y,z)
         b=_ss(0.1,0.16,d)*(1.0-_ss(0.3,0.6,d))          # the lip edge and root recess, not the crest line above
@@ -1036,22 +1078,33 @@ def make_displace(G,amp=1.0,relief=0.36,relief_v=0.22,sag=0.12):
         if m.any():
             rx,ry,rz=R(x[m],y[m],z[m]); out[m,0]=rx*w[m]; out[m,1]=ry*w[m]; out[m,2]=rz*w[m]
         return out
-    def D(p):
+    def D0(p):
         x,y,z=p[:,0],p[:,1],p[:,2]
         s=_bilinear_cells(stiff,x,y); t=np.clip(s/0.5,0,1); A=amp*(1-t*t*(3-2*t))
         e=np.clip(np.minimum(np.minimum(x,XM-x),np.minimum(y,YM-y))/3.0,0,1); A=A*e*e*(3-2*e)
         dx=0.28*vnoise(x/6,y/6,z/4,11)+0.08*vnoise(x/1.6,y/1.6,z/1.6,13)
         dy=0.28*vnoise(x/6,y/6,z/4,12)+0.08*vnoise(x/1.6,y/1.6,z/1.6,14)
         return np.stack([A*dx,A*dy,sag_z(x,y,z)],1)+Rw(p)
+    def D(p):
+        """the displacement at any point (props): the talus direction here is the level map's, an approximation"""
+        return D0(p)+talus_off(p[:,0],p[:,1],p[:,2])[0]
     def apply(arr):
-        co=arr["co"]; e=0.02
-        J=np.zeros((len(co),3,3))
+        co=arr["co"]; e=0.005                   # small step: the talus must not see the floor plane 2 cm above the toe
+        J=np.zeros((len(co),3,3)); ga=np.zeros((len(co),3))
         for a in range(3):
             dp=np.zeros(3); dp[a]=e
-            J[:,:,a]=(D(co+dp)-D(co-dp))/(2*e)
+            J[:,:,a]=(D0(co+dp)-D0(co-dp))/(2*e)
+            ga[:,a]=(talus_off(*(co+dp).T)[1]-talus_off(*(co-dp).T)[1])/(2*e)
+        # the talus pushes each vertex along its own tile normal (horizontal part): the tiles' normals agree across
+        # seams and follow the real contour, where the level map's gradient bends wrongly at junctions
+        nv=np.zeros((len(co),2)); np.add.at(nv,arr["vi"],arr["cn"][:,:2]); nl_=np.linalg.norm(nv,axis=1)
+        dv=np.where(nl_[:,None]>1e-6,nv/np.maximum(nl_,1e-9)[:,None],0.0)
+        dv=np.concatenate([dv,np.zeros((len(co),1))],1)
+        ta=talus_off(co[:,0],co[:,1],co[:,2])[1]*(nl_>1e-6)
+        J+=np.einsum("ni,nj->nij",dv,ga)
         J+=np.eye(3)[None]
         rel=Rw(co)
-        co2=co+D(co)
+        co2=co+D0(co)+dv*ta[:,None]
         # loop normals: n' = normalize(J^-T n)
         JiT=np.linalg.inv(J).transpose(0,2,1)
         cn0=arr["cn"]
@@ -1069,10 +1122,12 @@ def make_displace(G,amp=1.0,relief=0.36,relief_v=0.22,sag=0.12):
         r=np.maximum(st,er)*fades(x,y)
         rim=((d>0.005)&(d<0.3))*r; rock=((d>0.03)&(d<0.3))*r
         tc[:,1]=np.maximum(tc[:,1],rock[arr["vi"]]); tc[:,2]*=1.0-rim[arr["vi"]]
+        # the flared foot is no longer rock by definition: the terrain shader decides by slope (turf where it is gentle)
+        tc[:,1]*=1.0-_ss(0.08,0.35,ta)[arr["vi"]]
         arr["tc"]=tc
         arr["co"]=co2; arr["cn"]=n
         arr["detJ"]=float(np.min(J[:,0,0]*J[:,1,1]-J[:,0,1]*J[:,1,0]))
-    apply.D=D; apply.relief_w=relief_w; apply.tiers=tiers
+    apply.D=D; apply.relief_w=relief_w; apply.tiers=tiers; apply.talus=talus_off
     return apply
 
 def lip_pos(D,x,y,zt):
@@ -1315,13 +1370,13 @@ def tk_cliff_dress(G,place,D=None,seed=5,free=None,density=1.0):
                             if (t<-0.2 and not sl) or (t>0.2 and not sr) or rng.random()<0.45: continue
                             tt=t+rng.uniform(-0.15,0.15); x,y,z=lip_pos(D,cx+tx*tt,cy+ty*tt,Lm*TIER)
                             place(lipgrass,x,y,z,rot+rng.uniform(-8,8),rng.uniform(0.8,1.2)); n+=1
-                if rng.random()<0.6*density:                               # rubble at the toe
-                    for _ in range(rng.randint(2,4)):
-                        t=t_along(); off=rng.uniform(0.35,0.95); x,y=disp(cx+tx*t+ox*off,cy+ty*t+oy*off,zl)
+                if rng.random()<0.6*density:                               # rubble at the toe (just above the floor, D
+                    for _ in range(rng.randint(2,4)):                      # includes the talus push: the foot of the apron)
+                        t=t_along(); off=rng.uniform(0.35,0.95); x,y=disp(cx+tx*t+ox*off,cy+ty*t+oy*off,zl+0.01)
                         nm=rng.choice(rubble)
                         place(nm,x,y,zl-0.05,rng.uniform(0,360),rng.uniform(0.35,0.55) if nm.endswith("Cluster") else rng.uniform(0.6,1.2)); n+=1
                 if rng.random()<0.45*density:                              # plants at the toe
-                    t=t_along(); off=rng.uniform(0.5,1.0); x,y=disp(cx+tx*t+ox*off,cy+ty*t+oy*off,zl)
+                    t=t_along(); off=rng.uniform(0.5,1.0); x,y=disp(cx+tx*t+ox*off,cy+ty*t+oy*off,zl+0.01)
                     nm=rng.choice(plants)
                     place(nm,x,y,zl,rng.uniform(0,360),rng.uniform(0.45,0.65) if nm.endswith("Round") else rng.uniform(0.7,1.05)); n+=1
     return n
@@ -1520,10 +1575,10 @@ def tk_test_T3r(n=40,seed0=100):
     return fails,checked
 
 # ---------------------------------------------------------------- stairs (same footprint as ramps, 6 risers x 0.25)
-# cobble treads with a dressed-stone nosing, dressed-stone risers and cheeks (material M_VKT_Stair, TCol G = 1 on stone)
+# dressed stone throughout: treads, risers and the flanking walls (material M_VKT_Stair, TCol G = 1 = stone)
 STAIR_OUT=[(-1.5,-1.5),(-1.25,-1.5),(-1.25,-1.25),(-0.75,-1.25),(-0.75,-1.0),(-0.25,-1.0),(-0.25,-0.75),
            (0.25,-0.75),(0.25,-0.5),(0.75,-0.5),(0.75,-0.25),(1.25,-0.25),(1.25,0.0),(1.5,0.0)]
-STAIR_COB=(1.0,0.0,0.0,0.0); STAIR_STONE=(1.0,1.0,0.0,0.0); STAIR_NOSE=0.14; STAIR_CORNER_AO=0.76
+STAIR_STONE=(1.0,1.0,0.0,0.0); STAIR_CORNER_AO=0.6; STAIR_RISER_AO=0.84   # all one stone: shading keeps the steps legible
 def _stair_z(y):
     z=-1.5
     for k in range(0,len(STAIR_OUT)-1):
@@ -1535,8 +1590,8 @@ def _stairs(tb,xa,xb):
     for c in range(ncol):
         _stairs_strip(tb,xa+0.5*c,xa+0.5*(c+1))
 def _stairs_strip(tb,x0,x1):
-    """one 0.5 m wide strip of the flight. Treads: a stone nosing at the front (not on the bottom landing, which lies
-    at the lower floor) and cobbles behind it, shaded darker in the corner under the next riser. Risers face -y."""
+    """one 0.5 m wide strip of the flight, all dressed stone. Treads are shaded darker towards the corner under the
+    next riser (not the top landing, which meets the floor), so each step reads. Risers face -y."""
     last=len(STAIR_OUT)-2
     def quad(pts,n,cols):
         q=[tb.vert(p) for p in pts]; V=[Vector(tb.v[i]) for i in q]
@@ -1546,13 +1601,11 @@ def _stairs_strip(tb,x0,x1):
     for k in range(last+1):
         (y0,z0),(y1,z1)=STAIR_OUT[k],STAIR_OUT[k+1]
         if abs(z0-z1)<1e-9:   # tread
-            yn=y0+STAIR_NOSE if k>0 else y0
-            if yn>y0: quad([(x0,y0,z0),(x1,y0,z0),(x1,yn,z0),(x0,yn,z0)],(0.0,0.0,1.0),[STAIR_STONE]*4)
-            back=STAIR_COB if k==last else ao(STAIR_COB,STAIR_CORNER_AO)     # the top landing meets the floor
-            quad([(x0,yn,z0),(x1,yn,z0),(x1,y1,z1),(x0,y1,z1)],(0.0,0.0,1.0),[STAIR_COB,STAIR_COB,back,back])
+            back=STAIR_STONE if k==last else ao(STAIR_STONE,STAIR_CORNER_AO)
+            quad([(x0,y0,z0),(x1,y0,z0),(x1,y1,z1),(x0,y1,z1)],(0.0,0.0,1.0),[STAIR_STONE,STAIR_STONE,back,back])
         else:                 # riser
-            low=ao(STAIR_STONE,STAIR_CORNER_AO)
-            quad([(x0,y0,z0),(x0,y1,z1),(x1,y1,z1),(x1,y0,z0)],(0.0,-1.0,0.0),[low,STAIR_STONE,STAIR_STONE,low])
+            low=ao(STAIR_STONE,STAIR_CORNER_AO); up=ao(STAIR_STONE,STAIR_RISER_AO)
+            quad([(x0,y0,z0),(x0,y1,z1),(x1,y1,z1),(x1,y0,z0)],(0.0,-1.0,0.0),[low,up,up,low])
 def gen_stair_half_e():
     """like gen_ramp_half_e but the walking surface is the stepped STAIR_OUT outline"""
     tb=TB(); P=P_CLIFF; RN=row_normals(P,len(P)-1); T3=list(range(TOP_ROW+1))

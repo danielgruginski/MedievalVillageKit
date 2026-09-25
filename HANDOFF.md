@@ -24,7 +24,7 @@ Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README
   shutters mostly have fresh paint (about 1 in 5 worn); the user likes Unity-style camera controls
   (`blender_addons/unity_nav.py`, installed).
   More taste notes:
-  - Built things look man-made: stairs are cobble with dressed stone, not dirt and cliff rock.
+  - Built things look man-made: stairs are one dressed stone throughout (treads too, no cobble), not dirt or cliff rock.
   - Ground textures must read as the material, not grime: a calm base colour with small-scale structure, never big
     dark blotches or thin dark lines that look like hairs. Dirt has pebbles and clods (`gen_dirt_v2`); grass is dense
     painted tufts over darker gaps (`gen_grass_v2`).
@@ -60,8 +60,9 @@ Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README
 
 Common commands: [docs/KIT_README.md §3](docs/KIT_README.md). Quick checks after terrain changes:
 `tk_test_T1()` → `[]`; `tk_test_T3(30)` / `tk_test_T3r(30)` → no failures (≈26k / 16k checks);
-`tk_test_T4(G, chunks, step=0.25)`: the demo gives 2 known hits, the valley 10. They are grazing rays on near-vertical
-relief faces (face normal z between −0.1 and 0), plus the same small downward face on five ramps (open issue 13).
+`tk_test_T4(G, chunks, step=0.25)`: the demo gives 5 known hits, the valley 17. They are grazing rays on near-vertical
+relief and talus faces (face normal z between −0.19 and 0), plus the same small downward face on the ramps (open
+issue 13: five in the valley, one in the demo).
 A first hit with normal z below about −0.2 anywhere else would be a real hole.
 Valley build log (`T.log`) known entries: watermill and smokehouse overhang the bank slightly, `WS_skyline_Road`
 touches a tower (the road strip is deleted right after). `fix_levels dropped` lists a cart and the creels.
@@ -80,7 +81,7 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
   plants, mushrooms, rocks, stump, log, pond. Leaf atlas `T_VK_Leaves_*` (cherry cell repainted in hero-oak style).
 - **Terrain (`vk_terrain`):** dual-grid marching squares, 3 m cells, 1.5 m levels; cliff/shore tiles with A/B/C
   variants; ramps whose half tile blends the cliff down and has an earth bank (plus `tk_ramp_dress` props); built
-  stairs (cobble treads, dressed-stone risers and nosings, flanking walls with sloped copings and piers);
+  stairs (all dressed stone: treads, risers, flanking walls with sloped copings and piers);
   separate cobble paving mesh with curbs and missing-stone patches (left out where a stair climbs into a cell).
   - `make_displace` (position-only, seam-safe) does all of this:
     - wobbles the contours;
@@ -115,9 +116,10 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
    plain dressed-stone side walls.~~ Done 2026-09-24: the half-stair tile builds flanking walls (sloped coping, a pier
    where the cliff meets the flight, a kerb up top) on grass and cobble alike; the rock shoulders and
    `SM_VKT_RampShoulder` are gone. T1/T3/T3r pass and T4 keeps its known hits.
-7. Cliffs seen head-on at eye level still read as a band with a straight toe line. The cliff texture's painted grass
-   tufts look flat on vertical faces. Up-facing rock gets bright moss, so the middle ledges show as a thin green line
-   from above.
+7. ~~Cliffs seen head-on read as a band with a straight toe line; mossy middle ledges show as a green line from
+   above.~~ Done 2026-09-24: `make_displace` flares the foot of each cliff into a talus whose size wanders along the run
+   (turf climbs it up to ~0.7 m, the shader picks turf or rock by slope), and up-facing rock gets top-projected rock
+   with moss only in patches. Still open: the cliff texture's painted grass tufts look flat on vertical faces.
 8. The old small `build_blacksmith` is no longer placed (the landmark smithy replaced it); the skyline street still
    has a small smithy house.
 9. Willow slightly wispy from above; a few pine bark flecks at distance.

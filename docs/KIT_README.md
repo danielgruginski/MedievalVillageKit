@@ -71,8 +71,8 @@ The valley generator (`build_valley_town`) runs these checks and clean-up passes
 - **Paving:** cobbled cells become a separate mesh (`tk_build_paving`): stones 6 cm above the terrain, dressed-stone curbs towards grass, patches of missing stones showing dirt. Props on cobbles are lifted onto it.
 - **Ramps:** the half-ramp tile blends the cliff down into the ramp surface and turns the side into an earth bank; `tk_ramp_dress` adds a stone, grass and a fern at each ramp end.
 - **Stairs:** built steps.
-  - The treads are cobbles, with the paving's texture and mapping.
-  - The risers, the nosing strip on each tread and the side walls are dressed stone (`M_VKT_Stair`; TCol G = 1 marks stone, R is AO).
+  - Everything is one dressed stone (`M_VKT_Stair`, the curb's texture; TCol G = 1 marks stone, R is AO). Treads darken
+    towards the next riser and risers are a little darker than treads, so the steps read from the colony camera.
   - The half-stair tile is the transition to the cliff (`_stair_wall`): a 0.5 m flanking wall (wall + 2 m flight + wall
     fill one cell) with a sloped coping along the part of the flight in front of the cliff, a capped pier where the
     cliff meets the flight, and a kerb at terrace height along the upper flight. Same on grass and on cobble.
@@ -83,9 +83,16 @@ The valley generator (`build_valley_town`) runs these checks and clean-up passes
   - Where a tier top is the middle ledge of a taller cliff, the relief runs through the ledge, and the upper layer drops its skirt (`tk_cache_noskirt`).
   - The turf lip of cliff tops sags in patches.
   - `apply()` bakes rock instead of turf on the middle ledges and in eroded patches along the lips.
+  - Talus (`talus_off`): the bottom ~0.9 m of each cliff flares out (up to ~1.45 m at the toe), with a size that wanders
+    along the run (2.6 m noise), so turf climbs the foot to varying heights and the toe is not one level line. Each
+    vertex moves along its own tile normal (they agree across seams); every fade is read once per column, on the cliff
+    line, and changes over a metre or more along the run, which keeps the face from folding. It fades out on stiff
+    cells (buildings, paving), ramps/stairs, water, the map border, stacked ledges, near the next lip down and in
+    concave corners (curvature of the cliff line). Toe rubble and plants are placed at the talus foot.
   - `tk_cliff_dress` sinks boulders into the faces and puts rubble, plants and grass tufts at the toes, the lips and the middle ledges.
   - The rock texture comes from `gen_cliff_v2` in `vk_tex2`: angular blocks, strata and a soil strip under each lip.
-  - The terrain material blends two cliff samples at different scales, so long cliffs don't repeat.
+  - The terrain material blends two cliff samples at different scales, so long cliffs don't repeat. Up-facing rock
+    (ledges, eroded lips) is sampled from above, and moss covers only about a third of it, toned towards the rock.
 - **Kitchen gardens, roof palette:** crop beds next to houses; roofs chosen per district (Blue for landmarks), ±6 % per-instance brightness jitter.
 
 Landmarks: `build_smithy` (9 m forge stack with glowing hearth, open workshop, point light) and `build_inn` (3 storeys, lit windows, big tankard sign, beer garden). Market stalls: `SM_VK_MarketStall` + `_Greengrocer/_Baker/_Fishmonger/_Potter/_Draper/_Cheese/_Tinker`.

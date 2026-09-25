@@ -537,8 +537,8 @@ Total: 481 masters.
 | `SM_VKT_Shore_Inner_A` | 3.00 × 3.00 × 1.50 | 194 | 2 |
 | `SM_VKT_Shore_Outer_A` | 3.00 × 3.00 × 1.50 | 174 | 2 |
 | `SM_VKT_Shore_Saddle_A` | 3.00 × 3.00 × 1.50 | 304 | 2 |
-| `SM_VKT_Stair_HalfE_A` | 3.00 × 3.00 × 3.40 | 318 | 2 |
-| `SM_VKT_Stair_HalfW_A` | 3.00 × 3.00 × 3.40 | 318 | 2 |
-| `SM_VKT_Stair_Mid_A` | 3.00 × 3.00 × 1.50 | 228 | 2 |
+| `SM_VKT_Stair_HalfE_A` | 3.00 × 3.00 × 3.40 | 294 | 2 |
+| `SM_VKT_Stair_HalfW_A` | 3.00 × 3.00 × 3.40 | 294 | 2 |
+| `SM_VKT_Stair_Mid_A` | 3.00 × 3.00 × 1.50 | 156 | 2 |
 | `SM_VKT_WaterQuad` | 3.00 × 3.00 × 0.00 | 2 | 2 |
 
