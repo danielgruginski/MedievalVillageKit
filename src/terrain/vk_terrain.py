@@ -499,7 +499,8 @@ def tk_tiles(G,I0=0,J0=0,I1=None,J1=None):
                 if case==EDGE and G.ramp.any():
                     ro=ramp_override(G,c,l,r)
                     if ro:
-                        yield (I,J,l,"Stair" if _is_stair(G,c,l,r) else "Ramp",ro,r,"A"); continue
+                        if _is_stair(G,c,l,r): yield (I,J,l,"Stair",ro,r,"A"); continue
+                        yield (I,J,l,"Ramp",ro,r,"W" if ro!="Mid" and _is_paved_ramp(G,c,l,r) else "A"); continue
                 yield (I,J,l,"Cliff",case,r,pick_var("Cliff",case,hash32(I,J,l),stiff))
 
 # ---------------------------------------------------------------- chunk assembly (numpy)
@@ -1217,6 +1218,23 @@ def gen_ramp_half_e():
     ci,cp=cut
     ramp_blend_shoulder(tb,xr,cp[0])
     return tb
+def gen_ramp_half_e_walled():
+    """half ramp for a paved road: the cliff is not blended into the ramp; a built wall (_stair_wall: sloped coping
+    along the part in front of the cliff, a pier where the cliff meets the ramp, a kerb along the upper part) stands
+    between them, as beside the built stairs. The ramp surface is the same as gen_ramp_half_e's."""
+    tb=TB(); P=P_CLIFF; RN=row_normals(P,len(P)-1); T3=list(range(TOP_ROW+1))
+    ncol=int(round((RAMP_X+1.5)/0.25))+1
+    fr=_front_edge(13)[:ncol]
+    sweep(tb,fr,P,TOP_ROW,CLIFF_LAST)
+    xr=RAMP_X
+    top=curve_ents(P,RN,fr,TOP_ROW)
+    top+=[(xr,y,0.0,TUP,FLAT_T) for y in (0.5,1.0,1.5) if y>1.5-P[TOP_ROW][0]+1e-6]
+    top+=[(*side_pos(2,d,2),0.0,TUP,FLAT_T) for d in (0,0.5,1.0,1.5,2.0,2.5,3.0) if 1.5-d<=xr+1e-6]
+    top+=side_ents(P,RN,3,3,T3)
+    region(tb,top,0.0,FLAT_T)
+    _ramp_surface(tb,xr,1.5,int(round((1.5-xr)/0.5))+1)
+    _stair_wall(tb,xr-STAIR_WALL,xr)
+    return tb
 def gen_ramp_mid():
     tb=TB(); _ramp_surface(tb,-1.5,1.5,7); return tb
 def mirror_tb(tb):
@@ -1231,6 +1249,9 @@ def tk_build_ramps():
     tk_finish(e,"SM_VKT_Ramp_HalfE_A",coll,dict(set="Ramp",case="HalfE",var="A",mask=12))
     tk_finish(mirror_tb(e),"SM_VKT_Ramp_HalfW_A",coll,dict(set="Ramp",case="HalfW",var="A",mask=12))
     tk_finish(gen_ramp_mid(),"SM_VKT_Ramp_Mid_A",coll,dict(set="Ramp",case="Mid",var="A",mask=12))
+    w=gen_ramp_half_e_walled()
+    tk_finish(w,"SM_VKT_Ramp_HalfE_W",coll,dict(set="Ramp",case="HalfE",var="W",mask=12))
+    tk_finish(mirror_tb(w),"SM_VKT_Ramp_HalfW_W",coll,dict(set="Ramp",case="HalfW",var="W",mask=12))
 
 DIRV={1:(0,1),2:(1,0),3:(0,-1),4:(-1,0)}
 def _is_stair(G,c,l,r):
@@ -1238,6 +1259,13 @@ def _is_stair(G,c,l,r):
         ws=(cs+r)%4; a=c[ws]; b=c[(ws+1)%4]
         lowc=a if a[0]<b[0] else b
         if lowc[0]==l-1 and G.ramp[lowc[3],lowc[2]] and G.stair[lowc[3],lowc[2]]: return True
+    return False
+def _is_paved_ramp(G,c,l,r):
+    """the ramp crossing this layer carries a paved road (its low cell is cobbled): built walls instead of earth banks"""
+    for cs in (1,3):
+        ws=(cs+r)%4; a=c[ws]; b=c[(ws+1)%4]
+        lowc=a if a[0]<b[0] else b
+        if lowc[0]==l-1 and G.ramp[lowc[3],lowc[2]] and G.ground[lowc[3],lowc[2]]==2: return True
     return False
 def ramp_override(G,c,l,r):
     """c: corners [(level,water,i,j)] ; returns 'HalfE'/'HalfW'/'Mid' or None for an EDGE layer l with rotation r"""
@@ -1302,7 +1330,7 @@ def tk_ramp_dress(G,coll,origin=MAP_ORIGIN,seed=7):
            ("SM_VK_Plant_TallGrass",(-1.25,-0.25),1.0),("SM_VK_Rock_Small_B",(0.05,-1.35),0.6))
     for (j,i) in zip(*np.nonzero(G.ramp)):
         d=int(G.ramp[j,i]); fx,fy=((0,1),(1,0),(0,-1),(-1,0))[d-1]; wall=STAIR_WALL if G.stair[j,i] else 0.0
-        if wall and G.ground[j,i]==2: continue                                   # paved town steps stay clean
+        if G.ground[j,i]==2: continue                                            # paved steps and road ramps stay clean
         for sx,sy in ((fy,-fx),(-fy,fx)):
             ni,nj=i+sx,j+sy
             if 0<=ni<G.W and 0<=nj<G.H and G.ramp[nj,ni]==d: continue
@@ -1402,18 +1430,21 @@ def paving_materials():
         out.append(m)
     return out
 
-def tk_build_paving(G,coll,origin=MAP_ORIGIN,name="VK_Paving",lift=0.06,step=0.25,seed=3,hole_t=0.5,cliff_inset=0.35):
+def tk_build_paving(G,coll,origin=MAP_ORIGIN,name="VK_Paving",lift=0.06,step=0.25,seed=3,hole_t=0.5,cliff_inset=0.35,exclude=()):
     """Cobbled cells (ground==2) as a separate mesh: stones `lift` m above the terrain, a curb of dressed stones
     where the cobbles meet grass (not towards dirt roads or ramps), and patches of missing stones that show the
     dirt painted under the paving. Hole edges are irregular and get a small side face (the paving's thickness).
-    A ramp or stair climbs half a cell into the cell above it: that part is left unpaved (with a stair's flanking
-    walls), and curbs run along the cut walls beside a ramp instead of across it."""
+    A ramp climbs half a cell into the cell above it. When both the ramp cell and the cell above are paved (a paved
+    road on a ramp) the paving follows the ramp's slope (the upper half of the ramp cell and the lower half of the cell
+    above, over the ramp's width); otherwise that part is left unpaved, and always for stairs (with their flanking
+    walls). Curbs run along the cut walls beside a ramp instead of across it.
+    exclude: map-local rectangles (x0, x1, y0, y1) left unpaved (under bridges, gate floors)."""
     from mathutils import noise as mnoise
     rng=random.Random(seed)
     cob=(G.ground==2)&(~G.water)
     n=int(round(3.0/step))
     # cut-outs: upper cell -> [(side, a0, a1)]; side 0..3 = W,E,S,N faces the ramp cell, a0..a1 along that side (m)
-    cut={}
+    cut={}; walls={}; slope={}
     for (rj,ri) in zip(*np.nonzero(G.ramp)):
         d=int(G.ramp[rj,ri]); fx,fy=((0,1),(1,0),(0,-1),(-1,0))[d-1]; hi_,hj_=ri+fx,rj+fy
         if not (0<=hi_<G.W and 0<=hj_<G.H) or not cob[hj_,hi_]: continue
@@ -1422,17 +1453,33 @@ def tk_build_paving(G,coll,origin=MAP_ORIGIN,name="VK_Paving",lift=0.06,step=0.2
         edge=RAMP_X-(STAIR_WALL if G.stair[rj,ri] else 0.0)      # a flight's flanking walls stay unpaved too
         a0=0.0 if run(-1) else edge; a1=3.0 if run(1) else 3.0-edge
         side={(0,1):2,(0,-1):3,(1,0):0,(-1,0):1}[(fx,fy)]
-        cut.setdefault((hi_,hj_),[]).append((side,a0,a1))
+        walls.setdefault((hi_,hj_),[]).append((side,a0,a1))
+        if cob[rj,ri] and not G.stair[rj,ri]:                       # paved road on the ramp: pave the slope
+            L=int(G.level[rj,ri])
+            slope.setdefault((ri,rj),[]).append(("ramp",L,fx,fy,a0,a1))
+            slope.setdefault((hi_,hj_),[]).append(("high",L,fx,fy,a0,a1))
+        else: cut.setdefault((hi_,hj_),[]).append((side,a0,a1))
     def in_cut(i,j,lx,ly):
         for (sd,a0,a1) in cut.get((i,j),()):
             a=ly if sd in (0,1) else lx; dep=(lx,3-lx,ly,3-ly)[sd]
             if a0<=a<=a1 and dep<1.5: return True
         return False
+    def slope_z(i,j,lx,ly):
+        """(z, inside): the paving height on a paved ramp at cell-local (lx, ly), None where the spot is flat; inside
+        is False in the ramp cell's upper half beside the ramp (the earth shoulder: left unpaved)"""
+        for (kind,L,fx,fy,a0,a1) in slope.get((i,j),()):
+            s_=ly if fy==1 else (3-ly if fy==-1 else (lx if fx==1 else 3-lx))        # along the ramp, from the cell's low edge
+            a=lx if fx==0 else ly
+            inw=a0-1e-6<=a<=a1+1e-6
+            if kind=="ramp" and s_>1.5-1e-6: return (L*TIER+(s_-1.5)*0.5, True) if inw else (None,False)
+            if kind=="high" and s_<1.5+1e-6: return (L*TIER+0.75+s_*0.5, True) if inw else (None,False)
+        return None, True
+    def excluded(x,y): return any(x0<=x<=x1 and y0<=y<=y1 for (x0,x1,y0,y1) in exclude)
     bm=bmesh.new(); uvl=bm.loops.layers.uv.new("UVMap"); cl=bm.loops.layers.color.new("Col")
     V={}; holes=set()
-    def vert(ia,ib,lv):
-        k=(ia,ib,lv)
-        if k not in V: V[k]=bm.verts.new((ia*step,ib*step,lv*TIER+lift))
+    def vert(ia,ib,z):                                  # welded by position: flat and sloped parts share their seams
+        k=(ia,ib,round(z,3))
+        if k not in V: V[k]=bm.verts.new((ia*step,ib*step,z+lift))
         return V[k]
     def nb(i,j):
         return (G.level[j,i],bool(cob[j,i]),int(G.ground[j,i]),int(G.ramp[j,i])) if (0<=i<G.W and 0<=j<G.H) else None
@@ -1445,22 +1492,29 @@ def tk_build_paving(G,coll,origin=MAP_ORIGIN,name="VK_Paving",lift=0.06,step=0.2
             l2,c2,g2,r2=q
             if l2<lv: ins[sd]=cliff_inset; curb[sd]=not G.ramp[j,i]
             elif not c2 and l2==lv and g2!=1 and not r2 and not G.ramp[j,i]: curb[sd]=True
+            elif not c2 and l2==lv and g2!=1 and not r2 and G.ramp[j,i] and (di!=0)==(G.ramp[j,i] in (1,3)):
+                curb[sd]=True                                   # beside a paved ramp's flat half (limited below)
         curb_sides.append((i,j,lv,ins,curb))
         for a in range(n):
             for b in range(n):
                 x0,y0=3*i+a*step,3*j+b*step; cx,cy=x0+step/2,y0+step/2; lx,ly=cx-3*i,cy-3*j
-                if lx<ins[0] or lx>3-ins[1] or ly<ins[2] or ly>3-ins[3] or in_cut(i,j,lx,ly): continue
+                zc,inside=slope_z(i,j,lx,ly)
+                if not inside or excluded(cx,cy) or in_cut(i,j,lx,ly): continue
+                if zc is None and (lx<ins[0] or lx>3-ins[1] or ly<ins[2] or ly>3-ins[3]): continue
                 near_curb=((curb[0] and lx<0.6) or (curb[1] and lx>2.4) or (curb[2] and ly<0.6) or (curb[3] and ly>2.4))
                 hv=mnoise.noise(Vector((cx*0.42,cy*0.42,7.3)))+0.45*mnoise.noise(Vector((cx*1.4,cy*1.4,2.1)))
                 ia,ib=int(round(x0/step)),int(round(y0/step))
+                zs=[]
+                for (da,db) in ((0,0),(1,0),(1,1),(0,1)):
+                    z_=slope_z(i,j,lx-step/2+da*step,ly-step/2+db*step)[0] if zc is not None else None
+                    zs.append(lv*TIER if z_ is None else z_)
                 if hv>hole_t and not near_curb:
-                    holes.add((ia,ib,lv)); continue
-                f=bm.faces.new((vert(ia,ib,lv),vert(ia+1,ib,lv),vert(ia+1,ib+1,lv),vert(ia,ib+1,lv))); f.material_index=0
+                    holes.add(tuple((ia+da,ib+db,round(z_,3)) for (da,db),z_ in zip(((0,0),(1,0),(1,1),(0,1)),zs))); continue
+                f=bm.faces.new((vert(ia,ib,zs[0]),vert(ia+1,ib,zs[1]),vert(ia+1,ib+1,zs[2]),vert(ia,ib+1,zs[3]))); f.material_index=0
     # irregular hole outlines: jitter the vertices on hole edges (only in xy)
     hv_=set()
-    for (ia,ib,lv) in holes:
-        for (da,db) in ((0,0),(1,0),(1,1),(0,1)):
-            k=(ia+da,ib+db,lv)
+    for q in holes:
+        for k in q:
             if k in V: hv_.add(k)
     for k in hv_:
         v=V[k]; v.co.x+=rng.uniform(-0.07,0.07); v.co.y+=rng.uniform(-0.07,0.07)
@@ -1480,9 +1534,12 @@ def tk_build_paving(G,coll,origin=MAP_ORIGIN,name="VK_Paving",lift=0.06,step=0.2
         for sd in range(4):
             if not curb[sd]: continue
             off=ins[sd]+0.11; spans=[(0.0,3.0)]
-            for (s2,a0,a1) in cut.get((i,j),()):
+            if G.ramp[j,i]:                                     # ramp cell: only its flat (low) half, up to the wall
+                d_=int(G.ramp[j,i]); spans=[(0.0,1.45)] if d_ in (1,2) else [(1.55,3.0)]
+            for (s2,a0,a1) in walls.get((i,j),()):
                 if s2!=sd: continue
                 spans=[q for (b0,b1) in spans for q in ((b0,min(b1,a0-0.21)),(max(b0,a1+0.21),b1)) if q[1]-q[0]>0.05]
+                if (s2,a0,a1) not in cut.get((i,j),()): continue    # a walled (paved) ramp: its wall is the edge
                 for ac in ((a0-0.11,) if a0>0.0 else ())+((a1+0.11,) if a1<3.0 else ()):
                     runs.append((cpt(i,j,sd,off-0.1,ac),cpt(i,j,sd,1.5,ac),lv))          # along the cut wall
             runs+=[(cpt(i,j,sd,off,b0),cpt(i,j,sd,off,b1),lv) for (b0,b1) in spans]

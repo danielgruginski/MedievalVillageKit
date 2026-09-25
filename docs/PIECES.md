@@ -2,7 +2,7 @@
 
 Generated from the .blend on 2026-09-23 (`docs/PIECES.md`). Dimensions are the master's bounding box in metres (x × y × z).
 Every piece is a hidden master; the maps place instances that share its mesh.
-Total: 481 masters.
+Total: 483 masters.
 
 ## Building kit (`SM_VK_*`): 417 pieces
 
@@ -530,6 +530,8 @@ Total: 481 masters.
 | `SM_VKT_LipGrass` | 1.57 × 0.41 × 0.31 | 64 | 1 |
 | `SM_VKT_Ramp_HalfE_A` | 3.00 × 3.00 × 3.00 | 225 | 2 |
 | `SM_VKT_Ramp_HalfW_A` | 3.00 × 3.00 × 3.00 | 225 | 2 |
+| `SM_VKT_Ramp_HalfE_W` | 3.00 × 3.00 × 3.40 | 266 | 2 |
+| `SM_VKT_Ramp_HalfW_W` | 3.00 × 3.00 × 3.40 | 266 | 2 |
 | `SM_VKT_Ramp_Mid_A` | 3.00 × 3.00 × 1.50 | 72 | 2 |
 | `SM_VKT_Shore_Bed_A` | 3.00 × 3.00 × 0.00 | 72 | 2 |
 | `SM_VKT_Shore_Edge_A` | 3.00 × 3.00 × 1.50 | 252 | 2 |

@@ -70,6 +70,10 @@ The valley generator (`build_valley_town`) runs these checks and clean-up passes
   the ground-control map on grass only. The per-cell `TGrid.wear` still works but is no longer used by the valley.
 - **Paving:** cobbled cells become a separate mesh (`tk_build_paving`): stones 6 cm above the terrain, dressed-stone curbs towards grass, patches of missing stones showing dirt. Props on cobbles are lifted onto it.
 - **Ramps:** the half-ramp tile blends the cliff down into the ramp surface and turns the side into an earth bank; `tk_ramp_dress` adds a stone, grass and a fern at each ramp end.
+  A ramp whose low cell is cobbled (a paved road) uses the walled half tiles `SM_VKT_Ramp_Half*_W` instead: the same
+  ramp surface between the stairs' built walls (`_stair_wall`), and the paving follows the slope over the ramp's
+  width (`slope_z` in `tk_build_paving`), with curbs along the flat half of the ramp cell. `tk_build_paving(exclude=)`
+  leaves map rectangles unpaved (under bridge ramps, gate floors).
 - **Stairs:** built steps.
   - Everything is one dressed stone (`M_VKT_Stair`, the curb's texture; TCol G = 1 marks stone, R is AO). Treads darken
     towards the next riser and risers are a little darker than treads, so the steps read from the colony camera.

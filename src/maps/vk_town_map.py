@@ -66,6 +66,9 @@ def town_grid(seed=11):
         for i in (r0,r1):
             if not G.water[j,i]: G.ground[j,i]=1
     G.ground[25:32,r0:r1+1]=2                         # cobbled main street inside the gate
+    for j in range(0,24):                             # the main road is stone-paved from the south edge to the gate
+        for i in (r0,r1):                             # (the bridge's approach ramps cover rows 11 and 16: bank sand)
+            if not G.water[j,i]: G.ground[j,i]=3 if j in (11,16) else 2
     G.ground[31:36,35:48]=2                           # plaza (col 35: in front of the inn)
     G.ground[39:42,24:41]=2                           # skyline street (between its house rows)
     G.ground[36:39,39:41]=2                           # lane from the plaza up to the skyline street
@@ -664,6 +667,11 @@ def town_lift_on_paving(T,lift=0.06):
         if not (0<=i<G.W and 0<=j<G.H) or G.ground[j,i]!=2: continue
         if abs(o.location.z-G.level[j,i]*TIER)<0.03: o.location.z+=lift
 
+def town_paving_exclude():
+    """map-local rectangles the paving leaves out: under the stone bridge's approach ramps and the gatehouse floor"""
+    bx=3*GATE_I; by=3*14; gy=3*WALL_S
+    return [(bx-3.2,bx+3.2,by+6.0,by+9.0),(bx-3.2,bx+3.2,by-9.0,by-6.0),(bx-GH_HX,bx+GH_HX,gy-3.0,gy+3.0)]   # the ramps' roadway lands 9 m out
+
 def build_valley_town(seed=11,districts=("walls","river","south","meadow","west","inside"),scatter=True):
     G=town_grid(seed)
     errs=demo_validate(G)
@@ -687,5 +695,5 @@ def build_valley_town(seed=11,districts=("walls","river","south","meadow","west"
     for o in objs:
         if "Chunk" in o.name: o.data.materials[0]=bpy.data.materials["M_VK_TerrainTown"]
     tk_ramp_dress(G,vcoll,origin=TOWN_ORIGIN)
-    tk_build_paving(G,tcoll,origin=TOWN_ORIGIN,name="VKV_Paving"); town_lift_on_paving(T)
+    tk_build_paving(G,tcoll,origin=TOWN_ORIGIN,name="VKV_Paving",exclude=town_paving_exclude()); town_lift_on_paving(T)
     return G,T,objs

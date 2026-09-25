@@ -67,9 +67,9 @@ Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README
 
 Common commands: [docs/KIT_README.md §3](docs/KIT_README.md). Quick checks after terrain changes:
 `tk_test_T1()` → `[]`; `tk_test_T3(30)` / `tk_test_T3r(30)` → no failures (≈26k / 16k checks);
-`tk_test_T4(G, chunks, step=0.25)`: the demo gives 5 known hits, the valley 17. They are grazing rays on near-vertical
+`tk_test_T4(G, chunks, step=0.25)`: the demo gives 5 known hits, the valley 15. They are grazing rays on near-vertical
 relief and talus faces (face normal z between −0.19 and 0), plus the same small downward face on the ramps (open
-issue 13: five in the valley, one in the demo).
+issue 13: three in the valley, one in the demo).
 A first hit with normal z below about −0.2 anywhere else would be a real hole.
 Valley build log (`T.log`) known entries: watermill and smokehouse overhang the bank slightly, `WS_skyline_Road`
 touches a tower (the road strip is deleted right after). `fix_levels dropped` lists a cart and the creels.
@@ -135,8 +135,9 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
     drive the ground-type map from cell data, replace the Object-Info roof jitter.
 12. `E:\Unity\Projects\GameArtGeneration\unity\DualGridTerrain` exists in the parent folder (not inspected) — may be
     relevant to the terrain export.
-13. Ramp tops have a small face pointing down, coincident with the ramp surface. `tk_test_T4` flags it at five valley
-    ramps and one demo ramp. It is probably in `ramp_blend_shoulder`.
+13. Ramp tops have a small face pointing down, coincident with the ramp surface. `tk_test_T4` flags it at three valley
+    ramps and one demo ramp (earth ramps only: the walled road ramps don't use `ramp_blend_shoulder`, which confirms
+    the fault is there).
 
 ## 6. Gotchas
 

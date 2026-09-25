@@ -50,7 +50,7 @@ The PNG path is returned; look at it with the **Read** tool.
 | North ridge | 3–5 | rows 47–55 | Forest. |
 | West ridge | 3–4 | i 0–19, rows 34–46 | Forest. |
 
-**Main road.** Cells i 41–42, from the south map edge north across the stone bridge. Terrain ramps go up at rows 10, 17 and 22, then across the gate apron, through the gatehouse, and on to the plaza.
+**Main road.** Cells i 41–42, cobbled all the way from the south map edge north across the stone bridge (the paving stops under the bridge's approach ramps, `town_paving_exclude`). Walled road ramps go up at rows 10, 17 and 22, then across the gate apron, through the gatehouse, and on to the plaza.
 
 ## Style target
 
