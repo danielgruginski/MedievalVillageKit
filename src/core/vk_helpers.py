@@ -28,6 +28,7 @@ def tex_mat(name,img,rough=0.85,flat=None,emit=None,alpha_clip=False,tint=None):
         b.inputs["Emission Color"].default_value=(*emit,1); b.inputs["Emission Strength"].default_value=4.0
     nt.links.new(b.outputs[0],o.inputs[0])
     return m
+DRESS_TINT=(0.62,0.52,0.44)    # M_VK_StoneDressed: the dressed stone darkened to a warm sandstone (chapel dressings)
 def kit_mats():
     return [tex_mat("M_VK_Stone","T_VK_Stone"), tex_mat("M_VK_Plaster","T_VK_Plaster",0.9), tex_mat("M_VK_Wood","T_VK_Wood",0.8),
             tex_mat("M_VK_RoofRed","T_VK_RoofRed",0.7), tex_mat("M_VK_Window","T_VK_Window",0.25), tex_mat("M_VK_Iron",None,0.5,flat=(0.08,0.08,0.09)),
@@ -49,8 +50,9 @@ def kit_mats():
             tex_mat("M_VK_StoneBlock","T_VK_StoneBlock"), tex_mat("M_VK_FieldStone","T_VK_FieldStone"), tex_mat("M_VK_Wattle","T_VK_Wattle"),
             tex_mat("M_VK_Hide",None,0.8,flat=(0.50,0.33,0.20)), tex_mat("M_VK_Pigskin",None,0.7,flat=(0.90,0.62,0.56)),
             tex_mat("M_VK_Coal",None,0.95,flat=(0.045,0.043,0.050)), bpy.data.materials["M_VK_Net"],
-            tex_mat("M_VK_Goods","T_VK_Goods_BC",0.5)]
-STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS=range(53)
+            tex_mat("M_VK_Goods","T_VK_Goods_BC",0.5),
+            tex_mat("M_VK_StoneDressed","T_VK_StoneBlock",tint=DRESS_TINT)]
+STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS,DRESS=range(54)
 # ---- goods atlas (T_VK_Goods, painted by vk_goods; keep the cell order in sync with vk_goods.GOODS_CELLS) ----
 GOODS_CELLS=("cabbage","pumpkin","carrot","apple","bread","cheese","fish","fish_smoked",
              "hide","fur","meat","ham","sausage","turnip","herbs","pomace")
@@ -92,6 +94,37 @@ def goods_map(k,geom,cell,axis=(0,0,1),ref=None,c=None,plane=None,caps=False):
             p=l.vert.co-c; hh=p.dot(ax); r=p-ax*hh
             u=0.5 if r.length<1e-7 else math.acos(max(-1.0,min(1.0,r.normalized().dot(ref))))/math.pi
             l[k.uv].uv=goods_uv(cell,u,(hh-t0)/max(t1-t0,1e-6))
+    return fs
+def kit_fish(k,M,L=0.5,cell="fish",ref=None):
+    """fish on the goods atlas, placed by matrix M. Local frame: head at +X, flattened in Y, back toward +Z. Lofted
+    body narrowing to a tail stalk, a forked tail fin (two lobes) and a dorsal fin in the XZ plane, 6 mm thick so their
+    two sides never z-fight. ref: the atlas's back direction (default the fish's back). Returns the faces."""
+    prof=[(0.5,0.0),(0.44,0.055),(0.3,0.11),(0.1,0.13),(-0.15,0.11),(-0.34,0.06),(-0.45,0.032),(-0.47,0.0)]
+    n=8; rings=[]; bm=k.bm
+    for (x,r) in prof:
+        if r==0: rings.append([bm.verts.new((x*L,0,0))]); continue
+        rings.append([bm.verts.new((x*L,math.cos(2*math.pi*(i+0.5)/n)*r*L*0.42,math.sin(2*math.pi*(i+0.5)/n)*r*L)) for i in range(n)])
+    body=[]
+    for a,b in zip(rings[:-1],rings[1:]):
+        if len(a)==1:
+            for i in range(n): body.append(bm.faces.new((a[0],b[(i+1)%n],b[i])))
+        elif len(b)==1:
+            for i in range(n): body.append(bm.faces.new((a[i],a[(i+1)%n],b[0])))
+        else:
+            for i in range(n): body.append(bm.faces.new((a[i],a[(i+1)%n],b[(i+1)%n],b[i])))
+    fins=[]; fv=[]
+    def plate(pts,th=0.003):                            # thin triangular plate in the XZ plane
+        a=[bm.verts.new((x*L,-th,z*L)) for x,z in pts]; b=[bm.verts.new((x*L,th,z*L)) for x,z in pts]
+        fs_=[bm.faces.new(a),bm.faces.new(b[::-1])]+[bm.faces.new((a[i],a[(i+1)%3],b[(i+1)%3],b[i])) for i in range(3)]
+        fins.extend(fs_); fv.extend(a+b)
+    plate(((-0.43,0.0),(-0.67,0.2),(-0.57,0.0)))           # tail: upper lobe ...
+    plate(((-0.43,0.0),(-0.57,0.0),(-0.67,-0.2)))          # ... lower lobe (the notch between them is open)
+    plate(((-0.12,0.1),(0.14,0.1),(-0.1,0.2)))             # dorsal fin, its base inside the back
+    bmesh.ops.transform(bm,matrix=M,verts=[v for r in rings for v in r]+fv)
+    bmesh.ops.recalc_face_normals(bm,faces=body); bmesh.ops.recalc_face_normals(bm,faces=fins)
+    M3=M.to_3x3()
+    fs=goods_map(k,body+fins,cell,axis=M3@Vector((1,0,0)),ref=ref if ref is not None else M3@Vector((0,0,1)),c=M@Vector((0,0,0)))
+    for f in fins: f.smooth=False
     return fs
 VARIANT_MATS={
  "plaster":{"Cream":None,"White":("T_VK_Plaster",(1.10,1.12,1.18)),"Ochre":("T_VK_Plaster",(1.05,0.86,0.58)),"Rose":("T_VK_Plaster",(1.05,0.84,0.78)),
@@ -299,6 +332,7 @@ def wall_stone_door(k):
         k.box((0,-0.05,zz),(2*hw-0.1,0.03,0.11),IRON,bevel=0.01)
         for s in(-1,1): k.box((s*(hw-0.12),-0.07,zz),(0.08,0.03,0.08),IRON,bevel=0.01)
     k.box((0.38,-0.08,1.05),(0.06,0.06,0.16),IRON,bevel=0.01)
+    k.quad([(-hw,0.075,0.0),(hw,0.075,0.0),(hw,0.075,top),(-hw,0.075,top)],VOID,uvs=[(0,0),(1,0),(1,1),(0,1)])   # dark behind the board joints
     # reveal (inner surfaces of the opening)
     k.box((0,-0.02,0.08),(2*hw+0.1,0.5,0.16),STONE,bevel=0.02)
     k.box((0,-0.55,0.1),(1.7,0.6,0.2),STONE,bevel=0.05,segs=2,jitter=0.02,seed=3)
@@ -799,13 +833,14 @@ def stall_wares(k,trade,W_,D_):
         k.box((0,-0.45,z0+0.105),(2.55,0.6,0.03),PAPER,bevel=0.01)
         for n_ in range(10):
             x=-1.1+n_*0.245; y=-0.45+rnd.uniform(-0.12,0.12); a=rnd.uniform(0.6,1.1)*(1 if n_%2 else -1)
-            vs=_ico(k,(x,y,z0+0.16),1.0,STEEL,scale=(0.25,0.075,0.065)); _rot_vs(vs,(x,y,z0+0.16),a)
-            tx,ty=x-0.27*math.cos(a),y-0.27*math.sin(a)
-            tv=k.box((tx,ty,z0+0.14),(0.1,0.12,0.02),STEEL,rot=(0,0,a),bevel=0.0)                 # tail fin, flat on the slab
-            # lying on its side, back half turned up: from above the dark back runs along the silver flank
-            goods_map(k,list(vs)+list(tv),"fish",axis=(math.cos(a),math.sin(a),0),ref=(-math.sin(a)*0.7,math.cos(a)*0.7,0.7),c=(x,y,z0+0.16))
+            # lying on its side on the ice, tail fin flat; the atlas back is turned up so the dark back runs along the
+            # silver flank from above
+            M_=Matrix.Translation((x,y,z0+0.145))@Matrix.Rotation(a,4,"Z")@Matrix.Rotation(-math.pi/2,4,"X")
+            kit_fish(k,M_,0.5,ref=(-math.sin(a)*0.7,math.cos(a)*0.7,0.7))
         for n_,x in enumerate((-1.1,-0.4,0.4,1.1)):
-            goods_map(k,_ico(k,(x,-(D_/2-0.1),2.1),1.0,STEEL,scale=(0.07,0.055,0.26)),"fish",axis=(0,0,-1),ref=(1,0,0))   # hung by the tail
+            # hung by the tail from the front beam: head down, flank to the street
+            M_=Matrix.Translation((x,-(D_/2-0.1),2.06))@Matrix(((0,0,1,0),(0,1,0,0),(-1,0,0,0),(0,0,0,1)))
+            kit_fish(k,M_,0.5)
             k.box((x,-(D_/2-0.1),2.42),(0.012,0.012,0.12),WOOD,bevel=0)
         for n_ in range(3): _mat(_ico(k,(-1.0+n_*0.9,0.62,shelf+0.1),0.13,BURLAP,scale=(1.2,0.9,0.8)),BURLAP)
     elif trade=="potter":
@@ -1108,18 +1143,29 @@ def prop_well(k):
     for i in range(n):
         a=2*math.pi*i/n
         k.box((math.cos(a)*R,math.sin(a)*R,0.98),(0.52,2*math.pi*R/n+0.06,0.14),STONE,rot=(0,0,a),bevel=0.04)
-    k.quad([(-0.9,-0.9,0.5),(0.9,-0.9,0.5),(0.9,0.9,0.5),(-0.9,0.9,0.5)],WATER,uvs=[(0,0),(1.8,0),(1.8,1.8),(0,1.8)])
+    _cyl(k,(0,0,0.5),0.86,0.86,0.01,16,WATER)                                  # water: a disc inside the ring
+    # frame: posts standing on the rim cap (top 1.05), a tie beam on the post tops, knee braces post -> beam
+    zp0,zp1=1.05,2.75; zt=zp1+0.16
     for sx in(-1,1):
-        k.box((sx*1.15,0,1.9),(0.2,0.2,2.1),WOOD,bevel=0.05,segs=2)
-        k.box((sx*1.0,0,2.35),(0.35,0.12,0.12),WOOD,rot=(0,sx*0.8,0),bevel=0.02)
+        k.box((sx*1.15,0,(zp0+zp1)/2),(0.2,0.2,zp1-zp0),WOOD,bevel=0.05,segs=2)
+        a=(sx*1.05,2.25); b=(sx*0.62,zp1); dx,dz=b[0]-a[0],b[1]-a[1]
+        k.box(((a[0]+b[0])/2,0,(a[1]+b[1])/2),(math.hypot(dx,dz)+0.06,0.12,0.12),WOOD,rot=(0,math.atan2(-dz,dx),0),bevel=0.02)
+    k.box((0,0,(zp1+zt)/2),(2.7,0.16,0.16),WOOD,bevel=0.03)                     # tie beam
+    # windlass: axle between the posts, iron pins through them, crank on +X
     _cyl(k,(0,0,1.85),0.14,0.14,2.1,8,WOOD,rot=Matrix.Rotation(math.pi/2,4,"Y"))
-    k.box((1.35,0,1.85),(0.06,0.06,0.35),IRON,bevel=0); k.box((1.35,0.15,1.7),(0.06,0.35,0.06),IRON,bevel=0)
-    k.box((0,0,1.3),(0.02,0.02,1.0),IRON,bevel=0)
-    _cyl(k,(0.0,0,0.78),0.18,0.22,0.3,10,WOOD)
+    _cyl(k,(0,0,1.85),0.035,0.035,2.76,6,IRON,rot=Matrix.Rotation(math.pi/2,4,"Y"))
+    k.box((1.36,0,1.72),(0.06,0.06,0.32),IRON,bevel=0); k.box((1.36,0.14,1.59),(0.06,0.34,0.06),IRON,bevel=0)
+    k.box((0,0,1.3),(0.02,0.02,1.0),IRON,bevel=0)                               # rope
+    _cyl(k,(0.0,0,0.78),0.18,0.22,0.3,10,WOOD)                                  # bucket
+    # roof: two slopes (38 deg) whose underside clears the tie beam's ends, ridge beam on a king post
+    t=math.tan(math.radians(38)); zu=lambda x: zt+0.02+(1.35-x)*t
+    x0,x1=0.02,1.65; d=Vector((x1-x0,0,zu(x1)-zu(x0))); L=d.length; d.normalize(); nrm=Vector((-d.z,0,d.x))
     for sx in(-1,1):
-        k.box((sx*0.75,0,3.2),(1.7,2.0,0.1),ROOF,rot=(0,sx*0.72,0),bevel=0.03)
-    k.box((0,0,3.72),(0.2,2.1,0.2),WOOD,bevel=0.04)
-    k.box((0,0,2.95),(2.5,0.16,0.16),WOOD,bevel=0.03)
+        c=Vector(((x0+x1)/2,0,(zu(x0)+zu(x1))/2))+nrm*0.05
+        k.box((sx*c.x,0,c.z),(L,2.0,0.1),ROOF,rot=(0,sx*math.atan2(-d.z,d.x),0),bevel=0.03)
+    zr=zu(x0)+0.02
+    k.box((0,0,zr),(0.2,2.1,0.2),WOOD,bevel=0.04)                               # ridge beam
+    k.box((0,0,(zt+zr-0.1)/2),(0.14,0.14,zr-0.1-zt),WOOD,bevel=0.02)            # king post
 def prop_fence(k,length=3.0):
     rnd=random.Random(int(length*7))
     for x in(-length/2,length/2):
@@ -1348,10 +1394,15 @@ def prop_weaponrack(k):
     _cyl(k,(0,-0.25,0.7),0.4,0.4,0.06,12,WOOD,rot=Matrix.Rotation(math.pi/2,4,"X")@Matrix.Rotation(0,4,"Z"))
     _cyl(k,(0,-0.29,0.7),0.12,0.12,0.06,8,STEEL,rot=Matrix.Rotation(math.pi/2,4,"X"))
 def prop_barrelstack(k):
-    for i,x in enumerate((-0.45,0.45)): barrel(k,x,0,0.4,0.4,1.0,lying=True)
-    barrel(k,0,0,1.1,0.4,1.0,lying=True)
-    for sx in(-0.9,0.9): k.box((sx,0,0.1),(0.12,1.1,0.2),WOOD,bevel=0.02)
-    _cyl(k,(0,-0.55,1.1),0.05,0.05,0.12,6,WOOD,rot=Matrix.Rotation(math.pi/2,4,"X"))
+    """two barrels lying on a pair of rails (across their axes, wedged at the ends), a third in the groove on top"""
+    zb=0.12+0.366                         # the barrels touch the rails at y +-0.3, where their radius is 0.366
+    zt=zb+math.sqrt(0.8**2-0.45**2)       # the top barrel rests on both bulges (0.8 between centres)
+    for x in (-0.45,0.45): barrel(k,x,0,zb,0.4,1.0,lying=True)
+    barrel(k,0,0,zt,0.4,1.0,lying=True)
+    for sy in (-0.3,0.3):
+        k.box((0,sy,0.06),(1.9,0.14,0.12),WOOD,bevel=0.02)
+        for sx in (-1,1): k.box((sx*0.86,sy,0.17),(0.16,0.14,0.12),WOOD,rot=(0,sx*0.35,0),bevel=0.015)   # wedges
+    _cyl(k,(0,-0.53,zt),0.05,0.05,0.08,6,WOOD,rot=Matrix.Rotation(math.pi/2,4,"X"))
 def prop_bellows_forge(k):   # standalone open forge hearth
     k.box((0,0,0.45),(1.6,1.2,0.9),STONE,bevel=0.05,segs=2)
     k.box((0,0,0.92),(1.2,0.8,0.06),GLOW,bevel=0.02)
@@ -1481,29 +1532,47 @@ EXTRA_SPECS+= [("SM_VK_Roof_Gable_Stone",lambda k: roof_gable_kind("stone")(k),d
                ("SM_VK_Roof_Gable_Planks",lambda k: roof_gable_kind("planks")(k),dict(wobble=False,grime=False))]
 
 HC=4.5
+CH_DRESS=DRESS         # the chapel's dressings (arches, jambs, sills, courses, quoins): a darker dressed stone on pale ashlar
 def lancet_pts(x0,x1,z0,zs,n=6):
-    """pointed arch outline: rectangle x0..x1 from z0 to spring zs, then two arcs meeting at apex"""
-    w=x1-x0; r=w*0.85; pts=[(x0,z0),(x1,z0),(x1,zs)]
-    cxL=x1-r; cxR=x0+r
-    apex_z=zs+math.sqrt(r*r-(w/2 - (x1-cxL-r)+ (r-w/2))**2) if False else None
-    # right arc centred at x0+r? use standard equilateral-ish arch
-    cL=x0+r; cR=x1-r
-    xa=(x0+x1)/2; za=zs+math.sqrt(max(r*r-(xa-cR)**2,0))
-    for i in range(1,n):
-        t=i/n; x=x1+(xa-x1)*t; pts.append((x,zs+math.sqrt(max(r*r-(x-cR)**2,0))))
+    """pointed arch outline: rectangle x0..x1 from z0 to the spring zs, then two arcs (radius 0.85 w, centred on the
+    spring line) meeting at the apex, n segments per arc evenly spaced along it. Returns (outline, apex z); the outline
+    runs (x0,z0) (x1,z0) (x1,zs) ... apex ... (x0,zs) and closes back to (x0,z0)"""
+    w=x1-x0; r=w*0.85; cR=x1-r; cL=x0+r; xa=(x0+x1)/2
+    ta=math.acos((xa-cR)/r); za=zs+r*math.sin(ta)
+    pts=[(x0,z0),(x1,z0),(x1,zs)]
+    for i in range(1,n): t=ta*i/n; pts.append((cR+r*math.cos(t),zs+r*math.sin(t)))
     pts.append((xa,za))
-    for i in range(1,n):
-        t=i/n; x=xa+(x0-xa)*t; pts.append((x,zs+math.sqrt(max(r*r-(x-cL)**2,0))))
+    for i in range(n-1,0,-1): t=ta*i/n; pts.append((cL-r*math.cos(t),zs+r*math.sin(t)))
     pts.append((x0,zs))
     return pts,za
+def lancet_surround(k,pts,y,off,t,d,mi=None,jamb_h=0.46):
+    """dressed-stone surround of a lancet outline (lancet_pts), in the plane y (the stones span y-d/2..y+d/2):
+    voussoirs along both arcs and alternating long/short jamb stones up both sides, the whole outline including the
+    closing left jamb. off: distance from the opening edge to the stones' centre line, t: their width across it"""
+    mi=CH_DRESS if mi is None else mi
+    z0=pts[0][1]
+    for (xa,za_),(xb,zb) in zip(pts,pts[1:]+pts[:1]):
+        if abs(za_-z0)<1e-4 and abs(zb-z0)<1e-4: continue                  # sill / threshold side
+        L=math.hypot(xb-xa,zb-za_); nx,nz=-(zb-za_)/L,(xb-xa)/L             # nx,nz: into the opening
+        if abs(xb-xa)<1e-6:                                                  # jamb: courses of alternating stones
+            zlo,zhi=min(za_,zb),max(za_,zb); m=max(1,int(round((zhi-zlo)/jamb_h))); h=(zhi-zlo)/m
+            for j in range(m):
+                wb=t*(1.45 if j%2==0 else 1.0); inner=off-t/2
+                k.box((xa-nx*(inner+wb/2),y,zlo+h*(j+0.5)),(wb,d,h-0.03),mi,bevel=0.03)
+            continue
+        mx,mz=(xa+xb)/2,(za_+zb)/2; ang=math.atan2(zb-za_,xb-xa)
+        k.box((mx-nx*off,y,mz-nz*off),(L+0.04,d,t),mi,rot=(0,-ang,0),bevel=0.03)
 def chapel_wall(k,kind="W"):
     stone_panel(k,-1.5,1.5,0,HC,-0.3,0.3,mi=ASHLAR)
-    k.box((0,-0.05,0.25),(CELL,0.8,0.5),ASHLAR,bevel=0.04)                  # plinth
-    k.box((0,-0.34,HC-0.15),(CELL,0.2,0.3),ASHLAR,bevel=0.05,segs=2)        # cornice
+    if kind=="D":                                                         # the door's surround fills the cell: no plinth
+        k.box((0,0.05,0.25),(CELL,0.5,0.5),CH_DRESS,bevel=0.04)               # in front of it, a low threshold step instead
+        k.box((0,-0.55,0.07),(1.9,0.5,0.14),CH_DRESS,bevel=0.03)
+    else: k.box((0,-0.05,0.25),(CELL,0.8,0.5),CH_DRESS,bevel=0.04)            # plinth
+    k.box((0,-0.34,HC-0.15),(CELL,0.2,0.3),CH_DRESS,bevel=0.05,segs=2)        # cornice
     # buttress at the left edge (right edge belongs to the neighbour / corner)
     for (z0,z1,d) in ((0,2.2,0.9),(2.2,3.6,0.65)):
         k.box((-1.5,-0.3-d/2,(z0+z1)/2),(0.6,d,z1-z0),ASHLAR,bevel=0.05,segs=2)
-    k.box((-1.5,-0.55,3.75),(0.6,0.5,0.4),ASHLAR,rot=(0.6,0,0),bevel=0.05)
+    k.box((-1.5,-0.55,3.75),(0.6,0.5,0.4),CH_DRESS,rot=(0.6,0,0),bevel=0.05)
     if kind=="W":
         x0,x1,z0,zs=-0.45,0.45,1.3,3.1
         pts,za=lancet_pts(x0,x1,z0,zs)
@@ -1512,14 +1581,8 @@ def chapel_wall(k,kind="W"):
         # lead cames
         k.box((0,-0.35,(z0+za)/2),(0.05,0.03,za-z0),IRON,bevel=0)
         for zz in(1.9,2.5): k.box((0,-0.35,zz),(x1-x0,0.03,0.05),IRON,bevel=0)
-        # voussoir frame
-        for i in range(len(pts)-1):
-            (xa,za_),(xb,zb)=pts[i],pts[i+1]
-            if zb<=z0+0.01 and za_<=z0+0.01: continue
-            mx,mz=(xa+xb)/2,(za_+zb)/2; L=math.hypot(xb-xa,zb-za_); ang=math.atan2(zb-za_,xb-xa)
-            nx,nz=-(zb-za_)/L,(xb-xa)/L
-            k.box((mx-nx*0.1,-0.36,mz-nz*0.1),(L+0.05,0.12,0.22),ASHLAR,rot=(0,-ang,0),bevel=0.03)
-        k.box((0,-0.42,z0-0.08),(1.2,0.3,0.16),ASHLAR,bevel=0.04)
+        lancet_surround(k,pts,-0.36,0.1,0.22,0.12)                          # voussoir frame
+        k.box((0,-0.42,z0-0.08),(1.2,0.3,0.16),CH_DRESS,bevel=0.04)
     elif kind=="D":
         x0,x1,z0,zs=-0.8,0.8,0.0,2.2
         pts,za=lancet_pts(x0,x1,z0,zs,8)
@@ -1529,56 +1592,54 @@ def chapel_wall(k,kind="W"):
         for zz in(0.5,1.6):
             for s_ in(-1,1): k.box((s_*0.45,-0.37,zz),(0.6,0.03,0.09),IRON,bevel=0.01)
         for s_ in(-1,1): _cyl(k,(s_*0.15,-0.4,1.1),0.07,0.07,0.03,8,IRON,rot=Matrix.Rotation(math.pi/2,4,"X"))
-        for ring in range(3):
-            off=0.14+ring*0.2
-            for i in range(len(pts)-1):
-                (xa,za_),(xb,zb)=pts[i],pts[i+1]
-                if abs(zb-za_)<1e-4 and zb<0.01: continue
-                mx,mz=(xa+xb)/2,(za_+zb)/2; L=math.hypot(xb-xa,zb-za_); ang=math.atan2(zb-za_,xb-xa)
-                nx,nz=-(zb-za_)/L,(xb-xa)/L
-                k.box((mx-nx*off,-0.36-ring*0.07,mz-nz*off),(L+0.06,0.14,0.2),ASHLAR,rot=(0,-ang,0),bevel=0.03)
+        for ring in range(3): lancet_surround(k,pts,-0.36-ring*0.07,0.14+ring*0.2,0.2,0.14)   # stepped orders
         k.box((0,-0.8,0.08),(2.6,1.0,0.16),ASHLAR,bevel=0.04)
 def chapel_corner(k):
     k.box((0,0,HC/2),(0.9,0.9,HC),ASHLAR,bevel=0.05,segs=2)
-    k.box((0,0,0.25),(1.05,1.05,0.5),ASHLAR,bevel=0.04)
+    k.box((0,0,0.25),(1.05,1.05,0.5),CH_DRESS,bevel=0.04)
     for (z0,z1,d) in ((0,2.4,1.1),(2.4,3.8,0.8)):
         k.box((-0.35-d/2+0.45,-0.35-d/2+0.45,(z0+z1)/2),(d,d,z1-z0),ASHLAR,rot=(0,0,0),bevel=0.05,segs=2)
-    k.box((-0.05,-0.05,HC-0.15),(1.0,1.0,0.3),ASHLAR,bevel=0.05,segs=2)
-    k.box((0,0,HC+0.7),(0.35,0.35,1.2),ASHLAR,bevel=0.05,segs=2)
-    _cyl(k,(0,0,HC+1.55),0.28,0.0,0.6,4,ASHLAR,rot=Matrix.Rotation(math.pi/4,4,"Z"))
+    k.box((-0.05,-0.05,HC-0.15),(1.0,1.0,0.3),CH_DRESS,bevel=0.05,segs=2)
+    k.box((0,0,HC+0.7),(0.35,0.35,1.2),CH_DRESS,bevel=0.05,segs=2)
+    _cyl(k,(0,0,HC+1.55),0.28,0.0,0.6,4,CH_DRESS,rot=Matrix.Rotation(math.pi/4,4,"Z"))
 def bell_tower(k):
     """square tower 3.6m, local origin at its base centre; front (door side) toward -Y"""
     W=3.6; h1=8.0; hb=3.0
     stone_panel(k,-W/2,W/2,0,h1,-W/2,W/2,mi=ASHLAR)
-    k.box((0,0,0.3),(W+0.3,W+0.3,0.6),ASHLAR,bevel=0.05,segs=2)
-    for zz in(3.5,h1): k.box((0,0,zz),(W+0.24,W+0.24,0.28),ASHLAR,bevel=0.05,segs=2)
+    k.box((0,0.075,0.3),(W+0.3,W+0.15,0.6),CH_DRESS,bevel=0.05,segs=2)          # plinth: the front strip is cut for the door
+    for sx in (-1,1): k.box((sx*(W/2+0.15+0.98)/2,-W/2-0.075,0.3),(W/2+0.15-0.98,0.15,0.6),CH_DRESS,bevel=0.05,segs=2)
+    for zz in(3.5,h1): k.box((0,0,zz),(W+0.24,W+0.24,0.28),CH_DRESS,bevel=0.05,segs=2)
     for sx in(-1,1):
         for sy in(-1,1):
-            k.box((sx*(W/2+0.05),sy*(W/2+0.05),(h1)/2),(0.5,0.5,h1),ASHLAR,bevel=0.05,segs=2)
+            k.box((sx*(W/2+0.05),sy*(W/2+0.05),(h1)/2),(0.5,0.5,h1),CH_DRESS,bevel=0.05,segs=2)
     # slit windows
     for a in range(4):
         R=Matrix.Rotation(a*math.pi/2,4,"Z")
         sub=Kit(); sub.box((0,-W/2-0.02,5.5),(0.18,0.06,1.1),VOID,bevel=0); merge_kit(k,sub,R)
-    # belfry: 4 open arches (pillars + lintels), bell inside
-    z0=h1+0.14
+    # belfry: 4 open arches framed in dressed stone (corner piers with capitals, arch rings, sill and lintel bands),
+    # pale ashlar spandrels set back between them; bell inside
+    z0=h1+0.14; zsp=z0+1.15                       # arch spring line = top of the pier capitals
     for sx in(-1,1):
-        for sy in(-1,1): k.box((sx*(W/2-0.3),sy*(W/2-0.3),z0+hb/2),(0.6,0.6,hb),ASHLAR,bevel=0.05,segs=2)
+        for sy in(-1,1):
+            k.box((sx*(W/2-0.3),sy*(W/2-0.3),z0+hb/2),(0.6,0.6,hb),CH_DRESS,bevel=0.05,segs=2)
+            k.box((sx*(W/2-0.3),sy*(W/2-0.3),zsp-0.08),(0.74,0.74,0.16),CH_DRESS,bevel=0.03)          # capital
     for a in range(4):
         R=Matrix.Rotation(a*math.pi/2,4,"Z")
         sub=Kit()
-        sub.box((0,-W/2+0.3,z0+hb-0.25),(W,0.6,0.5),ASHLAR,bevel=0.05,segs=2)
-        sub.box((0,-W/2+0.3,z0+0.35),(W,0.6,0.25),ASHLAR,bevel=0.04)
-        n=7; r=(W-1.2)/2; zc_=z0+hb-0.7-r
-        # voussoir band: inner edge (1.0 x 0.9) and outer edge (1.4 x 1.28) around the arch centre, 7 wedge stones
-        # with thin joints, standing 3 cm proud of both wall faces
-        def ep(a_,R,Rz): return (R*math.cos(a_),zc_+Rz*math.sin(a_))
+        sub.box((0,-W/2+0.3,z0+hb-0.25),(W,0.6,0.5),CH_DRESS,bevel=0.05,segs=2)
+        sub.box((0,-W/2+0.3,z0+0.175),(W-1.2,0.56,0.35),ASHLAR,bevel=0.03)          # breast wall under the opening ...
+        sub.box((0,-W/2+0.3,z0+0.41),(W-1.1,0.66,0.13),CH_DRESS,bevel=0.03)         # ... and its sill coping
+        # voussoir ring: the intrados (1.2 x 1.0) meets the piers' inner faces, the extrados (1.55 x 1.3) lands on the
+        # capitals and stops just under the lintel; 9 wedge stones with thin joints, 3 cm proud of both wall faces
+        n=9; ri,rzi,ro,rzo=W/2-0.6,1.0,W/2-0.25,1.3
+        def ep(a_,R,Rz): return (R*math.cos(a_),zsp+Rz*math.sin(a_))
         ya,yb_=-W/2-0.03,-W/2+0.63
         for i in range(n):
             a0=math.pi*i/n+(0.012 if i else 0.0); a1=math.pi*(i+1)/n-(0.012 if i<n-1 else 0.0)
-            p=[ep(a0,1.0,0.9),ep(a1,1.0,0.9),ep(a1,1.4,1.28),ep(a0,1.4,1.28)]      # inner a0, inner a1, outer a1, outer a0
+            p=[ep(a0,ri,rzi),ep(a1,ri,rzi),ep(a1,ro,rzo),ep(a0,ro,rzo)]            # inner a0, inner a1, outer a1, outer a0
             f=[(x,ya,z) for x,z in p]; bk=[(x,yb_,z) for x,z in p]
             def qd(pts,want):
-                fc=sub.quad(pts,ASHLAR)
+                fc=sub.quad(pts,CH_DRESS)
                 if fc.normal.dot(Vector(want))<0: fc.normal_flip()
             am=(a0+a1)/2
             qd([f[0],f[1],f[2],f[3]],(0,-1,0)); qd([bk[0],bk[1],bk[2],bk[3]],(0,1,0))          # wall faces
@@ -1586,10 +1647,9 @@ def bell_tower(k):
             qd([f[3],bk[3],bk[2],f[2]],(math.cos(am),0,math.sin(am)))                       # extrados
             qd([f[0],bk[0],bk[3],f[3]],(math.sin(a0),0,-math.cos(a0)))                      # joint ends
             qd([f[1],f[2],bk[2],bk[1]],(-math.sin(a1),0,math.cos(a1)))
-        # solid spandrels: fill between the arch and the lintel/pillars (the opening was rectangular behind the arch)
-        hw=W/2-0.6; zc=z0+hb-0.7-r; zt=z0+hb-0.5; yf,yb=-W/2+0.05,-W/2+0.55; m=16   # recessed so the voussoir ring reads
-        crv=[(hw*math.cos(math.pi*i/m),zc+(0.9*r+0.02)*math.sin(math.pi*i/m)*(hw/r)**0) for i in range(m+1)]
-        crv=[(x,zc+(0.9*r+0.02)*math.sqrt(max(0.0,1-(x/hw)**2))) for (x,_) in crv]
+        # solid spandrels: pale fill between the arch and the lintel/piers, set back 5 cm so the dressed frame reads
+        hw=ri; zt=z0+hb-0.5; yf,yb=-W/2+0.05,-W/2+0.55; m=16
+        crv=[(hw*math.cos(math.pi*i/m),zsp+(rzi+0.02)*math.sin(math.pi*i/m)) for i in range(m+1)]
         for (x0,z0_),(x1,z1_) in zip(crv[:-1],crv[1:]):
             if x0>x1: (x0,z0_),(x1,z1_)=(x1,z1_),(x0,z0_)
             sub.quad([(x0,yf,z0_),(x1,yf,z1_),(x1,yf,zt),(x0,yf,zt)],ASHLAR)          # outer face (-Y)
@@ -1604,7 +1664,7 @@ def bell_tower(k):
     _ico(k,(0,0,z0+hb-1.95),0.12,IRON)
     # spire
     zs=z0+hb
-    k.box((0,0,zs+0.15),(W+0.4,W+0.4,0.3),ASHLAR,bevel=0.05,segs=2)
+    k.box((0,0,zs+0.15),(W+0.4,W+0.4,0.3),CH_DRESS,bevel=0.05,segs=2)
     sp=bmesh.ops.create_cone(k.bm,cap_ends=True,segments=8,radius1=(W+0.5)/2*1.08,radius2=0.05,depth=6.5)["verts"]
     bmesh.ops.transform(k.bm,matrix=Matrix.Translation((0,0,zs+0.3+3.25))@Matrix.Rotation(math.pi/8,4,"Z"),verts=sp)
     fs=list({f for v in sp for f in v.link_faces})
@@ -1630,11 +1690,8 @@ def bell_tower(k):
     x0,x1=-0.6,0.6; pts,za=lancet_pts(x0,x1,0,1.9,6)
     vs=[k.bm.verts.new((x,-W/2-0.02,z)) for x,z in pts]; f=k.bm.faces.new(vs[::-1]); f.material_index=PLANKS
     for l in f.loops: l[k.uv].uv=(l.vert.co.x/2,l.vert.co.z/2)
-    for i in range(len(pts)-1):
-        (xa,za_),(xb,zb)=pts[i],pts[i+1]
-        if zb<0.01 and za_<0.01: continue
-        mx,mz=(xa+xb)/2,(za_+zb)/2; L=math.hypot(xb-xa,zb-za_); ang=math.atan2(zb-za_,xb-xa); nx,nz=-(zb-za_)/L,(xb-xa)/L
-        k.box((mx-nx*0.12,-W/2-0.05,mz-nz*0.12),(L+0.06,0.14,0.24),ASHLAR,rot=(0,-ang,0),bevel=0.03)
+    lancet_surround(k,pts,-W/2-0.05,0.12,0.24,0.14)
+    k.box((0,-W/2-0.3,0.07),(1.5,0.6,0.14),CH_DRESS,bevel=0.03)                 # threshold step
 EXTRA_SPECS+= [("SM_VK_Chapel_Wall",lambda k: chapel_wall(k,"W"),dict(wobble=False,grime=True)),
                ("SM_VK_Chapel_Wall_Plain",lambda k: chapel_wall(k,"."),dict(wobble=False,grime=True)),
                ("SM_VK_Chapel_Wall_Door",lambda k: chapel_wall(k,"D"),dict(wobble=False,grime=True)),
@@ -1749,29 +1806,34 @@ def windmill(k):
         V=Vector((0,0,1)) if abs(nrm.z)<0.9 else Vector((0,1,0))
         for l in f.loops: p=l.vert.co; l[k.uv].uv=(p.dot(U)/TILE[STONE],p.dot(V)/TILE[STONE])
     grid_cut(k,list({v for f in fs for v in f.verts}),1.5)
+    # the octagon's corners are at 22.5 + 45*i degrees, its faces centred on 0, 45, 90 ... (-90 = front, -Y)
     # corner quoins on the 8 edges
     for i in range(n):
-        a=2*math.pi*i/n
+        a=2*math.pi*i/n+math.pi/n
         z=0; j=0
         while z<H_-0.3:
             t_=z/H_; r=r0+(r1-r0)*t_+0.05
             k.box((math.cos(a)*r,math.sin(a)*r,z+0.25),(0.5 if j%2 else 0.35,0.35 if j%2 else 0.5,0.46),STONE,rot=(0,0,a),bevel=0.05,segs=1,jitter=0.015,seed=i*50+j)
             z+=0.5; j+=1
-    # plinth, door, windows
-    _cyl(k,(0,0,0.25),r0+0.25,r0+0.25,0.5,n,STONE)
-    sub=Kit(); wall_door=Kit()
-    k.quad([(-0.6,-r0+0.08,0.5),(0.6,-r0+0.08,0.5),(0.6,-r0+0.08,2.5),(-0.6,-r0+0.08,2.5)],PLANKS,uvs=[(0,0),(0.6,0),(0.6,1),(0,1)])
-    for s_ in(-1,1): k.box((s_*0.72,-r0+0.02,1.5),(0.26,0.3,2.1),WOOD,bevel=0.04)
-    k.box((0,-r0,2.62),(1.7,0.34,0.26),WOOD,bevel=0.04)
+    # plinth (aligned with the body), door, windows
+    _cyl(k,(0,0,0.25),r0+0.25,r0+0.25,0.5,n,STONE,rot=Matrix.Rotation(math.pi/n,4,"Z"))
+    lean=math.atan((r0-r1)*math.cos(math.pi/n)/H_)            # the faces lean in with the taper
+    def face(deg,zc):
+        """frame on the face centred at angle deg, height zc: the face plane is local y=0 (outward -y), leaning with it"""
+        ap=(r0+(r1-r0)*zc/H_)*math.cos(math.pi/n)
+        return Matrix.Rotation(math.radians(deg)+math.pi/2,4,"Z")@Matrix.Translation((0,-ap,zc))@Matrix.Rotation(-lean,4,"X")
+    d=Kit()
+    d.quad([(-0.6,-0.02,-1.0),(0.6,-0.02,-1.0),(0.6,-0.02,1.0),(-0.6,-0.02,1.0)],PLANKS,uvs=[(0,0),(0.6,0),(0.6,1),(0,1)])
+    for s_ in(-1,1): d.box((s_*0.72,-0.08,0.0),(0.26,0.3,2.1),WOOD,bevel=0.04)
+    d.box((0,-0.1,1.12),(1.7,0.34,0.26),WOOD,bevel=0.04)
+    merge_kit(k,d,face(-90,1.5))
     k.box((0,-r0-0.45,0.35),(1.6,0.9,0.2),STONE,bevel=0.05,segs=2)
-    for (a,z) in ((math.radians(-50),4.2),(math.radians(40),5.8),(math.radians(160),3.6),(math.radians(-110),6.6)):
-        r=r0+(r1-r0)*z/H_
-        R=Matrix.Translation((0,0,0))@Matrix.Rotation(a+math.pi/2,4,"Z")
+    for (deg,z) in ((-45,4.2),(45,5.8),(180,3.6),(-135,6.6)):
         w=Kit()
-        w.quad([(-0.3,-r+0.05,z-0.4),(0.3,-r+0.05,z-0.4),(0.3,-r+0.05,z+0.4),(-0.3,-r+0.05,z+0.4)],WINDOW,uvs=[(0,0),(0.6,0),(0.6,0.8),(0,0.8)])
-        for s_ in(-1,1): w.box((s_*0.38,-r,z),(0.14,0.2,0.95),WOOD,bevel=0.025)
-        w.box((0,-r,z+0.5),(0.9,0.22,0.14),WOOD,bevel=0.025); w.box((0,-r-0.05,z-0.5),(0.9,0.3,0.12),STONE,bevel=0.02)
-        merge_kit(k,w,R)
+        w.quad([(-0.3,-0.02,-0.4),(0.3,-0.02,-0.4),(0.3,-0.02,0.4),(-0.3,-0.02,0.4)],WINDOW,uvs=[(0,0),(0.6,0),(0.6,0.8),(0,0.8)])
+        for s_ in(-1,1): w.box((s_*0.38,-0.06,0.0),(0.14,0.2,0.95),WOOD,bevel=0.025)
+        w.box((0,-0.06,0.5),(0.9,0.22,0.14),WOOD,bevel=0.025); w.box((0,-0.11,-0.5),(0.9,0.3,0.12),STONE,bevel=0.02)
+        merge_kit(k,w,face(deg,z))
     # timber gallery / balcony
     zg=H_-0.2
     _cyl(k,(0,0,zg),r1+1.1,r1+1.1,0.14,16,PLANKS)
@@ -1980,6 +2042,23 @@ def smith_sign(k):
     for sg in (-1,1):
         k.box((0.02,-0.6,-0.72),(0.03,0.05,0.5),WOOD,rot=(sg*0.7,0,0),bevel=0)
         k.box((0.02,-0.6+sg*0.16,-0.55),(0.05,0.14,0.07),IRON,rot=(sg*0.7,0,0),bevel=0.01)
+def inn_tankard(k):
+    """foaming pewter tankard for the inn sign: base at z=0, axis +Z, handle to +Y; a smooth head of foam (cream
+    cloth, smooth-shaded) spills over the rim with a drip down the -Y side"""
+    y0=-0.05
+    _cyl(k,(0,y0,0.02),0.2,0.2,0.04,20,STEEL)                                   # foot ring
+    _cyl(k,(0,y0,0.22),0.185,0.168,0.38,20,STEEL)                               # body, slightly tapered
+    for z,r in ((0.12,0.184),(0.31,0.176)): _cyl(k,(0,y0,z),r+0.01,r+0.01,0.035,20,IRON)   # hoops
+    _cyl(k,(0,y0,0.415),0.176,0.176,0.03,20,STEEL)                              # lip
+    c=(y0+0.17,0.22); R=0.12; pts=[]                                            # C handle on the +Y side
+    for i in range(9):
+        a=math.radians(-75+150*i/8); pts.append((0,c[0]+R*math.cos(a),c[1]+R*math.sin(a)))
+    for a,b in zip(pts[:-1],pts[1:]): _tube(k,a,b,0.026,STEEL,8)
+    for p in pts[1:-1]: _ico(k,p,0.026,STEEL,sub=1)
+    _ico(k,(0,y0,0.45),1.0,CLOTH_B,scale=(0.19,0.2,0.08),sub=3)                   # foam: dome over the rim ...
+    for (dy,z,r) in ((-0.1,0.49,0.085),(0.02,0.52,0.1),(0.12,0.48,0.075)): _ico(k,(0,y0+dy,z),r,CLOTH_B,sub=2)
+    _ico(k,(0,y0-0.175,0.39),1.0,CLOTH_B,scale=(0.05,0.045,0.08),sub=2)          # ... and a drip over the edge
+    _ico(k,(0,y0-0.182,0.305),0.034,CLOTH_B,sub=2)
 def inn_sign(k):
     """big inn sign: scrolled iron bracket (wall y=0, arm to -Y, 1.9 m), gilded board with a foaming tankard, lantern"""
     k.box((0,-0.05,0.0),(0.14,0.1,0.8),IRON,bevel=0.01)
@@ -1992,25 +2071,40 @@ def inn_sign(k):
     k.box((0,-1.05,-0.4),(0.12,1.35,1.0),BRONZE,bevel=0.02)
     k.box((0,-1.05,-0.4),(0.13,1.18,0.84),PLANKS,bevel=0.01)
     for sx in (-1,1):                                                          # tankard relief on both faces
-        x=sx*0.1
-        _cyl(k,(x,-1.05,-0.47),0.2,0.22,0.46,14,BRONZE,rot=Matrix.Rotation(math.pi/2,4,"Y"))
-        for j in range(5): _mat(_ico(k,(x,-1.05+(j-2)*0.09,-0.2+0.03*(j%2)),0.09,PAPER,sub=1,seed=j),PAPER)
-        k.box((x,-0.8,-0.47),(0.05,0.07,0.3),BRONZE,bevel=0.01); k.box((x,-0.84,-0.47),(0.05,0.1,0.06),BRONZE,bevel=0)
+        sub=Kit(); inn_tankard(sub)
+        # an upright tankard seen side-on, squashed into a relief standing out of the board face
+        M=Matrix.Translation((sx*0.063,-1.05,-0.74))@Matrix.Rotation(0 if sx>0 else math.pi,4,"Z")@Matrix.Diagonal((0.42,1,1,1))
+        merge_kit(k,sub,M)
     k.box((0,-2.0,0.2),(0.02,0.02,0.3),IRON,bevel=0)                            # lantern at the arm tip
     k.box((0,-2.0,-0.05),(0.22,0.22,0.3),GLOW,bevel=0.01)
     for sx in (-1,1):
         for sy in (-1,1): k.box((sx*0.12,-2.0+sy*0.12,-0.05),(0.03,0.03,0.34),IRON,bevel=0)
     k.box((0,-2.0,0.13),(0.3,0.3,0.05),IRON,bevel=0.01); k.box((0,-2.0,-0.22),(0.28,0.28,0.04),IRON,bevel=0.01)
 def ale_cask(k):
-    """great ale cask lying on a cradle, brass tap to -Y"""
-    for sx in (-0.45,0.45):
-        k.box((sx,0,0.2),(0.14,1.1,0.4),WOOD,bevel=0.02)
+    """great ale cask lying in two saddle cradles, brass tap to -Y. Staves bulge smoothly (0.55 at the ends, 0.62 in
+    the middle); the heads are boards, set just inside the stave ends"""
+    zc=0.8; L=0.66
     rot=Matrix.Rotation(math.pi/2,4,"X")
-    _cyl(k,(0,0,0.95),0.62,0.62,0.02,20,WOOD,rot=rot)
-    for (y,r0,r1,d) in ((-0.33,0.55,0.62,0.66),(0.33,0.62,0.55,0.66)): _cyl(k,(0,y,0.95),r0,r1,d,20,WOOD,rot=rot)
-    for y in (-0.62,-0.2,0.2,0.62): _cyl(k,(0,y,0.95),0.6 if abs(y)<0.5 else 0.56,0.6 if abs(y)<0.5 else 0.56,0.05,20,IRON,rot=rot)
-    for y in (-0.66,0.66): _cyl(k,(0,y,0.95),0.5,0.5,0.02,20,ENDGRAIN if "ENDGRAIN" in globals() else WOOD,rot=rot)
-    _tube(k,(0,-0.66,0.7),(0,-0.85,0.7),0.035,BRONZE,8); k.box((0,-0.86,0.62),(0.05,0.05,0.14),BRONZE,bevel=0.01)
+    rad=lambda y: 0.55+0.07*(1.0-(y/L)**2)
+    ys=[-L+2*L*i/8 for i in range(9)]
+    for y0,y1 in zip(ys[:-1],ys[1:]): _cyl(k,(0,(y0+y1)/2,zc),rad(y1),rad(y0),y1-y0,20,WOOD,rot=rot)
+    for y in (-0.58,-0.2,0.2,0.58): _cyl(k,(0,y,zc),rad(y)+0.012,rad(y)+0.012,0.05,20,IRON,rot=rot)
+    for y in (-L,L): _cyl(k,(0,y,zc),0.5,0.5,0.02,20,PLANKS,rot=rot)
+    # cradles across the cask: the top follows the staves (2 cm clear), the rest is a solid block to the ground
+    for yc in (-0.4,0.4):
+        r=rad(yc)+0.005; xs=0.47; zs=zc-math.sqrt(r*r-xs*xs)
+        prof=[(-0.58,0.0),(0.58,0.0),(0.58,zs),(xs,zs)]
+        for i in range(1,8):
+            a=math.asin(xs/r)*(1-2*i/8); prof.append((r*math.sin(a),zc-r*math.cos(a)))
+        prof.append((-xs,zs)); prof.append((-0.58,zs))
+        fr=[k.bm.verts.new((x,yc-0.08,z)) for x,z in prof]; bk=[k.bm.verts.new((x,yc+0.08,z)) for x,z in prof]
+        fs=[k.bm.faces.new(fr[::-1]),k.bm.faces.new(bk)]
+        for i in range(len(prof)):
+            j=(i+1)%len(prof); fs.append(k.bm.faces.new((fr[i],fr[j],bk[j],bk[i])))
+        for f in fs: f.material_index=WOOD
+        k.bm.normal_update(); k.project(fs,WOOD)
+    zt=zc-0.25
+    _tube(k,(0,-L,zt),(0,-0.85,zt),0.035,BRONZE,8); k.box((0,-0.86,zt-0.08),(0.05,0.05,0.14),BRONZE,bevel=0.01)
     _cyl(k,(0,-0.95,0.12),0.14,0.12,0.24,12,WOOD)
 def weathervane(k):
     k.box((0,0,0.6),(0.05,0.05,1.2),IRON,bevel=0)
@@ -2073,8 +2167,8 @@ def build_inn(coll,origin,seed=34,garden=True):
     def P(n,x,y,z=0.0,r=0.0,sty=None): return place_v(coll,n,x,y,z,r,origin,sty if sty is not None else {})
     P("SM_VK_Prop_InnSign",3.9,-3.3,4.1,0)
     for x in (-1.0,1.0): P("SM_VK_Prop_Lantern",x,-3.3,2.3,0)
-    P("SM_VK_Prop_AleCask",-3.3,-4.3,0,90)
-    P("SM_VK_Prop_BarrelStack",-4.3,-3.7,0,0)
+    P("SM_VK_Prop_AleCask",-3.3,-4.5,0,90)             # clear of the front wall (outer face at y -3.8), tap to the door
+    P("SM_VK_Prop_BarrelStack",-4.62,-4.8,0,90)        # beside the cask, clear of the corner (a neighbour's door may face it)
     P("SM_VK_Prop_HitchRail",3.0,-5.0,0,0)
     zs=[o.location.z+o.dimensions.z for o in new if o.type=="MESH" and "Roof" in o.name]
     top=max(zs) if zs else 10.0

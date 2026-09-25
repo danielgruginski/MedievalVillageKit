@@ -549,14 +549,8 @@ def twn_goods_candles(k):
 def twn_goods_fish(k):
     rnd=random.Random(9)
     def fish(x,y,z,a,L=0.3):
-        R=Matrix.Translation((x,y,z))@Matrix.Rotation(a,4,"Z")
-        sub=Kit(); vs=_ico(sub,(0,0,0),L/2,STEEL,(1,0.3,0.18),sub=2,seed=int(x*100))
-        v=[sub.bm.verts.new(p) for p in ((-L*0.45,0,0),(-L*0.72,0.07,0.0),(-L*0.72,-0.07,0.0))]
-        f=sub.bm.faces.new(v); f.material_index=STEEL; v2=[sub.bm.verts.new(q.co+Vector((0,0,-0.004))) for q in v]; f2=sub.bm.faces.new(v2[::-1]); f2.material_index=STEEL
-        sub.bm.normal_update()
-        # lying on its side (flat in z): the back points to +y, so the flank faces up; head at +x
-        goods_map(sub,list({ff for vv in vs for ff in vv.link_faces})+[f,f2],"fish",axis=(1,0,0),ref=(0,1,0),c=(0,0,0))
-        merge_kit(k,sub,R)
+        # lying on its side (flat in z), head at +x, the back to +y so the flank faces up (core kit_fish)
+        kit_fish(k,Matrix.Translation((x,y,z))@Matrix.Rotation(a,4,"Z")@Matrix.Rotation(-math.pi/2,4,"X"),L)
     for cx in (-0.55,0.35):
         k.box((cx,0,0.06),(0.62,0.42,0.12),PLANKS,bevel=0.015)
         k.box((cx,0,0.121),(0.56,0.36,0.004),PAPER,bevel=0)

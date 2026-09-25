@@ -755,37 +755,8 @@ def wat_millstone(k):
 
 # ---------------------------------------------------------------- FISHING PROPS
 def wat_fish(k,M,L=0.42,mi=STEEL,belly=PAPER):
-    """low-poly fish along local +X (head), flattened in Y; dark back (mi) over a pale belly"""
-    prof=[(-0.5,0.0),(-0.36,0.07),(-0.1,0.13),(0.18,0.12),(0.38,0.07),(0.5,0.0)]
-    n=6; rings=[]
-    for (x,r) in prof:
-        if r==0: rings.append([k.bm.verts.new(Vector((x*L,0,0)))]); continue
-        rings.append([k.bm.verts.new(Vector((x*L,math.cos(2*math.pi*(i+0.5)/n)*r*L*0.42,math.sin(2*math.pi*(i+0.5)/n)*r*L))) for i in range(n)])
-    fs=[]
-    for a,b in zip(rings[:-1],rings[1:]):
-        if len(a)==1:
-            for i in range(n): fs.append(k.bm.faces.new((a[0],b[(i+1)%n],b[i])))
-        elif len(b)==1:
-            for i in range(n): fs.append(k.bm.faces.new((a[i],a[(i+1)%n],b[0])))
-        else:
-            for i in range(n): fs.append(k.bm.faces.new((a[i],a[(i+1)%n],b[(i+1)%n],b[i])))
-    tail=[Vector(p) for p in ((-0.46*L,0,0),(-0.72*L,0,0.2*L),(-0.64*L,0,0),(-0.72*L,0,-0.2*L))]
-    tv=[k.bm.verts.new(p) for p in tail]; tv2=[k.bm.verts.new(p) for p in tail]
-    ft=k.bm.faces.new(tv); fb=k.bm.faces.new(tv2[::-1])
-    fin=[k.bm.verts.new(p) for p in ((-0.05*L,0,0.12*L),(0.15*L,0,0.12*L),(-0.1*L,0,0.24*L))]
-    fin2=[k.bm.verts.new(v.co) for v in fin]
-    ff=k.bm.faces.new(fin); ff2=k.bm.faces.new(fin2[::-1])
-    for f in fs: f.material_index=mi if f.calc_center_median().z>0.0 else belly
-    for f in (ft,fb,ff,ff2): f.material_index=mi
-    allv=[v for r in rings for v in r]+tv+tv2+fin+fin2
-    bmesh.ops.transform(k.bm,matrix=M,verts=allv)
-    k.bm.normal_update()
-    c=M@Vector((0,0,0))
-    for f in fs:
-        if f.normal.dot(f.calc_center_median()-c)<0: f.normal_flip()
-    # goods atlas: head at local +X, back at local +Z; smoked fish (mi BREAD) get the smoked cell
-    M3=M.to_3x3()
-    goods_map(k,fs+[ft,fb,ff,ff2],"fish_smoked" if mi==BREAD else "fish",axis=M3@Vector((1,0,0)),ref=M3@Vector((0,0,1)),c=c)
+    """low-poly fish along local +X (head), flattened in Y, back toward +Z (core kit_fish); mi BREAD = smoked"""
+    return kit_fish(k,M,L,cell="fish_smoked" if mi==BREAD else "fish")
 
 def wat_net_rack(k):
     rnd=random.Random(2)

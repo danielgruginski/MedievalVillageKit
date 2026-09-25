@@ -30,6 +30,9 @@ Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README
     painted tufts over darker gaps (`gen_grass_v2`).
   - Cliffs are natural, never trim-like.
   - Small goods (food, hides, fish) are textured from the goods atlas (`M_VK_Goods`, 27 pieces), not flat colours.
+    Every fish in the kit is `kit_fish` (core): lofted body, forked tail, dorsal fin.
+  - The chapel's dressings (arches, jambs, sills, plinth, cornice, pinnacles, the bell tower's quoins and courses) are a
+    warm dark dressed stone (`M_VK_StoneDressed`) against the pale ashlar walls.
 
 ## 2. Opening the project
 

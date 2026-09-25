@@ -62,6 +62,7 @@ def pbr_material(mat,prefix,tint=None,nstr=1.0,metallic=0.0,rough_mul=1.0,emissi
 MAT_MAP={
  "M_VK_Stone":dict(prefix="T_VK_Stone",nstr=1.0),
  "M_VK_StoneBlock":dict(prefix="T_VK_StoneBlock",nstr=0.8,spec=0.25),
+ "M_VK_StoneDressed":dict(prefix="T_VK_StoneBlock",tint=(0.62,0.52,0.44),nstr=0.8,spec=0.25),
  "M_VK_FieldStone":dict(prefix="T_VK_FieldStone",nstr=1.1),
  "M_VK_Stone_Field":dict(prefix="T_VK_FieldStone",nstr=1.1),
  "M_VK_Stone_Warm":dict(prefix="T_VK_Stone",tint=(1.04,1.0,0.94),nstr=1.0),

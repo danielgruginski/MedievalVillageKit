@@ -256,7 +256,8 @@ def fro_log_door(k,phase,zs,ptop):
     fro_log(k,-0.95,0.95,0.205,fro_Mx(fro_LOG_Y-0.03,zs[7]+0.01),caps=(True,True),voff=0.3,seed=77,tilt=0.03)
     for sx in (-1,1): k.box((sx*(hw-0.05),-0.02,(zb+ztop)/2),(0.1,0.15,ztop-zb),WOOD,bevel=0.02)   # jamb boards
     k.box((0,-0.1,zb-0.03),(2*hw+0.1,0.38,0.1),WOOD,bevel=0.03)                                   # sill board
-    # VOID behind (interior), door leaf ajar 20 degrees inward
+    # VOID behind (interior) over a plank floor at the sill, door leaf ajar 20 degrees inward
+    k.quad([(-0.85,-0.05,zb-0.005),(0.85,-0.05,zb-0.005),(0.85,0.5,zb-0.005),(-0.85,0.5,zb-0.005)],PLANKS,uvs=[(0,0),(1.7,0),(1.7,0.55),(0,0.55)])
     k.quad([(-0.85,0.5,zb-0.05),(0.85,0.5,zb-0.05),(0.85,0.5,ztop+0.2),(-0.85,0.5,ztop+0.2)],VOID,uvs=[(0,0),(1,0),(1,1),(0,1)])
     k.quad([(-0.85,0.5,zb-0.05),(-0.85,0.5,ztop+0.2),(-0.85,0.05,ztop+0.2),(-0.85,0.05,zb-0.05)],VOID,uvs=[(0,0),(1,0),(1,1),(0,1)])
     k.quad([(0.85,0.5,zb-0.05),(0.85,0.05,zb-0.05),(0.85,0.05,ztop+0.2),(0.85,0.5,ztop+0.2)],VOID,uvs=[(0,0),(1,0),(1,1),(0,1)])
