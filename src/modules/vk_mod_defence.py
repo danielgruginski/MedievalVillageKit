@@ -22,10 +22,11 @@ def def_endcap_uv(f,k,c,t1,t2,r):
     for l in f.loops:
         d=l.vert.co-c; l[k.uv].uv=(0.5+d.dot(t1)/r*0.44,0.5+d.dot(t2)/r*0.44)
 
-def def_log(k,p0,p1,r,segs=10,mi=BARK_OAK,tip=0.0,tip_mi=ENDGRAIN,top_cap=True,bot_cap=False,taper=0.93,
+def def_log(k,p0,p1,r,segs=10,mi=BARK_OAK,tip=0.0,tip_mi=HEWN,top_cap=True,bot_cap=False,taper=0.93,
             seed=0,wob=0.07,ts=(0.0,0.35,0.7,1.0),bend=0.0):
     """irregular log from p0 to p1 with cylindrical bark UVs.
-       tip>0 : carved point of length tip beyond p1 (tip_mi); else a flat end-grain cap at p1."""
+       tip>0 : carved point of length tip beyond p1 (tip_mi, hewn wood: a chamfer where the bark is cut, then the point,
+       with the grain running up it); else a flat end-grain cap at p1."""
     rnd=random.Random(seed)
     p0=Vector(p0); p1=Vector(p1); d=p1-p0; L=d.length; dn=d/L
     t1,t2=def_frame(dn)
@@ -51,15 +52,23 @@ def def_log(k,p0,p1,r,segs=10,mi=BARK_OAK,tip=0.0,tip_mi=ENDGRAIN,top_cap=True,b
             for l,uu,vv in zip(f.loops,us,vs): l[k.uv].uv=(uu,vv)
     ct=rings[-1][0]; top=vr[-1]
     if tip>0:
-        inner=[k.bm.verts.new(ct+(v.co-ct)*0.86+dn*0.03) for v in top]
+        inner=[k.bm.verts.new(ct+(v.co-ct)*0.8+dn*0.07) for v in top]
         ap=k.bm.verts.new(ct+dn*tip+t1*rnd.uniform(-0.03,0.03)+t2*rnd.uniform(-0.03,0.03))
         tf=[]
         for j in range(segs):
             j2=(j+1)%segs
             tf.append(k.bm.faces.new((top[j],top[j2],inner[j2],inner[j])))
             tf.append(k.bm.faces.new((inner[j],inner[j2],ap)))
-        for f in tf: f.material_index=tip_mi
-        k.bm.normal_update(); k.project(tf,tip_mi)
+        Tt=TILE.get(tip_mi,1.2)
+        for f in tf:                                     # cylindrical UVs: U up the point (grain), V around it
+            f.material_index=tip_mi
+            fc=f.calc_center_median()-ct; thc=math.atan2(fc.dot(t2),fc.dot(t1))
+            for l in f.loops:
+                q=l.vert.co-ct; a=q.dot(dn); rr=(q-dn*a).length
+                th=math.atan2(q.dot(t2),q.dot(t1)) if rr>1e-4 else thc
+                th+=2*math.pi*round((thc-th)/(2*math.pi))
+                l[k.uv].uv=((L+a)/Tt+uo,th*r/Tt+vo)
+        k.bm.normal_update()
     elif top_cap:
         cv=k.bm.verts.new(ct+dn*0.012)
         for j in range(segs):
@@ -219,16 +228,16 @@ def def_shield(k,c,r,normal=(0,-1,0),mi=CLOTH_A,seed=0):
     merge_kit(k,sub,Matrix.Translation(Vector(c))@q)
 
 # ================================================================ PALISADE SET
-def def_palisade_run(k,L,n,seed=0,rails=True,hmin=3.3,hmax=3.9):
+def def_palisade_run(k,L,n,seed=0,rails=True,hmin=3.45,hmax=3.75):
     """row of sharpened logs along local x (length L, centred), outer face -Y; inner rails on +Y"""
     rnd=random.Random(seed)
     sp=L/n
     for i in range(n):
         x=-L/2+sp*(i+0.5)
         r=0.15+rnd.uniform(-0.04,0.04)
-        h=rnd.uniform(hmin,hmax); tip=0.45+rnd.uniform(-0.05,0.08)
+        h=rnd.uniform(hmin,hmax); tip=0.5+rnd.uniform(-0.04,0.06)
         lx=rnd.uniform(-0.04,0.04); ly=rnd.uniform(-0.03,0.03)
-        bark=BARK_PINE if rnd.random()<0.22 else BARK_OAK
+        bark=BARK_MOSSY if rnd.random()<0.2 else BARK_OAK
         def_log(k,(x+rnd.uniform(-0.02,0.02),rnd.uniform(-0.03,0.03),-0.8),(x+lx,ly,h-tip),r,segs=9,tip=tip,mi=bark,
                 seed=seed*97+i,ts=(0.0,0.24,0.5,1.0),bend=0.03)
     if rails:

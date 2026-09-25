@@ -26,7 +26,7 @@ Other scenes: `MedievalColony` (first colony diorama, `mc_helpers`), `StoneWallK
 | Text | File | Role |
 |---|---|---|
 | `vk_kit` | `src/core/` | **Loader**: `exec(bpy.data.texts["vk_kit"].as_string()); g=vk_kit_ns()` gives one namespace with helpers + modules + nature + terrain. |
-| `vk_helpers` | `src/core/` | Core kit: the `Kit` bmesh builder, 54 material slots (the last, `DRESS` = `M_VK_StoneDressed`, is the warm dark dressed stone of the chapel's arches, jambs, courses and quoins; set by `CH_DRESS`), core pieces, `full_rebuild()`, `place_v()`, variant styles, market stalls (`STALL_TRADES`), landmarks (`build_smithy`, `build_inn`), lit windows. |
+| `vk_helpers` | `src/core/` | Core kit: the `Kit` bmesh builder, 55 material slots (`DRESS` = `M_VK_StoneDressed`, the warm dark dressed stone of the chapel's arches, jambs, courses and quoins, set by `CH_DRESS`; `HEWN` = `M_VK_Hewn`, pale freshly hewn wood for sharpened stake points, grain along U), core pieces, `full_rebuild()`, `place_v()`, variant styles, market stalls (`STALL_TRADES`), landmarks (`build_smithy`, `build_inn`), lit windows. |
 | `vk_mat` | `src/core/` | PBR material builder, `MAT_MAP`, `apply_pbr_all()`, `TONE_MAP`. Executed by `vk_helpers`. |
 | `vk_render` | `src/core/` | `shot(name, cam_loc, target, lens, res, ...)` render helper (default output `renders/wip/`). |
 | `vk_tex`, `vk_texgen`, `vk_tex2` | `src/textures/` | Procedural PBR texture generators (`_BC/_N/_H/_R/_AO`), written to `assets/textures/` and packed. `vk_tex2`: stone rework, wattle, net, slate/shingle roofs, terrain textures (current: `gen_grass_v2`, `gen_dirt_v2`, `gen_cliff_v2`; the older generators are kept). |

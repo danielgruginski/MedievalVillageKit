@@ -438,12 +438,12 @@ Total: 481 masters.
 | `SM_VK_Gatehouse_GateLeaf` | 1.79 × 0.42 × 4.49 | 2,012 | 52 |
 | `SM_VK_Gatehouse_Portcullis` | 3.72 × 0.21 × 4.94 | 1,392 | 52 |
 | `SM_VK_LowWall_GateArch` | 3.38 × 0.77 × 4.25 | 2,608 | 52 |
-| `SM_VK_Palisade_Diag` | 4.27 × 0.51 × 4.70 | 1,838 | 52 |
+| `SM_VK_Palisade_Diag` | 4.27 × 0.51 × 4.55 | 1,838 | 52 |
 | `SM_VK_Palisade_Gate` | 4.12 × 0.94 × 6.10 | 2,372 | 52 |
 | `SM_VK_Palisade_GateLeaf` | 1.51 × 0.55 × 3.35 | 820 | 52 |
 | `SM_VK_Palisade_Ladder` | 0.64 × 0.87 × 2.91 | 248 | 52 |
 | `SM_VK_Palisade_Post` | 1.00 × 1.00 × 5.00 | 654 | 52 |
-| `SM_VK_Palisade_Straight` | 3.00 × 0.50 × 4.68 | 1,338 | 52 |
+| `SM_VK_Palisade_Straight` | 3.00 × 0.50 × 4.54 | 1,338 | 52 |
 | `SM_VK_Palisade_Tower` | 4.38 × 4.38 × 11.66 | 4,842 | 52 |
 | `SM_VK_Palisade_Walk` | 3.11 × 1.10 × 2.90 | 816 | 52 |
 | `SM_VK_Parapet_Corner` | 1.40 × 1.39 × 2.81 | 424 | 52 |

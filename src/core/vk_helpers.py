@@ -3,7 +3,7 @@ import bpy, bmesh, math, random, os
 from mathutils import Vector, Matrix, noise
 SC=bpy.data.scenes["VillageKit"]
 CELL=3.0; H1=3.0; H2=2.8; DEPTH=6.0
-TILE={45:1.2,46:3.0,47:1.0,51:1.0,33:1.2,34:1.0,35:1.4,37:1.0,38:1.5,39:1.2,40:0.6,0:3.0,1:2.2,2:1.6,3:3.0,4:1.0,5:0.5,10:1.6,16:1.2,17:0.3,18:1.0,19:0.5,21:0.5,22:3.0,23:2.0,24:3.0,25:0.8,26:1.0,11:0.5,12:0.5,28:1.5,29:1.5}
+TILE={54:1.2,45:1.2,46:3.0,47:1.0,51:1.0,33:1.2,34:1.0,35:1.4,37:1.0,38:1.5,39:1.2,40:0.6,0:3.0,1:2.2,2:1.6,3:3.0,4:1.0,5:0.5,10:1.6,16:1.2,17:0.3,18:1.0,19:0.5,21:0.5,22:3.0,23:2.0,24:3.0,25:0.8,26:1.0,11:0.5,12:0.5,28:1.5,29:1.5}
 def vcol(name,parent=None):
     c=bpy.data.collections.get(name)
     if not c: c=bpy.data.collections.new(name); (parent or SC.collection).children.link(c)
@@ -29,6 +29,21 @@ def tex_mat(name,img,rough=0.85,flat=None,emit=None,alpha_clip=False,tint=None):
     nt.links.new(b.outputs[0],o.inputs[0])
     return m
 DRESS_TINT=(0.62,0.52,0.44)    # M_VK_StoneDressed: the dressed stone darkened to a warm sandstone (chapel dressings)
+def hewn_material(name="M_VK_Hewn"):
+    """freshly hewn wood (sharpened stake points, axe cuts): the kit wood's grain remapped to a pale tan; the grain runs
+    along the texture's U"""
+    m=bpy.data.materials.get(name)
+    if m: return m
+    m=tex_mat("M_VK_Wood","T_VK_Wood",0.8).copy(); m.name=name; nt=m.node_tree
+    b=next(n for n in nt.nodes if n.type=="BSDF_PRINCIPLED")
+    bc=next(n for n in nt.nodes if n.type=="TEX_IMAGE" and n.image and n.image.name=="T_VK_Wood_BC")
+    bw=nt.nodes.new("ShaderNodeRGBToBW"); nt.links.new(bc.outputs[0],bw.inputs[0])
+    mr=nt.nodes.new("ShaderNodeMapRange"); mr.clamp=True; nt.links.new(bw.outputs[0],mr.inputs["Value"])
+    mr.inputs["From Min"].default_value=0.012; mr.inputs["From Max"].default_value=0.055
+    mx=nt.nodes.new("ShaderNodeMix"); mx.data_type="RGBA"; nt.links.new(mr.outputs[0],mx.inputs[0])
+    mx.inputs[6].default_value=(0.24,0.145,0.07,1); mx.inputs[7].default_value=(0.56,0.37,0.18,1)
+    nt.links.new(mx.outputs[2],b.inputs["Base Color"])
+    return m
 def kit_mats():
     return [tex_mat("M_VK_Stone","T_VK_Stone"), tex_mat("M_VK_Plaster","T_VK_Plaster",0.9), tex_mat("M_VK_Wood","T_VK_Wood",0.8),
             tex_mat("M_VK_RoofRed","T_VK_RoofRed",0.7), tex_mat("M_VK_Window","T_VK_Window",0.25), tex_mat("M_VK_Iron",None,0.5,flat=(0.08,0.08,0.09)),
@@ -51,8 +66,8 @@ def kit_mats():
             tex_mat("M_VK_Hide",None,0.8,flat=(0.50,0.33,0.20)), tex_mat("M_VK_Pigskin",None,0.7,flat=(0.90,0.62,0.56)),
             tex_mat("M_VK_Coal",None,0.95,flat=(0.045,0.043,0.050)), bpy.data.materials["M_VK_Net"],
             tex_mat("M_VK_Goods","T_VK_Goods_BC",0.5),
-            tex_mat("M_VK_StoneDressed","T_VK_StoneBlock",tint=DRESS_TINT)]
-STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS,DRESS=range(54)
+            tex_mat("M_VK_StoneDressed","T_VK_StoneBlock",tint=DRESS_TINT), hewn_material()]
+STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS,DRESS,HEWN=range(55)
 # ---- goods atlas (T_VK_Goods, painted by vk_goods; keep the cell order in sync with vk_goods.GOODS_CELLS) ----
 GOODS_CELLS=("cabbage","pumpkin","carrot","apple","bread","cheese","fish","fish_smoked",
              "hide","fur","meat","ham","sausage","turnip","herbs","pomace")

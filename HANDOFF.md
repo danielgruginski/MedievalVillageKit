@@ -31,6 +31,10 @@ Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README
   - Cliffs are natural, never trim-like.
   - Small goods (food, hides, fish) are textured from the goods atlas (`M_VK_Goods`, 27 pieces), not flat colours.
     Every fish in the kit is `kit_fish` (core): lofted body, forked tail, dorsal fin.
+  - Sharpened stakes (palisades, gate posts and leaves) have pale hewn points (`M_VK_Hewn`, grain up the point) over
+    oak bark, with occasional mossy bark: the row of light points must read from the colony camera.
+  - Bushes use the normal broadleaf cell, not `broadleaf_dark` (it made them read as black patches). Card layout and
+    shading stay as they are: a retuned layout (tangent cards, whole-bush normals) was tried and rejected.
   - The chapel's dressings (arches, jambs, sills, plinth, cornice, pinnacles, the bell tower's quoins and courses) are a
     warm dark dressed stone (`M_VK_StoneDressed`) against the pale ashlar walls.
 
