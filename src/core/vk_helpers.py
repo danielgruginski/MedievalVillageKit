@@ -1401,11 +1401,17 @@ def prop_sacks(k):
 def prop_weaponrack(k):
     for sx in(-0.7,0.7): k.box((sx,0,0.8),(0.12,0.3,1.6),WOOD,bevel=0.03)
     k.box((0,0,0.35),(1.5,0.3,0.08),WOOD,bevel=0.02); k.box((0,0.05,1.4),(1.5,0.1,0.1),WOOD,bevel=0.02)
+    # the weapons lean back against the top rail (tilt -0.12 rad about X: tops toward +Y), feet on the ground, and every
+    # head sits on its own shaft, tilted with it. Fix 2026-09-26: the old +0.12 tilt leaned the shafts forward and left
+    # each head floating ~0.2 m behind its shaft, which showed in the interior smithy.
+    t=-0.12; R=Matrix.Rotation(t,4,"X"); L=1.92; zc=0.953
     for i in range(4):
-        x=-0.5+i*0.33
-        k.box((x,0.05,1.0),(0.04,0.04,1.8),WOOD,rot=(0.12,0,0),bevel=0)
-        if i%2: _cyl(k,(x,0.2,1.95),0.05,0,0.25,4,STEEL)
-        else:   k.box((x,0.18,1.75),(0.02,0.28,0.2),STEEL,bevel=0)
+        x=-0.5+i*0.33; C=Vector((x,0.05,zc))
+        k.box(tuple(C),(0.04,0.04,L),WOOD,rot=(t,0,0),bevel=0)
+        if i%2:                                          # spear: a four-sided point, its base 1 cm over the shaft top
+            _cyl(k,tuple(C+R@Vector((0,0,L/2+0.115))),0.05,0,0.25,4,STEEL,rot=R)
+        else:                                            # axe: a blade on the shaft's side just under the top
+            k.box(tuple(C+R@Vector((0.105,0,L/2-0.13))),(0.19,0.025,0.2),STEEL,rot=(t,0,0),bevel=0)
     _cyl(k,(0,-0.25,0.7),0.4,0.4,0.06,12,WOOD,rot=Matrix.Rotation(math.pi/2,4,"X")@Matrix.Rotation(0,4,"Z"))
     _cyl(k,(0,-0.29,0.7),0.12,0.12,0.06,8,STEEL,rot=Matrix.Rotation(math.pi/2,4,"X"))
 def prop_barrelstack(k):

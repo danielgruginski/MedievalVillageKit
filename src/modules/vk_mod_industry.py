@@ -648,27 +648,68 @@ def ind_bloomery(k):
         t=(j+0.6)/9; k.box((-0.18,2.0-1.25*t,3.05*t),(0.55,0.05,0.05),WOOD,bevel=0.01)
     ind_skirt(k,-1.25,1.25,-1.25,1.25)
 def ind_bellows(k):
-    """pair of leather bellows on a trestle, nozzle toward -X (points at a tuyere), with a pump lever"""
-    k.box((0.1,0,0.3),(1.2,0.6,0.08),PLANKS,bevel=0.02)
-    for x in(-0.35,0.55):
-        for y in(-0.25,0.25): k.box((x,y,0.14),(0.08,0.08,0.3),WOOD,bevel=0.02)
-    # bellows body: bottom board, leather bag (pleated), top board
-    zb=0.36; L=1.0
-    for i,(z,s) in enumerate(((zb,1.0),(zb+0.1,1.06),(zb+0.2,1.0),(zb+0.3,1.06),(zb+0.4,1.0))):
-        sub=Kit(); vs=sub.box((0,0,0),(L*s,0.62*s,0.12),HIDE,bevel=0.04,segs=1)
-        for v in set(vs):   # wedge: narrow at the nozzle end (-X)
-            t=(v.co.x+L/2)/L; v.co.y*=0.35+0.65*t; v.co.z*=0.3+0.7*t
-        merge_kit(k,sub,Matrix.Translation((0.05,0,z+0.06-0.02*i)))
-    for z in(zb-0.01,zb+0.53):
-        sub=Kit(); vs=sub.box((0,0,0),(L+0.08,0.66,0.05),WOOD,bevel=0.015)
-        for v in set(vs): t=(v.co.x+L/2)/L; v.co.y*=0.4+0.6*t
-        merge_kit(k,sub,Matrix.Translation((0.05,0,z))@Matrix.Rotation(0.1 if z>0.5 else 0,4,"Y"))
-    ind_rod(k,(-0.45,0,0.52),(-0.95,0,0.5),0.05,IRON,segs=8,r2=0.03)
-    # handle + lever post
-    k.box((0.72,0,0.95),(0.3,0.08,0.06),WOOD,bevel=0.01)
-    k.box((0.95,0.42,0.6),(0.12,0.12,1.2),WOOD,bevel=0.02)
-    ind_beam(k,(0.95,0.36,1.15),(0.2,0.0,0.96),0.07,0.07,WOOD,bevel=0.01)
-    ind_rod(k,(0.62,0,0.92),(0.6,0,1.08),0.02,HAY,segs=4)
+    """forge bellows on a trestle, nozzle toward -X (the long iron pipe reaches a tuyere ~1.55 m from the stand's
+    middle): two teardrop boards (the top one hinged at the nozzle end and lifted 13 deg), a pleated dark leather bag
+    between them, iron straps and studs, a nozzle block and a hand-pump pole with a cross handle.
+    Rebuilt 2026-09-26: the old one was a stack of pale hide wedges on a plank, which read as timber from above."""
+    xh, xw, rw, wn = -0.42, 0.28, 0.33, 0.085      # nozzle end, wide-end circle centre, its radius, half-width at the nozzle
+    def hw(x):                                     # half-width of the teardrop outline at x
+        if x >= xw: return math.sqrt(max(rw*rw-(x-xw)**2, 0.0))
+        t = (x-xh)/(xw-xh); return wn+(rw-wn)*(t**0.75)
+    xs = [xh+(xw+rw-xh)*i/15 for i in range(16)]
+    xs[-1] = xw+rw-1e-4
+    outline = [(x, hw(x)) for x in xs]+[(x, -hw(x)) for x in reversed(xs)]
+    def slab(z0, th, scale, mi, M=Matrix.Identity(4)):
+        pts = [((x-xh)*scale+xh, y*scale) for x, y in outline]
+        lo = [k.bm.verts.new(M@Vector((x, y, z0))) for x, y in pts]
+        hi = [k.bm.verts.new(M@Vector((x, y, z0+th))) for x, y in pts]
+        fs = [k.bm.faces.new(list(reversed(lo))), k.bm.faces.new(hi)]
+        n = len(pts)
+        for i in range(n):
+            j = (i+1) % n; fs.append(k.bm.faces.new((lo[i], lo[j], hi[j], hi[i])))
+        bmesh.ops.recalc_face_normals(k.bm, faces=fs); k.bm.normal_update(); k.project(fs, mi); return fs
+    zb = 0.50; a = math.radians(13.0); g0 = 0.05; th = 0.05
+    # trestle: two A-frames and two rails under the bottom board
+    for x in (-0.18, 0.40):
+        for y in (-0.22, 0.22):
+            k.box((x, y*1.15, 0.22), (0.07, 0.07, 0.46), WOOD, rot=(math.copysign(0.14, y), 0, 0), bevel=0.015)
+        k.box((x, 0, 0.44), (0.09, 0.62, 0.08), WOOD, bevel=0.015)
+        k.box((x, 0, 0.16), (0.05, 0.52, 0.05), WOOD, bevel=0.01)
+    for y in (-0.16, 0.16): k.box((0.11, y, 0.49), (0.86, 0.07, 0.03), WOOD, bevel=0.008)
+    # bottom board (fixed) and top board (hinged at the nozzle end, wide end lifted)
+    slab(zb, th, 1.0, WOOD)
+    zt = zb+th+g0
+    Mt = Matrix.Translation((xh, 0, zt))@Matrix.Rotation(-a, 4, "Y")@Matrix.Translation((-xh, 0, -zt))
+    slab(zt, th, 1.0, WOOD, Mt)
+    # leather bag: rings between the boards, every other one pleated inward
+    n = 7; ring_prev = None
+    for r in range(n+1):
+        f = r/n; inset = 0.93 if r % 2 else 1.0
+        ring = []
+        for x, y in outline:
+            xx = (x-xh)*inset+xh; yy = y*inset
+            gap = g0+(xx-xh)*math.tan(a)
+            ring.append(k.bm.verts.new((xx, yy, zb+th+f*gap-0.004+0.008*f)))
+        if ring_prev:
+            m = len(ring); fs = []
+            for i in range(m):
+                j = (i+1) % m; fs.append(k.bm.faces.new((ring_prev[i], ring_prev[j], ring[j], ring[i])))
+            for f_ in fs: f_.normal_flip()      # outline runs clockwise: turn the bag's faces outward
+            k.bm.normal_update(); k.project(fs, HIDE)
+        ring_prev = ring
+    # iron straps over both boards and studs round the rims
+    for sx in (-0.05, 0.36):
+        k.box((sx, 0, zb+0.012), (0.05, 2*hw(sx)+0.02, th+0.03), IRON, bevel=0.005)
+        c = Vector((sx, 0, zt+th/2)); k.box(tuple(Mt@c), (0.05, 2*hw(sx)+0.02, th+0.03), IRON, rot=(0, a, 0), bevel=0.005)
+    # nozzle block and the long iron pipe (tip at x -1.50, z 0.60: placed by its bbox centre west of Forge_300, the tip
+    # stops 2.5 cm short of the forge tuyere, so the two never intersect)
+    k.box((xh-0.06, 0, zb+0.07), (0.16, 0.19, 0.14), WOOD, bevel=0.02)
+    ind_rod(k, (xh-0.12, 0, zb+0.08), (-1.50, 0, 0.60), 0.05, IRON, segs=8, r2=0.03)
+    k.box((xh-0.15, 0, zb+0.08), (0.04, 0.13, 0.13), IRON, bevel=0.005)
+    # pump pole on the top board's wide end, with a cross handle
+    base = Mt@Vector((0.46, 0, zt+th))
+    ind_rod(k, tuple(base), (0.50, 0, 1.12), 0.035, WOOD, segs=8)
+    k.box((0.50, 0, 1.13), (0.07, 0.42, 0.06), WOOD, bevel=0.015)
 
 # ================================================================ CLAY
 def ind_bottle_kiln(k):
