@@ -1,5 +1,5 @@
 
-LEAF_CELLS=["broadleaf","broadleaf_dark","autumn_orange","autumn_red",
+LEAF_CELLS=["broadleaf","broadleaf_b","autumn_orange","autumn_red",
             "birch","pine","willow","fern",
             "berry","blossom","apple","hydrangea",
             "reeds","tallgrass","wildflowers","deadtwigs"]
@@ -392,6 +392,83 @@ def cell_deadtwigs(P,rng):
                 rec(bx,by,a+(1 if kk%2==0 else -1)*rng.uniform(0.35,0.8),L*rng.uniform(0.5,0.72),w*0.62,d+1)
     for a0 in (-math.pi/2-0.5,-math.pi/2,-math.pi/2+0.5):
         rec(cx+rng.uniform(-10,10),B[3]-4,a0+rng.uniform(-0.1,0.1),(B[3]-B[1])*rng.uniform(0.45,0.6),11,0)
+# ---- sprig cells: one twig with separate leaves (the hero oak's look), centred in the cell, the sides transparent.
+# Cards using them are narrow (SPRIG_ASPECT) and map only the cell's middle band (vk_nature.lcard).
+SPRIG_CELLS=("broadleaf","broadleaf_b","autumn_orange","autumn_red","birch","apple","berry")
+SPRIG_ASPECT=0.52                        # card width / height; the cell's used band is u 0.5 +- SPRIG_ASPECT/2
+def sprig(P,B,rng,pal,kind=0,n=11,Lr=(0.21,0.26),Wr=(0.34,0.40),curve=0.18,fork=0,stem=(0.30,0.20,0.11),lean=0.0,step=None,spread=(1.1,1.35)):
+    """one sprig: a curved stem from the bottom middle to near the top, leaves alternating left and right up it (the
+    lowest shortest, angled up), a terminal leaf; fork>0 adds side twigs with their own leaves. Sizes are fractions
+    of the cell height. Returns the node list (x, y, angle, is_tip)."""
+    cx=(B[0]+B[2])/2; bot=B[3]-6; H=B[3]-B[1]; half=H*SPRIG_ASPECT/2-6
+    Bb=(cx-half,B[1],cx+half,B[3])                     # the band the card maps
+    Ls=H*0.86; m=24; pts=[]; a=-math.pi/2+lean; x,y=cx,bot; c0=rng.uniform(-curve,curve)
+    for i in range(m+1):
+        pts.append((x,y)); t=i/m
+        a+=c0*(1-t)*0.35/m*6+rng.uniform(-0.02,0.02)
+        x+=math.cos(a)*Ls/m; y+=math.sin(a)*Ls/m
+        x=min(max(x,cx-half*0.45),cx+half*0.45)
+    P.poly(B,pts,H*0.016,H*0.005,stem,0.4)
+    nodes=[]; nn=n
+    for j in range(nn):
+        t=0.1+0.8*j/(nn-1); i=int(t*m); (xa,ya),(xb,yb)=pts[i],pts[min(i+1,m)]
+        nodes.append((xb,yb,math.atan2(yb-ya,xb-xa),(-1)**j,t))
+    for f in range(fork):
+        t=rng.uniform(0.35,0.55)+0.2*f; i=int(t*m); bx,by=pts[i]; sd=1 if (f+int(rng.integers(0,2)))%2 else -1
+        a2=math.atan2(pts[i+1][1]-by,pts[i+1][0]-bx)+sd*rng.uniform(0.55,0.75); L2=Ls*rng.uniform(0.34,0.42); q=[(bx,by)]
+        for s in range(8):
+            a2+=rng.uniform(-0.05,0.05); q.append((q[-1][0]+math.cos(a2)*L2/8,q[-1][1]+math.sin(a2)*L2/8))
+        P.poly(B,q,H*0.009,H*0.004,stem,0.4)
+        for s in (3,5,7): nodes.append((q[s][0],q[s][1],a2,(-1)**s,0.45+0.1*s))
+    tipx,tipy=pts[-1]; nodes.append((tipx,tipy,math.atan2(tipy-pts[-2][1],tipx-pts[-2][0]),0,1.0))
+    order=list(range(len(nodes))); rng.shuffle(order)
+    for k_ in order:
+        x,y,a,sd,t=nodes[k_]
+        L=H*rng.uniform(*Lr)*(0.8+0.3*t)*(0.9 if sd==0 else 1.0)
+        aa=a if sd==0 else a+sd*rng.uniform(*spread)*(1.0-0.15*t)
+        W=L*rng.uniform(*Wr)
+        col=np.array(pal[rng.integers(0,len(pal))],f32)*rng.uniform(0.9,1.1)
+        Lf=P.fitL(Bb,x,y,aa,L,W)                                 # keep the leaf inside the card's band
+        if Lf<H*0.08: continue
+        if Lf<L: W=W*(0.6+0.4*Lf/L); L=Lf
+        P.leaf(B,x,y,aa,L,W,col,kind=kind,bend=rng.uniform(-0.12,0.12),side=sd or 1,fit=False)
+    return nodes
+_NULL_IMG=[]        # scratch image for painters that write pixels directly (cell_apple's blush)
+def _burn(fn):
+    """run an old cell painter for its random draws only (drawing is a no-op), so the atlas' shared rng stays in step
+    and every later cell replays exactly as before"""
+    class _Null(Painter):
+        def __init__(s):
+            s.S=AT
+            if not _NULL_IMG: _NULL_IMG.append(np.zeros((AT,AT,3),f32))
+            s.img=_NULL_IMG[0]
+        def seg(s,*a,**k): pass
+        def leaf(s,*a,**k): pass
+        def disc(s,*a,**k): pass
+        def flower(s,*a,**k): pass
+        def put(s,*a,**k): pass
+    fn(_Null())
+def paint_sprigs(P):
+    """the sprig cells, each from its own rng (independent of the shared one)"""
+    R=lambda s: np.random.default_rng(1000+s)
+    green=[(0.30,0.55,0.13),(0.38,0.63,0.16),(0.46,0.70,0.20),(0.25,0.48,0.11),(0.55,0.76,0.24)]
+    green_b=[(0.24,0.49,0.12),(0.31,0.57,0.14),(0.40,0.65,0.18),(0.20,0.43,0.10),(0.48,0.70,0.21)]
+    aor=[(0.86,0.46,0.08),(0.95,0.62,0.12),(0.78,0.32,0.06),(0.92,0.74,0.20),(0.70,0.40,0.08)]
+    ard=[(0.72,0.14,0.07),(0.86,0.26,0.08),(0.58,0.10,0.07),(0.90,0.46,0.10),(0.80,0.20,0.10)]
+    birch=[(0.52,0.70,0.18),(0.62,0.76,0.23),(0.44,0.63,0.14),(0.70,0.80,0.30)]
+    sprig(P,cell_bounds("broadleaf"),R(1),green)
+    sprig(P,cell_bounds("broadleaf_b"),R(2),green_b,n=10,fork=1,lean=0.08)
+    sprig(P,cell_bounds("autumn_orange"),R(3),aor,kind=1,n=10,Wr=(0.42,0.5))
+    sprig(P,cell_bounds("autumn_red"),R(4),ard,kind=1,n=10,Wr=(0.42,0.5),fork=1)
+    sprig(P,cell_bounds("birch"),R(5),birch,n=15,Lr=(0.12,0.15),Wr=(0.5,0.62),curve=0.3,fork=2,stem=(0.36,0.30,0.24))
+    rng=R(6); B=cell_bounds("apple"); nodes=sprig(P,B,rng,green,n=10)
+    for (x,y,a,sd,t) in [nodes[i] for i in (2,5)]:                     # two apples hanging from the nodes
+        r=(B[3]-B[1])*0.052; ax=x+sd*r*0.6; ay=y+r*1.25
+        P.seg(B,x,y,ax,ay-r*0.8,3,(0.28,0.2,0.1)); P.disc(B,ax,ay,r,(0.80,0.12,0.08),0.9)
+    rng=R(7); B=cell_bounds("berry"); nodes=sprig(P,B,rng,[(0.16,0.40,0.12),(0.21,0.46,0.14),(0.26,0.52,0.17)],n=10)
+    for (x,y,a,sd,t) in [nodes[i] for i in (1,3,5,7)]:                 # berry clusters at alternate nodes
+        for j in range(int(rng.integers(4,7))):
+            P.disc(B,x+rng.uniform(-16,16),y+rng.uniform(-6,20),rng.uniform(8,11),(0.80,0.07,0.10) if rng.random()<0.75 else (0.52,0.04,0.12),0.8)
 def paint_leaf_atlas(seed=301):
     P=Painter(AT); rng=np.random.default_rng(seed)
     broad=[(0.26,0.53,0.12),(0.34,0.61,0.15),(0.43,0.68,0.19),(0.21,0.46,0.10),(0.50,0.72,0.22)]
@@ -399,16 +476,20 @@ def paint_leaf_atlas(seed=301):
     aor=[(0.86,0.46,0.08),(0.95,0.62,0.12),(0.78,0.32,0.06),(0.92,0.74,0.20),(0.70,0.40,0.08)]
     ard=[(0.72,0.14,0.07),(0.86,0.26,0.08),(0.58,0.10,0.07),(0.90,0.46,0.10),(0.80,0.20,0.10)]
     birch=[(0.52,0.70,0.18),(0.62,0.76,0.23),(0.44,0.63,0.14),(0.70,0.80,0.30)]
-    cell_broad(P,"broadleaf",rng,broad,kind=0,dens=0.72,Lr=(95,135),nt=3,spread=0.75,Lf=(0.5,0.7))
-    cell_broad(P,"broadleaf_dark",rng,dark,kind=0,dens=0.95,Lr=(85,120),nt=4,spread=0.9)
-    cell_broad(P,"autumn_orange",rng,aor,kind=1,dens=0.75,Lr=(95,130),Wr=(0.36,0.44),nt=3,spread=0.75,Lf=(0.5,0.7))
-    cell_broad(P,"autumn_red",rng,ard,kind=1,dens=0.75,Lr=(95,130),Wr=(0.36,0.44),nt=3,spread=0.75,Lf=(0.5,0.7))
-    Bb=cell_bounds("birch")
-    ptsb=fan_twigs(P,Bb,rng,nt=5,spread=1.15,Lf=(0.4,0.55),w=4,stem=(0.36,0.30,0.24),maxd=2,leaf_step=15,kid_ang=(0.7,1.3),kid_len=(0.5,0.75),curl=0.14)
-    draw_leaves(P,Bb,rng,ptsb,birch,kind=0,Lr=(36,50),Wr=(0.45,0.58),ang_off=(0.7,1.3))
+    # the dense twig-bunch versions of the sprig cells only consume their draws now (see _burn / paint_sprigs)
+    _burn(lambda Q: cell_broad(Q,"broadleaf",rng,broad,kind=0,dens=0.72,Lr=(95,135),nt=3,spread=0.75,Lf=(0.5,0.7)))
+    _burn(lambda Q: cell_broad(Q,"broadleaf_b",rng,dark,kind=0,dens=0.95,Lr=(85,120),nt=4,spread=0.9))
+    _burn(lambda Q: cell_broad(Q,"autumn_orange",rng,aor,kind=1,dens=0.75,Lr=(95,130),Wr=(0.36,0.44),nt=3,spread=0.75,Lf=(0.5,0.7)))
+    _burn(lambda Q: cell_broad(Q,"autumn_red",rng,ard,kind=1,dens=0.75,Lr=(95,130),Wr=(0.36,0.44),nt=3,spread=0.75,Lf=(0.5,0.7)))
+    def _birch(Q):
+        Bb=cell_bounds("birch")
+        ptsb=fan_twigs(Q,Bb,rng,nt=5,spread=1.15,Lf=(0.4,0.55),w=4,stem=(0.36,0.30,0.24),maxd=2,leaf_step=15,kid_ang=(0.7,1.3),kid_len=(0.5,0.75),curl=0.14)
+        draw_leaves(Q,Bb,rng,ptsb,birch,kind=0,Lr=(36,50),Wr=(0.45,0.58),ang_off=(0.7,1.3))
+    _burn(_birch)
     cell_pine(P,rng); cell_willow(P,rng); cell_fern(P,rng)
-    cell_berry(P,rng); cell_blossom(P,rng); cell_apple(P,rng); cell_hydrangea(P,rng)
+    _burn(lambda Q: cell_berry(Q,rng)); cell_blossom(P,rng); _burn(lambda Q: cell_apple(Q,rng)); cell_hydrangea(P,rng)
     cell_reeds(P,rng); cell_tallgrass(P,rng); cell_wildflowers(P,rng); cell_deadtwigs(P,rng)
+    paint_sprigs(P)
     return P
 def repaint_leaf_cell(cell,seed=301,name="T_VK_Leaves",dry=False,save=True,inset=5,height=False):
     # Re-paint ONE atlas cell in place. The atlas shares one rng across all cells and rng use does not depend on

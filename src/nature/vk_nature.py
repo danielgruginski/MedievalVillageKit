@@ -1,9 +1,13 @@
 from mathutils import Quaternion
 
 # =====================  NATURE KIT  =====================
-LEAF_CELLS=["broadleaf","broadleaf_dark","autumn_orange","autumn_red","birch","pine","willow","fern",
+LEAF_CELLS=["broadleaf","broadleaf_b","autumn_orange","autumn_red","birch","pine","willow","fern",
             "berry","blossom","apple","hydrangea","reeds","tallgrass","wildflowers","deadtwigs"]
 UP=Vector((0,0,1)); GOLD=2.39996
+# sprig cells (one twig with separate leaves in the middle of the cell, as the hero oak's): cards using them are narrow
+# and map only the cell's middle band. Keep in sync with vk_leafgen.SPRIG_CELLS / SPRIG_ASPECT.
+SPRIG_CELLS=("broadleaf","broadleaf_b","autumn_orange","autumn_red","birch","apple","berry")
+SPRIG_ASPECT=0.52
 def leaf_uv(cell,m=0.004):
     i=LEAF_CELLS.index(cell); cx=i%4; cy=i//4
     return cx*0.25+m,(cx+1)*0.25-m,1-(cy+1)*0.25+m,1-cy*0.25-m
@@ -13,6 +17,8 @@ class NK(Kit):
     def lcard(s,base,right,up,w,h,cell,flip=False,bend=0.0,arch=0.0,rows=2,cols=2,nfn=None,aofn=None,anchor="bottom",vr=None):
         u0,u1,v0,v1=leaf_uv(cell)
         if vr: v0,v1=v0+(v1-v0)*vr[0],v0+(v1-v0)*vr[1]      # use only a vertical band of the cell (0=bottom)
+        if cell in SPRIG_CELLS:                                   # a sprig: narrow card on the cell's middle band
+            w=h*SPRIG_ASPECT; um=(u0+u1)/2; hw=(u1-u0)*SPRIG_ASPECT/2; u0,u1=um-hw,um+hw
         if flip: u0,u1=u1,u0
         B=Vector(base); R=Vector(right).normalized(); U=Vector(up).normalized(); N=R.cross(U).normalized()
         if anchor=="top": B=B-U*h
@@ -164,6 +170,97 @@ def clump_cards(k,c,r,n,cells,rng,C,ext,size=(0.9,1.3),shell=(0.15,0.85),wc=0.35
         if right.length<1e-3: right=up.cross(Vector((1,0,0)))
         sz=rng.uniform(*size); cell=rng.choices(names,wts)[0]
         k.lcard(base,right.normalized(),up,sz*0.95,sz,cell,flip=rng.random()<0.5,bend=0.08,nfn=nfn,aofn=aofn)
+class Anchors:
+    """points of the rendered branch skeleton (the same cut / rscale as bark_tubes), for growing twigs off the wood.
+    find(p) -> (point on a branch axis, branch radius there, branch tangent)"""
+    def __init__(s,B,min_depth=1,cut=None,rscale=None,step=0.1):
+        from mathutils.kdtree import KDTree
+        pick=lambda t,d: None if t is None else t[min(d,len(t)-1)]
+        s.P=[]
+        for b in B:
+            d=b["depth"]
+            if d<min_depth: continue
+            c=pick(cut,d); rs=pick(rscale,d) or 1.0
+            bb=cut_branch(b,c) if (c is not None and c<0.999) else b
+            P=bb["pts"]; R=bb["rad"]
+            for i in range(len(P)-1):
+                seg=P[i+1]-P[i]; L=seg.length
+                if L<1e-6: continue
+                n=max(1,int(math.ceil(L/step)))
+                for j in range(n):
+                    a=j/n; s.P.append((P[i].lerp(P[i+1],a),(R[i]*(1-a)+R[i+1]*a)*rs,seg/L))
+            if len(P)>=2: s.P.append((P[-1].copy(),R[-1]*rs,(P[-1]-P[-2]).normalized()))
+        s.kd=KDTree(len(s.P))
+        for i,(q,r,t) in enumerate(s.P): s.kd.insert(q,i)
+        s.kd.balance()
+    def find(s,p):
+        co,i,dist=s.kd.find(p); return s.P[i]
+def _perp(v):
+    a=Vector((0,0,1)) if abs(v.z)<0.9 else Vector((1,0,0))
+    return v.cross(a).normalized()
+def twig_tube(k,a,b,ra,rb,mi,vfn,droop=0.04):
+    """thin twig from a (inside the branch) to b; 4 sides, open ends (the base sits in the wood, the tip under a sprig's
+    painted stem); vfn(p) -> (AO, wind) for its vertex colour"""
+    L=(b-a).length
+    if L<0.02: return
+    pts=[a,b] if L<0.45 else [a,a.lerp(b,0.5)-UP*droop*L,b]
+    rad=[ra,rb] if len(pts)==2 else [ra,(ra+rb)*0.5,rb]
+    n0=len(k.bm.verts)
+    k.tube(pts,rad,4,mi,tileU=0.3,tileV=0.6,cap_end=False,noise_amp=0.0)
+    k.bm.verts.ensure_lookup_table()
+    for i in range(n0,len(k.bm.verts)): k.vinfo[k.bm.verts[i]]=vfn
+def sprig_foliage(k,A,clumps,per_clump,cells,rng,C,ext,size=(0.9,1.3),shell=(0.6,1.0),wc=0.35,ao_lo=0.56,per_twig=3,
+                  tilt=(35,60),droop=0.0,twig_r=(0.02,0.008),max_twig=1.2,twig_mi=BARK_OAK,skip_down=-0.6,side_at=(0.85,0.55)):
+    """Leaf sprigs that grow out of the wood: every card's painted stem starts on a twig or a branch.
+    Per clump, twig targets P spread over the clump's shell (outward-biased, like clump_cards). A twig runs from the
+    nearest point of the branch skeleton A to where the leaves around P start and carries per_twig sprigs: one at its
+    tip, the rest fanned along its outer part. A sprig points outward, tilted `tilt` degrees off the canopy normal (so
+    it is never seen tip-on from outside) with its face turned outward; `droop` hangs it toward the ground (birch), a
+    negative droop stands it up (hydrangea flower heads). side_at: where the side sprigs sit along the twig (tip=1).
+    A target the branch already reaches gets its sprigs straight on the branch, no twig."""
+    names=[x[0] for x in cells]; wts=[x[1] for x in cells]
+    for (c,r) in clumps:
+        nfn,aofn=canopy_fns(C,ext,c,wc,ao_lo)
+        def bark_ao(p,aofn=aofn): return (0.8*aofn(p)[0], k.wind_fn(p) if k.wind_fn else 1.0)
+        q_=c-C; out=Vector((q_.x/ext.x,q_.y/ext.y,q_.z/ext.z))
+        out=out.normalized() if out.length>1e-6 else Vector((0,0,1))
+        nt=max(1,int(round(per_clump/per_twig)))
+        for i in range(nt):
+            zf=1-2*(i+0.5)/nt; az=i*GOLD+rng.uniform(-0.3,0.3); s_=math.sqrt(max(0.0,1-zf*zf))
+            d=(Vector((s_*math.cos(az),s_*math.sin(az),zf))+out*0.6).normalized()
+            if d.z<skip_down and rng.random()<0.6: continue
+            P=c+d*r*rng.uniform(*shell)
+            sz=rng.uniform(*size)
+            th=math.radians(rng.uniform(*tilt)); tv=Quaternion(d,rng.uniform(0,6.283))@_perp(d)
+            U=d*math.cos(th)+tv*math.sin(th)
+            if droop: U=U-UP*droop
+            U.normalize()
+            ap,ar,at=A.find(P)
+            T=P-U*(sz*0.5)
+            v=T-ap; L=v.length
+            has_twig=L>0.12 and v.dot(d)>0.0
+            if has_twig:
+                if L>max_twig: T=ap+v*(max_twig/L); L=max_twig
+                vd=v.normalized()
+                U=(U+vd*0.6).normalized()                        # the tip sprig carries on from the twig
+                twig_tube(k,ap,T,min(twig_r[0],ar*0.75),twig_r[1],twig_mi,bark_ao)
+                bases=[T]+[ap.lerp(T,side_at[0]+(side_at[1]-side_at[0])*j/max(1,per_twig-2)) for j in range(per_twig-1)]
+            else:
+                w_=(P-ap); w_=w_.normalized() if w_.length>1e-6 else d
+                T=ap+w_*ar*0.6                                   # on the branch surface
+                bases=[T]*per_twig
+            for j,base in enumerate(bases):
+                Uj=U; sj=sz
+                if j:                                            # side sprigs fan out in the card plane, alternating
+                    R0=U.cross(d); R0=R0.normalized() if R0.length>1e-3 else _perp(U); N0=R0.cross(U)
+                    Uj=(Quaternion(N0,(1 if j%2 else -1)*rng.uniform(0.5,0.85))@U+Vector((rng.uniform(-.15,.15),rng.uniform(-.15,.15),rng.uniform(-.15,.15)))).normalized()
+                    sj=sz*rng.uniform(0.72,0.9)
+                R=Uj.cross(d)
+                R=R.normalized() if R.length>1e-3 else _perp(Uj)
+                R=Quaternion(Uj,rng.uniform(-0.45,0.45))@R       # face outward, some roll
+                cell=rng.choices(names,wts)[0]
+                k.lcard(base-Uj*(sj*0.012),R,Uj,sj*0.95,sj,cell,flip=rng.random()<0.5,arch=rng.uniform(-0.06,0.06),
+                        rows=2,cols=1,nfn=nfn,aofn=aofn)
 def nk_finish(k,name,coll,sharp=None,bark_ao=(0.62,0.8),moss_alpha=1.0,wind_H=8.0):
     bm=k.bm; bm.normal_update()
     for f in bm.faces:
@@ -282,7 +379,7 @@ def make_broad_tree(k,seed,cells,bark=BARK_OAK,trunkH=3.2,spread=1.0,cards=36,si
     k.wind_fn=tree_wind(H+1.5)
     bark_tubes(k,B,bark,flare=root_flare())
     cl=broad_clumps(limbs,subs,rng,clump_scale); C,ext=canopy_bounds(cl)
-    for (c,r) in cl: clump_cards(k,c,r,cards,cells,rng,C,ext,size=size)
+    sprig_foliage(k,Anchors(B,1),cl,cards,cells,rng,C,ext,size=size)
     return B
 
 def make_pine(k,seed,H=10.0,Rmax_f=0.30,cards_step=0.42,size=(1.35,1.85),young=False):
@@ -375,7 +472,8 @@ def make_birch(k,seed,H=8.5,stems=2):
     bark_tubes(k,B,(BARK_BIRCH,BARK_OAK),segs=(10,4,4,4),flare=root_flare(4,0.3,0.3,0.12),tile=1.0,
                cut=(0.86,0.8),rscale=(1.0,0.7),ao=(stem_ao,0.8))
     C,ext=canopy_bounds(clumps)
-    for (c,r) in clumps: clump_cards(k,c,r,11,[("birch",1.0)],rng,C,ext,size=(0.7,1.0),shell=(0.1,0.8),ao_lo=0.72)
+    sprig_foliage(k,Anchors(B,1,cut=(0.86,0.8),rscale=(1.0,0.7)),clumps,11,[("birch",1.0)],rng,C,ext,size=(0.7,1.0),
+                  shell=(0.4,0.95),ao_lo=0.72,tilt=(30,55),droop=0.45,twig_r=(0.012,0.006),max_twig=0.8)
     return B
 def make_willow(k,seed,H=3.0,R=3.9,Rz=2.3):
     rng=random.Random(seed); B=[]
@@ -506,7 +604,7 @@ def make_fruit(k,seed,cells,spread=1.0,cards=34,size=(0.85,1.2)):
     for c in cl:
         if all((c[0]-o[0]).length>0.3*(c[1]+o[1]) for o in out): out.append(c)
     C,ext=canopy_bounds(out)
-    for (c,r) in out: clump_cards(k,c,r,cards//2,cells,rng,C,ext,size=size,ao_lo=0.64)
+    sprig_foliage(k,Anchors(B,1),out,cards//2,cells,rng,C,ext,size=size,ao_lo=0.64,twig_r=(0.016,0.007),max_twig=1.0)
     return B
 def make_dead(k,seed):
     rng=random.Random(seed)
@@ -541,7 +639,7 @@ def make_sapling(k,seed):
     k.wind_fn=tree_wind(3.5)
     bark_tubes(k,B,BARK_OAK,segs=(6,4,4,4),flare=None)
     C,ext=canopy_bounds(cl)
-    for (c,r) in cl: clump_cards(k,c,r,12,[("broadleaf",1.0)],rng,C,ext,size=(0.55,0.8),ao_lo=0.65)
+    sprig_foliage(k,Anchors(B,0),cl,12,[("broadleaf",1.0)],rng,C,ext,size=(0.55,0.8),ao_lo=0.65,twig_r=(0.01,0.005),max_twig=0.5)
     # support stake + ties
     k.box((0.14,0.0,0.7),(0.05,0.05,1.6),WOOD,bevel=0.01)
     for z in (0.5,1.2): k.box((0.07,0,z),(0.16,0.04,0.04),BURLAP,bevel=0.01)
@@ -556,16 +654,22 @@ def plant_fns(center=Vector((0,0,0)),H=1.0,ao_lo=0.76,radw=0.45):
     def aofn(p):
         t=max(0.0,min(1.0,(p.z-center.z)/H)); return ao_lo+(1-ao_lo)*t, min(1.0,0.2+0.8*t)
     return nfn,aofn
-def make_bush(k,seed,cells,R=0.9,H=1.1,nclump=4,cards=22,size=(0.6,0.9)):
+def make_bush(k,seed,cells,R=0.9,H=1.1,nclump=4,cards=22,size=(0.6,0.9),shell=(0.7,1.0),tilt=(50,75),droop=0.0):
+    """woody stems from the root crown to each leaf clump (dark bark, seen through the gaps); every sprig grows out of
+    a stem or a twig off it (sprig_foliage)"""
     rng=random.Random(seed); cl=[]
     for i in range(nclump):
         a=i*GOLD+rng.uniform(-0.4,0.4); d=rng.uniform(0.15,0.5)*R if i else 0.0
         c=Vector((math.cos(a)*d,math.sin(a)*d,H*rng.uniform(0.45,0.6))); cl.append((c,rng.uniform(0.55,0.75)*R))
-    for i in range(3):
-        a=rng.uniform(0,6.28); k.tube([Vector((0,0,-0.1)),Vector((math.cos(a)*0.2,math.sin(a)*0.2,0.45))],[0.05,0.025],5,WOOD,cap_end=True)
+    B=[]
+    for j,(c,r) in enumerate(cl):
+        base=Vector((rng.uniform(-0.07,0.07),rng.uniform(-0.07,0.07),-0.08)); v=c-base
+        B.append(grow(base,v,v.length,0.032,0.012,1,rng,up=0.02,wig=0.12,step=0.2,taper=0.8,seed=seed*7+j))
     C,ext=canopy_bounds(cl); ext.z=max(ext.z,H*0.6)
     k.wind_fn=lambda p: min(1.0,max(0.0,p.z/H))
-    for (c,r) in cl: clump_cards(k,c,r,cards,cells,rng,C,ext,size=size,shell=(0.2,0.9),ao_lo=0.62)
+    bark_tubes(k,B,BARK_OAK,segs=(5,5,4,4),ao=(lambda p: 0.5+0.25*min(1.0,max(0.0,p.z)/H),))
+    sprig_foliage(k,Anchors(B,1),cl,cards,cells,rng,C,ext,size=size,shell=shell,ao_lo=0.62,tilt=tilt,droop=droop,
+                  twig_r=(0.012,0.005),max_twig=0.6,side_at=(0.92,0.72))
 def make_fern(k,seed,n=11,Hs=(0.9,1.3),c=(0,0,0)):
     rng=random.Random(seed); C0=Vector(c); nfn,aofn=plant_fns(center=C0,H=1.0,ao_lo=0.72,radw=0.6)
     for i in range(n):
@@ -933,9 +1037,9 @@ def dress_town_nature(coll,C=(200.0,0.0),seed=2029):
 # rebuild_nature({"SM_VK_..."}) -- masters are rebuilt in place, so every placed instance updates.
 _R40=math.radians(40)
 NATURE_SPECS=[
- # broadleaf trees (dense card canopies, no core blobs: clump_cards(core=False, tangent=False))
- ("SM_VK_Tree_Oak_A",lambda k: make_broad_tree(k,11,[("broadleaf",0.75),("broadleaf_dark",0.25)],cards=54,size=(0.95,1.35)),{}),
- ("SM_VK_Tree_Oak_B",lambda k: make_broad_tree(k,17,[("broadleaf",0.6),("broadleaf_dark",0.4)],trunkH=3.8,spread=0.85,cards=52,size=(0.95,1.35)),{}),
+ # broadleaf trees and bushes: sprig cards grown out of the wood (sprig_foliage); every stem starts on a twig or branch
+ ("SM_VK_Tree_Oak_A",lambda k: make_broad_tree(k,11,[("broadleaf",0.75),("broadleaf_b",0.25)],cards=54,size=(0.95,1.35)),{}),
+ ("SM_VK_Tree_Oak_B",lambda k: make_broad_tree(k,17,[("broadleaf",0.6),("broadleaf_b",0.4)],trunkH=3.8,spread=0.85,cards=52,size=(0.95,1.35)),{}),
  ("SM_VK_Tree_Oak_Autumn",lambda k: make_broad_tree(k,13,[("autumn_orange",0.55),("autumn_red",0.3),("broadleaf",0.15)],cards=52,size=(0.95,1.35)),{}),
  ("SM_VK_Tree_Apple",lambda k: make_fruit(k,61,[("apple",0.55),("broadleaf",0.45)],cards=56,size=(0.75,1.05)),{}),
  ("SM_VK_Tree_Blossom",lambda k: make_fruit(k,67,[("blossom",1.0)],spread=1.1,cards=76,size=(0.6,0.85)),{}),
@@ -948,11 +1052,11 @@ NATURE_SPECS=[
  ("SM_VK_Tree_Dead",lambda k: make_dead(k,71),{}),
  ("SM_VK_Tree_Sapling",lambda k: make_sapling(k,81),{}),
  # bushes and plants
- ("SM_VK_Bush_Round",lambda k: make_bush(k,101,[("broadleaf",1.0)]),{}),
- ("SM_VK_Bush_Large",lambda k: make_bush(k,103,[("broadleaf",1.0)],R=1.5,H=1.8,nclump=6,cards=24,size=(0.8,1.15)),{}),
- ("SM_VK_Bush_Berry",lambda k: make_bush(k,105,[("berry",0.75),("broadleaf",0.25)]),{}),
- ("SM_VK_Bush_Hydrangea",lambda k: make_bush(k,107,[("hydrangea",0.75),("broadleaf",0.25)],R=1.0,H=1.2),{}),
- ("SM_VK_Bush_Autumn",lambda k: make_bush(k,109,[("autumn_orange",0.5),("autumn_red",0.5)]),{}),
+ ("SM_VK_Bush_Round",lambda k: make_bush(k,101,[("broadleaf",0.6),("broadleaf_b",0.4)],R=0.62,H=0.95,cards=54,size=(0.44,0.6)),{}),
+ ("SM_VK_Bush_Large",lambda k: make_bush(k,103,[("broadleaf",0.6),("broadleaf_b",0.4)],R=1.3,H=1.6,nclump=6,cards=45,size=(0.58,0.8)),{}),
+ ("SM_VK_Bush_Berry",lambda k: make_bush(k,105,[("berry",0.75),("broadleaf",0.25)],R=0.66,H=0.9,cards=54,size=(0.44,0.6)),{}),
+ ("SM_VK_Bush_Hydrangea",lambda k: make_bush(k,107,[("hydrangea",0.75),("broadleaf",0.25)],R=1.0,H=1.2,cards=30,tilt=(15,40),droop=-0.9),{}),
+ ("SM_VK_Bush_Autumn",lambda k: make_bush(k,109,[("autumn_orange",0.5),("autumn_red",0.5)],R=0.72,H=1.0,cards=54,size=(0.46,0.62)),{}),
  ("SM_VK_Plant_Fern",lambda k: make_fern(k,111),{"bark_ao":None}),
  ("SM_VK_Plant_Reeds",lambda k: make_tufts(k,113,"reeds",n=10,R=0.7,Hs=(1.3,1.9),W=0.7),{"bark_ao":None}),
  ("SM_VK_Plant_TallGrass",lambda k: make_tufts(k,115,"tallgrass",n=10,R=0.7,Hs=(0.7,1.1),W=0.9),{"bark_ao":None}),
