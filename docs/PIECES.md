@@ -4,6 +4,9 @@ Generated from the .blend on 2026-09-23 (`docs/PIECES.md`). Dimensions are the m
 Every piece is a hidden master; the maps place instances that share its mesh.
 Total: 483 masters.
 
+The interior kit's 146 pieces (`SM_VKI_*`, added 2026-09-26) are listed in [INTERIOR_KIT.md §6](INTERIOR_KIT.md#6-pieces).
+The Mats column below predates two material slots added since: `kit_mats()` now returns 55 slots.
+
 ## Building kit (`SM_VK_*`): 417 pieces
 
 ### core (vk_helpers): 127
@@ -472,11 +475,11 @@ Total: 483 masters.
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
-| `SM_VK_Bush_Autumn` | 2.68 × 2.93 × 2.54 | 693 | 2 |
-| `SM_VK_Bush_Berry` | 2.76 × 2.98 × 2.36 | 645 | 2 |
-| `SM_VK_Bush_Hydrangea` | 3.05 × 3.28 × 2.79 | 701 | 2 |
-| `SM_VK_Bush_Large` | 3.99 × 4.17 × 3.97 | 1,101 | 2 |
-| `SM_VK_Bush_Round` | 2.78 × 2.65 × 2.54 | 669 | 2 |
+| `SM_VK_Bush_Autumn` | 1.80 × 1.96 × 1.62 | 1,442 | 2 |
+| `SM_VK_Bush_Berry` | 1.70 × 1.70 × 1.51 | 1,408 | 2 |
+| `SM_VK_Bush_Hydrangea` | 2.62 × 3.07 × 2.33 | 954 | 2 |
+| `SM_VK_Bush_Large` | 2.86 × 2.68 × 2.29 | 2,364 | 2 |
+| `SM_VK_Bush_Round` | 1.62 × 1.59 × 1.42 | 1,356 | 2 |
 | `SM_VK_Log_Fallen` | 3.48 × 1.72 × 0.95 | 1,212 | 5 |
 | `SM_VK_Mushrooms_Brown` | 0.29 × 0.34 × 0.21 | 1,128 | 2 |
 | `SM_VK_Mushrooms_Glow` | 0.38 × 0.59 × 0.73 | 1,316 | 2 |
@@ -498,18 +501,18 @@ Total: 483 masters.
 | `SM_VK_Rock_Standing_B` | 1.10 × 1.37 × 2.28 | 560 | 2 |
 | `SM_VK_Rock_StepStones` | 5.83 × 1.14 × 0.30 | 480 | 1 |
 | `SM_VK_Stump` | 1.71 × 1.77 × 0.86 | 772 | 4 |
-| `SM_VK_Tree_Apple` | 4.65 × 5.29 × 5.22 | 3,982 | 2 |
-| `SM_VK_Tree_Birch` | 6.36 × 5.53 × 9.57 | 7,816 | 3 |
-| `SM_VK_Tree_Birch_Single` | 5.18 × 5.17 × 8.17 | 3,322 | 3 |
-| `SM_VK_Tree_Blossom` | 4.85 × 5.54 × 5.30 | 5,084 | 2 |
+| `SM_VK_Tree_Apple` | 4.07 × 4.78 × 4.85 | 3,666 | 2 |
+| `SM_VK_Tree_Birch` | 6.04 × 5.01 × 9.11 | 6,808 | 3 |
+| `SM_VK_Tree_Birch_Single` | 5.24 × 4.70 × 7.82 | 3,038 | 3 |
+| `SM_VK_Tree_Blossom` | 4.51 × 5.08 × 4.99 | 4,952 | 2 |
 | `SM_VK_Tree_Dead` | 5.54 × 4.00 × 6.18 | 1,786 | 2 |
-| `SM_VK_Tree_Oak_A` | 8.62 × 9.29 × 7.91 | 10,705 | 2 |
-| `SM_VK_Tree_Oak_Autumn` | 7.42 × 8.07 × 8.16 | 9,640 | 2 |
-| `SM_VK_Tree_Oak_B` | 8.73 × 7.01 × 8.52 | 8,749 | 2 |
+| `SM_VK_Tree_Oak_A` | 8.26 × 8.59 × 7.52 | 9,845 | 2 |
+| `SM_VK_Tree_Oak_Autumn` | 6.65 × 7.82 × 7.73 | 8,456 | 2 |
+| `SM_VK_Tree_Oak_B` | 8.27 × 6.72 × 8.12 | 7,813 | 2 |
 | `SM_VK_Tree_Pine_A` | 8.03 × 7.97 × 10.33 | 7,860 | 3 |
 | `SM_VK_Tree_Pine_B` | 8.84 × 9.58 × 13.42 | 9,031 | 3 |
 | `SM_VK_Tree_Pine_Young` | 4.93 × 4.94 × 5.33 | 6,129 | 3 |
-| `SM_VK_Tree_Sapling` | 2.64 × 2.85 × 3.82 | 1,086 | 4 |
+| `SM_VK_Tree_Sapling` | 2.17 × 2.58 × 3.58 | 962 | 4 |
 | `SM_VK_Tree_Willow` | 8.72 × 8.83 × 5.42 | 5,254 | 2 |
 
 ## Terrain tiles (`vk_terrain`): 26 pieces

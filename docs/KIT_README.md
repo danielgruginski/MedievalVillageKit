@@ -32,7 +32,7 @@ Other scenes: `MedievalColony` (first colony diorama, `mc_helpers`), `StoneWallK
 | `vk_tex`, `vk_texgen`, `vk_tex2` | `src/textures/` | Procedural PBR texture generators (`_BC/_N/_H/_R/_AO`), written to `assets/textures/` and packed. `vk_tex2`: stone rework, wattle, net, slate/shingle roofs, terrain textures (current: `gen_grass_v2`, `gen_dirt_v2`, `gen_cliff_v2`; the older generators are kept). |
 | `vk_leafgen` | `src/textures/` | Leaf/flower atlas `T_VK_Leaves_*` (one cell per plant), `repaint_leaf_cell(cell)`. |
 | `vk_mod_humble` … `vk_mod_defence` | `src/modules/` | 8 expansion modules: pieces (`WS_SPECS` → `EXTRA_SPECS`) and builders `build_*`. |
-| `vk_nature` | `src/nature/` | Nature kit (trees, bushes, rocks…), `NATURE_SPECS` + `rebuild_nature()` + `check_nature_specs()`. |
+| `vk_nature` | `src/nature/` | Nature kit (trees, bushes, rocks…), `NATURE_SPECS` + `rebuild_nature()` + `check_nature_specs()`. Broadleaf trees and bushes grow their leaf sprigs out of the wood: `sprig_foliage()` hangs twigs off the nearest branch (`Anchors`) and the sprig cards off the twigs. |
 | `vk_terrain` | `src/terrain/` | Marching-squares terrain kit: tiles, ramps/stairs (with cliff transition), chunk assembler, displacement, materials, paving/curbs, ramp dressing, tests. |
 | `vk_terrain_demo`, `vk_town_map` | `src/terrain/`, `src/maps/` | The two terrain showcase maps. |
 | `ws_common` | `src/workshop/` | Helper for isolated "workshop" scenes, used to develop new modules with agents. |
@@ -154,3 +154,11 @@ Export is deliberately postponed until the Blender files are finished. The targe
 - import normals;
 - drive the terrain ground-type map from cell data;
 - the per-instance roof brightness jitter (Object Info › Random) needs an equivalent in Unity (per-renderer property).
+
+## 7. Interior kit
+
+Building interiors for a top-down camera, one scene per floor, entered through the building's door: 146 pieces
+(`SM_VKI_*` in `VKI_Pieces`, scene `VKI_Test`) on a 1.5 m grid, and nine showcase scenes `VKI_<Room>_F<n>`. The code is
+in `src/interior/` (texts `vki_*`), loaded with `g0={}; exec(bpy.data.texts["vki_core"].as_string(), g0); g=g0["vki_ns"]()`.
+It never changes the exterior kit (tested by T15). Everything about it (camera, grid, wall families, placement rules,
+Unity metadata, commands, the piece catalogue) is in [INTERIOR_KIT.md](INTERIOR_KIT.md).

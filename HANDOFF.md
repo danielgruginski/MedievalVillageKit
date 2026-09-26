@@ -1,8 +1,9 @@
-# HANDOFF — Medieval Village Kit (state at the end of 2026-09-24)
+# HANDOFF — Medieval Village Kit (state at the end of 2026-09-26)
 
 Read this first when continuing the work (new session: *"Read MedievalVillageKit/HANDOFF.md and continue"*).
 Project root: `E:\Unity\Projects\GameArtGeneration\MedievalVillageKit` (git repo, branch `main`).
 Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README.md](docs/KIT_README.md).
+Interior kit (built 2026-09-25/26): [docs/INTERIOR_KIT.md](docs/INTERIOR_KIT.md).
 
 ---
 
@@ -18,6 +19,9 @@ Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README
 - **Save the .blend** after each completed step (`bpy.ops.wm.save_mainfile()`).
 - **The user steers:** finish the task at hand and report; don't start big new directions or spend a lot of
   credits unasked. The user writes English (sometimes Portuguese); answer in their language.
+- **Make work visible in Blender:** the user watches changes live in the Blender window. Build in scenes they can
+  open, and keep the scene being worked on (or the `Interior_Progress` board) on screen. The user has hit weekly and
+  session usage limits during multi-agent work: keep agent counts and review rounds modest.
 - Taste notes from feedback: plaster must look even (no repeating decals); broadleaf trees = dense leaf cards, **no
   solid "lump" cores**; cherry blossom foliage in the style of the hero oak's leaves; cobbles sit on a curb with a
   few missing-stone patches; market stalls sell different goods; landmark buildings (smithy, inn) must stand out;
@@ -33,8 +37,18 @@ Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README
     Every fish in the kit is `kit_fish` (core): lofted body, forked tail, dorsal fin.
   - Sharpened stakes (palisades, gate posts and leaves) have pale hewn points (`M_VK_Hewn`, grain up the point) over
     oak bark, with occasional mossy bark: the row of light points must read from the colony camera.
-  - Bushes use the normal broadleaf cell, not `broadleaf_dark` (it made them read as black patches). Card layout and
-    shading stay as they are: a retuned layout (tangent cards, whole-bush normals) was tried and rejected.
+  - Broadleaf foliage (oaks, autumn oak, apple, birches, sapling, and the round/large/berry/autumn bushes) uses sprig
+    cells: one twig with separate leaves, like the hero oak's (`SPRIG_CELLS` in `vk_leafgen` / `vk_nature`). Sprig cards
+    are narrow (`SPRIG_ASPECT` 0.52) and map the cell's middle band. The old dense twig-bunch cells read as flat mushy
+    patches. `broadleaf_dark` is gone: that cell is now `broadleaf_b`, a second, slightly darker green sprig.
+    Every sprig grows out of the wood (`sprig_foliage` + `Anchors` in `vk_nature`): a sprig's painted stem starts at the
+    bottom of its card, so a card floating in a clump sphere (the old `clump_cards`) showed stems starting in mid-air.
+    Now a thin bark twig runs from the nearest branch to where the leaves go and carries the sprigs (tip + fanned side
+    sprigs); sprigs point outward tilted 35-60 deg (never tip-on from outside) with their faces turned out; the birch
+    hangs its sprigs (droop). Bushes have woody stems from the root crown to each leaf clump (dark bark, seen through
+    the gaps); the hydrangea's flower cards stand up (negative droop). Bush sizes were tuned back to about their old
+    footprint. The sprig cells are painted from their own rng; the old cell painters only replay their draws (`_burn`),
+    so every other atlas cell stays bit-identical.
   - The chapel's dressings (arches, jambs, sills, plinth, cornice, pinnacles, the bell tower's quoins and courses) are a
     warm dark dressed stone (`M_VK_StoneDressed`) against the pale ashlar walls.
 
@@ -61,8 +75,12 @@ Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README
 - Everything is rebuilt **in place**: `full_rebuild(names)` for kit pieces, `rebuild_nature(names)` for nature
   (recipes in `NATURE_SPECS`, verified exact), `tk_build_ramps()`/`tk_build_stairs()` for tiles. Instances share the
   master meshes, so they update automatically.
+- Interior kit loader: `g0={}; exec(bpy.data.texts["vki_core"].as_string(), g0); g=g0["vki_ns"]()` (the exterior kit
+  without terrain, plus every `vki_*` text). Rebuild interior pieces with `vki_rebuild(names)`, rooms with
+  `vki_build_scene(name)`; commands and rules in [docs/INTERIOR_KIT.md](docs/INTERIOR_KIT.md) §4.
 - Paths in code: `VK_ROOT` in `vk_tex` (textures → `assets/textures`, then packed), `vk_render` (renders →
-  `renders/wip`) and `ws_common` (→ `renders/modules`). If the project folder moves, change these three lines.
+  `renders/wip`) and `ws_common` (→ `renders/modules`), plus `VKI_ROOT` in `vki_core` (→ `renders/interior`). If the
+  project folder moves, change these four lines.
 - All kit textures are packed in the .blend; their file paths point to `assets/textures/`.
 
 Common commands: [docs/KIT_README.md §3](docs/KIT_README.md). Quick checks after terrain changes:
@@ -101,6 +119,15 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
 - **Maps:** valley town (`vk_town_map`, 72×56 cells at world 1500,0 — see [docs/VALLEY_MAP.md](docs/VALLEY_MAP.md)) and
   the terrain demo (`vk_terrain_demo`, 32×24 at 1200,0). Both are rebuilt entirely by code.
 - **Lighting (renders only):** `VK_Sun` key light + shadowless `VK_Fill`.
+- **Interior kit (`VKI_Pieces`, 146 masters; see [docs/INTERIOR_KIT.md](docs/INTERIOR_KIT.md)):** modular interiors
+  for a top-down camera (pitch 50°) on a 1.5 m grid, every wall in Full and 1 m Cut heights. Wall families Timber,
+  Stone, Board, Wattle, Ashlar with posts, rakes, windows, doors, wide doors and the fireplace / hearth / forge
+  specials; floors with 3 m texture parity; door leaves, aprons, overlays; up/down stairs as scene links; 23 home,
+  18 tavern and smithy, and 7 chapel props; 16 interior texture sets (`T_VKI_*`). Nine showcase scenes, one per floor:
+  `VKI_Hovel_F0`, `VKI_Cottage_F0`, `VKI_Townhouse_F0/F1`, `VKI_Tavern_F0/F1`, `VKI_Smithy_F0`, `VKI_Workshop_F0`,
+  `VKI_Chapel_F0`, rebuilt by `vki_rooms` (`vki_check` gives 0 errors in all nine). Viewer scenes: `VKI_Catalog`
+  (every piece, a camera per group) and `Interior_Progress` (a live board of all rooms and workshops). Every piece
+  passes `vki_test_pieces`; the exterior is untouched (T15).
 
 ## 5. Open issues and ideas (none started unless marked done)
 
@@ -139,6 +166,38 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
     ramps and one demo ramp (earth ramps only: the walled road ramps don't use `ramp_blend_shoulder`, which confirms
     the fault is there).
 
+Interior kit (spec: `docs/history/interior_design/INTERIOR_SPEC.md`, its §10–§11 record the changes made while building):
+
+14. Floor light levels below the spec's targets in three rooms: Townhouse_F1 0.187 and Smithy 0.221 by Day (target
+    0.25), Tavern_F1 0.114 by Night (target 0.15). Dark floors by design (Boards_NS, EarthSooty, a night guest floor);
+    lift them with paler floor styles or more lights if wanted. Unity lighting will be set up separately.
+15. `vki_check` palette warnings where caps are dark stone by design: the Ashlar chapel (Dress caps), the Stone
+    townhouse, the tavern at night. A pale `cap` style would make the room outline read more.
+16. The Night style maps the unglazed Wattle window's daylight card to the glass texture `M_VKI_Window_Night`; it should
+    be a flat night-sky emissive (matters only if a Wattle room is ever lit for Night).
+17. Not built yet: §5 P2/P3 props (home P2, tavern P2/P3 such as stillage, back bar, chandelier; chapel P2/P3), a
+    cellar, trapdoor and ladder, a cottage loft, the Log wall family, Slit/Niche windows, Timber/Board wide doors.
+18. The exterior smithy's only door is blocked by its forge chimney (found while designing the interiors). Move the door
+    to bay 1 (`front="WD"`) or fix it with the export.
+19. Unity export of interiors (when asked): the metadata is in place (INTERIOR_KIT §2). It needs an importer for the
+    link triggers, spawns, `LGT_`/`FXA_` empties and colliders, the glow gradient `vki_rim` baked to UV2 or `Col.a`, and
+    a Full↔Cut toggle tool using `vki_cut_pair` / `vki_cut_to`.
+20. `M_VKI_WoodScrubbed` renders at floor luma; the home props use pale hewn tops instead, the tavern bar and tables
+    still use it.
+21. Open questions from the spec for the user: live 3D characters or sprites (the sprite pitch must then match 50°);
+    fixed camera yaw and the 14–22 m zoom range; AgX vs Standard for interiors; which buildings are enterable (the §6
+    mapping leaves out barns, granaries, stables, the town hall and the inn's third storey).
+22. ~~The weapon rack's spear and axe heads floated ~0.2 m behind their shafts~~ (seen in the interior smithy). Done
+    2026-09-26: `prop_weaponrack` leans the shafts back against the top rail with their feet on the ground, seats each
+    head on its shaft and turns the axe blades sideways; the exterior racks update too.
+23. Solid viewport colours: flat-colour materials (coal, leather, steel, bronze, food…) showed white in Solid/Texture
+    view. Their viewport colours (`diffuse_color`, display only) now match their base colours; use Material Preview to
+    judge materials.
+24. ~~The industry bellows (`SM_VK_Prop_Bellows`, also used in the interior smithy) was a stack of pale hide wedges on
+    a plank.~~ Done 2026-09-26: `ind_bellows` builds a forge bellows: teardrop boards (the top one hinged and lifted),
+    a pleated leather bag, iron straps, a pump pole with a cross handle, a trestle, and a long iron pipe (tip at local
+    x −1.50) that stops 2.5 cm short of the Smithy forge's tuyere. The exterior bloomery uses the same piece.
+
 ## 6. Gotchas
 
 - **Python on this machine:** `python` resolves to the Python install manager, a *packaged* app. Inside `%APPDATA%`
@@ -158,6 +217,20 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
 - **Never publish the .blend as-is:** its `SpriteRig` scene holds third-party character assets. The repo is public;
   keep the .blend, renders and anything from that scene out of git.
 - Blender cannot create folders under the long scratchpad path (Windows `MAX_PATH`); render into `renders/` instead.
+- **Blender 4.4 crashes when scripts delete objects in scenes that are not on screen.** Its GPU-buffer garbage
+  collector (`DRW_cache_free_old_batches`) walks every scene's depsgraph, and a stale one still points at the deleted
+  objects (access violation; logs in `%TEMP%\medievalDiorama.crash.txt`). It crashed three times on 2026-09-26 while
+  six agents built interiors in parallel. Fix: `bpy.context.preferences.system.vbo_time_out = 0` (the collector then
+  returns at once). Launch with it set from the first second:
+  `blender-launcher.exe "…\blender\medievalDiorama.blend" --python-expr "import bpy; bpy.context.preferences.system.vbo_time_out = 0"`
+  from Blender's own folder. The preference is 0 in the current session (the default is 120).
+- After a restart, a scene that is not on screen has no depsgraph (`view_layers[0].depsgraph` is `None`) until
+  `view_layers[0].update()` evaluates it; `vki_depsgraph` and `vki_flush_lights` handle this.
+- Parallel agents on one Blender: each owns its texts and its `WS_vki_<name>` scene, compiles every file before
+  pushing (`vki_ns` skips a broken package text but raises on core texts), and only the coordinator saves.
+- The `Interior_Progress` board shows collection instances refreshed by a 60 s timer
+  (`bpy.app.driver_namespace["ip_tick"]`). The timer is lost when Blender restarts; re-register it or open the room
+  scenes directly.
 - README gallery: `tools/render_showcase.py` → `render_showcase()` re-renders `docs/images/*.jpg` (cameras in
   `SHOWCASE`); rebuild the valley and the demo first.
 
@@ -167,4 +240,6 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
   with results. Start at its `INDEX.md`.
 - `reviews/` — the two valley reviews (33 confirmed issues, then the re-review) and the module-build agent reports.
 - `docs/history/` — design briefs, specs and design-panel outputs from the expansion phase.
+- `docs/history/interior_design/` — the interior kit: spec (with the §10–§11 amendments), design-panel surveys and
+  critiques, the package briefs (`PACKAGES.md`) and the core API notes the builders used.
 - `renders/` — every render made, by topic; `renders/final/` has the latest verification shots.
