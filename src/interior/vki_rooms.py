@@ -641,7 +641,7 @@ def vki_rooms_layout(name, R=None, P=None):
                 limewash = fam == "Stone" and any(str(R["zones"].get(zmap.get(c_), {}).get("wall", "")).startswith("Plaster")
                                                   for c_ in fa)
                 if kind == "Plain" and n == 1 and ht == "Full" and role != "part" and \
-                        fam in ("Timber", "Stone", "Wattle", "Dungeon", "Ancient", "Sewer") \
+                        fam in ("Timber", "Stone", "Wattle", "Dungeon", "Ancient", "Sewer", "Dwarf") \
                         and k % 2 == 1 and not limewash:
                     mx, my = ((x0 + VKI_IG * 0.5, y0) if ori == "EW" else (x0, y0 + VKI_IG * 0.5))
                     if not any(math.hypot(px - mx, py - my) < 1.3 for px, py in ppts):
@@ -1719,7 +1719,8 @@ def vki_rooms_lights(ctx):
             data = dict(type=typ, role=Ls.get("role"), color=col, intensity=w, range=Ls.get("range"),
                         flicker=Ls.get("flicker", 0), shadows=Ls.get("shadows", 1), blender_w=w, w_day=wd, w_night=wn,
                         color_day=cdy, color_night=cnt, cone=Ls.get("cone"), blend=Ls.get("blend"),
-                        size=Ls.get("size"), radius=Ls.get("radius"), host=o.name, piece=o.get("vki_piece"))
+                        size=Ls.get("size"), radius=Ls.get("radius"), specular=Ls.get("specular"), host=o.name,
+                        piece=o.get("vki_piece"))
             emp["vki_light"] = json.dumps({k_: v_ for k_, v_ in data.items() if v_ is not None})
             ld = bpy.data.lights.new("LIT_" + nm, typ)
             lo = bpy.data.objects.new("LIT_" + nm, ld)
@@ -1730,6 +1731,8 @@ def vki_rooms_lights(ctx):
             ld.energy = w
             ld.color = col
             ld.use_shadow = bool(Ls.get("shadows", 1))
+            if Ls.get("specular") is not None:          # 0: a diffuse-only light (no image of it in glossy water)
+                ld.specular_factor = float(Ls["specular"])
             if typ == "SPOT":
                 ld.spot_size = math.radians(Ls.get("cone", 60.0))
                 ld.spot_blend = Ls.get("blend", 0.35)
@@ -1831,6 +1834,7 @@ def vki_build_scene(name):
         vki_rooms_rhythm(ctx)
         vki_rooms_mats(ctx)
         vki_rooms_pools(ctx)
+        vki_rooms_debris(ctx)                          # loose debris strewn by R["debris"] (vki_props_debris)
         vki_rooms_root(ctx)
         nl, nf = vki_rooms_lights(ctx)
     finally:

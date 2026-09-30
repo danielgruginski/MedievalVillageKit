@@ -32,7 +32,7 @@ VKI_PLANS.update({
      +   ==+==+==+xx+xx+==+==+==+==+==+==+==+        +
    3 ### ## .. .. .. .. .. .. ## ## ## .. .. .. .. ###
      +                                               +
-   2 ### .. gv .. .. .. .. .. .. ## .. .. .. CR .. ###
+   2 ### .. RK .. .. .. .. .. .. ## .. .. .. CR .. ###
      +                                               +
    1 ### .. .. CR .. .. ~~ ~~ .. .. .. BD ## ## ## ###
      +                                               +
@@ -45,6 +45,7 @@ VKI_ROOMS.update({
     "VKI_Sewer_S1": dict(
         building="Sewer", floor=-1, preset="Sewer", family=dict(perimeter="Cave", partition="Sewer"), cave=True,
         pools=False, partition_wall="zone", rush_mats=False,
+        debris=dict(density=0.36, seed=17),                                  # loose debris (vki_props_debris)
         specials={"S1": "Wall_Sewer_Ladder_150_Full", "S2": "Wall_Sewer_Outfall_150_Full",
                   "1": "Wall_Sewer_Culvert_150_Full"},
         zones={"sewer": dict(cells=[(1, 12, 4, 6), (8, 10, 7, 8)], floor="SewerFloor", wall="SewerBrick"),
@@ -69,7 +70,8 @@ VKI_ROOMS.update({
                # the grotto and the east cave
                ("Crystals", 5.2, 2.2, 0, None, None, {"hug": False}),
                ("Mushrooms_Glow", 12.9, 1.0, 0, None, None, {"hug": False}),
-               ("Overlay_Gravel", 3.75, 3.75, 0, None, None, {"hug": False}),
+               ("POI_RatKing", 3.1, 2.75, 0, None, None, {"hug": False}),      # the rat king's throne (a point of
+               #                                                                  interest, vki_props_poi)
                ("Boulders", 16.6, 2.3, 0, None, None, {"hug": False}),
                ("Crystals", 20.6, 3.9, 0, None, None, {"hug": False}),
                ("Mushrooms_Glow", 20.4, 11.4, 0, None, None, {"hug": False})]),

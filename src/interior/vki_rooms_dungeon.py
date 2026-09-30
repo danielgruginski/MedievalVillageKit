@@ -38,9 +38,9 @@ VKI_PLANS.update({
      +                             +
    4 #.. bo .. PI .. .. .. PI cn ..N
      +                             +
-   3 N.. ts .. cn SA SA .. .. ts ..P
+   3 N.. ts .. .. NC NC .. .. ts ..P
      +                             +
-   2 #.. .. .. PI .. cn .. PI .. ..N
+   2 #.. .. .. PI .. .. .. PI .. ..N
      +||+gg+                       +
    1 #TR ..|.. CF CF .. CF CF .. ..#
      +                             +
@@ -53,6 +53,7 @@ VKI_ROOMS.update({
     "VKI_Dungeon_B1": dict(
         building="Dungeon", floor=-1, preset="Dungeon", family=dict(perimeter="Dungeon", partition="Dungeon"),
         partition_wall="zone", pools=False,
+        debris=dict(density=0.26, seed=11, themes={"cells": "dungeon"}),     # loose debris (vki_props_debris)
         zones={"cells": dict(cells=[(2, 5, 4, 5), (8, 9, 0, 2)], floor="EarthDamp", wall="DungeonInDamp"),
                "hall": dict(cells="rest", floor="DungeonFlag", wall="DungeonIn")},
         stairs=[("Up", 0.0, 4.5, 0, "surface", "Stone"), ("Down", 10.5, 9.0, -90, "crypt", "Stone")],
@@ -83,6 +84,7 @@ VKI_ROOMS.update({
     "VKI_Dungeon_B2": dict(
         building="Dungeon", floor=-2, preset="Dungeon", family=dict(perimeter="Dungeon", partition="Dungeon"),
         partition_wall="zone", pools=False,
+        debris=dict(density=0.26, seed=12),                                  # loose debris (vki_props_debris)
         gates={("EW", 1, 2): -90.0},            # the vault gate opens out into the nave (inside, it closed the chest off)
         zones={"vault": dict(cells=[(0, 1, 0, 1)], floor="DungeonFlag", wall="DungeonIn"),
                "crypt": dict(cells="rest", floor="DungeonFlagWarm", wall="DungeonInWarm")},
@@ -94,8 +96,9 @@ VKI_ROOMS.update({
                ("Overlay_Bones", 2.25, 6.75, 0, None, None),
                ("Pillar_Cut", 4.5, 6.0, 0, None, None), ("Pillar_Cut", 4.5, 3.0, 0, None, None),
                ("Pillar_Cut", 10.5, 6.0, 0, None, None), ("Pillar_Cut", 10.5, 3.0, 0, None, None),
-               ("Sarcophagus", 7.5, 4.5, 0, None, None),
-               ("Candles_Floor", 6.0, 5.25, 0, None, None), ("Candles_Floor", 9.0, 3.0, 0, None, None),
+               # the nave: a necromancer's circle round the crypt's opened sarcophagus (a point of interest,
+               # vki_props_poi; it brings its own tomb and candles)
+               ("POI_NecroCircle", 7.5, 4.5, 0, None, None, {"hug": False}),
                ("Coffin", 6.0, 2.25, 0, None, None), ("Coffin", 10.5, 2.25, 0, None, None),
                ("Overlay_TombSlab", 1.5, 4.5, 90, None, None), ("Overlay_TombSlab", 13.5, 4.5, 90, None, None),
                ("Rubble", 13.5, 0.75, 0, None, None), ("Overlay_Puddle", 11.25, 0.75, 0, None, None),

@@ -14,9 +14,9 @@ VKI_ROOT = r"E:\Unity\Projects\GameArtGeneration\MedievalVillageKit"
 VKI_RENDERS = os.path.join(VKI_ROOT, "renders", "interior")
 # load order of the package texts (vki_tex / vki_textiles are generators, executed on demand, not listed)
 VKI_TEXTS = ["vki_fam_timber", "vki_floors", "vki_fam_stone", "vki_fam_board", "vki_fam_wattle", "vki_fam_ashlar",
-             "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_fam_sewer", "vki_fam_water", "vki_props_home", "vki_props_tavern",
+             "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_fam_sewer", "vki_fam_water", "vki_fam_dwarf", "vki_props_home", "vki_props_tavern",
              "vki_props_smithy", "vki_props_chapel", "vki_props_dungeon", "vki_props_adventure", "vki_props_lair",
-             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_test"]
+             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_rooms_dwarf", "vki_props_poi", "vki_props_debris", "vki_test"]
 
 
 VKI_CORE_TEXTS = ("vki_fam_timber", "vki_floors", "vki_test")    # a failure here raises; package texts only warn
@@ -50,7 +50,7 @@ def vki_ns(strict=False):
 VKI_IG = 1.5                                   # interior grid
 VKI_T = {"O": 0.50, "P": 0.30}                 # wall thickness by class
 VKI_H_FULL = {"Timber": 3.0, "Stone": 3.0, "Board": 3.0, "Wattle": 2.4, "Ashlar": 4.5, "Dungeon": 3.0, "Bars": 3.0,
-              "Ancient": 3.0, "Cave": 3.0, "Sewer": 3.0}
+              "Ancient": 3.0, "Cave": 3.0, "Sewer": 3.0, "Dwarf": 3.0}
 VKI_H_UPPER = 3.0                              # upper floors use 3.0
 VKI_PROUD = 0.03
 VKI_CAP_HW = {"O": 0.28, "P": 0.18}            # caps, rails, skirtings, oak members
@@ -123,8 +123,16 @@ VKI_FAMILIES = {
                   cut_cap="dressed stone coping in 0.75 m units, SewerCap top", full_top="same coping",
                   posts="Corner: brick pier with stone quoins; Mid: pilaster", b_variant="a barred drain low in face A",
                   rake=True, rhythm=False, prio=5, h_fit=3.0, sag=0.0, coping_jitter=0.010),
+    # dwarf kit (docs/DWARF_KIT.md, text vki_fam_dwarf): halls cut into the mountain, granite ashlar with a plinth and a
+    # gilded rune band
+    "Dwarf": dict(cls="O", H=3.0, wall_a="DwarfIn", cap="DwarfCap", base="plinth course 0-0.28, 3 cm proud",
+                  cut_cap="polished coping in 0.75 m units, DwarfCap top", full_top="coping over the gilded rune band",
+                  posts="Corner: square pier with a stepped capital and a gold ring; Mid: pilaster",
+                  b_variant="a carved relief: frame, lozenge, gold rune disc", rake=True, rhythm=False, prio=6,
+                  h_fit=3.0, sag=0.0, coping_jitter=0.006),
 }
-VKI_POST_PRIO = ["Cave", "Ancient", "Dungeon", "Sewer", "Stone", "Ashlar", "Timber", "Wattle", "Board", "Bars"]  # §2.3
+VKI_POST_PRIO = ["Cave", "Ancient", "Dwarf", "Dungeon", "Sewer", "Stone", "Ashlar", "Timber", "Wattle", "Board",
+                 "Bars"]  # §2.3
 
 # ---------------------------------------------------------------- §4.1 slots
 VKI_FLOOR, VKI_WALL_A, VKI_WALL_B, VKI_CAP, VKI_STONE_BLOCK_IN, VKI_BRICK, VKI_STRAW, VKI_ASH, VKI_TEXTILE, \
@@ -306,7 +314,7 @@ class VKIKit(Kit):
             if mi == STONE and abs(n.z) > 0.7:
                 m2 = STONE_BLOCK
             elif mi in (VKI_WALL_A, VKI_WALL_B) and abs(n.z) > 0.7 and s.fam in ("Stone", "Ashlar", "Dungeon", "Bars",
-                                                                                "Ancient", "Sewer"):
+                                                                                "Ancient", "Sewer", "Dwarf"):
                 m2 = VKI_STONE_BLOCK_IN
             f.material_index = m2
             tt = (tile or vki_tile(mi)) if m2 == mi else vki_tile(m2)
@@ -573,7 +581,7 @@ def vki_default_meta(piece, k, bbox):
 
 # ---------------------------------------------------------------- §2.6 seam rule (wobble)
 VKI_AMP = {"Timber": .012, "Stone": .020, "Ashlar": .010, "Wattle": .020, "Board": 0.0, "Dungeon": .020, "Bars": 0.0,
-           "Ancient": .020, "Cave": 0.0, "Sewer": .015}
+           "Ancient": .020, "Cave": 0.0, "Sewer": .015, "Dwarf": .006}
 VKI_SECOND = {"A": "B", "B": "A"}
 
 
@@ -716,6 +724,25 @@ VKI_MAT_MAP = {
     "M_VKI_StreamWater": dict(kind="gloss", col=(.070, .115, .125), rough=0.04, alpha=0.72),
     "M_VKI_StreamBed": dict(tex="T_VKI_CaveFloor", tint=(0.46, 0.50, 0.50), ph="#3A3632", nstr=1.3, spec=0.5),
     "M_VKI_WaterFall": dict(kind="gloss", col=(.50, .58, .60), rough=0.25, alpha=0.82),
+    # dwarf kit: granite ashlar and the paneled hall floor (vki_tex_dungeon), pale polished caps and dark dressed stone
+    # from T_VKI_StoneBlockIn, molten lava (emissive; Unity animates it)
+    "M_VKI_DwarfIn": dict(tex="T_VKI_DwarfIn", ph="#4A4B4E", nstr=1.0, spec=0.35),
+    "M_VKI_DwarfFloor": dict(tex="T_VKI_DwarfFloor", tint=(0.56, 0.56, 0.58), ph="#5A5C5E", nstr=1.0, spec=0.45),
+    "M_VKI_DwarfCap": dict(tex="T_VKI_StoneBlockIn", tint=(1.18, 1.20, 1.22), ph="#8E9092", nstr=0.8, spec=0.35),
+    "M_VKI_DwarfBlock": dict(tex="T_VKI_StoneBlockIn", tint=(0.62, 0.64, 0.68), ph="#5E6064", nstr=0.9, spec=0.35),
+    "M_VKI_DwarfFlag": dict(tex="T_VKI_DwarfFlag", tint=(0.56, 0.56, 0.58), ph="#55575A", nstr=1.0, spec=0.40),
+    # molten lava: a pure emitter (a lit base read pink) on the heat gradient its tiles write (vki_rim: 0 at the hot
+    # core, 1 at the banks), yellow-white down the middle to a deep red at the banks; the crust that cools on it, dark
+    # with a faint red glow (it read as holes when black)
+    "M_VKI_Lava": dict(kind="heat", core=(1.0, 0.70, 0.15), rim=(1.0, 0.12, 0.0), strength=(1.25, -0.9)),  # (brighter
+    # cores went peach under AgX)
+    "M_VKI_LavaCrust": dict(kind="flat", col=(0.035, 0.026, 0.022), rough=0.9, emit=(1.0, 0.14, 0.01), strength=0.12),
+    "M_VKI_BannerRed": dict(kind="flat", col=(0.36, 0.035, 0.03), rough=0.9),               # the clan banners' cloth
+    # points of interest (vki_props_poi): the necromancer's sigil, a pure green emitter
+    "M_VKI_RuneGlow": dict(kind="flat", col=(0.0, 0.0, 0.0), rough=1.0, emit=(0.22, 1.0, 0.30), strength=1.0),
+    # debris (vki_props_debris): forge slag, glassy black
+    "M_VKI_Slag": dict(kind="gloss", col=(0.035, 0.030, 0.035), rough=0.18, alpha=1.0),
+    "M_VKI_Rust": dict(kind="flat", col=(0.26, 0.15, 0.09), rough=0.85),                      # old iron
 }
 VKI_SLOT_DEFAULTS = ["M_VKI_Boards_NS", "M_VKI_PlasterCream", "M_VKI_PlasterCream", "M_VK_Hewn",
                      "M_VKI_StoneBlockIn", "M_VKI_Brick", "M_VKI_Straw", "M_VKI_Ash", "M_VKI_Textiles", "M_VKI_Wax",
@@ -723,18 +750,19 @@ VKI_SLOT_DEFAULTS = ["M_VKI_Boards_NS", "M_VKI_PlasterCream", "M_VKI_PlasterCrea
 VKI_WALL_MATS = {**{k_: "M_VKI_" + k_ for k_ in VKI_WALL_STYLES},
                  **{k_: "M_VKI_" + k_ for k_ in ("StoneIn", "StoneInWarm", "StoneInCool", "AshlarIn", "WattleIn",
                                                  "BoardsV", "Brick", "DungeonIn", "DungeonInDamp", "DungeonInWarm",
-                                                 "AncientIn", "CaveRock", "CaveRockDamp", "SewerBrick")}}
+                                                 "AncientIn", "CaveRock", "CaveRockDamp", "SewerBrick", "DwarfIn")}}
 VKI_STYLE_MATS = {
     "floor": {k_: "M_VKI_" + k_ for k_ in ("Boards_NS", "Boards_EW", "BoardsDark_NS", "BoardsDark_EW",
                                            "BoardsPale_NS", "BoardsPale_EW", "Flag", "FlagWarm", "FlagRustic",
                                            "Earth", "EarthSooty", "ApronCobble", "ApronDirt", "ApronGrass",
                                            "DungeonFlag", "DungeonFlagWarm", "EarthDamp", "AncientFlag", "CaveFloor",
-                                           "SewerFloor")},
+                                           "SewerFloor", "DwarfFloor", "DwarfFlag")},
     "wall_a": VKI_WALL_MATS, "wall_b": VKI_WALL_MATS, "infill": VKI_WALL_MATS,
     "cap": {"Hewn": "M_VK_Hewn", "StoneBlockIn": "M_VKI_StoneBlockIn", "Dress": "M_VKI_Dress",
             "PlasterDaub": "M_VKI_PlasterDaub", "DungeonCap": "M_VKI_DungeonCap", "DungeonBlock": "M_VKI_DungeonBlock",
             "AncientCap": "M_VKI_AncientCap", "AncientBlock": "M_VKI_AncientBlock", "CaveCut": "M_VKI_CaveCut",
-            "SewerCap": "M_VKI_SewerCap", "SewerBlock": "M_VKI_SewerBlock"},
+            "SewerCap": "M_VKI_SewerCap", "SewerBlock": "M_VKI_SewerBlock", "DwarfCap": "M_VKI_DwarfCap",
+            "DwarfBlock": "M_VKI_DwarfBlock"},
     "wood": {"Oak": "M_VK_Wood", "Dark": "M_VKI_WoodDark"},
     "planks": {"Scrubbed": "M_VKI_WoodScrubbed", "Planks": "M_VK_Planks"},
     "window": {"Day": "M_VKI_Window_Day", "Window_Day": "M_VKI_Window_Day", "Night": "M_VKI_Window_Night",
@@ -744,7 +772,7 @@ VKI_STYLE_MATS = {
     "glow": {"GlowIn": "M_VKI_GlowIn", "Glow": "M_VK_Glow"},
     "water": {"Water": "M_VK_Water", "Ale": "M_VKI_Ale", "WaterMurky": "M_VKI_WaterMurky", "Puddle": "M_VKI_Puddle",
               "SewerWater": "M_VKI_SewerWater", "Sludge": "M_VKI_Sludge", "StreamWater": "M_VKI_StreamWater",
-              "WaterFall": "M_VKI_WaterFall"},
+              "WaterFall": "M_VKI_WaterFall", "Lava": "M_VKI_Lava"},
     # "shutter", "cloth", "cloth_b": the exterior variants (variant_mat), e.g. shutter "Red", cloth "Blue"
 }
 VKI_FAMILY_SLOT_MATS = {
@@ -763,6 +791,8 @@ VKI_FAMILY_SLOT_MATS = {
              VKI_STONE_BLOCK_IN: "M_VKI_CaveRock"},
     "Sewer": {VKI_WALL_A: "M_VKI_SewerBrick", VKI_WALL_B: "M_VKI_SewerBrick", VKI_CAP: "M_VKI_SewerCap",
               VKI_STONE_BLOCK_IN: "M_VKI_SewerBlock"},
+    "Dwarf": {VKI_WALL_A: "M_VKI_DwarfIn", VKI_WALL_B: "M_VKI_DwarfIn", VKI_CAP: "M_VKI_DwarfCap",
+              VKI_STONE_BLOCK_IN: "M_VKI_DwarfBlock"},
 }
 VKI_MASTER_MATS = {GLOW: "M_VKI_GlowIn", WINDOW: "M_VKI_Window_Day", STAINED: "M_VKI_Stained_In",
                    DRESS: "M_VKI_Dress"}                     # on every VKI master (§4.1)
@@ -858,8 +888,14 @@ VKI_GLOW_STRENGTH = (2.2, -1.6)     # strength = a + b * rim
 
 
 def vki_glow_nodes(m):
-    """M_VKI_GlowIn: black, non-specular base (a pure emitter); emission = mix(VKI_GLOW_CORE, VKI_GLOW_RIM,
-    Attribute vki_rim), strength VKI_GLOW_STRENGTH[0] + VKI_GLOW_STRENGTH[1] * rim"""
+    """M_VKI_GlowIn: the flames' heat gradient (VKI_GLOW_CORE -> VKI_GLOW_RIM, VKI_GLOW_STRENGTH)"""
+    return vki_heat_nodes(m, VKI_GLOW_CORE, VKI_GLOW_RIM, VKI_GLOW_STRENGTH, diffuse=(1.0, .6, .25, 1))
+
+
+def vki_heat_nodes(m, core, rim, strength, diffuse=None):
+    """a pure emitter on a heat gradient: black, non-specular base; emission = mix(core, rim, Attribute vki_rim),
+    strength strength[0] + strength[1] * rim. M_VKI_GlowIn (the flames) and the kind "heat" (the dwarf kit's lava).
+    A mesh without vki_rim reads 0: full core."""
     nt, b, out = vki_nodes_reset(m)
     b.inputs["Base Color"].default_value = (0.0, 0.0, 0.0, 1)
     b.inputs["Roughness"].default_value = 1.0
@@ -867,13 +903,13 @@ def vki_glow_nodes(m):
     at = nt.nodes.new("ShaderNodeAttribute"); at.attribute_type = "GEOMETRY"; at.attribute_name = "vki_rim"
     at.location = (-500, 0)
     mx = nt.nodes.new("ShaderNodeMix"); mx.data_type = "RGBA"; mx.blend_type = "MIX"; mx.location = (-200, 100)
-    mx.inputs[6].default_value = (*VKI_GLOW_CORE, 1); mx.inputs[7].default_value = (*VKI_GLOW_RIM, 1)
+    mx.inputs[6].default_value = (*core, 1); mx.inputs[7].default_value = (*rim, 1)
     nt.links.new(at.outputs["Fac"], mx.inputs[0])
     st = nt.nodes.new("ShaderNodeMath"); st.operation = "MULTIPLY_ADD"; st.location = (-200, -150)
-    st.inputs[1].default_value = VKI_GLOW_STRENGTH[1]; st.inputs[2].default_value = VKI_GLOW_STRENGTH[0]
+    st.inputs[1].default_value = strength[1]; st.inputs[2].default_value = strength[0]
     nt.links.new(at.outputs["Fac"], st.inputs[0])
     nt.links.new(mx.outputs[2], b.inputs["Emission Color"]); nt.links.new(st.outputs[0], b.inputs["Emission Strength"])
-    m.diffuse_color = (1.0, .6, .25, 1)
+    m.diffuse_color = diffuse or (*core, 1)
     return m
 
 
@@ -933,10 +969,12 @@ def vki_build_mat(name):
             vki_bc_nodes(m, sp["tex"], sp.get("tint"))
         else:
             vki_flat_nodes(m, vki_srgb(sp["ph"])); ph = 1
-    elif kind == "flat":
-        vki_flat_nodes(m, sp["col"], sp.get("rough", 0.85))
+    elif kind == "flat":                            # (emit / strength: an emissive flat colour, the dwarf kit's lava)
+        vki_flat_nodes(m, sp["col"], sp.get("rough", 0.85), emit=sp.get("emit"), strength=sp.get("strength", 0.0))
     elif kind == "glow":
         vki_glow_nodes(m)
+    elif kind == "heat":                            # an emitter on a heat gradient (vki_rim): the dwarf kit's lava
+        vki_heat_nodes(m, sp["core"], sp["rim"], sp["strength"])
     elif kind == "daylight":
         vki_flat_nodes(m, sp["col"], 0.5, use_col=False, emit=sp["col"], strength=sp["strength"])
         vki_shadow_transparent(m)
@@ -1599,8 +1637,12 @@ VKI_PRESETS = {
     # sewer kit: torch-lit tunnels with a faint green cast (the Dungeon key left the brick paving under the dark target)
     "Sewer": dict(world=(0.09, 0.11, 0.10), world_strength=0.90, key=0.70, key_color=(.66, .80, .72),
                   fill=0.95, fill_color=(.62, .76, .70), window_w=700.0, window_color=(.78, .86, 1.0)),
+    # dwarf kit: the halls under the mountain, lit by braziers, forges and lava -- a cool stone-grey key and fill (a
+    # warm key flattened the fires' warm pools), of about the same luminance as the first warm one
+    "Hall": dict(world=(0.10, 0.10, 0.11), world_strength=0.90, key=0.55, key_color=(.90, .92, 1.0),
+                 fill=0.95, fill_color=(.78, .80, .86), window_w=700.0, window_color=(.78, .86, 1.0)),
 }
-VKI_DARK_PRESETS = ("Night", "Dungeon", "Cavern", "Sewer")   # floor-level target 0.15 (vki_check), torch-lit
+VKI_DARK_PRESETS = ("Night", "Dungeon", "Cavern", "Sewer", "Hall")   # floor-level target 0.15 (vki_check), torch-lit
 VKI_NIGHT_SPEC = dict(world_strength=0.35, key=0.35, fill=0.2)     # §6 start values (moodier, darker)
 VKI_KEY_DIR = (-0.1797, -0.4338, 0.8829)       # toward the light: elevation 62 deg, from the SSW (azimuth 202.5)
 VKI_FILL_DIR = (0.0, -0.6428, 0.7660)          # toward the camera: the fill shines along the view direction

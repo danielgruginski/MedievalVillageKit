@@ -117,11 +117,15 @@ passage), `street` → `@surface` (the ladder), `caverns` → `VKI_Dungeon_B4` (
   - At the east end, the channel passes under the end wall through a culvert and runs out into a cave, and a breach
     beside it opens the walkway onto the cave.
   - The cave wraps round to the grotto and leads to the tunnel on to the caverns.
-- **Dressing.** Torches, sludge, a puddle, boulders, gravel.
+- **The rat king.** In the grotto sits the rat king's throne of junk on its refuse heap, the level's point of interest
+  (`POI_RatKing`, [POINTS_OF_INTEREST.md](POINTS_OF_INTEREST.md)).
+- **Dressing.** Torches, sludge, a puddle, boulders.
 
-It checks at **0 errors and 0 warnings**, with full BFS reach (1,420 / 1,420). Its floor luma is 0.150 and its cap tops
-0.340. It has 74,896 triangles. The rock mass between the tunnels is 41,960 of them (121 tiles), the walls and posts
-22,476, and the channel tiles 4,096.
+It checks at **0 errors and 0 warnings**, with full BFS reach (1,334 / 1,334). Its floor luma is 0.158 and its cap tops
+0.340. It has 62,830 triangles with the throne's 2,738, and 69,434 with its 25 pieces of debris ([DEBRIS.md](DEBRIS.md):
+planks, barrels, rags, sludge, rocks). The first build had 74,896: the rock mass between the
+tunnels (121 tiles) took 41,960 of them, the walls and posts 22,476, the channel tiles 4,096. The rock tiles have
+since dropped the bottom faces nothing sees ([DWARF_KIT.md](DWARF_KIT.md), section 6).
 
 The adventure catalog (`VKI_Adventure_Catalog`) has two more groups (`G24`, `G25`): the sewer walls, posts and breaches;
 the channel tiles, the bridge, the sluice and the sludge.

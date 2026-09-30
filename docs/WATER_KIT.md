@@ -83,10 +83,15 @@ ground tiles:
   from the west wall and joins it in a wide confluence (a 2 × 2 pool of stream cells).
 - **The fall.** The river runs east under stepping stones and pours over the lip into a chasm that splits the cave.
 - **Beyond.** A rope bridge crosses the chasm to the east ledge and the tunnel on. A pool lies in the south-west.
+- **The sacred spring.** By the river, its stele backing onto the bank, stands the level's point of interest: a carved
+  basin fed from the stele's spout, crystals crowning it (`POI_SpringShrine`,
+  [POINTS_OF_INTEREST.md](POINTS_OF_INTEREST.md)).
 - **Dressing.** Crystals, glowing mushrooms, stalagmites, boulders.
 
-It checks at **0 errors and 0 warnings**, with full BFS reach (1,935 / 1,935). Floor luma is 0.150, cap tops 0.361.
-It has 60,710 triangles: rock 36,472 (102 tiles), the stream 10,240 (31 tiles), the chasm 7,552.
+It checks at **0 errors and 0 warnings**, with full BFS reach (1,823 / 1,823). Floor luma is 0.159, cap tops 0.365.
+It has 44,814 triangles with the shrine's 1,612, and 53,212 with its 32 pieces of debris ([DEBRIS.md](DEBRIS.md)). The first build had 60,710 (rock 36,472 in 102 tiles, the stream
+10,240 in 31 tiles, the chasm 7,552). The rock, stream and chasm tiles have since dropped the bottom faces nothing
+sees ([DWARF_KIT.md](DWARF_KIT.md), section 6).
 
 The adventure catalog has five more groups (`G26`–`G30`): the stream tiles by parity, then the waterfalls and stepping
 stones. The chasm fall hangs below the catalog's floor there; see it in the level.

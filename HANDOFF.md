@@ -175,6 +175,44 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
   stones cross. Every stream and sewer-channel tile carries `vki_flow` (a BFS from the sinks) and the falls `vki_fx`
   sockets for Unity. Level `VKI_Cave_Falls` (0 errors, 0 warnings). The user's next asks: dwarven halls, mines, the
   connection to the town.
+- **Dwarf kit (35 more masters, 651 in all; see [docs/DWARF_KIT.md](docs/DWARF_KIT.md)):** dwarven halls cut into the
+  mountain (a cave map with Dwarf walls backed by the rock): the Dwarf family (granite ashlar, plinth and gilded rune
+  band on both faces, corbelled doors, the great gate + `Leaf_DwarfGate_300`, passage, posts, breaches), lava channels
+  (`ll` cells: the sewer's channel tiles with emissive lava, `R["lava_sinks"]`), pillars, a throne, king statues,
+  braziers, a forge, an anvil, a stone arch bridge, a gold floor medallion; the warm `Hall` preset. Level
+  `VKI_Dwarf_Hall` (0 errors, 0 warnings). Next in the user's queue: mines, then the connection to the town.
+- **Critique round on the dwarven halls (2026-09-30; the user: "criticize, then improve it"; DWARF_KIT section 6).**
+  - **Open bottoms.** The rock, chasm and stream tiles no longer close their solids underneath (`bottom=False`,
+    `vki_open_bottom`, T7's exemption): 278 masters, 88,468 → 65,218 triangles; every cave level is 18–30 % lighter.
+  - **Lava.** Dark scorched kerbs, a heat gradient on the surface (the material kind `heat`, `vki_rim` for Unity),
+    crust against the banks.
+  - **Floor.** A checkered runner up the aisle and plain granite flags elsewhere (`T_VKI_DwarfFlag`).
+  - **Rooms and dressing.** A treasury in the south band, red clan banners (`Prop_Banner_Dwarf`, the 36th master),
+    richer king statues, vestibule braziers.
+  - **Light.** A cooler Hall key of the same luminance, so the fires' warm pools read.
+  - **Result.** The hall: 0 errors, 0 warnings, 98,700 triangles.
+- **Points of interest (6 masters, 658 in all; see [docs/POINTS_OF_INTEREST.md](docs/POINTS_OF_INTEREST.md)).** The
+  user asked for "points of interests (a single asset that is more interesting, not expected to be repeated many
+  times over a level)", after asking whether there were enough assets for larger levels.
+  - **The pieces** (`vki_props_poi`, hero tier, 1,612–3,318 triangles each), each with a `vki_poi` record for the game:
+    the wyrm's bones (caves), the fallen king's head (ruins), the great crucible (dwarf), the necromancer's circle
+    (dungeon), the rat king's throne (sewers), the sacred spring (water).
+  - **Placement.** Each is placed once: the crucible in the hall's enlarged foundry, the circle in B2's nave, the head
+    in `VKI_Cave_Breach`, the throne in `VKI_Sewer_S1`, the spring in `VKI_Cave_Falls`. The cave generator places the
+    wyrm (its new `poi` option) in `VKI_Cave_Test`. All check at 0 errors.
+  - **Larger levels (the user's question).** The tilesets are size-independent and the follow camera handles big maps.
+    What bites at scale: one variant per tile class (repetition), hand-drawn plans (only caves have a generator), the
+    rock mass's triangles, and no height changes inside a level.
+- **Debris (20 masters, 678 in all; see [docs/DEBRIS.md](docs/DEBRIS.md)).** The user: "we need more debris, things
+  like loose rocks, broken vases, things that add flavor to the environment".
+  - **The pieces** (`vki_props_debris`): walkable overlays of 96–372 triangles. Loose rocks, a rubble heap, broken
+    pottery (a jar broken open, a toppled amphora, shards, a pot pile), planks, a smashed crate, a broken barrel,
+    fallen masonry, lost weapons, a cold campfire, broken stalactites, ore, slag, a torn sack, rags. Stone pieces take
+    the level's stone (CAP-slot variants); old iron is rust (`M_VKI_Rust`).
+  - **The scatter** (`vki_rooms_debris`, run by `vki_build_scene` from `R["debris"]`): themed by each zone's floor
+    style, clear of structure, props, use points, spawns and water. Heavy stone gathers at walls' and rock faces' feet.
+  - **Result.** Ten adventure levels carry 15–32 pieces each (the generated cave 79), at 0 errors and with no new
+    warnings.
 
 ## 5. Open issues and ideas (none started unless marked done)
 
@@ -306,6 +344,22 @@ Adventure kit (2026-09-29; details in docs/ADVENTURE_KIT.md):
     water type at one node. A chasm fall facing east or west is edge-on to the game camera. Streams are one level
     (-0.22); height changes only at waterfalls. Unity: water tiles carry `vki_flow` (world x / y), falls `vki_fx`
     (`waterfall`, `mist`); the static sheets are placeholders for a scrolling waterfall shader.
+37. Dwarf halls: keep the rows round a lava channel's ends clear (a brazier or statue there cut the walkways off). The
+    lava is a pure emitter on a heat gradient (a lit base read pink; cores brighter than 1.25 went peach under AgX).
+    The pale dwarf floors are tinted 0.56 for the palette rule. Solid rock is still the largest part of a mountain
+    level (a third of VKI_Dwarf_Hall); a cheap solid-rock filler tile would help deep mountain. A Full N-S wall hides a
+    strip east of it from the game camera (the foundry's west side): keep use points out of it.
+38. Points of interest: one per level; a POI's tall parts carry `vki_cam_fade` (R-occ3). Each has one variant; a level
+    wanting two of a theme needs a second design. The catalog's POI row (`G33`) is tight and its title overlaps the
+    wyrm's skull. Unity: `vki_poi` (name, kind, theme, interact), the crucible's molten metal carries `vki_rim` like
+    the lava, and a light may carry `specular` 0 (diffuse only).
+39. `VKI_Cave_Test` keeps one warning, its floor mean (0.130) under the dark target 0.15: the generated cave has few
+    light sources for its size (from its first build). The generator could scale its crystals and mushrooms with the
+    map's area.
+40. Debris is decorative (walk-through, no collider) and scattered at build time; a level's pieces change with its
+    seed or its layout. Density is what a zone asks for: crowded zones place fewer (a piece needs its footprint clear).
+    Unity may keep the placements or rerun the rules (DEBRIS.md section 4). Not built: wall-hung debris (hanging
+    chains, more cobwebs, roots) and a second variant per piece.
 
 ## 6. Gotchas
 
@@ -320,6 +374,11 @@ Adventure kit (2026-09-29; details in docs/ADVENTURE_KIT.md):
   indices. Doing it the other way round had hidden the stair and curb materials behind the terrain material.
 - Never `raise SystemExit` in code run through MCP. Don't keep references to objects/bmesh elements you delete in
   the same call (`StructRNA ... removed` / `BMesh data ... removed`).
+- **Creating an icosphere invalidates BMVert references held from before it** (`bmesh.ops.create_icosphere`, so
+  `_ico` / `vki_home_ico`). A `set(k.bm.verts)` taken before it no longer matches the verts after it: "the verts added
+  since" then returns every vert, and a transform meant for one part moves the whole master (the spring's basin took
+  its spout's tilt). Build parts with icospheres first, or transform them the moment they exist, and measure
+  colliders at once (`vki_props_poi`).
 - `vk_tex` creates `TEXDIR` when executed; generated textures are saved there *and* packed.
 - The valley generator deletes and rebuilds `VK_ValleyTown` / `VK_ValleyTerrain` completely: never hand-edit them;
   change the code instead.

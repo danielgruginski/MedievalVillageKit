@@ -363,6 +363,7 @@ def vki_brk_breach(k, L, height, fam):
     e = D["e"]
     x0, x1 = D["open"]
     rnd = random.Random(vki_seed("Breach|%s|%g" % (fam, L)) % 1000003)      # never the height: Full = Cut below 0.65
+    lean = fam == "Dwarf"                     # its plinth course costs 88 triangles: a leaner spill keeps Cut in budget
     vki_sto_body(k, 0.0, e, VKI_FOOT_Z, zb)
     vki_sto_body(k, L - e, L, VKI_FOOT_Z, zb)
     vki_sto_body(k, x0, x1, VKI_FOOT_Z, VKI_STO_FOOT_TOP)                     # footing under the opening
@@ -387,19 +388,22 @@ def vki_brk_breach(k, L, height, fam):
     vki_sto_coping(k, L - e, L, zb, zt, L, fixed=True)
     if full and fam == "Ancient":
         vki_anc_frieze(k, [(0.0, e - 0.02), (L - e + 0.02, L)])              # 2 cm short of the break (T5S)
+    if fam == "Dwarf":                                                      # the plinth (and the band on Full) ends
+        vki_dwf_trim(k, [(0.0, e - 0.02), (L - e + 0.02, L)], full)
     # the spill (identical in both heights): a rubble floor across the opening, grit mounds and fallen blocks on both sides
-    vki_dpr_blob(k, ((x0 + x1) / 2, 0.0), ((x1 - x0) / 2 + 0.03, 0.34), 0.0005, 0.03, VKI_FLOOR, ns=8, wob=0.14,
+    vki_dpr_blob(k, ((x0 + x1) / 2, 0.0), ((x1 - x0) / 2 + 0.03, 0.34), 0.0005, 0.03, VKI_FLOOR, ns=6 if lean else 8, wob=0.14,
                  seed=21)                                          # earth over the seam in the opening (irregular)
     for sgn in (-1, 1):                                      # earth spilt from the cave (the FLOOR slot: EarthDamp)
         cx = L / 2 + sgn * 0.05 * (L / 1.5)
-        vki_dpr_mound(k, (cx, sgn * 0.60, 0.0), 0.30 * (L / 1.5) ** 0.7, 0.32, 0.12, VKI_FLOOR, z0=0.001, nr=2, ns=8,
+        vki_dpr_mound(k, (cx, sgn * 0.60, 0.0), 0.30 * (L / 1.5) ** 0.7, 0.32, 0.12, VKI_FLOOR, z0=0.001, nr=2,
+                      ns=6 if lean else 8,
                       seed=13 + sgn, wob=0.14, bump=0.3)
         for i in range(3 if L < 2 else 5):                                   # fallen blocks (one bevelled: budget)
             sz = rnd.uniform(0.12, 0.24)
             c = (rnd.uniform(0.50, L - 0.50), sgn * rnd.uniform(0.45, 0.95), sz * 0.40)   # clear of the node zones
             vs = list(set(k.box(c, (sz, sz * rnd.uniform(0.6, 0.9), sz * 0.8), VKI_STONE_BLOCK_IN,
                                 rot=(rnd.uniform(-0.4, 0.4), rnd.uniform(-0.4, 0.4), rnd.uniform(0, math.pi)),
-                                bevel=0.02 if i == 0 else 0.0, jitter=0.012, seed=rnd.randint(0, 10 ** 6))))
+                                bevel=0.02 if (i == 0 and not lean) else 0.0, jitter=0.012, seed=rnd.randint(0, 10 ** 6))))
             k.set_dark(vs, rnd.uniform(0.05, 0.2))
     if full:                                                                  # loose blocks on the break
         for i, (xs, zs) in enumerate(tops):
@@ -412,7 +416,7 @@ def vki_brk_breach(k, L, height, fam):
             k.set_dark(vs, 0.10)
     vki_sto_body_finish(k)
     vki_wobble(k, L, fam, "A", holes=[(e, 0.0, L - e, 3.0)], top_body_fn=lambda x: zb)
-    {"Ancient": vki_anc_patch, "Sewer": vki_sew_patch}.get(fam, vki_dun_patch)(k)
+    {"Ancient": vki_anc_patch, "Sewer": vki_sew_patch, "Dwarf": vki_dwf_patch}.get(fam, vki_dun_patch)(k)
     k.slot_mats[VKI_FLOOR] = "EarthDamp"
     k.meta.update(vki_class="wall", vki_nav="door", vki_nav_open=[x0, x1], vki_breach=1,
                   vki_opening={"x0": x0, "x1": x1, "z0": 0.0, "z1": zt, "head": "breach"},

@@ -187,13 +187,14 @@ def vki_cav_prof(z, H):
     return foot + lean
 
 
-def vki_cav_ms_solid(k, fld, ztop, levels, prof, seed, wamp=0.10, freeze=None):
+def vki_cav_ms_solid(k, fld, ztop, levels, prof, seed, wamp=0.10, freeze=None, bottom=True):
     """the marching-squares solid of a dual-grid tile over the region fld > 0 (the tile is [-0.75, 0.75]^2, grid
     VKI_CAV_N): a top surface at ztop(x, y); a column down every boundary vertex of the top at levels(H) (bottom
     first, the top vertex last), displaced along the outline's normal toward fld < 0 by prof(z, H) plus windowed noise
     (wamp) on the inner rows -- along the tile edge and without noise at an edge crossing, so neighbours meet
     exactly; straight vertical sections where the region meets a tile edge; a flat bottom (the top's polygons at the
-    bottom level). freeze(x, y) -> True keeps a vertex's column straight. Closed. Returns dict(tops, cliff, sect,
+    bottom level; bottom=False leaves it open: it faces down under the floor, never seen). freeze(x, y) -> True keeps
+    a vertex's column straight. Closed unless bottom=False. Returns dict(tops, cliff, sect,
     bottoms): cliff faces carry UVs along the outline (u wraps to whole 1.5 m tiles, 0 at both ends) and z / 1.5."""
     N, h = VKI_CAV_N, 0.75
     st = 1.5 / N
@@ -352,7 +353,9 @@ def vki_cav_ms_solid(k, fld, ztop, levels, prof, seed, wamp=0.10, freeze=None):
                 lp[k.uv].uv = ((ua if lp.vert in (ca[m], ca[m + 1]) else ub), lp.vert.co.z / 1.5)
             cliff.append(f)
     bot, bottoms = {}, []
-    for f in tops:
+    for f in (tops if bottom else []):                                  # bottom=False: open there (the bottom faces
+        # face down under the floor, never seen from above: 14-25 % of a cave level's triangles; T7 allows the open
+        # bottom plane through vki_open_bottom)
         vs = []
         for v in f.verts:
             kk = key_of[v]
@@ -413,7 +416,9 @@ def vki_cav_tile(k, code, var="A", tunnel=False, arms=""):
         fld = lambda x, y: vki_cav_field(x, y, code, seed, amp, tunnel)
         freeze = (lambda x, y: abs(x) < T["hw"] + 0.10 and y > -0.25) if tunnel else None
     sd = vki_cav_ms_solid(k, fld, lambda x, y: vki_cav_height(x, y, code, seed),
-                          lambda H: (VKI_FOOT_Z, 0.0, 0.25 * H, 0.5 * H, 0.75 * H), vki_cav_prof, seed, freeze=freeze)
+                          lambda H: (VKI_FOOT_Z, 0.0, 0.25 * H, 0.5 * H, 0.75 * H), vki_cav_prof, seed, freeze=freeze,
+                          bottom=False)
+    k.meta["vki_open_bottom"] = VKI_FOOT_Z
     bm = k.bm
     if tunnel:                                                           # the fallen lintel and the dark at the back
         lv = vki_home_ico(k, (0.0, 0.10, T["lintel"] + 0.52), 1.0, VKI_STONE_BLOCK_IN, scale=(0.64, 0.30, 0.52),
@@ -480,7 +485,8 @@ def vki_cav_ground(k, code, qa, qb):
     seed = vki_seed("CaveGround|%s|%d%d" % (code, qa, qb))
     s_ = lambda x, y: vki_cav_field(x, y, code.replace("X", "F"), seed, VKI_CAV_AMP, sym=True)
     sd = vki_cav_ms_solid(k, lambda x, y: -s_(x, y), lambda x, y: 0.0, lambda H: VKI_CAV_CHASM_LEVELS,
-                          lambda z, H: VKI_CAV_CHASM_STEP.get(round(z, 2), 0.0), seed, wamp=0.08)
+                          lambda z, H: VKI_CAV_CHASM_STEP.get(round(z, 2), 0.0), seed, wamp=0.08, bottom=False)
+    k.meta["vki_open_bottom"] = VKI_CAV_CHASM_LEVELS[0]
     bm = k.bm
     vki_adv_box(k, -0.75, 0.75, -0.75, 0.75, -4.12, -4.04, VOID)          # the dark far below
     for f in sd["tops"]:

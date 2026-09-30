@@ -204,12 +204,15 @@ def vki_sew_passage(k):
 VKI_SEW_QUAD = ((-1, -1), (1, -1), (1, 1), (-1, 1))       # SW SE NE NW: the quarter of each corner (signs)
 
 
-def vki_sew_channel(k, code):
+def vki_sew_channel(k, code, fam="Sewer", C=None, liquid="M_VKI_SewerWater", rim_top=VKI_CAP, volumes=True):
     """one dual-grid channel tile (see the header): per X quarter a bed (-0.75, dark) and water (-0.28, WATER slot);
     a rim along each inner edge where the quarter meets an O quarter (the channel meets floor), shortened where two
-    meet, and a corner block where both neighbours are channel and the diagonal is floor (the inner corner)"""
-    k.set_family("Sewer")
-    C = VKI_SEW_CH
+    meet, and a corner block where both neighbours are channel and the diagonal is floor (the inner corner).
+    fam / C / liquid: another channel on the same tiles (the dwarven lava channels: vki_dwf_lava); rim_top: the rim
+    tops' slot (None: the block's own, the lava's dark kerbs); volumes=False leaves the liquid to the caller.
+    -> (the X quarters, the liquid rects)"""
+    k.set_family(fam)
+    C = C or VKI_SEW_CH
     h, rw = 0.75, C["rim"]
     X = [c == "X" for c in code]
     quads, rims, waters = [], [], []
@@ -235,7 +238,7 @@ def vki_sew_channel(k, code):
         for (u0, u1, v0, v1) in uv:
             wx, wy = sorted((sx * u0, sx * u1)), sorted((sy * v0, sy * v1))
             waters.append((wx[0], wy[0], wx[1], wy[1]))
-    for (x0, y0, x1, y1) in waters:                                     # closed water volumes
+    for (x0, y0, x1, y1) in (waters if volumes else []):                # closed water volumes
         vs = list(set(k.box(((x0 + x1) / 2, (y0 + y1) / 2, (C["bed"] + C["water"]) / 2),
                             (x1 - x0, y1 - y0, C["water"] - C["bed"]), VKI_STONE_BLOCK_IN, bevel=0.0)))
         k.bm.normal_update()
@@ -244,7 +247,7 @@ def vki_sew_channel(k, code):
                 f.material_index = WATER
         k.set_dark(vs, 0.65)
     for (xa, ya) in rims:
-        vki_sto_block(k, xa[0], xa[1], C["bed"], C["kerb"], ya[0], ya[1], top=VKI_CAP, bev=0.012,
+        vki_sto_block(k, xa[0], xa[1], C["bed"], C["kerb"], ya[0], ya[1], top=rim_top, bev=0.012,
                       key="rim%d%d" % (int(xa[0] * 100), int(ya[0] * 100)))
     for v in k.bm.verts:                                                 # slime on the rims toward the water
         if v.co.z < -0.05:
@@ -252,13 +255,14 @@ def vki_sew_channel(k, code):
     for v in k.bm.verts:                                                 # the water's surface keeps its colour
         if abs(v.co.z - C["water"]) < 1e-4:
             v[k.dark] = 0.0
-    k.slot_mats[WATER] = "M_VKI_SewerWater"
+    k.slot_mats[WATER] = liquid
     k.meta.update(vki_class="ground", vki_corners=code, vki_nav="block", vki_rot_lock="none", vki_water=1,
                   vki_uv_lock="local", vki_channel=1,
                   vki_covers_floor=[list(q) for q in quads],
                   vki_collider=[[(x0 + x1) / 2, (y0 + y1) / 2, 0.5, x1 - x0, y1 - y0, 1.0] for (x0, y0, x1, y1) in quads],
                   vki_place_rule="dual grid: origin on a node, corners SW SE NE NW = the cells around it (X channel, "
                                  "O not); rotation 0/90/180/270 (vki_cav_canon); carries no floor")
+    return quads, waters
 
 
 def vki_sew_channel_codes():

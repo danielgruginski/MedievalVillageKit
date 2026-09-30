@@ -205,29 +205,38 @@ def vki_cave_ground(R, P, zmap, problems):
     return tiles, cov, falls
 
 
+VKI_CAVE_CHANNELS = (("ww", "Sewer", "channel_sinks"), ("ll", "Lava", "lava_sinks"))   # code, tile set, sinks key
+
+
 def vki_cave_channels(R, P, problems):
-    """the sewer channels (sewer kit, vki_fam_sewer): cells coded "ww" are channel (X). A channel tile stands on every
-    node with channel among its four cells: the master of the code's rotation class (SW SE NE NW, X / O), turned to
-    show it. It carries the channel over its X quarters only, and no floor, so the cells round a channel keep whole
-    floors. -> (tiles [dict(piece, x, y, rot, node, code)], the channel cells)"""
+    """the channels: sewer water (cells coded "ww", vki_fam_sewer) and dwarven lava ("ll", vki_fam_dwarf). A channel
+    tile stands on every node with channel among its four cells: the master of the code's rotation class (SW SE NE NW,
+    X / O) of its set, turned to show it. It carries the channel over its X quarters only, and no floor, so the cells
+    round a channel keep whole floors. Flow (vki_flow) runs toward R["channel_sinks"] / R["lava_sinks"].
+    -> (tiles [dict(piece, x, y, rot, node, code, flow)], every channel cell)"""
     nc, nr, codes = P["nc"], P["nr"], P["codes"]
-    xs = {c for c, v in codes.items() if v == "ww" and 0 <= c[0] < nc and 0 <= c[1] < nr}
-    chasm = {c for c, v in codes.items() if v in ("vv", "==", "ss")}
-    flow = vki_cave_flow(xs, R.get("channel_sinks", {}))            # {cell: (dx, dy)}: where the channel drains
-    tiles = []
-    for i in range(nc + 1):
-        for j in range(nr + 1):
-            cs = ((i - 1, j - 1), (i, j - 1), (i, j), (i - 1, j))
-            if not any(c in xs for c in cs):
-                continue
-            if any(c in chasm for c in cs):
-                problems.append(f"cave: the channel at node ({i},{j}) touches the chasm or a stream")
-            code = "".join("X" if c in xs else "O" for c in cs)
-            m, kk = vki_cav_canon(code)
-            tiles.append(dict(piece=f"SM_VKI_Ground_Sewer_{m}", x=VKI_IG * i, y=VKI_IG * j,
-                              rot=(90 * kk + 180) % 360 - 180, node=(i, j), code=code,
-                              flow=vki_cave_tile_flow([c for c in cs if c in xs], flow)))
-    return tiles, xs
+    inside = lambda c: 0 <= c[0] < nc and 0 <= c[1] < nr
+    kinds = {cc: {c for c, v in codes.items() if v == cc and inside(c)} for cc, _, _ in VKI_CAVE_CHANNELS}
+    wet = {c for c, v in codes.items() if v in ("vv", "==", "ss")}
+    tiles, allx = [], set()
+    for cc, tset, sk in VKI_CAVE_CHANNELS:
+        xs = kinds[cc]
+        others = wet | {c for c2, cs2 in kinds.items() if c2 != cc for c in cs2}
+        flow = vki_cave_flow(xs, R.get(sk, {}))
+        for i in range(nc + 1):
+            for j in range(nr + 1):
+                cs = ((i - 1, j - 1), (i, j - 1), (i, j), (i - 1, j))
+                if not any(c in xs for c in cs):
+                    continue
+                if any(c in others for c in cs):
+                    problems.append(f"cave: the {tset.lower()} channel at node ({i},{j}) touches other water")
+                code = "".join("X" if c in xs else "O" for c in cs)
+                m, kk = vki_cav_canon(code)
+                tiles.append(dict(piece=f"SM_VKI_Ground_{tset}_{m}", x=VKI_IG * i, y=VKI_IG * j,
+                                  rot=(90 * kk + 180) % 360 - 180, node=(i, j), code=code,
+                                  flow=vki_cave_tile_flow([c for c in cs if c in xs], flow)))
+        allx |= xs
+    return tiles, allx
 
 
 def vki_cave_layout(name, R, P, zmap):
@@ -346,7 +355,7 @@ VKI_PLANS.update({
      +   ##+XX+XX+##+##+   s2+s1+s1+s2+        +
    6 ####.. .. .. .. sk#.. .. .. .. .. .. CR ###
      +                                         +
-   5 ####.. .. .. .. ..#.. .. .. ## .. .. .. ..#
+   5 ####.. .. .. .. ..#.. .. KH .. .. .. .. ..#
      +                                         +
    4 ####.. SA SA .. ..X.. .. .. .. .. .. .. Sx#
      +                                         +
@@ -366,6 +375,7 @@ VKI_ROOMS.update({
     "VKI_Dungeon_B3": dict(
         building="Dungeon", floor=-3, preset="Dungeon", family=dict(perimeter="Ancient", partition="Ancient"),
         partition_wall="zone", pools=False,
+        debris=dict(density=0.40, seed=13),                                  # loose debris (vki_props_debris)
         specials={"S1": "Wall_Dungeon_DartTrap_150_Full", "S2": "Wall_Ancient_Relief_150_Full",
                   "2": "Wall_Ancient_Vault_300_Full", "S4": "Wall_Ancient_Broken_150_Full",
                   "s1": "Wall_Ancient_Collapsed_150_Cut", "1": "Wall_Ancient_DoorWide_300_Full"},
@@ -405,6 +415,7 @@ VKI_ROOMS.update({
     "VKI_Dungeon_B4": dict(
         building="Dungeon", floor=-4, preset="Cavern", family=dict(perimeter="Cave", partition="Cave"), cave=True,
         pools=False,
+        debris=dict(density=0.50, seed=14),                                  # loose debris (vki_props_debris)
         zones={"cavern": dict(cells="rest", floor="CaveFloor")},
         tunnels={(0, 1): "temple", (12, 6): "warren"},
         links=[("temple", "passage", "VKI_Dungeon_B3"), ("warren", "passage", "VKI_Dungeon_B5")],
@@ -426,6 +437,7 @@ VKI_ROOMS.update({
     "VKI_Dungeon_B5": dict(
         building="Dungeon", floor=-5, preset="Cavern", family=dict(perimeter="Cave", partition="Cave"), cave=True,
         pools=False,
+        debris=dict(density=0.38, seed=15),                                  # loose debris (vki_props_debris)
         zones={"warren": dict(cells=[(0, 2, 0, 5)], floor="EarthDamp"),
                "cave": dict(cells="rest", floor="CaveFloor")},
         tunnels={(0, 5): "caverns"},
@@ -451,6 +463,7 @@ VKI_ROOMS.update({
     "VKI_Cave_Breach": dict(
         building="Dungeon", floor=-4, preset="Cavern", family=dict(perimeter="Cave", partition="Dungeon"), cave=True,
         pools=False, partition_wall="zone",
+        debris=dict(density=0.40, seed=16),                                  # loose debris (vki_props_debris)
         specials={"s1": "Wall_Ancient_Breach_300_Cut", "s2": "Wall_Ancient_Collapsed_150_Cut"},
         zones={"hall": dict(cells=[(1, 5, 3, 6)], floor="DungeonFlag", wall="DungeonIn"),
                "corridor": dict(cells=[(3, 3, 1, 2), (4, 6, 1, 1)], floor="DungeonFlag", wall="DungeonIn"),
@@ -471,7 +484,10 @@ VKI_ROOMS.update({
                ("Overlay_Gravel", 16.0, 3.9, 0, None, None, {"hug": False}), ("Boulders", 12.9, 2.5, 0, None, None, {"hug": False}),
                ("Mushrooms_Glow", 17.25, 1.9, 0, None, None, {"hug": False}), ("Crystals", 18.3, 9.5, 0, None, None, {"hug": False}),
                ("Crystals", 15.75, 11.4, 0, None, None, {"hug": False}), ("Altar_Idol", 14.25, 12.5, 0, None, None, {"hug": False}),
-               ("Candles_Floor", 12.75, 12.6, 0, None, None, {"hug": False})]),
+               ("Candles_Floor", 12.75, 12.6, 0, None, None, {"hug": False}),
+               # before the shrine's broken front: the head of its fallen colossus, face up (a point of interest,
+               # vki_props_poi), a lane kept clear to the breach
+               ("POI_ColossusHead", 13.2, 7.3, 0, None, None, {"hug": False})]),
 })
 
 VKI_ROOMS_CODES.update({"Boulder": "BO", "Overlay_CrackedFloor": "cr", "Overlay_PressurePlate": "pp",
@@ -574,15 +590,18 @@ def vki_rooms_mkplan(nc, nr, codes, ew=None, ns=None):
     return "\n" + "\n".join(lines) + "\n"
 
 
-def vki_cave_generate(name="VKI_Cave_Test", nc=24, nr=16, seed=7, chasm=True, pools=2, props=18, build=True):
+def vki_cave_generate(name="VKI_Cave_Test", nc=24, nr=16, seed=7, chasm=True, pools=2, props=18, build=True,
+                      poi=None):
     """a cave level from a cellular automaton, registered in VKI_PLANS / VKI_ROOMS and built (vki_build_scene):
     random rock (44 %) with a meandering main passage carved from the west edge to the east edge (three cells tall)
     and a few round chambers kept open; five smoothing passes (rock at >= 5 rock neighbours, open at <= 3; outside
     counts as rock); every open cell kept only if it lies in some 2 x 2 open block (passages two cells wide); the
     largest open region kept. A chasm winds west-east (one to two cells, a row step of at most one per column, so it
     stays connected) with a rope bridge where it runs two cells wide; pools (2 x 2, a cell clear of the chasm); cave
-    dressing on cells with open ground all round; a tunnel in the west and east walls. Returns the build summary (or
-    the R dict when build=False)."""
+    dressing on cells with open ground all round; a tunnel in the west and east walls. poi = (piece, w, h, code): a
+    point of interest (vki_props_poi) on the w x h block of open cells, with a cell of open ground all round and clear
+    of the chasm, nearest the map's centre, placed before the pools and dressing. Returns the build summary (or the R
+    dict when build=False)."""
     rnd = random.Random(seed)
     cells = [(c, r) for c in range(nc) for r in range(nr)]
     rock = {p: rnd.random() < 0.44 for p in cells}
@@ -732,6 +751,17 @@ def vki_cave_generate(name="VKI_Cave_Test", nc=24, nr=16, seed=7, chasm=True, po
                 for d in (-2, -1, 0, 1):
                     clear_.add((c_, j + d))
             codes[(cs_[0], j - 1)] = codes[(cs_[0], j)] = "Sx"
+    poi_prop = None
+    if poi:                                                  # the point of interest: the open block nearest the centre
+        pc_, pw, ph_, pcode = poi
+        blocks = [(c, r) for (c, r) in cells if all(free(c + a, r + b) for a in range(-1, pw + 1) for b in range(-1, ph_ + 1))
+                  and not any(near_x(c + a, r + b) for a in range(pw) for b in range(ph_))]
+        if blocks:
+            c, r = min(blocks, key=lambda q: (q[0] + pw / 2 - nc / 2) ** 2 + (q[1] + ph_ / 2 - nr / 2) ** 2)
+            poi_prop = (pc_, VKI_IG * (c + pw / 2), VKI_IG * (r + ph_ / 2), 0, None, None, {"hug": False})
+            for a in range(pw):
+                for b in range(ph_):
+                    codes[(c + a, r + b)] = pcode
     pits, used = [], set()
     cand = [(c, r) for (c, r) in cells if all(free(c + a, r + b) for a in range(-1, 3) for b in range(-1, 3))
             and not any(near_x(c + a, r + b) for a in (0, 1) for b in (0, 1))]
@@ -750,6 +780,8 @@ def vki_cave_generate(name="VKI_Cave_Test", nc=24, nr=16, seed=7, chasm=True, po
     plist = []
     if chasm and bridge:
         plist.append(("RopeBridge_420", VKI_IG * bridge[0] + 0.75, VKI_IG * (bridge[1] + 1), 0, None, None, NH))
+    if poi_prop:
+        plist.append(poi_prop)
     kinds = [("Crystals", "CR"), ("Mushrooms_Glow", "MG"), ("Stalagmites", "SM"), ("Boulders", "BD"),
              ("Overlay_Gravel", "gv"), ("Crystals", "CR"), ("Stalagmites", "SM"), ("Mushrooms_Glow", "MG")]
     spots = [(c, r) for (c, r) in cells if all(free(c + a, r + b) for a in (-1, 0, 1) for b in (-1, 0, 1))]
@@ -766,12 +798,12 @@ def vki_cave_generate(name="VKI_Cave_Test", nc=24, nr=16, seed=7, chasm=True, po
         placed.append((c, r))
     R = dict(building="Dungeon", floor=-9, preset="Cavern", family=dict(perimeter="Cave", partition="Cave"), cave=True,
              pools=False, zones={"cavern": dict(cells="rest", floor="CaveFloor")}, tunnels=tun, links=links, pits=pits,
-             props=plist, generated=dict(seed=seed, nc=nc, nr=nr))
+             props=plist, generated=dict(seed=seed, nc=nc, nr=nr), debris=dict(density=0.34, seed=seed))
     VKI_PLANS[name] = vki_rooms_mkplan(nc, nr, codes)
     VKI_ROOMS[name] = R
     if not build:
         return R
     out = vki_build_scene(name)
     bpy.data.scenes[name]["vki_generated"] = json.dumps(dict(nc=nc, nr=nr, seed=seed, chasm=chasm, pools=pools,
-                                                             props=props))
+                                                             props=props, poi=list(poi) if poi else None))
     return out

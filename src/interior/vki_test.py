@@ -676,18 +676,23 @@ def vki_t6_uv_continuity(objs, slots=None, tol=1e-4):
 def vki_t7_closed(o):
     """every edge has exactly 2 faces. Walls (core fix): the end planes x = 0 / x = L are open (VKIKit.finish
     removes the end faces), so an edge with ONE face is allowed there -- both its vertices in the same end plane;
-    everywhere else a wall is closed. Edges with 3+ faces are always an error."""
+    everywhere else a wall is closed. Dual-grid rock / ground tiles are open at their bottom plane (vki_open_bottom:
+    the bottom faces face down under the floor, never seen). Edges with 3+ faces are always an error."""
     o = vki_obj(o)
     bm = bmesh.new(); bm.from_mesh(o.data)
     wall = o.get("vki_class") == "wall"
     L = float(o.get("vki_len") or 0.0)
     ends = (0.0, L) if wall else ()
+    ob = o.get("vki_open_bottom")            # dual-grid rock / ground tiles: open at their bottom plane (never seen)
     bad = 0; open_ = 0
     for e in bm.edges:
         nf = len(e.link_faces)
         if nf == 2:
             continue
         if nf == 1 and any(all(abs(v.co.x - xe) <= 1e-5 for v in e.verts) for xe in ends):
+            open_ += 1
+            continue
+        if nf == 1 and ob is not None and all(abs(v.co.z - float(ob)) <= 1e-5 for v in e.verts):
             open_ += 1
             continue
         bad += 1

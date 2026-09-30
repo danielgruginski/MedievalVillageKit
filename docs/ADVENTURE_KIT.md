@@ -85,7 +85,12 @@ map: each 1.5 m cell is open floor or rock (`##`), and everything outside the ma
   under the 0.6 m walker.
 - **Props near rock** stand off it with the hug off (`{"hug": False}`): there are no walls to hug. Webs, the cocoon and
   the rat hole carry `vki_wall_anchor` and may enter rock.
-- **Tri budget:** 188–492 per tile (T9 limit 1200). A 10 × 6 cave takes 43–51 tiles, about 16–19k triangles of rock.
+- **Open underneath.** The rock, chasm and stream tiles leave their solids open at the bottom, where nothing sees
+  them (the mesher's `bottom=False`); such a master carries `vki_open_bottom`, the z of its open rim, and T7 accepts
+  one-sided edges there. The closed bottoms had been 14–25 % of every cave level's triangles (2026-09-30,
+  [DWARF_KIT.md](DWARF_KIT.md) section 6).
+- **Tri budget:** 153–364 per tile (T9 limit 1200). A 10 × 6 cave takes 43–51 tiles, about 11–13k triangles of rock
+  (B4 11,456, B5 13,136).
 
 **The chasm: dual-grid ground tiles** (`vki_fam_cave`, class `ground`). In a cave map, cells coded `vv` (and `==`
 under a bridge) are chasm.
@@ -108,7 +113,7 @@ under a bridge) are chasm.
   the cell lines. Its `vki_bridge` deck is where the walk BFS crosses the chasm's colliders.
 - **Chasm ends.** The chasm can end in open floor (a rounded tip), or run in under the rock, where the rock's foot
   overhangs it.
-- **Tri budget:** 12–492 per ground tile (T9 limit 1500). B4's chasm takes 40 tiles, about 11.7k triangles.
+- **Tri budget:** 12–376 per ground tile (T9 limit 1500), open underneath like the rock.
 
 **Transitions: masonry meets the cave.** A cave map may carry walls, so dungeon rooms and corridors can be dug into
 the rock or stand in the open cave (section 2, plans).
@@ -119,7 +124,7 @@ the rock or stand in the open cave (section 2, plans).
   off each arm's line and off the post square on the node. Where one side of an arm is rock, the rock stops just
   behind the wall, and its face there is straight and upright (hidden behind the wall, no foot or lean). Where both
   sides are open, the rock is cut back round the wall's end, so the end is let into the rock face. Every corner code
-  comes with every set of arms that has open floor beside each arm: 115 rotation classes, one master each, 104–424
+  comes with every set of arms that has open floor beside each arm: 115 rotation classes, one master each, 87–346
   triangles. Their outline meets the plain tiles' at every tile edge that no wall crosses.
 - **Breaches** (`Wall_<Dungeon|Ancient|Sewer>_Breach_150 / _300`, Full and Cut). The wall is knocked through to the floor.
   Both ends stay intact (the plain section and coping), and the masonry between them breaks down in ragged steps
@@ -268,9 +273,13 @@ on the far side. Its north wall is broken through (`Breach_300_Full`) into a cav
 its east wall stands free in the cavern with a breach (`Breach_150_Full`). A corridor leaves the hall's door
 through the rock, between low walls with a band of rock between it and the hall. It runs out into the cave, its walls
 let into the rock, with earth spilt over the seam. In the cavern stands the ruined front of an ancient shrine (Cut:
-collapsed walls either side of `Wall_Ancient_Breach_300_Cut`), with its altar and idol behind. It checks at 0 errors
-and 0 warnings. It has 58,306 triangles: 102 rock tiles (27 wall-backed) take 33,588, walls and posts 15,880. BFS reach
-is 1,441 / 1,463.
+collapsed walls either side of `Wall_Ancient_Breach_300_Cut`), with its altar and idol behind. Before it lies the head of
+the shrine's fallen colossus, face up: the level's point of interest (`POI_ColossusHead`,
+[POINTS_OF_INTEREST.md](POINTS_OF_INTEREST.md); a free-standing rock knob was cleared for it, and a lane stays clear
+to the breach). It checks at 0 errors and 0 warnings. It has 49,712 triangles with the head's 2,848, and 56,322 with its
+25 pieces of debris ([DEBRIS.md](DEBRIS.md)). The first build had 58,306:
+102 rock tiles (27 wall-backed) took 33,588, walls and posts 15,880; the rock tiles are open underneath since. BFS
+reach is 1,310 / 1,332.
 
 **The cave generator** (`vki_cave_generate`). This builds a large random cave map to test the tileset on,
 registered like any level and rebuilt from the scene's record (`scene["vki_generated"]`).
@@ -281,16 +290,22 @@ registered like any level and rebuilt from the scene's record (`scene["vki_gener
 - **Chasm.** A chasm winds west–east (one to two cells wide, a row step of at most one per column). The rope bridge
   goes where the chasm runs two cells wide and has clear landings. Where the chasm still splits the floor, natural
   land bridges close a chasm column.
-- **Contents.** A tunnel is placed in the west and east walls, then pools and cave dressing on cells with open ground
-  all round.
-- **Output.** `VKI_Cave_Test` (24 × 16, seed 7) builds in ~26 s: 194 rock tiles, 107,052 triangles, 0 errors, full
-  reach. Seeds 3 and 11 also check clean.
+- **Contents.** A tunnel is placed in the west and east walls, then an optional point of interest, then pools and cave
+  dressing on cells with open ground all round.
+- **A point of interest.** `poi=(piece, w, h, code)` puts one ([POINTS_OF_INTEREST.md](POINTS_OF_INTEREST.md)) on the
+  w × h block of open cells nearest the map's centre, with a cell of open ground all round, clear of the chasm; the
+  pools and dressing then avoid it.
+- **Output.** `VKI_Cave_Test` (24 × 16, seed 7, with the wyrm's bones) builds in ~41 s: 76,720 triangles, 0 errors,
+  full reach (6,077 / 6,077); with its 79 pieces of debris ([DEBRIS.md](DEBRIS.md)), 98,484 in ~65 s. Its floor luma is 0.131, under the dark target of 0.15 (a warning it had from the first
+  build: the generated cave has few lights for its size). The first build, without the wyrm and with closed rock
+  bottoms, had 107,052 triangles. Seeds 3 and 11 also check clean.
 - **Rock tops.** Two changes came from these larger maps: the tops use `T_VKI_CaveTop`, a calm rock texture
   (`vki_gen_rocktop`; the rock face texture showed its 1.5 m repeat across wide tops), and the tops are
   smooth-shaded.
 
 ```python
-g["vki_cave_generate"]("VKI_Cave_Test", nc=24, nr=16, seed=7, chasm=True, pools=2, props=18)
+g["vki_cave_generate"]("VKI_Cave_Test", nc=24, nr=16, seed=7, chasm=True, pools=2, props=18,
+                       poi=("POI_WyrmBones", 3, 4, "WY"))
 ```
 
 ![A generated cave, VKI_Cave_Test (seed 7)](images/adventure_cave_test.jpg)
@@ -300,7 +315,8 @@ reports **0 errors** in each; B1 and B2 stay at 0.
 
 | | B3 | B4 | B5 |
 |---|---|---|---|
-| Triangles (whole level) | 40,742 | 34,418 (44 rock tiles; 40 ground tiles, 11,696) | 29,510 (51 rock tiles, 18,604) |
+| Triangles (whole level) | 40,742 | 26,274 (44 rock tiles, 11,456; 40 ground tiles, 8,344) | 24,042 (51 rock tiles, 13,136) |
+| With the debris ([DEBRIS.md](DEBRIS.md)) | 46,922 (22 pieces) | 32,016 (22 pieces) | 27,814 (16 pieces) |
 | Walk BFS reach (raster nodes) | 952 / 956 | 916 / 940 | 703 / 705 |
 | Floor luma | 0.220 | 0.153 | 0.168 |
 | Cap tops luma | 0.378 | 0.340 | 0.354 |
@@ -309,9 +325,11 @@ Every use point and trigger is reached from every spawn; the few unreached raste
 (pockets between rock lobes and the chasm, corners behind props). The only warning left is B4's corner web rising
 over a walk lane (R-occ3); it is see-through.
 
-`VKI_Adventure_Catalog` shows every adventure master, labelled, in thirty-one groups, with a camera each
-(`VKI_AdvCat_Cam_G0`…`G30`). The rock tiles take four rows, the ground tiles four (one per parity), the Cave walls
-one, the breaches and the spill one, the wall-backed rock tiles five, the sewer kit two and the water kit five
+`VKI_Adventure_Catalog` shows every adventure master, labelled, in thirty-five groups, with a camera each
+(`VKI_AdvCat_Cam_G0`…`G34`). The rock tiles take four rows, the ground tiles four (one per parity), the Cave walls
+one, the breaches and the spill one, the wall-backed rock tiles five, the sewer kit two, the water kit five, the
+dwarf kit two ([DWARF_KIT.md](DWARF_KIT.md)), the points of interest one
+([POINTS_OF_INTEREST.md](POINTS_OF_INTEREST.md)) and the debris one ([DEBRIS.md](DEBRIS.md))
 ([WATER_KIT.md](WATER_KIT.md))
 ([SEWER_KIT.md](SEWER_KIT.md)). The vault and the secret door show their leaves; the floor leaves the pits open.
 
@@ -350,8 +368,10 @@ Changes to the shared texts:
 - `vki_test`: the pit budget (6000 tris, as links); the rock and ground classes (budgets 1200 / 1500, lattice,
   `vki_corners`, the ground tiles' node parity); the quarter floors' 0.75 lattice and parity (T11).
 
-The nine interiors still check at 0 errors, and `vki_test_all()` passes for all 616 masters (with the sewer kit's
-30, [SEWER_KIT.md](SEWER_KIT.md), and the water kit's 61, [WATER_KIT.md](WATER_KIT.md)).
+The nine interiors still check at 0 errors, and `vki_test_all()` passes for all 678 masters (with the sewer kit's
+30, [SEWER_KIT.md](SEWER_KIT.md), the water kit's 61, [WATER_KIT.md](WATER_KIT.md), the dwarf kit's 36,
+[DWARF_KIT.md](DWARF_KIT.md), the six points of interest, [POINTS_OF_INTEREST.md](POINTS_OF_INTEREST.md), and the
+twenty debris pieces, [DEBRIS.md](DEBRIS.md)).
 
 ```python
 g0={}; exec(bpy.data.texts["vki_core"].as_string(), g0); g=g0["vki_ns"]()
@@ -396,10 +416,10 @@ Triangles and footprint in 1.5 m cells for each master in `VKI_Pieces`.
 
 | Piece | Tris | Cells |
 |---|---|---|
-| `SM_VKI_Rock_Cave_<code>_<A\|B\|C>`: 23 codes × 2 variants, 3 for `FFOO` / `CCOO` (48) | 188–492 (19,340 in all) | 1,1 |
-| `SM_VKI_Rock_Cave_OOFF_Tunnel` | 348 | 1,1 |
-| `SM_VKI_Rock_Cave_<code>_Wall<arms>`: wall-backed, every code with every set of wall arms S E N W that has open floor beside each arm (115) | 104–424 (30,176 in all) | 1,1 |
-| `SM_VKI_Ground_Cave_<code>_Q<p>`: 14 codes × 4 node parities (56) | 12–492 (19,004 in all) | 1,1 |
+| `SM_VKI_Rock_Cave_<code>_<A\|B\|C>`: 23 codes × 2 variants, 3 for `FFOO` / `CCOO` (48) | 153–364 (13,078 in all) | 1,1 |
+| `SM_VKI_Rock_Cave_OOFF_Tunnel` | 288 | 1,1 |
+| `SM_VKI_Rock_Cave_<code>_Wall<arms>`: wall-backed, every code with every set of wall arms S E N W that has open floor beside each arm (115) | 87–346 (23,764 in all) | 1,1 |
+| `SM_VKI_Ground_Cave_<code>_Q<p>`: 14 codes × 4 node parities (56) | 141–376 (13,750 in all) | 1,1 |
 | `SM_VKI_Ground_Cave_XXXX` | 12 | 1,1 |
 | `SM_VKI_Floor_075_R<a><b>` (16) | 12 each | 1,1 |
 | `SM_VKI_Prop_RopeBridge_420` | 552 | 1,3 |

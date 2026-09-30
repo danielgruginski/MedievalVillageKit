@@ -27,7 +27,7 @@ VKI_PLANS.update({
      +                                               +
    4 ### .. .. .. .. .. ss ss ss ss ss ss vv .. .. Sx#
      +                                               +
-   3 #Ss .. .. .. .. .. .. .. .. .. .. .. vv .. CR ###
+   3 #Ss .. .. .. .. .. .. .. SP .. .. .. vv .. CR ###
      +                                               +
    2 #Ss .. ~~ ~~ .. .. CR .. .. .. .. .. vv .. ## ###
      +                                               +
@@ -42,6 +42,7 @@ VKI_ROOMS.update({
     "VKI_Cave_Falls": dict(
         building="Dungeon", floor=-4, preset="Cavern", family=dict(perimeter="Cave", partition="Cave"), cave=True,
         pools=False,
+        debris=dict(density=0.38, seed=18),                                  # loose debris (vki_props_debris)
         zones={"cave": dict(cells="rest", floor="CaveFloor")},
         tunnels={(0, 3): "west", (16, 5): "east"},
         links=[("west", "passage", "VKI_Dungeon_B4"), ("east", "passage", "@return")],
@@ -60,7 +61,10 @@ VKI_ROOMS.update({
                ("Stalagmites", 12.6, 2.4, 0, None, None, {"hug": False}),
                ("Boulders", 15.5, 2.1, 0, None, None, {"hug": False}),
                ("Crystals", 21.6, 5.1, 0, None, None, {"hug": False}),
-               ("Overlay_Gravel", 21.6, 11.0, 0, None, None, {"hug": False})]),
+               ("Overlay_Gravel", 21.6, 11.0, 0, None, None, {"hug": False}),
+               ("POI_SpringShrine", 13.5, 4.6, 0, None, None, {"hug": False})]),   # the sacred spring, its stele
+    #                                                                            backing onto the river (a point of
+    #                                                                            interest, vki_props_poi)
 })
 
 VKI_ADVENTURE_CATALOG += [

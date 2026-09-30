@@ -196,3 +196,52 @@ VKI_TEX_JOBS.update({
                                                    (0.28, 0.25, 0.21)],
                                               mortar="#3C3730", over=0.12, over_col="#2A221C", vrange=(0.84, 1.06)),
 })
+
+
+# dwarven halls (docs/DWARF_KIT.md): dark granite ashlar walls (t 1.5: three 0.5 m courses, blocks 0.75 / 1.5 m, tight
+# crisp joints, little chipping), and the hall floor -- square polished slabs on a checker of two granites with a carved
+# groove inside every slab edge
+def vki_gen_dwarffloor(S=2048, seed=111, T=3.0, n=4, depth=0.02, out_prefix="T_VKI_DwarfFloor", write=True):
+    """dwarven hall floor (t 3.0): n x n square slabs (0.75 m) on a checker of a darker and a paler granite, 2.5 mm
+    joints, a groove cut 0.09 m inside every slab edge (the carved panel line), fine granite speckle, polished"""
+    rng = np.random.default_rng(seed)
+    x, y = grid(S)
+    X = (x * n) % 1; Y = (y * n) % 1
+    ci = np.minimum((x * n).astype(np.int32), n - 1); cj = np.minimum((y * n).astype(np.int32), n - 1); del x, y
+    d = (np.minimum(np.minimum(X, 1 - X), np.minimum(Y, 1 - Y)) * T / n).astype(f32); del X, Y
+    g = 0.0025
+    mask = smooth(g, g + 0.002, d)
+    groove = (1.0 - smooth(0.004, 0.010, np.abs(d - 0.09))).astype(f32)
+    cheq = ((ci + cj) % 2).astype(f32)
+    sid = ci * n + cj; del ci, cj
+    val = rng.uniform(0.93, 1.05, n * n).astype(f32)
+    dk, pl = hx("#4C5054"), hx("#7C7F7B")
+    base = (dk[None, None, :] * (1 - cheq[..., None]) + pl[None, None, :] * cheq[..., None]) * val[sid][..., None]
+    speck = fbm(S, 0.6, seed + 3, fmin=80, fmax=500)
+    base = base * (1 + 0.10 * np.clip(speck, -1.5, 1.5))[..., None]
+    base = base * (1 + 0.03 * fbm(S, 2.0, seed + 4, fmin=3, fmax=30))[..., None]
+    h = blur(np.clip(mask * (0.55 + 0.30 * smooth(g, g + 0.02, d) - 0.40 * groove) + (1 - mask) * 0.12, 0, 1), 1.2).astype(f32)
+    col = lerp(hx("#26272A")[None, None, :], base, mask[..., None])
+    col = col * (1 - 0.40 * groove)[..., None]
+    col, n_s = paint_form_light(col.astype(f32), h, depth, T, hig=0.12, log=0.18, post=0.20)
+    rough = np.clip(0.55 + 0.05 * fbm(S, 2.2, seed + 9, fmin=6) + 0.35 * (1 - mask) + 0.25 * groove, 0, 1).astype(f32)
+    bc, h1, R1 = down2(np.clip(col, 0, 1).astype(f32)), down2(h), down2(rough)
+    if write: vki_write_set(out_prefix, bc, h1, R1, depth, T)
+    return bc
+
+
+VKI_TEX_JOBS.update({
+    "T_VKI_DwarfIn": lambda: vki_gen_blocks(seed=101, T=1.5, nrow=3, blocks=(2, 1, 2), pal=("S6", "S3"),
+                                            mortar="#232326", chip=0.25, depth=0.03, gap=0.0032, wjit=0.10, min_sep=0.30,
+                                            tone=0.62, mtone=1.0, cham_m=0.02, dnoise=0.0015, dfmax=10,
+                                            rows=(0.50, 0.50, 0.50), vrange=(0.86, 1.06), warm_amp=0.6,
+                                            out_prefix="T_VKI_DwarfIn"),
+    "T_VKI_DwarfFloor": lambda: vki_gen_dwarffloor(),
+    # the plain floor of the halls' walkways, side rooms and forge (the checker is kept for the processional runner):
+    # big granite flags in four 0.75 m courses, 1.0-1.5 m long, crisp tight joints, calm tone
+    "T_VKI_DwarfFlag": lambda: vki_gen_blocks(seed=121, T=3.0, nrow=4, blocks=(2, 3, 2, 3), pal=("S6", "S3"),
+                                              mortar="#26272A", chip=0.12, depth=0.02, gap=0.0026, wjit=0.12,
+                                              min_sep=0.30, tone=0.76, mtone=1.0, cham_m=0.015, dnoise=0.0012,
+                                              dfmax=8, vrange=(0.90, 1.05),
+                                              warm_amp=0.4, out_prefix="T_VKI_DwarfFlag"),
+})

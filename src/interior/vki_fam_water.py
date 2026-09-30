@@ -49,7 +49,8 @@ def vki_wat_stream(k, code, qa, qb):
     seed = vki_seed("Stream|%s|%d%d" % (code, qa, qb))
     s_ = lambda x, y: vki_cav_field(x, y, code.replace("X", "F"), seed, VKI_CAV_AMP * 0.8, sym=True)
     sd = vki_cav_ms_solid(k, lambda x, y: -s_(x, y), lambda x, y: 0.0, lambda H: W["levels"],
-                          lambda z, H: W["step"].get(round(z, 2), 0.0), seed, wamp=0.05)
+                          lambda z, H: W["step"].get(round(z, 2), 0.0), seed, wamp=0.05, bottom=False)
+    k.meta["vki_open_bottom"] = W["levels"][0]
     bm = k.bm
     for f in sd["tops"]:
         f.material_index = VKI_FLOOR

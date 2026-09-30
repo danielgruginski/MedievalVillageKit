@@ -98,7 +98,7 @@ Stairs at rot ±90 now get correct footprint cells and forbidden post nodes, and
 | Scene | Size | Walls | Preset | Links | Contents |
 |---|---|---|---|---|---|
 | `VKI_Dungeon_B1` | 10 × 6 | Dungeon, Bars | Dungeon | `surface` stair up → `@return`, `crypt` stair down → B2 | the gaol: two barred cells under light grates (straw, bucket, chains, a skeleton), a cage, a barred holding pen, a guard table with dice and cards, weapon rack, brazier, puddles, a drain, rubble, seven torches |
-| `VKI_Dungeon_B2` | 10 × 6 | Dungeon, Bars | Dungeon | `above` stair up → B1 (same origin and rotation as B1's stair down) | the crypt: ossuary niches, four cut pillars round a sarcophagus with an effigy, floor candles, coffins, grave slabs, a skeleton, bones, rubble, a barred treasure vault with an open chest of gold |
+| `VKI_Dungeon_B2` | 10 × 6 | Dungeon, Bars | Dungeon | `above` stair up → B1 (same origin and rotation as B1's stair down) | the crypt: ossuary niches, four cut pillars round a necromancer's circle about an opened sarcophagus (the point of interest `POI_NecroCircle`, [POINTS_OF_INTEREST.md](POINTS_OF_INTEREST.md); it replaced the sarcophagus with its effigy), floor candles, coffins, grave slabs, a skeleton, bones, rubble, a barred treasure vault with an open chest of gold |
 
 Both levels are 10 × 6 cells and frame at D 20.6. `vki_check` reports **0 errors** in both.
 
