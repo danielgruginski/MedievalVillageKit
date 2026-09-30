@@ -9,6 +9,10 @@ the kit. The design, with every decision and its reasons, is in
 [history/interior_design/INTERIOR_SPEC.md](history/interior_design/INTERIOR_SPEC.md) (its §10 lists the changes made
 while building).
 
+The dungeon kit builds on this framework with two more wall families (Dungeon, Bars), stone stairs, dungeon props and
+two linked levels: [DUNGEON_KIT.md](DUNGEON_KIT.md). The adventure kit adds the Ancient family, organic cave rock
+tiles on a dual grid, pits, traps, passages and three more levels: [ADVENTURE_KIT.md](ADVENTURE_KIT.md).
+
 ![The nine showcase interiors from the game camera](images/interiors.jpg)
 
 <table>
@@ -58,7 +62,8 @@ Rakes: `_L` on west walls, `_R` on east walls (low end south).
 | A free end | `Post_<Family>_Mid`, required (an uncovered end is an error) |
 | An even node (multiple of 3 m) on a straight run | rhythm `Post_<Family>_Mid`, optional (Timber, Wattle, Board) |
 
-Post family by priority: Stone > Ashlar > Timber > Wattle > Board. Height: the tallest wall end at the node.
+Post family by priority: Ancient > Dungeon > Stone > Ashlar > Timber > Wattle > Board > Bars (the dungeon
+and adventure families: [DUNGEON_KIT.md](DUNGEON_KIT.md), [ADVENTURE_KIT.md](ADVENTURE_KIT.md)). Height: the tallest wall end at the node.
 
 **Wall families.**
 
@@ -149,6 +154,8 @@ the spec's plans while building are listed in `VKI_PLAN_CHANGES`.
 | `vki_floors`, `vki_links` | floors, sills, door leaves, aprons, overlays; stairs, dais, window light pool, runners |
 | `vki_props_home`, `vki_props_tavern`, `vki_props_smithy`, `vki_props_chapel` | furniture and dressing |
 | `vki_rooms` | the plans and the room assembler |
+| `vki_fam_dungeon`, `vki_props_dungeon`, `vki_rooms_dungeon`, `vki_tex_dungeon` | the dungeon kit ([DUNGEON_KIT.md](DUNGEON_KIT.md)) |
+| `vki_fam_ancient`, `vki_fam_cave`, `vki_props_adventure`, `vki_props_lair`, `vki_rooms_adventure` | the adventure kit ([ADVENTURE_KIT.md](ADVENTURE_KIT.md)) |
 
 | In the .blend | What it is |
 |---|---|

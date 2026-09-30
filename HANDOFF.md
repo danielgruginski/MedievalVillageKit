@@ -1,9 +1,11 @@
-# HANDOFF — Medieval Village Kit (state at the end of 2026-09-26)
+# HANDOFF — Medieval Village Kit (state at the end of 2026-09-29)
 
 Read this first when continuing the work (new session: *"Read MedievalVillageKit/HANDOFF.md and continue"*).
 Project root: `E:\Unity\Projects\GameArtGeneration\MedievalVillageKit` (git repo, branch `main`).
 Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README.md](docs/KIT_README.md).
 Interior kit (built 2026-09-25/26): [docs/INTERIOR_KIT.md](docs/INTERIOR_KIT.md).
+Dungeon kit (built 2026-09-29 on the interior kit): [docs/DUNGEON_KIT.md](docs/DUNGEON_KIT.md).
+Adventure kit (built 2026-09-29 on the dungeon kit): [docs/ADVENTURE_KIT.md](docs/ADVENTURE_KIT.md).
 
 ---
 
@@ -128,6 +130,36 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
   `VKI_Chapel_F0`, rebuilt by `vki_rooms` (`vki_check` gives 0 errors in all nine). Viewer scenes: `VKI_Catalog`
   (every piece, a camera per group) and `Interior_Progress` (a live board of all rooms and workshops). Every piece
   passes `vki_test_pieces`; the exterior is untouched (T15).
+- **Dungeon kit (46 more masters in `VKI_Pieces`, 194 in all; see [docs/DUNGEON_KIT.md](docs/DUNGEON_KIT.md)):** the interior
+  kit's framework with two new wall families: Dungeon (dark coursed masonry, damp band, light grates, ossuary niches) and
+  Bars (iron cell fronts, barred gates, never cut). Iron and gate leaves, stone stairs, 14 props, 5 overlays, the
+  `Dungeon` lighting preset (torch-lit, floor target 0.15) and two linked levels: `VKI_Dungeon_B1` (gaol, stair up to
+  `@return`) and `VKI_Dungeon_B2` (crypt). Both pass `vki_check` with 0 errors. `vki_test_all()` is clean for all 194
+  masters. The nine interiors rebuild unchanged. Viewer scene: `VKI_Dungeon_Catalog`. The workshop scene `WS_vki_dungeon`
+  still holds the first piece rows (its masters were adopted into `VKI_Pieces`).
+- **Adventure kit (331 more masters, 525 in all; see [docs/ADVENTURE_KIT.md](docs/ADVENTURE_KIT.md)):** the dungeon
+  kit widened to adventuring places, all four themes the user chose: traps and mechanisms, ancient ruins, monster
+  lairs, caves. The Ancient wall family (sunken-temple blocks, frieze, trilithon doors, broken / collapsed walls,
+  relief, vault) and the Cave wall family (rock walls for walled levels, `vki_fam_cavewall`). **Organic caves** (the
+  user asked for them after the first try, the rock-textured walls, which stay as the Cave family): a cave level is a
+  cell map, and 49 dual-grid rock tiles (class `rock`, 23 corner codes O / C / F, 2-3 variants, a tunnel tile) give it
+  curving outlines, spurs, bays, pillars, leaning cliffs, ragged tops; rock is Cut where it would hide floor from the
+  camera. **A winding chasm** (the user found the straight chasm too linear): chasm cells are painted too, and 57
+  dual-grid ground tiles (class `ground`, X / O codes, never rotated, four node parities for the world-locked floor)
+  carry the floor with the hole cut in curves; Floor_075 quarters fill part-covered cells; a standalone rope bridge
+  (`vki_bridge` deck: the BFS crosses the chasm there). Rock texture from `vki_gen_rockface`. A `pit` class (spike
+  pit, straight chasm segments, pool). Passages and tunnels (scene links), named plan pieces, door leaves (portcullis,
+  rolling vault disc, secret door, locked iron door), 51 props / overlays, the `Cavern` preset. Three more levels
+  continue the descent from B2 through a breach: `VKI_Dungeon_B3` (sunken temple, walls), `B4` (caverns, 12 x 7: the
+  winding chasm and bridge) and `B5` (goblin warren) as cave maps. **Transitions** (the user asked for "walls that
+  break into caves"): walls may be drawn inside a cave map (partition family, `vki_cave_walls`); 115 wall-backed rock
+  tiles (`Rock_Cave_<code>_Wall<arms>`) keep the rock 0.33 m off a wall on the node lines; breaches knocked through
+  to the floor (`Wall_<Dungeon|Ancient>_Breach_150/300`, Full and Cut, plan tokens `XX` / `X`, `xx` / `x`);
+  `Overlay_Spill` for floor seams. Demo `VKI_Cave_Breach` (0 errors, 0 warnings). **Cave generator**
+  `vki_cave_generate` (the user asked for a larger cave spawned as a map): `VKI_Cave_Test`, 24 x 16, seed 7, 0
+  errors. All five levels pass `vki_check` with 0 errors; `vki_test_all()` is clean for 525 masters; the nine
+  interiors still check at 0 errors. Viewer scene: `VKI_Adventure_Catalog` (24 groups). The workshop scene
+  `WS_vki_adventure` is empty.
 
 ## 5. Open issues and ideas (none started unless marked done)
 
@@ -197,6 +229,61 @@ Interior kit (spec: `docs/history/interior_design/INTERIOR_SPEC.md`, its §10–
     a plank.~~ Done 2026-09-26: `ind_bellows` builds a forge bellows: teardrop boards (the top one hinged and lifted),
     a pleated leather bag, iron straps, a pump pole with a cross handle, a trestle, and a long iron pipe (tip at local
     x −1.50) that stops 2.5 cm short of the Smithy forge's tuyere. The exterior bloomery uses the same piece.
+
+Dungeon kit (2026-09-29; details in docs/DUNGEON_KIT.md):
+
+25. `vki_check` warnings left in the two levels:
+    - Palette: cap tops sit just under floor + 0.15 (0.300 vs 0.308 in B1, 0.293 vs 0.304 in B2). The caps are a
+      tinted `T_VKI_StoneBlockIn` (`M_VKI_DungeonCap`), already lifted 1.16x; lift further or accept.
+    - B1 has R-occ5 notes: chains, a torch and the skeleton stand within 0.9 m of the Cut cell partitions.
+    - B2's stair is let into a Plain_150B pop-out. The assembler picks the B variant without checking stairs.
+    - 2026-09-29 (adventure kit): B2 lost its east-wall torch to the breach on to B3; floor candles by the breach keep
+      its floor at 0.156. Its cap tops now sit at 0.291 vs 0.306.
+26. From the game camera:
+    - The wall chains read weakly (dark iron on dark stone).
+    - The down stair's steps are hard to see in the dark shaft; paler treads or a faint light at the bottom would help.
+    - The puddles (`M_VKI_Puddle`, a 55 % glossy film) read as dark wet patches, with few highlights.
+27. Not built yet:
+    - ~~a portcullis leaf for `DoorWide_300`~~ (adventure kit: `Leaf_Portcullis_300`);
+    - ~~cobwebs (for spider lairs, Insectoids)~~ (adventure kit: `Prop_Web_Corner`, `Overlay_WebFloor`);
+    - stocks or a rack;
+    - ~~a rough rock / cave wall family~~ (adventure kit: the Cave family);
+    - ~~goblin-lair dressing (bedrolls, totems)~~ (adventure kit: `vki_props_lair`);
+    - an exterior entrance (cellar stair, crypt door).
+    `@return` sends the player back to wherever the game entered the dungeon.
+28. Unity export (issue 19) also needs:
+    - the `vki_see_through` flag: bars, gates and the cage don't block sight lines;
+    - `vki_no_cut` on the Bars pieces;
+    - the gloss puddle material;
+    - the grate's SPOT, which sits inside the opening.
+
+Adventure kit (2026-09-29; details in docs/ADVENTURE_KIT.md):
+
+29. Cave maps: openings between rock must be two cells wide -- the rock's lobes and foot take up to ~0.6 m off each
+    side, and a one-cell gap closed below the 0.6 m walker (B4's first spur and pillar, B5's first chambers). Props
+    near rock stand off it with the hug off (`{"hug": False}`; there are no walls to hug); webs, the cocoon and the
+    rat hole carry `vki_wall_anchor` and may enter rock. Rock colliders are the floor-level footprint in 0.25 m boxes;
+    a game with tight collision should use the mesh. Rock UVs turn at tile edges (rotated instances): a triplanar rock
+    shader in Unity would hide the seams. The first cave try (the Cave wall family: bulging faces, a ragged skyline)
+    was not organic enough for cave levels; it stays for walled levels (the user asked to keep pieces unless they
+    clash with the new ones).
+30. N-S doors read edge-on from the fixed camera (B3's portcullis and vault disc). The vault door faces east because a
+    Full front wall hid the loot (T19); the vault's south side is a Cut wall.
+31. Chasms: the cave maps use the ground tiles (curving; they end in a rounded tip or under the rock); the straight
+    `Pit_Chasm` segments stay for walled levels and have open ends (run them wall to wall). Ground tiles are never
+    rotated (world-locked floor: four parity versions per code); a pit must keep a cell clear of the chasm; the rope
+    bridge needs the chasm two cells wide and a cell-centre column.
+32. Not in a level yet: `Wall_Dungeon_Secret_150_Full` + `Leaf_SecretStone_Full`, `Leaf_Iron_Full`. They are in the
+    catalog.
+33. Unity export (issue 19) also needs: the `pit` class (floor replaced over `vki_covers_floor`, never rotated), the
+    `rock` class (dual-grid tiles on nodes, rotated), the `ground` class (dual-grid chasm tiles on nodes, never
+    rotated) and the Floor_075 quarters, the bridge deck (`vki_bridge`), the passage and tunnel links (`vki_link`
+    passage, `vki_target`), `vki_trap` / `vki_mechanism` / `vki_openable` /
+    `vki_leaf_motion` for gameplay, the web card material (alpha clip) and the `Cavern` preset.
+34. Transitions: walls in a cave map go on its inner grid lines only, never between two rock cells (an error); the
+    rock tiles on their nodes are the wall-backed ones (`vki_wall_arms`), picked by `vki_cave_tiles`. A breach in an
+    N-S wall is hidden from the game camera by the wall south of it; put the one that should be seen in an E-W wall.
+    The generated test cave (`VKI_Cave_Test`) is rebuilt from `scene["vki_generated"]` in a fresh namespace.
 
 ## 6. Gotchas
 

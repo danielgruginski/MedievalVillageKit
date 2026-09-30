@@ -33,10 +33,26 @@ VKI_ROOMS_BAND = (0.05, 1.00)  # collider z band that blocks the capsule (overhe
 VKI_ROOMS_TOK_EW = {"##": ("Plain", "Full"), "==": ("Plain", "Cut"), "WW": ("Window", "Full"),
                     "ww": ("Window", "Cut"), "dd": ("Door", "Cut"), "ee": ("Exit", "Cut"), "EE": ("ExitWide", "Cut"),
                     "FF": ("Special", "Full"), "LL": ("Lancet", "Full"), "LT": ("LancetTall", "Full"),
-                    "ll": ("Lancet", "Cut"), "rr": ("Rail", None), "  ": (None, None)}
+                    "ll": ("Lancet", "Cut"), "rr": ("Rail", None), "  ": (None, None),
+                    # dungeon kit: iron bars (the Bars family, always Full), barred gates, ossuary niches
+                    "||": ("Bars", "Full"), "gg": ("BarsGate", "Full"), "NN": ("Niche", "Full"), "nn": ("Niche", "Cut"),
+                    # adventure kit: passages (scene links), and the family's named specials ("S1".."S4": R["specials"])
+                    "PP": ("Passage", "Full"), "S1": ("Named", "Full"), "S2": ("Named", "Full"), "S3": ("Named", "Full"),
+                    "S4": ("Named", "Full"), "s1": ("Named", "Cut"), "s2": ("Named", "Cut"),
+                    # natural openings (the Cave wall family's doors: Wall_<fam>_Gap_150_<height>)
+                    "OO": ("Gap", "Full"), "oo": ("Gap", "Cut"),
+                    # transitions: a breach knocked through to the floor (Dungeon / Ancient; two in a row pair to 300)
+                    "XX": ("Breach", "Full"), "xx": ("Breach", "Cut")}
 VKI_ROOMS_TOK_NS = {"#": ("Plain", "Full"), ":": ("Plain", "Cut"), "W": ("Window", "Full"), "w": ("Window", "Cut"),
                     "d": ("Door", "Cut"), "t": ("Rake", "Rake"), "r": ("Rail", None), "L": ("Lancet", "Full"),
-                    "l": ("Lancet", "Cut"), " ": (None, None)}
+                    "l": ("Lancet", "Cut"), " ": (None, None),
+                    "|": ("Bars", "Full"), "g": ("BarsGate", "Full"), "N": ("Niche", "Full"), "n": ("Niche", "Cut"),
+                    "P": ("Passage", "Full"), "1": ("Named", "Full"), "2": ("Named", "Full"), "3": ("Named", "Full"),
+                    "4": ("Named", "Full"), "O": ("Gap", "Full"), "o": ("Gap", "Cut"), "X": ("Breach", "Full"),
+                    "x": ("Breach", "Cut")}
+VKI_ROOMS_OWN_FAMILY = {"Bars": "Bars", "BarsGate": "Bars"}   # segment kinds that bring their own wall family
+VKI_ROOMS_GATE_DEG = 90.0      # barred gates stand open by default (closed, a gate walls the cell off for the BFS;
+                               # at 70 deg the leaf left 0.55 m of the 0.84 m doorway, under the 0.6 m capsule)
 # plan cell codes per piece (§6 legend); "TB" also covers the forms of a table set
 VKI_ROOMS_CODES = {"Bed_Box": "BX", "Bed_HalfTester": "HT", "Bed_Straw": "bd", "Chest": "CH", "Dresser": "DR",
                    "Pantry_Shelves_300": "PN", "Shelf_Wall_150": "SH", "Prop_Sawhorse": "SH",
@@ -477,27 +493,57 @@ def vki_rooms_wall_name(fam, kind, height, n, var="A", side=None, special=None):
         return f"SM_VKI_Wall_{fam}_Rake_150_{side}"
     if kind == "Special":
         return f"SM_VKI_Wall_{fam}_{special}_{height}"
+    if kind == "Bars":
+        return f"SM_VKI_Wall_{fam}_Plain_300_Full" if n == 2 else f"SM_VKI_Wall_{fam}_Plain_150A_Full"
+    if kind == "BarsGate":
+        return f"SM_VKI_Wall_{fam}_Door_150_Full"
+    if kind == "Niche":
+        return f"SM_VKI_Wall_{fam}_Niche_150_{height}"
+    if kind == "Passage":
+        return f"SM_VKI_Wall_{fam}_Passage_150_Full"
+    if kind == "Gap":
+        return f"SM_VKI_Wall_{fam}_Gap_150_{height}"
+    if kind == "Breach":
+        return f"SM_VKI_Wall_{fam}_Breach_{300 if n == 2 else 150}_{height}"
+    if kind == "Named":                      # special = the piece name (R["specials"][token]), e.g. "Wall_Dungeon_DartTrap_150_Full"
+        return special if special.startswith("SM_VKI_") else "SM_VKI_" + special
     raise ValueError(kind)
 
 
+def vki_rooms_stair_frame(x, y, rot, lx, ly):
+    """stair-local (lx, ly) -> world (x, y) for a stair at (x, y) with rotation rot (0 / 90 / -90)"""
+    r = math.radians(rot)
+    return (x + math.cos(r) * lx - math.sin(r) * ly, y + math.sin(r) * lx + math.cos(r) * ly)
+
+
 def vki_rooms_stair_cells(R):
-    """{(c, r): ('Up'|'Down', index)} footprint cells of the stairs (1 x 3 cells at rot 0)"""
+    """{(c, r): ('Up'|'Down', index)} footprint cells of the stairs (the 1 x 3 cells of local [0, 1.5] x [0, 4.5],
+    through the stair's frame: rot 0 runs +Y, 90 runs -X along an E-W wall on its south side, -90 runs +X along an
+    E-W wall on its north side)"""
     out = {}
-    for si, (kind, x, y, rot, lid) in enumerate(R.get("stairs", [])):
-        c0, r0 = int(round(x / VKI_IG)), int(round(y / VKI_IG))
-        cells = [(c0, r0 + d) for d in range(3)] if rot == 0 else [(c0 - d if rot == 90 else c0 + d, r0) for d in range(3)]
-        for c in cells:
-            out[c] = (kind, si)
+    for si, st_ in enumerate(R.get("stairs", [])):
+        kind, x, y, rot, lid = st_[:5]
+        for d in range(3):
+            cx, cy = vki_rooms_stair_frame(x, y, rot, 0.75, 0.75 + VKI_IG * d)       # the cell centre
+            out[(int(math.floor(cx / VKI_IG)), int(math.floor(cy / VKI_IG)))] = (kind, si)
     return out
 
 
-def vki_rooms_layout(name):
+def vki_rooms_layout(name, R=None, P=None):
     """pure layout of a §6 scene (no Blender objects): wall pieces, posts (§2.3), floors (§2.7), specials, exits,
-    stairs, door cells. Returns a dict; 'problems' lists plan-level errors found while laying out."""
-    R = VKI_ROOMS[name]
-    P = vki_parse_plan(VKI_PLANS[name])
+    stairs, door cells. Returns a dict; 'problems' lists plan-level errors found while laying out. R / P override the
+    registered room and plan (a cave map lays out its walls this way, R["open_frame"]: no closed perimeter)."""
+    if R is None and name not in VKI_ROOMS:  # a generated level (vki_cave_generate): regenerate it from the scene's record
+        sc_ = bpy.data.scenes.get(name)
+        gp = vki_get(sc_, "vki_generated", None) if sc_ is not None else None
+        if gp:
+            vki_cave_generate(name, build=False, **gp)
+    R = VKI_ROOMS[name] if R is None else R
+    P = vki_parse_plan(VKI_PLANS[name]) if P is None else P
     nc, nr, W, D = P["nc"], P["nr"], P["W"], P["D"]
     zmap = vki_rooms_zone_map(R, nc, nr)
+    if R.get("cave"):                    # adventure kit: a cave level is a cell map of rock tiles (vki_rooms_adventure)
+        return vki_cave_layout(name, R, P, zmap)
     fam_p, fam_i = R["family"]["perimeter"], R["family"].get("partition", R["family"]["perimeter"])
     problems = []
     # ---- segments
@@ -508,21 +554,21 @@ def vki_rooms_layout(name):
             problems.append(f"plan: unknown E-W token {tok!r} at node ({i},{j})")
         role = "N" if j == nr else ("S" if j == 0 else "part")
         segs[("EW", i, j)] = dict(ori="EW", i=i, j=j, tok=tok, kind=kind, height=ht, role=role,
-                                  fam=fam_i if role == "part" else fam_p)
+                                  fam=VKI_ROOMS_OWN_FAMILY.get(kind) or (fam_i if role == "part" else fam_p))
     for (i, r), c in P["ns"].items():
         kind, ht = VKI_ROOMS_TOK_NS.get(c, (None, None))
         if c not in VKI_ROOMS_TOK_NS:
             problems.append(f"plan: unknown N-S char {c!r} at node ({i},{r})")
         role = "W" if i == 0 else ("E" if i == nc else "part")
         segs[("NS", i, r)] = dict(ori="NS", i=i, j=r, tok=c, kind=kind, height=ht, role=role,
-                                  fam=fam_i if role == "part" else fam_p)
+                                  fam=VKI_ROOMS_OWN_FAMILY.get(kind) or (fam_i if role == "part" else fam_p))
     walls = lambda s: s is not None and s["kind"] not in (None, "Rail")
-    # perimeter must be closed
-    for i in range(nc):
+    # perimeter must be closed (not in a cave map: its walls stand in the rock and the open cave)
+    for i in range(nc if not R.get("open_frame") else 0):
         for j in (0, nr):
             if not walls(segs[("EW", i, j)]):
                 problems.append(f"plan: perimeter gap at E-W segment ({i},{j})")
-    for r in range(nr):
+    for r in range(nr if not R.get("open_frame") else 0):
         for i in (0, nc):
             if not walls(segs[("NS", i, r)]):
                 problems.append(f"plan: perimeter gap at N-S segment ({i},{r})")
@@ -552,15 +598,23 @@ def vki_rooms_layout(name):
                     continue
                 kind, ht, fam, role = s["kind"], s["height"], s["fam"], s["role"]
                 n = 1
+                named = None
+                if kind == "Named":
+                    named = R.get("specials", {}).get(s["tok"].strip())
+                    if not named:
+                        problems.append(f"plan: named token {s['tok']!r} at {ori} ({k},{ln}) has no R['specials'] entry")
+                        named = "SM_VKI_Wall_%s_Plain_150A_%s" % (fam, ht)
+                    if "_300_" in named or named.endswith("_300"):
+                        n = 2
                 if kind in ("Special", "ExitWide"):
                     s2 = (segs.get((ori, k + 1, ln)) if ori == "EW" else segs.get((ori, ln, k + 1)))
                     if s2 is None or s2["kind"] != kind:
                         problems.append(f"plan: {s['tok']} at {ori} ({k},{ln}) needs a second cell")
                     n = 2
-                elif kind == "Plain":
+                elif kind in ("Plain", "Bars", "Breach"):
                     s2 = (segs.get((ori, k + 1, ln)) if ori == "EW" else segs.get((ori, ln, k + 1)))
                     mid = (k + 1, ln) if ori == "EW" else (ln, k + 1)
-                    if (k % 2 == 0 and s2 is not None and s2["kind"] == "Plain" and s2["height"] == ht and
+                    if (k % 2 == 0 and s2 is not None and s2["kind"] == kind and s2["height"] == ht and
                             s2["fam"] == fam and not junction(mid)):
                         n = 2
                 if kind == "Rake" and not VKI_FAMILIES.get(fam, {}).get("rake"):
@@ -586,7 +640,8 @@ def vki_rooms_layout(name):
                 var = "A"
                 limewash = fam == "Stone" and any(str(R["zones"].get(zmap.get(c_), {}).get("wall", "")).startswith("Plaster")
                                                   for c_ in fa)
-                if kind == "Plain" and n == 1 and ht == "Full" and role != "part" and fam in ("Timber", "Stone", "Wattle") \
+                if kind == "Plain" and n == 1 and ht == "Full" and role != "part" and \
+                        fam in ("Timber", "Stone", "Wattle", "Dungeon", "Ancient") \
                         and k % 2 == 1 and not limewash:
                     mx, my = ((x0 + VKI_IG * 0.5, y0) if ori == "EW" else (x0, y0 + VKI_IG * 0.5))
                     if not any(math.hypot(px - mx, py - my) < 1.3 for px, py in ppts):
@@ -596,7 +651,12 @@ def vki_rooms_layout(name):
                     side = "L" if role == "W" else "R"
                     if role not in ("W", "E") or k != 0:
                         problems.append(f"plan: rake 't' at {ori} ({ln},{k}) is not the south-most side-wall piece")
-                pname = vki_rooms_wall_name(fam, kind, ht if kind != "Rake" else "Rake", n, var, side, special)
+                pname = vki_rooms_wall_name(fam, kind, ht if kind != "Rake" else "Rake", n, var, side,
+                                            named if kind == "Named" else special)
+                if kind == "Named":                                  # a named piece may be another family's
+                    pf_ = vki_parse_name(pname).get("fam")
+                    if pf_ in VKI_FAMILIES:
+                        fam = pf_
                 # end heights (a rake's low end is its south end: Cut)
                 h_end = {}
                 for nd in nodes:
@@ -615,10 +675,12 @@ def vki_rooms_layout(name):
             ends.setdefault(nd, []).append(dict(d=(d[0] / ln_, d[1] / ln_), fam=pc["fam"], cls=pc["cls"],
                                                 h=pc["h_end"][nd], pi=pi))
     stair_nodes = set()
-    for kind, sx, sy, srot, lid in R.get("stairs", []):
-        if srot == 0:     # walls along local x = 0 (the west side) and y = 4.5 (the north end)
-            c0, r0 = int(round(sx / VKI_IG)), int(round(sy / VKI_IG))
-            stair_nodes |= {(c0, r0 + d) for d in range(4)} | {(c0 + d, r0 + 3) for d in range(2)}
+    for st_ in R.get("stairs", []):
+        kind, sx, sy, srot, lid = st_[:5]
+        # the nodes along the stair's walls: local x = 0 (y 0..4.5) and y = 4.5 (x 0..1.5), in any rotation
+        for lx, ly in [(0.0, VKI_IG * d) for d in range(4)] + [(VKI_IG, 3 * VKI_IG)]:
+            wx, wy = vki_rooms_stair_frame(sx, sy, srot, lx, ly)
+            stair_nodes.add((int(round(wx / VKI_IG)), int(round(wy / VKI_IG))))
     posts = []
     for nd, es in sorted(ends.items()):
         dirs = [e["d"] for e in es]
@@ -649,9 +711,11 @@ def vki_rooms_layout(name):
         p["piece"] = f"SM_VKI_Post_{p['fam']}_{p['kind']}_{p['height']}"
     # ---- floors (§2.7): greedy 600 -> 300 (even nodes) -> Q150 per zone; Stair_Down footprints excluded
     scells = vki_rooms_stair_cells(R)
+    pcells = vki_rooms_pit_cells(R)
     floors = []
     for zn, z in R["zones"].items():
-        cells = {c for c, zz in zmap.items() if zz == zn and not (c in scells and scells[c][0] == "Down")}
+        cells = {c for c, zz in zmap.items() if zz == zn and not (c in scells and scells[c][0] == "Down")
+                 and c not in pcells}
         if z.get("dais"):
             for (dx, dy) in R.get("dais", []):
                 blk = {(int(round(dx / VKI_IG)) + a, int(round(dy / VKI_IG)) + b) for a in (0, 1) for b in (0, 1)}
@@ -676,11 +740,14 @@ def vki_rooms_layout(name):
     # ---- doors: cells on both sides (exits: the inside cells)
     doors = []
     for pi, pc in enumerate(pieces):
-        if pc["kind"] in ("Door", "Exit", "ExitWide"):
+        if pc["kind"] in ("Door", "Exit", "ExitWide", "BarsGate", "Gap", "Breach"):
             cells = pc["face_a"] + pc["face_b"]
             doors.append(dict(pi=pi, kind=pc["kind"], cells=cells, ori=pc["ori"]))
+        elif pc["kind"] == "Passage":
+            cells = pc["face_a"]
+            doors.append(dict(pi=pi, kind=pc["kind"], cells=cells, ori=pc["ori"]))
     return dict(name=name, R=R, P=P, nc=nc, nr=nr, W=W, D=D, zmap=zmap, segs=segs, pieces=pieces, posts=posts,
-                floors=floors, doors=doors, stair_cells=scells, problems=problems)
+                floors=floors, doors=doors, stair_cells=scells, pit_cells=pcells, problems=problems)
 
 
 # ---------------------------------------------------------------- placeholders (PACKAGES.md: PH_<piece>)
@@ -1307,7 +1374,9 @@ def vki_rooms_exit(ctx, pc, door):
         leaves = list(zip(lv, socks))
     else:
         s = socks if (isinstance(socks, list) and socks and not isinstance(socks[0], list)) else [0.33, -T / 2 + 0.05, 0]
-        leaves = [("SM_VKI_Leaf_Plank_Cut", s)]
+        lv = vki_get(door, "vki_leaf", None)            # dungeon kit: the door names its own leaf (Leaf_Iron_Cut)
+        lv = lv if isinstance(lv, str) and lv.endswith("_Cut") and vki_rooms_master(lv) is not None else None
+        leaves = [(lv or "SM_VKI_Leaf_Plank_Cut", s)]
     for lp, s in leaves:
         x, y = vki_rooms_local(pc, s[0], s[1])
         lf = vki_rooms_put(ctx, shell, lp, round(x, 4), round(y, 4), pc["rot"], walls=[])
@@ -1334,8 +1403,8 @@ def vki_rooms_exit(ctx, pc, door):
     ctx["links"][lk[0]] = door
 
 
-def vki_rooms_stair(ctx, kind, x, y, rot, lid):
-    piece = f"SM_VKI_Stair_{kind}_150x450_RailR"
+def vki_rooms_stair(ctx, kind, x, y, rot, lid, var="RailR"):
+    piece = f"SM_VKI_Stair_{kind}_150x450_{var}"                  # var "Stone": the dungeon kit's stone stairs
     o = vki_rooms_put(ctx, ctx["colls"]["Shell"], piece, x, y, rot, walls=[])
     lk = next((l for l in ctx["R"]["links"] if l[0] == lid), None)
     o["vki_link"] = "stair_up" if kind == "Up" else "stair_down"
@@ -1349,6 +1418,97 @@ def vki_rooms_stair(ctx, kind, x, y, rot, lid):
     vki_rooms_spawn(ctx, lid, round(sx, 4), round(sy, 4), (fac - rot) % 360, o)
     ctx["links"][lid] = o
     return o
+
+
+def vki_rooms_pit_cells(R):
+    """{(c, r): pit piece} cells covered by R["pits"] entries (piece, x, y[, rot 0]): pits are unrotated (world0) and
+    cover their vki_fp_cells from their min corner (x, y); read from the master when it exists, else from the name's
+    <w>x<d> token in cm (default one cell)"""
+    out = {}
+    for pt in R.get("pits", []):
+        piece = pt[0] if pt[0].startswith("SM_") else "SM_VKI_" + pt[0]
+        x, y = pt[1], pt[2]
+        src = bpy.data.objects.get(piece)
+        if src is not None and src.get("vki_fp_cells"):
+            w, d = (int(a) for a in str(src["vki_fp_cells"]).split(","))
+        else:
+            p_ = vki_parse_name(piece)
+            w = max(1, int(round((p_["len"] or 1.5) / VKI_IG)))
+            d = max(1, int(round((p_["depth"] or p_["len"] or 1.5) / VKI_IG)))
+        c0, r0 = int(round(x / VKI_IG)), int(round(y / VKI_IG))
+        for a in range(w):
+            for b in range(d):
+                out[(c0 + a, r0 + b)] = piece
+    return out
+
+
+def vki_rooms_pits(ctx):
+    """R["pits"]: pit pieces (spike pits, chasms, pools) at their min corners, rotation 0, in _Shell"""
+    out = []
+    for pt in ctx["R"].get("pits", []):
+        piece = pt[0] if pt[0].startswith("SM_") else "SM_VKI_" + pt[0]
+        out.append(vki_rooms_put(ctx, ctx["colls"]["Shell"], piece, pt[1], pt[2], 0, walls=[]))
+    return out
+
+
+def vki_rooms_passage(ctx, pc, o):
+    """a passage (adventure kit): the wall piece carries the scene link -- R["passages"][(ori, k, line)] = link id,
+    whose R["links"] entry gives the target scene -- and the spawn at its vki_spawn_local"""
+    R = ctx["R"]
+    lid = R.get("passages", {}).get((pc["ori"], pc["k"], pc["line"]))
+    lk = next((l for l in R["links"] if l[0] == lid), None)
+    if lk is None:
+        ctx["notes"].append(f"passage at {pc['ori']} ({pc['k']},{pc['line']}) has no R['passages'] / links entry")
+        return None
+    o["vki_link"] = "passage"
+    o["vki_link_id"] = lid
+    o["vki_target"] = lk[2]
+    o["vki_prompt"] = o.get("vki_prompt_text", "Go through")
+    o["vki_facing_min"] = 60
+    sl = vki_get(o, "vki_spawn_local", None) or [0.75, -1.60]
+    sx, sy = vki_rooms_local(pc, sl[0], sl[1])
+    vki_rooms_spawn(ctx, lid, round(sx, 4), round(sy, 4), (180 - pc["rot"]) % 360, o)
+    ctx["links"][lid] = o
+    return o
+
+
+def vki_rooms_door_leaf(ctx, pc, door):
+    """R["door_leaves"][(ori, k, line)] = dict(piece, deg=0.0, z=0.0, socket=None): a leaf on an interior door piece
+    (a locked iron door, a portcullis let down or half raised, a secret stone door ajar) at the door's
+    vki_leaf_socket (or socket), rotation door rot - deg, lifted z. Leaves whose master has vki_openable do not block
+    the BFS (they open in the game)."""
+    spec = ctx["R"].get("door_leaves", {}).get((pc["ori"], pc["k"], pc["line"]))
+    if not spec:
+        return None
+    piece = spec["piece"] if spec["piece"].startswith("SM_") else "SM_VKI_" + spec["piece"]
+    s = spec.get("socket") or vki_get(door, "vki_leaf_socket", None) or [0.33, -0.2, 0.0]
+    if s and isinstance(s[0], list):
+        s = s[0]
+    x, y = vki_rooms_local(pc, s[0], s[1])
+    lf = vki_rooms_put(ctx, ctx["colls"]["Shell"], piece, round(x, 4), round(y, 4), pc["rot"] - float(spec.get("deg", 0.0)),
+                       z=float(spec.get("z", 0.0)), walls=[])
+    lf["vki_leaf_state"] = spec.get("state", "open" if spec.get("deg") or spec.get("z") else "closed")
+    lf["vki_leaf_deg"] = float(spec.get("deg", 0.0))
+    lf["vki_leaf_door"] = door.name
+    return lf
+
+
+def vki_rooms_gate(ctx, pc, door):
+    """barred gate (dungeon kit): the door's vki_leaf (Leaf_BarsGate_Full) at its vki_leaf_socket with the door's
+    rotation, opened R["gates"][(ori, k, line)] degrees (default VKI_ROOMS_GATE_DEG) toward face A"""
+    lv = vki_get(door, "vki_leaf", None)
+    if not isinstance(lv, str):
+        return None
+    s = vki_get(door, "vki_leaf_socket", None) or [0.33, -0.022, 0.0]
+    deg = float(ctx["R"].get("gates", {}).get((pc["ori"], pc["k"], pc["line"]), VKI_ROOMS_GATE_DEG))
+    # a negative angle opens the gate toward face B: its frame (local y 0.004..0.040) would then swing through the
+    # hinge-side jamb, so the hinge moves one frame thickness (0.045) into the opening
+    x, y = vki_rooms_local(pc, s[0] + (0.045 if deg < 0 else 0.0), s[1])
+    lf = vki_rooms_put(ctx, ctx["colls"]["Shell"], lv, round(x, 4), round(y, 4), pc["rot"] - deg, walls=[])
+    lf["vki_leaf_state"] = "open" if deg else "closed"
+    lf["vki_leaf_deg"] = deg
+    lf["vki_leaf_door"] = door.name
+    return lf
 
 
 def vki_rooms_props(ctx):
@@ -1466,8 +1626,8 @@ def vki_rooms_mats(ctx):
 def vki_rooms_pools(ctx):
     """FX_WindowPool (PKG-L) under every Full window / lancet, with the window's origin and rotation, in Day scenes
     only (vki_fx_presets); z 0.20 where the pool lands on a dais. Only when the real master exists."""
-    if ctx["night"] or vki_rooms_master("SM_VKI_FX_WindowPool") is None:
-        return 0
+    if ctx["night"] or not ctx["R"].get("pools", True) or vki_rooms_master("SM_VKI_FX_WindowPool") is None:
+        return 0                                         # R["pools"] False: the dungeon's grates (their own shafts)
     L, props = ctx["L"], ctx["colls"]["Props"]
     dais = [(dx, dy) for (dx, dy) in ctx["R"].get("dais", [])]
     n = 0
@@ -1497,7 +1657,7 @@ def vki_rooms_root(ctx):
         lo = ctx["links"].get(lid)
         links.append(dict(id=lid, kind=kind, target=target, obj=lo.name if lo else None,
                           spawn=ctx["spawns"][lid].name if lid in ctx["spawns"] else None))
-    default = "front" if any(l[0] == "front" for l in R["links"]) else R["links"][0][0]
+    default = "front" if any(l[0] == "front" for l in R["links"]) else (R["links"][0][0] if R["links"] else None)
     bounds = [0.0, 0.0, L["W"], L["D"]]
     for k_, v_ in dict(vki_building=R["building"], vki_floor=R["floor"], vki_cam_mode=fit["mode"], vki_cam_dist=D,
                        vki_cam_target=json.dumps(tgt), vki_cam_pitch=50, vki_cam_yaw=0, vki_bounds=json.dumps(bounds),
@@ -1635,6 +1795,21 @@ def vki_build_scene(name):
             pc["obj"] = o.name
             if pc["kind"] in ("Exit", "ExitWide"):
                 vki_rooms_exit(ctx, pc, o)
+            elif pc["kind"] == "BarsGate":
+                vki_rooms_gate(ctx, pc, o)
+            elif pc["kind"] == "Passage":
+                vki_rooms_passage(ctx, pc, o)
+            if (pc["ori"], pc["k"], pc["line"]) in R.get("door_leaves", {}):
+                vki_rooms_door_leaf(ctx, pc, o)
+        for gt in L.get("grounds", []):                 # cave levels: the chasm's dual-grid ground tiles
+            o = vki_rooms_put(ctx, shell, gt["piece"], gt["x"], gt["y"], 0, style=gt.get("style"), walls=[])
+            o["vki_node"] = json.dumps(list(gt["node"]))
+        for rk in L.get("rocks", []):                   # cave levels: the dual-grid rock tiles
+            o = vki_rooms_put(ctx, shell, rk["piece"], rk["x"], rk["y"], rk["rot"], walls=[])
+            o["vki_room_role"] = "rock"
+            o["vki_node"] = json.dumps(list(rk["node"]))
+            if rk.get("tunnel"):
+                vki_cave_tunnel(ctx, rk, o)
         for p in L["posts"]:
             if p["req"]:
                 vki_rooms_put(ctx, shell, p["piece"], p["x"], p["y"], p["rot"], walls=[])
@@ -1643,8 +1818,9 @@ def vki_build_scene(name):
             vki_rooms_put(ctx, shell, f["piece"], f["x"], f["y"], 0, style=st, walls=[])
         for (x, y, rot, lift) in R.get("sills", []):
             vki_rooms_put(ctx, shell, "SM_VKI_Floor_Sill_150", x, y, rot, z=lift, walls=[])
-        for (kind, x, y, rot, lid) in R.get("stairs", []):
-            vki_rooms_stair(ctx, kind, x, y, rot, lid)
+        for st_ in R.get("stairs", []):
+            vki_rooms_stair(ctx, *st_[:5], var=st_[5] if len(st_) > 5 else "RailR")
+        vki_rooms_pits(ctx)
         vki_rooms_props(ctx)
         vki_rooms_rhythm(ctx)
         vki_rooms_mats(ctx)
@@ -1698,10 +1874,16 @@ def vki_rooms_boxes_of(o, boxes):
     return out
 
 
-def vki_rooms_bfs_run(boxes, W, D, st, rr, spawns, targets):
-    """one BFS pass on a raster of step st: {spawn name: (blocked, set of reached target labels)}, reached points"""
+def vki_rooms_bfs_run(boxes, W, D, st, rr, spawns, targets, decks=()):
+    """one BFS pass on a raster of step st: {spawn name: (blocked, set of reached target labels)}, reached points.
+    A box with a fifth field is soft (the chasm's ground tiles): a capsule centred on a bridge deck (decks, world
+    rects x0 y0 x1 y1) ignores it"""
     def clear(x, y):
-        for (x0, y0, x1, y1) in boxes:
+        ondeck = any(d[0] <= x <= d[2] and d[1] <= y <= d[3] for d in decks)
+        for b_ in boxes:
+            if ondeck and len(b_) > 4:
+                continue
+            x0, y0, x1, y1 = b_[:4]
             if x0 - rr < x < x1 + rr and y0 - rr < y < y1 + rr:
                 dx = max(x0 - x, 0.0, x - x1); dy = max(y0 - y, 0.0, y - y1)
                 if dx * dx + dy * dy < rr * rr - 1e-9:
@@ -1803,14 +1985,16 @@ def vki_rooms_bfs(sc, L):
     boxes, sboxes = [], []
     for o in sc.objects:
         c = o.get("vki_class")
-        if c not in ("wall", "post", "prop", "leaf", "link"):
+        if c not in ("wall", "post", "prop", "leaf", "link", "pit", "rock", "ground"):
             continue
         if c == "prop" and o.get("vki_mount") == "table":
             continue
-        if o.get("vki_nav") == "none" and c != "link":
+        if c == "leaf" and o.get("vki_openable"):
+            continue                                     # locked doors, portcullis, secret doors: they open in play
+        if o.get("vki_nav") in ("none", "walk") and c != "link":
             continue
         for bb in vki_rooms_collider_boxes(o, VKI_ROOMS_BAND):
-            boxes.append((bb[0][0], bb[0][1], bb[1][0], bb[1][1]))
+            boxes.append((bb[0][0], bb[0][1], bb[1][0], bb[1][1]) + (("soft",) if c == "ground" else ()))
             if c in ("wall", "post"):
                 sboxes.append((bb[0][0], bb[0][1], bb[1][0], bb[1][1]))
     targets, warns = [], []
@@ -1830,7 +2014,12 @@ def vki_rooms_bfs(sc, L):
             if tr:
                 targets.append(("trigger", f"{o.name}.trigger", None, vki_rooms_boxes_of(o, [tr])[0]))
     spawns = [(o.name, (o.location.x, o.location.y)) for o in sc.objects if o.get("vki_spawn_id")]
-    res, reach, nodes = vki_rooms_bfs_run(boxes, L["W"], L["D"], VKI_ROOMS_RASTER, rr, spawns, targets)
+    decks = []
+    for o in sc.objects:                                 # rope bridges: their decks cross the chasm
+        for d in vki_get(o, "vki_bridge", None) or []:
+            bb = vki_rooms_boxes_of(o, [[(d[0] + d[2]) / 2, (d[1] + d[3]) / 2, 0.0, d[2] - d[0], d[3] - d[1], 0.1]])[0]
+            decks.append((bb[0][0], bb[0][1], bb[1][0], bb[1][1]))
+    res, reach, nodes = vki_rooms_bfs_run(boxes, L["W"], L["D"], VKI_ROOMS_RASTER, rr, spawns, targets, decks)
     errs = []
     miss = {sp: [t_ for t_ in targets if t_[1] not in got] for sp, (blk, got) in res.items() if not blk}
     fine = {}
@@ -1838,7 +2027,8 @@ def vki_rooms_bfs(sc, L):
     for step in (VKI_ROOMS_RASTER / 2, VKI_ROOMS_RASTER / 4):
         if not any(left.values()):
             break
-        r2, _, _ = vki_rooms_bfs_run(boxes, L["W"], L["D"], step, rr, spawns, [t_ for ts in left.values() for t_ in ts])
+        r2, _, _ = vki_rooms_bfs_run(boxes, L["W"], L["D"], step, rr, spawns, [t_ for ts in left.values() for t_ in ts],
+                                     decks)
         for sp in list(left):
             got2 = r2.get(sp, (True, set()))[1]
             for t_ in left[sp]:
@@ -1891,20 +2081,20 @@ def vki_rooms_palette(sc, path=None, step=6):
                 continue
             mi = o.data.polygons[idx].material_index
             v = float(lum[py, px])
-            if c == "floor" and mi == VKI_FLOOR:
+            if c in ("floor", "ground") and mi == VKI_FLOOR:
                 fl.append(v)
-            elif c == "wall" and mi == VKI_CAP:
+            elif c in ("wall", "rock") and mi == VKI_CAP:
                 cp.append(v)
             elif c == "prop" and o.get("vki_mount") != "table" and not o.get("vki_placeholder"):
                 pr.setdefault(o.name, []).append(v)
     warns = []
     fm = float(numpy.mean(fl)) if fl else None
     cm = float(numpy.mean(cp)) if cp else None
-    night = sc.get("vki_preset", "Day") == "Night"
+    night = sc.get("vki_preset", "Day") in VKI_DARK_PRESETS            # Night, and the torch-lit Dungeon preset
     if fm is not None:
         lim = 0.15 if night else 0.25                    # §9 visual 3: walkable floor >= 0.25 by Day, 0.15 by Night
         if fm < lim:
-            warns.append(f"level: floor mean {fm:.3f} < {lim} ({'Night' if night else 'Day'}, render luma)")
+            warns.append(f"level: floor mean {fm:.3f} < {lim} ({sc.get('vki_preset', 'Day')}, render luma)")
     if fm is not None and cm is not None and cm < fm + 0.15:
         warns.append(f"palette: cap tops {cm:.3f} < floor {fm:.3f} + 0.15 (render luma)")
     for n_, vs in sorted(pr.items()):
@@ -1940,38 +2130,39 @@ def vki_check(scene, full=False, t19=True, bfs=True, palette=True):
     overlays = [o for o in objs if cls_of(o) == "overlay" and o.type == "MESH"]
     links = [o for o in objs if o.get("vki_link") in ("stair_up", "stair_down")]
     leaves = [o for o in objs if cls_of(o) == "leaf"]
-    floors = [o for o in objs if cls_of(o) == "floor" and o.get("vki_kind") != "Sill"]
+    floors = [o for o in objs if (cls_of(o) == "floor" and o.get("vki_kind") != "Sill") or cls_of(o) == "ground"]
     sills = [o for o in objs if cls_of(o) == "floor" and o.get("vki_kind") == "Sill"]
     cache = {}
     # 1 posts (§2.3 / §10.1)
     errs += vki_t12_posts(walls + posts)
-    # 2 floor coverage
+    # 2 floor coverage, per quarter cell (adventure kit: the chasm's dual-grid ground tiles and the Floor_075
+    # quarters cover parts of cells)
     cover = {}
-    for f in floors:
-        fp = [float(t) for t in str(f.get("vki_footprint", "0,0,1.5,1.5")).split(",")]
-        x0, y0 = f.location.x + fp[0], f.location.y + fp[1]
-        x1, y1 = f.location.x + fp[2], f.location.y + fp[3]
+    qpts = [(a, b) for a in (0.25, 0.75) for b in (0.25, 0.75)]
+
+    def mark(name, x0, y0, x1, y1):
         for c in range(L["nc"]):
             for r in range(L["nr"]):
-                cx, cy = VKI_IG * (c + 0.5), VKI_IG * (r + 0.5)
-                if x0 < cx < x1 and y0 < cy < y1:
-                    cover.setdefault((c, r), []).append(f.name)
-    for o in links:
-        if o.get("vki_link") == "stair_down":
+                for qi, (a, b) in enumerate(qpts):
+                    qx, qy = VKI_IG * (c + a), VKI_IG * (r + b)
+                    if x0 < qx < x1 and y0 < qy < y1:
+                        cover.setdefault((c, r, qi), []).append(name)
+    for f in floors:
+        fp = [float(t) for t in str(f.get("vki_footprint", "0,0,1.5,1.5")).split(",")]
+        mark(f.name, f.location.x + fp[0], f.location.y + fp[1], f.location.x + fp[2], f.location.y + fp[3])
+    for o in objs:
+        if o.get("vki_link") == "stair_down" or o.get("vki_covers_floor"):
             cf = vki_get(o, "vki_covers_floor", None) or [0.0, 0.0, 1.5, 4.5]
             bb = vki_rooms_boxes_of(o, [[(cf[0] + cf[2]) / 2, (cf[1] + cf[3]) / 2, 0.0, cf[2] - cf[0], cf[3] - cf[1], 0.1]])[0]
-            for c in range(L["nc"]):
-                for r in range(L["nr"]):
-                    cx, cy = VKI_IG * (c + 0.5), VKI_IG * (r + 0.5)
-                    if bb[0][0] < cx < bb[1][0] and bb[0][1] < cy < bb[1][1]:
-                        cover.setdefault((c, r), []).append(o.name)
+            mark(o.name, bb[0][0], bb[0][1], bb[1][0], bb[1][1])
     for c in range(L["nc"]):
         for r in range(L["nr"]):
-            n_ = len(cover.get((c, r), []))
-            if n_ == 0:
+            ns_ = [len(cover.get((c, r, qi), [])) for qi in range(4)]
+            if min(ns_) == 0:
                 errs.append(f"T12 floor gap at cell ({c},{r})")
-            elif n_ > 1:
-                errs.append(f"T12 floor overlap at cell ({c},{r}): {cover[(c, r)]}")
+            elif max(ns_) > 1:
+                errs.append(f"T12 floor overlap at cell ({c},{r}): "
+                            f"{sorted({n for qi in range(4) for n in cover.get((c, r, qi), [])})}")
     # 3 doors: free cells on both sides (exits: inside)
     blockers = [o for o in props if o.get("vki_mount") not in ("table", "wall_hung")] + links
     for d in L["doors"]:
@@ -2012,7 +2203,7 @@ def vki_check(scene, full=False, t19=True, bfs=True, palette=True):
                 continue
             if vki_rooms_box_hit(boxes[a.name], boxes[b.name]) and vki_rooms_touch(a, b, cache):
                 errs.append(f"T12 prop clash {a.name} / {b.name}")
-    struct = walls + posts + links + leaves
+    struct = walls + posts + links + leaves + [o for o in objs if cls_of(o) == "rock"]
     sboxes = {o.name: vki_rooms_obj_box(o) for o in struct + sills}
     for a in props + overlays:
         hung = a.get("vki_mount") == "wall_hung"
@@ -2020,6 +2211,8 @@ def vki_check(scene, full=False, t19=True, bfs=True, palette=True):
             r_ = math.radians(a.get("vki_rot", 0))
             bdir = Vector((-math.sin(r_), math.cos(r_)))
         for s_ in struct + (sills if cls_of(a) == "overlay" else []):
+            if a.get("vki_wall_anchor") and cls_of(s_) in ("wall", "post", "rock"):
+                continue                                                 # webs: anchored into the (cave) rock
             if hung and cls_of(s_) == "wall":
                 d = (vki_mw(s_) @ Vector((1, 0, 0))).to_2d() - vki_mw(s_).translation.to_2d()
                 if abs(d.normalized().dot(bdir)) < 1e-3:

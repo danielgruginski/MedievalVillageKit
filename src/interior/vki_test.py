@@ -729,8 +729,12 @@ def vki_budget(o):
         return (12, 12) if "_Q" in o.name else (24, 24)
     if cls == "leaf":
         return (800, 800)
-    if cls == "link":
+    if cls in ("link", "pit"):
         return (6000, 6000)
+    if cls == "rock":
+        return (1200, 1200)
+    if cls == "ground":
+        return (1500, 1500)
     if cls in ("overlay", "fx"):
         return (400, 400)
     if cls == "prop":
@@ -760,6 +764,8 @@ VKI_REQ_META = {
     "post": ["vki_family", "vki_height", "vki_thick", "vki_post_rule"],
     "leaf": ["hinge_axis", "vki_leaf_state"],
     "prop": ["vki_mount"],
+    "rock": ["vki_family", "vki_corners"],
+    "ground": ["vki_family", "vki_corners"],
 }
 
 
@@ -857,7 +863,13 @@ def vki_t11_placement(objs, pairs=()):
         if "Stair_Up" in piece and rr == 180:
             errs.append(f"T11 {o.name}: Stair_Up at 180")
         on = lambda a, s: abs(a / s - round(a / s)) < 1e-4
-        if cls in ("wall", "post", "floor", "link"):
+        if o.get("vki_kind") == "Q075":                  # adventure kit: quarter floors on the 0.75 lattice
+            import re as _re
+            m4 = _re.search(r"_R([0-3])([0-3])", piece)
+            want = (int(round(x / 0.75)) % 4, int(round(y / 0.75)) % 4)
+            if not (on(x, 0.75) and on(y, 0.75)) or not m4 or (int(m4.group(1)), int(m4.group(2))) != want:
+                errs.append(f"T11 {o.name}: quarter floor off its 0.75 lattice / parity {want}")
+        elif cls in ("wall", "post", "floor", "link", "rock", "ground"):
             if not (on(x, 1.5) and on(y, 1.5)):
                 errs.append(f"T11 {o.name}: structure off the 1.5 lattice ({x:.4f},{y:.4f})")
             # the parity / even-node rule is about the world-locked t 3.0 FLOOR UVs, so it applies only to pieces
@@ -1274,12 +1286,24 @@ def vki_t18_namespace(texts=None):
 
 # ---------------------------------------------------------------- T19 visibility (assembly step)
 def vki_ray_blocked(sc, cam, point, tol=0.3, dg=None):
-    """None when the ray camera -> point reaches within tol of the point, else (object name, hit location)"""
+    """None when the ray camera -> point reaches within tol of the point, else (object name, hit location).
+    Dungeon kit: objects marked vki_see_through (iron bars, barred gates, the cage) do not block -- the ray continues
+    through them, as the eye does between the bars."""
     dg = dg or vki_depsgraph(sc)
-    cam = Vector(cam); point = Vector(point)
-    d = point - cam; L = d.length
-    hit, loc, nrm, idx, ob, mat = sc.ray_cast(dg, cam, d.normalized(), distance=max(L - tol, 1e-4))
-    return (ob.original.name, tuple(round(c, 3) for c in loc)) if hit else None
+    org = Vector(cam); point = Vector(point)
+    for _i in range(64):
+        d = point - org; L = d.length
+        if L <= tol:
+            return None
+        dn = d.normalized()
+        hit, loc, nrm, idx, ob, mat = sc.ray_cast(dg, org, dn, distance=max(L - tol, 1e-4))
+        if not hit:
+            return None
+        if ob.original.get("vki_see_through"):
+            org = loc + dn * 1e-3
+            continue
+        return (ob.original.name, tuple(round(c, 3) for c in loc))
+    return None
 
 
 def vki_cam_loc(target, D, pitch=None):
