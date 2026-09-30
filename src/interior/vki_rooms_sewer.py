@@ -51,6 +51,7 @@ VKI_ROOMS.update({
                "cave": dict(cells="rest", floor="CaveFloor")},
         passages={("NS", 6, 1): "gaol", ("EW", 3, 7): "street"},
         tunnels={(16, 7): "caverns"},
+        channel_sinks={(14, 5): (1, 0)},             # the channel drains east into the cave (flow, for Unity)
         links=[("gaol", "passage", "VKI_Dungeon_B1"), ("street", "passage", "@surface"),
                ("caverns", "passage", "VKI_Dungeon_B4")],
         pits=[("Pit_Pool_300x300", 9.0, 0.0)],

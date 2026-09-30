@@ -75,6 +75,9 @@ rubble-cored body, 0.75 m coping units, dressed jambs, voussoirs and quoins) in 
 - **Width.** A one-cell channel is 1.2 m of water between its rims. The water reads as green-brown water; darker
   water read as holes.
 - **Tri budget:** 48–200 per tile. The level's 36 tiles take 4,096 triangles.
+- **Flow, for Unity.** `R["channel_sinks"] = {cell: (dx, dy)}` marks where a channel drains. Every channel tile gets
+  `vki_flow`, the direction toward the drain, for Unity's water shader ([WATER_KIT.md](WATER_KIT.md) §1). The level
+  drains east into the cave.
 
 **Props.**
 

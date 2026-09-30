@@ -14,9 +14,9 @@ VKI_ROOT = r"E:\Unity\Projects\GameArtGeneration\MedievalVillageKit"
 VKI_RENDERS = os.path.join(VKI_ROOT, "renders", "interior")
 # load order of the package texts (vki_tex / vki_textiles are generators, executed on demand, not listed)
 VKI_TEXTS = ["vki_fam_timber", "vki_floors", "vki_fam_stone", "vki_fam_board", "vki_fam_wattle", "vki_fam_ashlar",
-             "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_fam_sewer", "vki_props_home", "vki_props_tavern",
+             "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_fam_sewer", "vki_fam_water", "vki_props_home", "vki_props_tavern",
              "vki_props_smithy", "vki_props_chapel", "vki_props_dungeon", "vki_props_adventure", "vki_props_lair",
-             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_test"]
+             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_test"]
 
 
 VKI_CORE_TEXTS = ("vki_fam_timber", "vki_floors", "vki_test")    # a failure here raises; package texts only warn
@@ -711,7 +711,11 @@ VKI_MAT_MAP = {
     "M_VKI_SewerBlock": dict(tex="T_VKI_StoneBlockIn", tint=(0.56, 0.60, 0.52), ph="#5E5E54", nstr=0.9, spec=0.3),
     "M_VKI_SewerWater": dict(kind="gloss", col=(.10, .11, .065), rough=0.08, alpha=0.93),
     "M_VKI_Sludge": dict(kind="gloss", col=(.060, .064, .028), rough=0.30, alpha=0.90),
-    "M_VKI_Foam": dict(kind="flat", col=(.40, .44, .36), rough=0.7),
+    "M_VKI_Foam": dict(kind="flat", col=(.62, .66, .62), rough=0.7),
+    # water kit: clear cave water over a pebbly bed (the bed shows through), pale falling water; Unity animates them
+    "M_VKI_StreamWater": dict(kind="gloss", col=(.070, .115, .125), rough=0.04, alpha=0.72),
+    "M_VKI_StreamBed": dict(tex="T_VKI_CaveFloor", tint=(0.46, 0.50, 0.50), ph="#3A3632", nstr=1.3, spec=0.5),
+    "M_VKI_WaterFall": dict(kind="gloss", col=(.50, .58, .60), rough=0.25, alpha=0.82),
 }
 VKI_SLOT_DEFAULTS = ["M_VKI_Boards_NS", "M_VKI_PlasterCream", "M_VKI_PlasterCream", "M_VK_Hewn",
                      "M_VKI_StoneBlockIn", "M_VKI_Brick", "M_VKI_Straw", "M_VKI_Ash", "M_VKI_Textiles", "M_VKI_Wax",
@@ -739,7 +743,8 @@ VKI_STYLE_MATS = {
                 "Stained_Night": "M_VKI_Stained_Night"},
     "glow": {"GlowIn": "M_VKI_GlowIn", "Glow": "M_VK_Glow"},
     "water": {"Water": "M_VK_Water", "Ale": "M_VKI_Ale", "WaterMurky": "M_VKI_WaterMurky", "Puddle": "M_VKI_Puddle",
-              "SewerWater": "M_VKI_SewerWater", "Sludge": "M_VKI_Sludge"},
+              "SewerWater": "M_VKI_SewerWater", "Sludge": "M_VKI_Sludge", "StreamWater": "M_VKI_StreamWater",
+              "WaterFall": "M_VKI_WaterFall"},
     # "shutter", "cloth", "cloth_b": the exterior variants (variant_mat), e.g. shutter "Red", cloth "Blue"
 }
 VKI_FAMILY_SLOT_MATS = {

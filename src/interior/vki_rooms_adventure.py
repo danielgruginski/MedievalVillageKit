@@ -128,30 +128,81 @@ def vki_cave_tiles(R, P, cells, problems, arms=None):
     return out
 
 
+def vki_cave_flow(cells, sinks):
+    """flow directions over painted water cells (streams, sewer channels; for Unity's water shaders): a breadth-first
+    search from the sinks ({cell: (dx, dy)}, the way the water leaves there); every other reached cell flows toward
+    its neighbour one step nearer a sink. -> {cell: (dx, dy)} (cells no sink reaches: left out, still water)"""
+    flow = {tuple(c): tuple(d) for c, d in sinks.items() if tuple(c) in cells}
+    todo = list(flow)
+    while todo:
+        nxt = []
+        for c in todo:
+            for d in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                q = (c[0] + d[0], c[1] + d[1])
+                if q in cells and q not in flow:
+                    flow[q] = (-d[0], -d[1])
+                    nxt.append(q)
+        todo = nxt
+    return flow
+
+
+def vki_cave_tile_flow(cs, flow):
+    """a water tile's flow: the normalised sum of its water corners' flows, or None"""
+    fx = sum(flow[c][0] for c in cs if c in flow)
+    fy = sum(flow[c][1] for c in cs if c in flow)
+    L = math.hypot(fx, fy)
+    return [round(fx / L, 3), round(fy / L, 3)] if L > 1e-6 else None
+
+
 def vki_cave_ground(R, P, zmap, problems):
-    """the chasm: cells coded "vv" or "==" (under a bridge) are chasm (X). A ground tile stands on every node with
-    chasm among its four cells (code SW SE NE NW, X / O; never rotated; the node's parity picks Q00..Q11).
-    -> (tiles [dict(piece, x, y, node, code, style)], {cell: set of its quarters (qa, qb) the tiles cover})"""
+    """the chasm and the streams: cells coded "vv" or "==" (under a bridge) are chasm, cells coded "ss" stream. A
+    ground tile stands on every node with chasm or stream among its four cells (code SW SE NE NW, X / O; never
+    rotated; the node's parity picks Q00..Q11): the chasm's where the chasm is (a stream there counts as chasm: it
+    pours in), else the stream's. A stream cell next to a chasm cell gets a waterfall (Prop_Waterfall_Chasm on its
+    centre, facing the chasm) and is a sink of the stream's flow (R["stream_sinks"] adds more: {cell: (dx, dy)}).
+    -> (tiles [dict(piece, x, y, node, code, style, flow)], {cell: set of its quarters (qa, qb) the tiles cover},
+    the waterfalls as prop tuples)"""
     nc, nr, codes = P["nc"], P["nr"], P["codes"]
-    xs = {c for c, v in codes.items() if v in ("vv", "==") and 0 <= c[0] < nc and 0 <= c[1] < nr}
+    inside = lambda c: 0 <= c[0] < nc and 0 <= c[1] < nr
+    xs = {c for c, v in codes.items() if v in ("vv", "==") and inside(c)}
+    ss = {c for c, v in codes.items() if v == "ss" and inside(c)}
     pc = vki_rooms_pit_cells(R)
+    falls, sinks = [], {}
+    for c in sorted(ss):
+        for d, rot in (((0, -1), 0), ((1, 0), 90), ((0, 1), 180), ((-1, 0), -90)):
+            if (c[0] + d[0], c[1] + d[1]) in xs:
+                falls.append(("Waterfall_Chasm", VKI_IG * (c[0] + 0.5), VKI_IG * (c[1] + 0.5), rot, None, None,
+                              {"hug": False}))
+                sinks.setdefault(c, d)
+    for c, d in R.get("stream_sinks", {}).items():
+        sinks.setdefault(tuple(c), tuple(d))
+    flow = vki_cave_flow(ss, sinks)
     tiles, cov = [], {}
     for i in range(nc + 1):
         for j in range(nr + 1):
             cs = ((i - 1, j - 1), (i, j - 1), (i, j), (i - 1, j))
-            if not any(c in xs for c in cs):
+            chasm, stream = any(c in xs for c in cs), any(c in ss for c in cs)
+            if not (chasm or stream):
                 continue
             if any(c in pc for c in cs):
-                problems.append(f"cave: the chasm at node ({i},{j}) touches a pit cell")
-            code = "".join("X" if c in xs else "O" for c in cs)
-            piece = "SM_VKI_Ground_Cave_XXXX" if code == "XXXX" else f"SM_VKI_Ground_Cave_{code}_Q{i % 2}{j % 2}"
-            zc = next((c for c in cs if c not in xs and 0 <= c[0] < nc and 0 <= c[1] < nr), None)
+                problems.append(f"cave: the {'chasm' if chasm else 'stream'} at node ({i},{j}) touches a pit cell")
+            if chasm:
+                code = "".join("X" if (c in xs or c in ss) else "O" for c in cs)
+                piece = "SM_VKI_Ground_Cave_XXXX" if code == "XXXX" else f"SM_VKI_Ground_Cave_{code}_Q{i % 2}{j % 2}"
+            else:
+                code = "".join("X" if c in ss else "O" for c in cs)
+                piece = "SM_VKI_Ground_Stream_XXXX" if code == "XXXX" else \
+                    f"SM_VKI_Ground_Stream_{code}_Q{i % 2}{j % 2}"
+            zc = next((c for c in cs if c not in xs and c not in ss and inside(c)), None)
             zn = zmap.get(zc) if zc else None
-            tiles.append(dict(piece=piece, x=VKI_IG * i, y=VKI_IG * j, node=(i, j), code=code,
-                              style={"floor": R["zones"][zn]["floor"]} if zn else None))
+            t = dict(piece=piece, x=VKI_IG * i, y=VKI_IG * j, node=(i, j), code=code,
+                     style={"floor": R["zones"][zn]["floor"]} if zn else None)
+            if stream and not chasm:
+                t["flow"] = vki_cave_tile_flow([c for c in cs if c in ss], flow)
+            tiles.append(t)
             for c, q in zip(cs, ((1, 1), (0, 1), (0, 0), (1, 0))):
                 cov.setdefault(c, set()).add(q)
-    return tiles, cov
+    return tiles, cov, falls
 
 
 def vki_cave_channels(R, P, problems):
@@ -161,7 +212,8 @@ def vki_cave_channels(R, P, problems):
     floors. -> (tiles [dict(piece, x, y, rot, node, code)], the channel cells)"""
     nc, nr, codes = P["nc"], P["nr"], P["codes"]
     xs = {c for c, v in codes.items() if v == "ww" and 0 <= c[0] < nc and 0 <= c[1] < nr}
-    chasm = {c for c, v in codes.items() if v in ("vv", "==")}
+    chasm = {c for c, v in codes.items() if v in ("vv", "==", "ss")}
+    flow = vki_cave_flow(xs, R.get("channel_sinks", {}))            # {cell: (dx, dy)}: where the channel drains
     tiles = []
     for i in range(nc + 1):
         for j in range(nr + 1):
@@ -169,11 +221,12 @@ def vki_cave_channels(R, P, problems):
             if not any(c in xs for c in cs):
                 continue
             if any(c in chasm for c in cs):
-                problems.append(f"cave: the channel at node ({i},{j}) touches the chasm")
+                problems.append(f"cave: the channel at node ({i},{j}) touches the chasm or a stream")
             code = "".join("X" if c in xs else "O" for c in cs)
             m, kk = vki_cav_canon(code)
             tiles.append(dict(piece=f"SM_VKI_Ground_Sewer_{m}", x=VKI_IG * i, y=VKI_IG * j,
-                              rot=(90 * kk + 180) % 360 - 180, node=(i, j), code=code))
+                              rot=(90 * kk + 180) % 360 - 180, node=(i, j), code=code,
+                              flow=vki_cave_tile_flow([c for c in cs if c in xs], flow)))
     return tiles, xs
 
 
@@ -186,7 +239,7 @@ def vki_cave_layout(name, R, P, zmap):
     problems = list(WL["problems"])
     cells = vki_cave_cells(R, P)
     rocks = vki_cave_tiles(R, P, cells, problems, WL["arms"])
-    grounds, cov = vki_cave_ground(R, P, zmap, problems)
+    grounds, cov, falls = vki_cave_ground(R, P, zmap, problems)
     chans, ccells = vki_cave_channels(R, P, problems)
     pcells = vki_rooms_pit_cells(R)
     floors = []
@@ -208,7 +261,8 @@ def vki_cave_layout(name, R, P, zmap):
                                            x=VKI_IG * c + 0.75 * qa, y=VKI_IG * r + 0.75 * qb, zone=zn, style=st))
     return dict(name=name, R=R, P=P, nc=nc, nr=nr, W=P["W"], D=P["D"], zmap=zmap, segs=WL["segs"],
                 pieces=WL["pieces"], posts=WL["posts"], floors=floors, doors=WL["doors"], stair_cells={},
-                pit_cells=pcells, problems=problems, rocks=rocks, grounds=grounds + chans, cells=cells)
+                pit_cells=pcells, problems=problems, rocks=rocks, grounds=grounds + chans, cells=cells,
+                auto_props=falls)
 
 
 def vki_cave_tunnel(ctx, rk, o):

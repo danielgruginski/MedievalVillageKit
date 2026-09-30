@@ -167,6 +167,14 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
   culverts where a channel passes under a wall, an outfall, a sluice, slab bridges (`vki_bridge` decks), a ladder link,
   sewer breaches into caves. Textures `T_VKI_SewerBrick` / `T_VKI_SewerFloor`, the `Sewer` preset. Level
   `VKI_Sewer_S1` (0 errors, 0 warnings); every other level still checks at 0 errors.
+- **Water kit (61 more masters, 616 in all; see [docs/WATER_KIT.md](docs/WATER_KIT.md)):** the user asked for
+  "natural water, streams and waterfalls", the animation and shaders to be done in Unity. Streams are painted `ss` in a
+  cave map: 57 dual-grid stream tiles (class `ground`, like the chasm's: sloping banks, a bed at -0.45, clear water at
+  -0.22, soft colliders). A stream meeting the chasm pours in (the chasm's tiles take the shared nodes and the
+  assembler adds `Prop_Waterfall_Chasm`); springs fall from rock faces (`Prop_Waterfall_Rock` / `_RockLow`); stepping
+  stones cross. Every stream and sewer-channel tile carries `vki_flow` (a BFS from the sinks) and the falls `vki_fx`
+  sockets for Unity. Level `VKI_Cave_Falls` (0 errors, 0 warnings). The user's next asks: dwarven halls, mines, the
+  connection to the town.
 
 ## 5. Open issues and ideas (none started unless marked done)
 
@@ -294,6 +302,10 @@ Adventure kit (2026-09-29; details in docs/ADVENTURE_KIT.md):
 35. Sewers: channel water darker than `M_VKI_SewerWater` read as holes in the floor; the channel tiles' water
     surface must keep vki_dark 0 (the slime darkening multiplies the material). The doorway rush mats are off in the
     sewers (`R["rush_mats"] = False`).
+36. Water: a stream may meet the chasm (it pours in) and rock (it runs under), not a pit, a sewer channel or another
+    water type at one node. A chasm fall facing east or west is edge-on to the game camera. Streams are one level
+    (-0.22); height changes only at waterfalls. Unity: water tiles carry `vki_flow` (world x / y), falls `vki_fx`
+    (`waterfall`, `mist`); the static sheets are placeholders for a scrolling waterfall shader.
 
 ## 6. Gotchas
 

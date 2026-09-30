@@ -1516,7 +1516,7 @@ def vki_rooms_props(ctx):
     default, wall_floor always), table dressing on its host, and the pull fallback when a wall_floor hug fails"""
     R, props = ctx["R"], ctx["colls"]["Props"]
     placed = []
-    for idx, pr in enumerate(R.get("props", [])):
+    for idx, pr in enumerate(list(R.get("props", [])) + list(ctx["L"].get("auto_props", []))):   # + waterfalls
         short, x, y, rot, style, mount = pr[:6]
         opts = dict(pr[6]) if len(pr) > 6 else {}
         piece, src = vki_rooms_resolve(short)
@@ -1807,6 +1807,8 @@ def vki_build_scene(name):
         for gt in L.get("grounds", []):                 # cave levels: the chasm's / channels' dual-grid ground tiles
             o = vki_rooms_put(ctx, shell, gt["piece"], gt["x"], gt["y"], gt.get("rot", 0), style=gt.get("style"),
                               walls=[])
+            if gt.get("flow"):                          # water tiles: the flow direction, for Unity's water shaders
+                o["vki_flow"] = json.dumps(gt["flow"])
             o["vki_node"] = json.dumps(list(gt["node"]))
         for rk in L.get("rocks", []):                   # cave levels: the dual-grid rock tiles
             o = vki_rooms_put(ctx, shell, rk["piece"], rk["x"], rk["y"], rk["rot"], walls=[])

@@ -309,9 +309,10 @@ Every use point and trigger is reached from every spawn; the few unreached raste
 (pockets between rock lobes and the chasm, corners behind props). The only warning left is B4's corner web rising
 over a walk lane (R-occ3); it is see-through.
 
-`VKI_Adventure_Catalog` shows every adventure master, labelled, in twenty-six groups, with a camera each
-(`VKI_AdvCat_Cam_G0`…`G25`). The rock tiles take four rows, the ground tiles four (one per parity), the Cave walls
-one, the breaches and the spill one, the wall-backed rock tiles five, and the sewer kit two
+`VKI_Adventure_Catalog` shows every adventure master, labelled, in thirty-one groups, with a camera each
+(`VKI_AdvCat_Cam_G0`…`G30`). The rock tiles take four rows, the ground tiles four (one per parity), the Cave walls
+one, the breaches and the spill one, the wall-backed rock tiles five, the sewer kit two and the water kit five
+([WATER_KIT.md](WATER_KIT.md))
 ([SEWER_KIT.md](SEWER_KIT.md)). The vault and the secret door show their leaves; the floor leaves the pits open.
 
 <table>
@@ -349,8 +350,8 @@ Changes to the shared texts:
 - `vki_test`: the pit budget (6000 tris, as links); the rock and ground classes (budgets 1200 / 1500, lattice,
   `vki_corners`, the ground tiles' node parity); the quarter floors' 0.75 lattice and parity (T11).
 
-The nine interiors still check at 0 errors, and `vki_test_all()` passes for all 555 masters (with the sewer kit's
-30, [SEWER_KIT.md](SEWER_KIT.md)).
+The nine interiors still check at 0 errors, and `vki_test_all()` passes for all 616 masters (with the sewer kit's
+30, [SEWER_KIT.md](SEWER_KIT.md), and the water kit's 61, [WATER_KIT.md](WATER_KIT.md)).
 
 ```python
 g0={}; exec(bpy.data.texts["vki_core"].as_string(), g0); g=g0["vki_ns"]()
