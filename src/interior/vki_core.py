@@ -16,7 +16,7 @@ VKI_RENDERS = os.path.join(VKI_ROOT, "renders", "interior")
 VKI_TEXTS = ["vki_fam_timber", "vki_floors", "vki_fam_stone", "vki_fam_board", "vki_fam_wattle", "vki_fam_ashlar",
              "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_fam_sewer", "vki_fam_water", "vki_fam_dwarf", "vki_props_home", "vki_props_tavern",
              "vki_props_smithy", "vki_props_chapel", "vki_props_dungeon", "vki_props_adventure", "vki_props_lair",
-             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_rooms_dwarf", "vki_props_poi", "vki_props_debris", "vki_test"]
+             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_rooms_dwarf", "vki_props_poi", "vki_props_debris", "vki_fam_mine", "vki_rooms_mine", "vki_test"]
 
 
 VKI_CORE_TEXTS = ("vki_fam_timber", "vki_floors", "vki_test")    # a failure here raises; package texts only warn
@@ -50,7 +50,7 @@ def vki_ns(strict=False):
 VKI_IG = 1.5                                   # interior grid
 VKI_T = {"O": 0.50, "P": 0.30}                 # wall thickness by class
 VKI_H_FULL = {"Timber": 3.0, "Stone": 3.0, "Board": 3.0, "Wattle": 2.4, "Ashlar": 4.5, "Dungeon": 3.0, "Bars": 3.0,
-              "Ancient": 3.0, "Cave": 3.0, "Sewer": 3.0, "Dwarf": 3.0}
+              "Ancient": 3.0, "Cave": 3.0, "Sewer": 3.0, "Dwarf": 3.0, "Mine": 3.0}
 VKI_H_UPPER = 3.0                              # upper floors use 3.0
 VKI_PROUD = 0.03
 VKI_CAP_HW = {"O": 0.28, "P": 0.18}            # caps, rails, skirtings, oak members
@@ -130,8 +130,14 @@ VKI_FAMILIES = {
                   posts="Corner: square pier with a stepped capital and a gold ring; Mid: pilaster",
                   b_variant="a carved relief: frame, lozenge, gold rune disc", rake=True, rhythm=False, prio=6,
                   h_fit=3.0, sag=0.0, coping_jitter=0.006),
+    # mine kit (docs/MINE_KIT.md, text vki_fam_mine): timber lining for galleries in a cave map -- lagging boards on
+    # both faces of a packed-rock core, hewn posts; partitions only (no rakes, no doors: a drift's mouth stays open)
+    "Mine": dict(cls="O", H=3.0, wall_a="CaveRock", cap="Hewn", base=None,
+                 cut_cap="a hewn cap beam 0.78-1.00 (CAP top)", full_top="a hewn wall plate 2.76-3.00 (CAP top)",
+                 posts="Corner / Mid: hewn posts through the lining, end-grain tops", b_variant=None, rake=False,
+                 rhythm=True, prio=4, h_fit=3.0, sag=0.0),
 }
-VKI_POST_PRIO = ["Cave", "Ancient", "Dwarf", "Dungeon", "Sewer", "Stone", "Ashlar", "Timber", "Wattle", "Board",
+VKI_POST_PRIO = ["Cave", "Ancient", "Dwarf", "Dungeon", "Sewer", "Mine", "Stone", "Ashlar", "Timber", "Wattle", "Board",
                  "Bars"]  # §2.3
 
 # ---------------------------------------------------------------- §4.1 slots
@@ -581,7 +587,7 @@ def vki_default_meta(piece, k, bbox):
 
 # ---------------------------------------------------------------- §2.6 seam rule (wobble)
 VKI_AMP = {"Timber": .012, "Stone": .020, "Ashlar": .010, "Wattle": .020, "Board": 0.0, "Dungeon": .020, "Bars": 0.0,
-           "Ancient": .020, "Cave": 0.0, "Sewer": .015, "Dwarf": .006}
+           "Ancient": .020, "Cave": 0.0, "Sewer": .015, "Dwarf": .006, "Mine": 0.0}
 VKI_SECOND = {"A": "B", "B": "A"}
 
 
@@ -743,6 +749,10 @@ VKI_MAT_MAP = {
     # debris (vki_props_debris): forge slag, glassy black
     "M_VKI_Slag": dict(kind="gloss", col=(0.035, 0.030, 0.035), rough=0.18, alpha=1.0),
     "M_VKI_Rust": dict(kind="flat", col=(0.26, 0.15, 0.09), rough=0.85),                      # old iron
+    # mine kit (docs/MINE_KIT.md, vki_fam_mine): weathered oak for the track and the carts, the veins' quartz and ore
+    "M_VKI_MineWood": dict(tex="T_VK_Wood", tint=(0.92, 0.88, 0.84), ph="#6A5442", nstr=1.2, spec=0.15),
+    "M_VKI_Quartz": dict(kind="flat", col=(0.74, 0.73, 0.68), rough=0.45),
+    "M_VKI_IronOre": dict(kind="flat", col=(0.36, 0.13, 0.07), rough=0.8),
 }
 VKI_SLOT_DEFAULTS = ["M_VKI_Boards_NS", "M_VKI_PlasterCream", "M_VKI_PlasterCream", "M_VK_Hewn",
                      "M_VKI_StoneBlockIn", "M_VKI_Brick", "M_VKI_Straw", "M_VKI_Ash", "M_VKI_Textiles", "M_VKI_Wax",
@@ -791,6 +801,8 @@ VKI_FAMILY_SLOT_MATS = {
              VKI_STONE_BLOCK_IN: "M_VKI_CaveRock"},
     "Sewer": {VKI_WALL_A: "M_VKI_SewerBrick", VKI_WALL_B: "M_VKI_SewerBrick", VKI_CAP: "M_VKI_SewerCap",
               VKI_STONE_BLOCK_IN: "M_VKI_SewerBlock"},
+    "Mine": {VKI_WALL_A: "M_VKI_CaveRock", VKI_WALL_B: "M_VKI_CaveRock", VKI_CAP: "M_VK_Hewn",
+             VKI_STONE_BLOCK_IN: "M_VKI_CaveRock"},
     "Dwarf": {VKI_WALL_A: "M_VKI_DwarfIn", VKI_WALL_B: "M_VKI_DwarfIn", VKI_CAP: "M_VKI_DwarfCap",
               VKI_STONE_BLOCK_IN: "M_VKI_DwarfBlock"},
 }
@@ -1641,8 +1653,11 @@ VKI_PRESETS = {
     # warm key flattened the fires' warm pools), of about the same luminance as the first warm one
     "Hall": dict(world=(0.10, 0.10, 0.11), world_strength=0.90, key=0.55, key_color=(.90, .92, 1.0),
                  fill=0.95, fill_color=(.78, .80, .86), window_w=700.0, window_color=(.78, .86, 1.0)),
+    # mine kit: galleries lit by lanterns on the timber sets -- a dim neutral key and fill, the lanterns' warm pools
+    "Mine": dict(world=(0.09, 0.09, 0.10), world_strength=0.90, key=0.60, key_color=(.84, .86, .95),
+                 fill=0.95, fill_color=(.72, .74, .82), window_w=700.0, window_color=(.78, .86, 1.0)),
 }
-VKI_DARK_PRESETS = ("Night", "Dungeon", "Cavern", "Sewer", "Hall")   # floor-level target 0.15 (vki_check), torch-lit
+VKI_DARK_PRESETS = ("Night", "Dungeon", "Cavern", "Sewer", "Hall", "Mine")   # floor-level target 0.15 (vki_check), torch-lit
 VKI_NIGHT_SPEC = dict(world_strength=0.35, key=0.35, fill=0.2)     # §6 start values (moodier, darker)
 VKI_KEY_DIR = (-0.1797, -0.4338, 0.8829)       # toward the light: elevation 62 deg, from the SSW (azimuth 202.5)
 VKI_FILL_DIR = (0.0, -0.6428, 0.7660)          # toward the camera: the fill shines along the view direction

@@ -37,7 +37,9 @@ VKI_ADVENTURE_SCENES = ["VKI_Dungeon_B3", "VKI_Dungeon_B4", "VKI_Dungeon_B5"]
 # The plan is a cell map: a cell coded "##" is rock, every other cell is open floor, everything outside the map is
 # rock (the plan's wall tokens are only a frame). Rock tiles (vki_fam_cave) stand on every node of the map whose four
 # cells are not all open; floors cover the map and a ring of cells round it (the rock may wander off a cell);
-# R["tunnels"] = {(i, j): link id} puts the tunnel tile on a perimeter node whose rock is a straight Full face;
+# R["tunnels"] = {(i, j): link id} puts the tunnel tile on a perimeter node whose rock is a straight Full face
+# (R["tunnel_kinds"] = {link id: "Adit"} takes the mine's timbered adit instead, vki_fam_mine); R["tracks"] lays a
+# mine's track (vki_mine_tracks, vki_rooms_mine);
 # R["cave_heights"] = {(c, r): "C" | "F"} overrides a rock cell's height.
 def vki_cave_cells(R, P):
     """{(c, r): 'O' | 'C' | 'F'} for the map and a ring of one cell round it. A rock cell is Cut (C) in the south
@@ -115,7 +117,8 @@ def vki_cave_tiles(R, P, cells, problems, arms=None):
                 if kk is None:
                     problems.append(f"cave: tunnel {lid} at node ({i},{j}) needs a straight Full face, corners {code}")
                 else:
-                    out.append(dict(piece="SM_VKI_Rock_Cave_OOFF_Tunnel", x=VKI_IG * i, y=VKI_IG * j,
+                    kind = R.get("tunnel_kinds", {}).get(lid, "Tunnel")     # "Adit": the mine's timbered mouth
+                    out.append(dict(piece="SM_VKI_Rock_Cave_OOFF_" + kind, x=VKI_IG * i, y=VKI_IG * j,
                                     rot=(90 * kk + 180) % 360 - 180, node=(i, j), code=code, tunnel=lid))
                     continue
             m, kk = vki_cav_canon(code)
@@ -271,7 +274,7 @@ def vki_cave_layout(name, R, P, zmap):
     return dict(name=name, R=R, P=P, nc=nc, nr=nr, W=P["W"], D=P["D"], zmap=zmap, segs=WL["segs"],
                 pieces=WL["pieces"], posts=WL["posts"], floors=floors, doors=WL["doors"], stair_cells={},
                 pit_cells=pcells, problems=problems, rocks=rocks, grounds=grounds + chans, cells=cells,
-                auto_props=falls)
+                auto_props=falls + (vki_mine_tracks(R, P, problems) if R.get("tracks") else []))   # + track
 
 
 def vki_cave_tunnel(ctx, rk, o):

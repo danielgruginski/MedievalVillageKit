@@ -1511,6 +1511,27 @@ def vki_rooms_gate(ctx, pc, door):
     return lf
 
 
+def vki_rooms_prop_link(ctx, o, lid):
+    """a prop that carries a scene link (R["props"] opts {"link": id}; the mine's lift, POI_Treadwheel): its R["links"]
+    entry (id, kind, target), the prompt (the master's vki_prompt_text), and the spawn at its vki_spawn_local facing
+    its local vki_spawn_facing (default 180: away from it)"""
+    lk = next((l for l in ctx["R"]["links"] if l[0] == lid), None)
+    if lk is None:
+        ctx["notes"].append(f"prop {o.name} carries link {lid}: no R['links'] entry")
+        return None
+    o["vki_link"] = lk[1]
+    o["vki_link_id"] = lid
+    o["vki_target"] = lk[2]
+    o["vki_prompt"] = o.get("vki_prompt_text", "Use")
+    o["vki_facing_min"] = 60
+    sl = vki_get(o, "vki_spawn_local", None) or [0.0, -1.60]
+    sx, sy = vki_rooms_local(o, sl[0], sl[1])
+    fac = float(o.get("vki_spawn_facing", 180))
+    vki_rooms_spawn(ctx, lid, round(sx, 4), round(sy, 4), (fac - float(o.get("vki_rot", 0))) % 360, o)
+    ctx["links"][lid] = o
+    return o
+
+
 def vki_rooms_props(ctx):
     """the prop list (source of truth) through vki_place: mounts, hug (floor props and wall_hung props hug by
     default, wall_floor always), table dressing on its host, and the pull fallback when a wall_floor hug fails"""
@@ -1549,6 +1570,8 @@ def vki_rooms_props(ctx):
                 o["vki_hug"] = json.dumps([dx, dy])
             o["vki_on"] = host.name
         o["vki_prop_index"] = idx
+        if opts.get("link"):
+            vki_rooms_prop_link(ctx, o, opts["link"])                  # a prop carrying a scene link (the lift)
         if opts.get("warn_ok"):
             o["vki_warn_ok"] = opts["warn_ok"]
         if edge:

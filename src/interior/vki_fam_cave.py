@@ -159,7 +159,7 @@ def vki_cav_field(x, y, code, seed, amp=VKI_CAV_AMP, notch=False, sym=False):
         0.25 * (2.0 * vki_vnoise(x / 0.18 + 5.3, y / 0.18 + 2.9, seed + 3) - 1.0)
     s = B + amp * vki_cav_window(x, y) * (n if sym else 0.4 + 0.6 * n)
     if notch:
-        T = VKI_CAV_TUNNEL
+        T = notch if isinstance(notch, dict) else VKI_CAV_TUNNEL          # a dict: another cleft (the mine's adit)
         s = min(s, 2.5 * max(abs(x) - T["hw"], y - T["back"]))
     return s
 
@@ -406,14 +406,14 @@ def vki_cav_tile(k, code, var="A", tunnel=False, arms=""):
     and bottom STONE_BLOCK_IN (CaveRock); the tunnel variant cuts a cleft under a fallen lintel; `arms` (wall arms,
     vki_cav_wall_clamp) keeps the rock off walls on the node's grid lines, its face there straight and upright."""
     k.set_family("Cave")
-    seed = vki_seed("CaveTile|%s|%s|%d" % (code, var, int(tunnel)))
+    seed = vki_seed("CaveTile|%s|%s|%d" % (code, var, int(bool(tunnel))))
     amp = VKI_CAV_AMP * (0.5 if tunnel else 1.0)
-    T = VKI_CAV_TUNNEL
+    T = tunnel if isinstance(tunnel, dict) else VKI_CAV_TUNNEL       # a dict: the mine's adit (vki_fam_mine)
     if arms:
         fld = lambda x, y: min(vki_cav_field(x, y, code, seed, amp), vki_cav_wall_clamp(code, arms, x, y))
         freeze = lambda x, y: vki_cav_wall_clamp(code, arms, x, y) < 0.15
     else:
-        fld = lambda x, y: vki_cav_field(x, y, code, seed, amp, tunnel)
+        fld = lambda x, y: vki_cav_field(x, y, code, seed, amp, T if tunnel else False)
         freeze = (lambda x, y: abs(x) < T["hw"] + 0.10 and y > -0.25) if tunnel else None
     sd = vki_cav_ms_solid(k, fld, lambda x, y: vki_cav_height(x, y, code, seed),
                           lambda H: (VKI_FOOT_Z, 0.0, 0.25 * H, 0.5 * H, 0.75 * H), vki_cav_prof, seed, freeze=freeze,
@@ -421,12 +421,14 @@ def vki_cav_tile(k, code, var="A", tunnel=False, arms=""):
     k.meta["vki_open_bottom"] = VKI_FOOT_Z
     bm = k.bm
     if tunnel:                                                           # the fallen lintel and the dark at the back
-        lv = vki_home_ico(k, (0.0, 0.10, T["lintel"] + 0.52), 1.0, VKI_STONE_BLOCK_IN, scale=(0.64, 0.30, 0.52),
-                          sub=1, jit=0.03, seed=5, smooth=False)
-        k.project(vki_faces_of(lv), VKI_STONE_BLOCK_IN)
-        for v in lv:
-            k.set_dark([v], 0.15)
-        vki_adv_box(k, -T["hw"] + 0.01, T["hw"] - 0.01, T["back"] - 0.035, T["back"] - 0.02, 0.0, 2.4, VOID)
+        if not isinstance(tunnel, dict):
+            lv = vki_home_ico(k, (0.0, 0.10, T["lintel"] + 0.52), 1.0, VKI_STONE_BLOCK_IN, scale=(0.64, 0.30, 0.52),
+                              sub=1, jit=0.03, seed=5, smooth=False)
+            k.project(vki_faces_of(lv), VKI_STONE_BLOCK_IN)
+            for v in lv:
+                k.set_dark([v], 0.15)
+        vki_adv_box(k, -T["hw"] + 0.01, T["hw"] - 0.01, T["back"] - 0.035, T["back"] - 0.02, 0.0,
+                    max(2.4, T["lintel"] + 0.3), VOID)
     for f in sd["tops"]:
         f.material_index = VKI_CAP
         for lp in f.loops:
@@ -452,6 +454,8 @@ def vki_cav_tile(k, code, var="A", tunnel=False, arms=""):
             if abs(v.co.x) < T["hw"] + 0.05 and v.co.y > -0.15 and v.co.z < T["lintel"] + 0.4:
                 k.set_dark([v], 0.55)
     vki_cav_rock_mats(k)
+    if isinstance(tunnel, dict) and tunnel.get("portal"):
+        tunnel["portal"](k, T)                                           # the adit's timbering (vki_mine_adit_portal)
     boxes = [[cx, cy, 1.1, w, d, 2.2] for cx, cy, w, d in vki_cav_boxes(lambda x, y: fld(x, y) > -VKI_CAV_FOOT)]
     k.meta.update(vki_class="rock", vki_corners=code, vki_nav="block", vki_collider=boxes or [[0, 0, -5, 0.01, 0.01, 0.01]],
                   vki_place_rule="dual grid: origin on a node (the tile centre), corners SW SE NE NW = the cells around "
@@ -463,7 +467,7 @@ def vki_cav_tile(k, code, var="A", tunnel=False, arms=""):
     if tunnel:
         k.meta.update(vki_tunnel=1, vki_nav="door", vki_trigger=[0.0, -0.45, 1.0, 0.8, 0.7, 2.0],
                       vki_spawn_local=[0.0, -1.60], vki_prompt_local=[0.0, -0.30, 1.40], vki_prompt_text="Go through",
-                      vki_opening={"x0": -T["hw"], "x1": T["hw"], "z0": 0.0, "z1": T["lintel"], "head": "natural",
+                      vki_opening={"x0": -T["hw"], "x1": T["hw"], "z0": 0.0, "z1": T["lintel"], "head": T.get("head", "natural"),
                                    "passage": 1})
 
 

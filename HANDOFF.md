@@ -213,6 +213,45 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
     style, clear of structure, props, use points, spawns and water. Heavy stone gathers at walls' and rock faces' feet.
   - **Result.** Ten adventure levels carry 15–32 pieces each (the generated cave 79), at 0 errors and with no new
     warnings.
+- **Mines (35 masters, 713 in all; see [docs/MINE_KIT.md](docs/MINE_KIT.md)).** The user: "start the mines" (next in
+  his queue after the dwarven halls; the connection to the town comes after).
+  - **The pieces** (`vki_fam_mine`):
+    - track tiles (overlays), laid from polylines by `vki_mine_tracks` (`R["tracks"]`; turntables at junctions,
+      "open" ends run on into an adit);
+    - carts (empty, ore, tipped);
+    - timber sets (plain, lamp, broken);
+    - veins (gold, iron, crystal: seam ribbons over rock lumps);
+    - `Pit_Shaft_300x300`, and `POI_Treadwheel` (the mine's point of interest: headframe, cage, a great treadwheel;
+      it carries the lift link);
+    - eight props and two debris pieces;
+    - the adit (`Rock_Cave_OOFF_Adit`, `R["tunnel_kinds"]`).
+  - **Framework hooks.**
+    - `vki_rooms_prop_link`: any prop can carry a scene link, via the props option `{"link": id}`.
+    - A tunnel dict in `vki_cav_tile`. The natural tunnel is unchanged.
+    - The track hook in `vki_cave_layout`.
+    - The Mine preset, `M_VKI_MineWood`, `M_VKI_Quartz`, `M_VKI_IronOre`.
+    - The debris "mine" theme.
+  - **The level** `VKI_Mine_M1` (22 × 13):
+    - the haulage gallery from the adit (`@surface`, for the town) to the tunnel back to `VKI_Dwarf_Hall` (whose
+      "mines" link now targets it);
+    - the gold stope and a caved-in drift;
+    - the shaft chamber with the treadwheel (the lift to `@deep`);
+    - the iron drift, the crystal cave, the miners' store.
+
+    0 errors, 0 warnings, 94,140 triangles.
+  - **Critiqued before handing over.** Head boards across the sets' caps read as ladder rungs from the game camera
+    (removed). Seams painted on the veins' faces read as teeth (now ribbons). The shaft chamber's south half was bare
+    (ore pile, tool rack, spare sleepers).
+  - **Timber lining** (the user asked whether timber-lined galleries would be too complicated, then: "ok, we can build
+    it").
+    - **The family.** A Mine wall family (8 masters): lagging boards on both faces of a packed-rock core, a wale that is
+      the Cut wall's cap, a wall plate, crib corners, hewn Mid posts.
+    - **Where it goes.** It is drawn on the cave map's inner grid lines, so the rock tiles behind become wall-backed.
+      Heights follow the rock behind: Cut mostly, Full where the rock is Full.
+    - **In `VKI_Mine_M1`.** The gallery, the drift mouths and the iron drift are lined: 32 walls, 35 posts. The level
+      is still 0 errors, 0 warnings, and has 98,398 triangles (+4.3k).
+    - **Looks.** The first boards (dark oak) read as black panels, and square corner posts as stumps. Now: hewn boards
+      darkened a board at a time, on the SHUTTER slot for the grain, and cribs.
 
 ## 5. Open issues and ideas (none started unless marked done)
 
@@ -360,6 +399,15 @@ Adventure kit (2026-09-29; details in docs/ADVENTURE_KIT.md):
     seed or its layout. Density is what a zone asks for: crowded zones place fewer (a piece needs its footprint clear).
     Unity may keep the placements or rerun the rules (DEBRIS.md section 4). Not built: wall-hung debris (hanging
     chains, more cobwebs, roots) and a second variant per piece.
+41. Mines: one level at one height. The shaft and the adit are links, so there are no inclines or winzes inside a
+    level. The timber lining (the Mine wall family) has no doorway, rake or damaged variant, and its height must follow
+    the rock behind it (Cut where the rock is Cut). Veins read best on north faces: the iron vein on the drift's east
+    end reads side-on. The barricade across an E-W drift is seen edge-on. Unity: `vki_track` (conn bits turned by the
+    tile's rotation give the cart graph), link kind "lift" (new), `vki_lift`, `vki_vein`, `vki_cart`. The treadwheel
+    is one mesh (split it to animate). The adit `@surface` is where the town connection plugs in.
+42. T19 checks a follow-mode level from one camera over its centre, so tall props near the level's ends (the timber
+    sets by the mine's tunnels) can hide a spawn or trigger they would not hide in play. `VKI_Mine_M1` moved its sets
+    off those rays; a follow grid of cameras (`vki_t19_visibility` accepts several) would test what the game sees.
 
 ## 6. Gotchas
 

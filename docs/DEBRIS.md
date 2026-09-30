@@ -87,6 +87,7 @@ debris=dict(density=0.40, seed=19,                      # a fraction of each zon
   | `SewerFloor` | sewer | sewer block |
   | `DwarfFloor`, `DwarfFlag` | dwarf | dwarf granite |
   | (by level setting) | forge | dwarf granite |
+  | (by level setting) | mine | cave rock |
 
   A zone whose floor maps to no theme (the town interiors) gets no debris.
 - **Kinds.** Each theme has a weighted list of kinds: stalactites only in caves, masonry mostly in ruins, slag and ore
@@ -113,6 +114,10 @@ debris=dict(density=0.40, seed=19,                      # a fraction of each zon
   tries to a wall or rock face, so it gathers at their feet as real rubble does. Scree lies along the nearest wall or
   rock face.
 - **Deterministic.** A level rebuilds with the same debris for the same seed.
+- **The mine theme** ([MINE_KIT.md](MINE_KIT.md)): rocks, rubble, ore, gravel, planks, a few sacks, crates and barrels,
+  and the mine kit's two debris pieces, `Overlay_Debris_Tools` (a pick with its haft snapped, a shovel, a dented
+  bucket, iron wedges; 180 tris) and `Overlay_Debris_Rail` (a loose length of rail, a sleeper and a broken one,
+  spikes; 88 tris). Mine floors are `EarthDamp`, so a mine level sets the theme per zone.
 
 ## 3. The levels
 
@@ -128,9 +133,10 @@ debris=dict(density=0.40, seed=19,                      # a fraction of each zon
 | `VKI_Cave_Falls` | 0.38 | 32 | 8,398 | 53,212 |
 | `VKI_Dwarf_Hall` | 0.40; runner 0, halls 0.08, foundry 0.60 (forge) | 17 | 4,374 | 103,074 |
 | `VKI_Cave_Test` (generated) | 0.34 | 79 | 21,764 | 98,484 |
+| `VKI_Mine_M1` ([MINE_KIT.md](MINE_KIT.md)) | 0.36, the "mine" theme; the store 0.18 | 35 | 9,104 | 98,398 |
 
-- **Checks.** All ten check at 0 errors, and debris added no warnings (the ones left are listed in their kits' docs).
-  `vki_test_all()` passes for all 678 masters.
+- **Checks.** All eleven check at 0 errors, and debris added no warnings (the ones left are listed in their kits'
+  docs). `vki_test_all()` passes for all 713 masters (with the mine kit's).
 - **Placed vs wanted.** Fewer pieces land than the density asks for where a level is crowded: a piece needs its whole
   footprint clear.
 - **The generator.** `vki_cave_generate` gives its caves `debris=dict(density=0.34, seed=<its seed>)`.

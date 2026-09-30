@@ -63,7 +63,7 @@ VKI_ROOMS.update({
                     themes={"foundry": "forge"}),
         passages={("NS", 1, 8): "gate"},
         tunnels={(0, 6): "mines"},
-        links=[("gate", "passage", "@surface"), ("mines", "passage", "@mines")],
+        links=[("gate", "passage", "@surface"), ("mines", "passage", "VKI_Mine_M1")],
         lava_sinks={(7, 4): (0, -1), (12, 4): (0, -1)},          # the lava runs south (flow, for Unity)
         # the hall: x 9-21, y 4.5-13.5. Cross passages along the south and north rows (y 4.5-6, 12-13.5) join the side
         # walkways to the aisle round the lava channels' ends, so nothing stands on them but the throne's dais; the

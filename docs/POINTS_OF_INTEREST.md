@@ -4,7 +4,8 @@ Landmark pieces for the adventure levels ([ADVENTURE_KIT.md](ADVENTURE_KIT.md) a
 
 A point of interest (POI) is a single, more elaborate piece, meant to be placed **once** in a level. It is the thing a
 level is built round and the player remembers, where the tilesets and dressing are repeated freely. There is one per
-theme, six in all, in `vki_props_poi`. Each is placed in a level of its theme.
+theme, seven in all: six in `vki_props_poi`, and the mines' treadwheel in the mine kit ([MINE_KIT.md](MINE_KIT.md)).
+Each is placed in a level of its theme.
 
 <table>
 <tr>
@@ -31,8 +32,9 @@ theme, six in all, in `vki_props_poi`. Each is placed in a level of its theme.
 | `Prop_POI_NecroCircle` | dungeon | 3.7 × 3.7 × 1.1 | 3,170 | green ritual light, candles; `ritual_glow`, `rune_pulse` | disrupt |
 | `Prop_POI_RatKing` | sewers | 2.7 × 2.4 × 2.5 | 2,738 | candles; — | challenge |
 | `Prop_POI_SpringShrine` | water | 2.2 × 2.9 × 2.2 | 1,612 | crystal light (diffuse only); `spring_pour`, `shrine_motes` | drink |
+| `Prop_POI_Treadwheel` | mines | 7.1 × 2.8 × 3.7 | 2,144 | a lantern; `lantern` | descend (the lift) |
 
-The six together are 16,840 triangles, all well under the hero tier's 6,000 (T9).
+The first six together are 16,840 triangles, all well under the hero tier's 6,000 (T9); the treadwheel adds 2,144.
 
 - **Wyrm bones.** A spine of 29 vertebrae on a spline, with dorsal spines tallest over the shoulders. The ribs arch
   out to both sides (a few broken, one fallen). The skull has fangs, horns and dark sockets, lifted on its jaw hinge
@@ -61,6 +63,10 @@ The six together are 16,840 triangles, all well under the hero tier's 6,000 (T9)
   and candles on its rim. Behind it stands a framed stele, carved with a sun and its rays round a gold boss. A stone
   spout pours a thin stream (`M_VKI_WaterFall`) into the basin, foaming where it lands. Glowing crystals crown the
   stele, and three stepping stones lead up to it.
+- **The great treadwheel** (`vki_fam_mine`, [MINE_KIT.md](MINE_KIT.md) section 5). A headframe of two A-frames stands
+  over the shaft, carrying a sheave at 3.25 m. The rope runs from the sheave down to a timber cage at the landing, and
+  to the drum of a treadwheel 3 m across, its plane facing the camera. A signal bell, a kibble of ore and a lantern
+  stand on the landing. It is the only point of interest that is also a scene link (`vki_link` "lift").
 
 ## 2. What a point of interest carries (for Unity)
 
@@ -85,6 +91,7 @@ The six together are 16,840 triangles, all well under the hero tier's 6,000 (T9)
 | `VKI_Sewer_S1` | the rat king's throne | It sits in the grotto west of the sewer's breaches, in place of the gravel overlay. |
 | `VKI_Cave_Falls` | the sacred spring | It stands by the river, its stele backing onto the bank. |
 | `VKI_Cave_Test` | the wyrm bones | Placed by the cave generator: `poi=("POI_WyrmBones", 3, 4, "WY")`. |
+| `VKI_Mine_M1` | the great treadwheel | Built with the level: over the shaft (`Pit_Shaft_300x300`), the treadwheel west of it, the landing south. It carries the level's lift link (`{"link": "deep"}`). |
 
 - **The generator's `poi` option.** `vki_cave_generate(..., poi=(piece, w, h, code))` puts the POI on the w × h block
   of open cells nearest the map's centre. The block needs a cell of open ground all round and must be clear of the

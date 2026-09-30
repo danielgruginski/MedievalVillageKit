@@ -325,11 +325,12 @@ Every use point and trigger is reached from every spawn; the few unreached raste
 (pockets between rock lobes and the chasm, corners behind props). The only warning left is B4's corner web rising
 over a walk lane (R-occ3); it is see-through.
 
-`VKI_Adventure_Catalog` shows every adventure master, labelled, in thirty-five groups, with a camera each
-(`VKI_AdvCat_Cam_G0`…`G34`). The rock tiles take four rows, the ground tiles four (one per parity), the Cave walls
+`VKI_Adventure_Catalog` shows every adventure master, labelled, in thirty-eight groups, with a camera each
+(`VKI_AdvCat_Cam_G0`…`G37`). The rock tiles take four rows, the ground tiles four (one per parity), the Cave walls
 one, the breaches and the spill one, the wall-backed rock tiles five, the sewer kit two, the water kit five, the
 dwarf kit two ([DWARF_KIT.md](DWARF_KIT.md)), the points of interest one
-([POINTS_OF_INTEREST.md](POINTS_OF_INTEREST.md)) and the debris one ([DEBRIS.md](DEBRIS.md))
+([POINTS_OF_INTEREST.md](POINTS_OF_INTEREST.md)), the debris one ([DEBRIS.md](DEBRIS.md)) and the mine kit three
+([MINE_KIT.md](MINE_KIT.md))
 ([WATER_KIT.md](WATER_KIT.md))
 ([SEWER_KIT.md](SEWER_KIT.md)). The vault and the secret door show their leaves; the floor leaves the pits open.
 
@@ -368,10 +369,10 @@ Changes to the shared texts:
 - `vki_test`: the pit budget (6000 tris, as links); the rock and ground classes (budgets 1200 / 1500, lattice,
   `vki_corners`, the ground tiles' node parity); the quarter floors' 0.75 lattice and parity (T11).
 
-The nine interiors still check at 0 errors, and `vki_test_all()` passes for all 678 masters (with the sewer kit's
+The nine interiors still check at 0 errors, and `vki_test_all()` passes for all 713 masters (with the sewer kit's
 30, [SEWER_KIT.md](SEWER_KIT.md), the water kit's 61, [WATER_KIT.md](WATER_KIT.md), the dwarf kit's 36,
-[DWARF_KIT.md](DWARF_KIT.md), the six points of interest, [POINTS_OF_INTEREST.md](POINTS_OF_INTEREST.md), and the
-twenty debris pieces, [DEBRIS.md](DEBRIS.md)).
+[DWARF_KIT.md](DWARF_KIT.md), the six points of interest, [POINTS_OF_INTEREST.md](POINTS_OF_INTEREST.md), the
+twenty debris pieces, [DEBRIS.md](DEBRIS.md), and the mine kit's 35, [MINE_KIT.md](MINE_KIT.md)).
 
 ```python
 g0={}; exec(bpy.data.texts["vki_core"].as_string(), g0); g=g0["vki_ns"]()
