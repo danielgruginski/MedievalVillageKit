@@ -158,8 +158,15 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
   `Overlay_Spill` for floor seams. Demo `VKI_Cave_Breach` (0 errors, 0 warnings). **Cave generator**
   `vki_cave_generate` (the user asked for a larger cave spawned as a map): `VKI_Cave_Test`, 24 x 16, seed 7, 0
   errors. All five levels pass `vki_check` with 0 errors; `vki_test_all()` is clean for 525 masters; the nine
-  interiors still check at 0 errors. Viewer scene: `VKI_Adventure_Catalog` (24 groups). The workshop scene
+  interiors still check at 0 errors. Viewer scene: `VKI_Adventure_Catalog` (26 groups). The workshop scene
   `WS_vki_adventure` is empty.
+- **Sewer kit (30 more masters, 555 in all; see [docs/SEWER_KIT.md](docs/SEWER_KIT.md)):** the user asked for "some
+  sewers, including the transitions". A sewer level is a cave map: rock between the tunnels, brick walls (the Sewer
+  family, `vki_fam_sewer`) on the inner grid lines backed by wall-backed rock tiles, channels painted `ww` and built
+  from five dual-grid channel tiles (class `ground`, rotated, no floor: `vki_covers_floor` lists their X quarters),
+  culverts where a channel passes under a wall, an outfall, a sluice, slab bridges (`vki_bridge` decks), a ladder link,
+  sewer breaches into caves. Textures `T_VKI_SewerBrick` / `T_VKI_SewerFloor`, the `Sewer` preset. Level
+  `VKI_Sewer_S1` (0 errors, 0 warnings); every other level still checks at 0 errors.
 
 ## 5. Open issues and ideas (none started unless marked done)
 
@@ -284,6 +291,9 @@ Adventure kit (2026-09-29; details in docs/ADVENTURE_KIT.md):
     rock tiles on their nodes are the wall-backed ones (`vki_wall_arms`), picked by `vki_cave_tiles`. A breach in an
     N-S wall is hidden from the game camera by the wall south of it; put the one that should be seen in an E-W wall.
     The generated test cave (`VKI_Cave_Test`) is rebuilt from `scene["vki_generated"]` in a fresh namespace.
+35. Sewers: channel water darker than `M_VKI_SewerWater` read as holes in the floor; the channel tiles' water
+    surface must keep vki_dark 0 (the slime darkening multiplies the material). The doorway rush mats are off in the
+    sewers (`R["rush_mats"] = False`).
 
 ## 6. Gotchas
 

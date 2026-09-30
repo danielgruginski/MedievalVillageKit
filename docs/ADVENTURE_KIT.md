@@ -121,7 +121,7 @@ the rock or stand in the open cave (section 2, plans).
   sides are open, the rock is cut back round the wall's end, so the end is let into the rock face. Every corner code
   comes with every set of arms that has open floor beside each arm: 115 rotation classes, one master each, 104–424
   triangles. Their outline meets the plain tiles' at every tile edge that no wall crosses.
-- **Breaches** (`Wall_<Dungeon|Ancient>_Breach_150 / _300`, Full and Cut). The wall is knocked through to the floor.
+- **Breaches** (`Wall_<Dungeon|Ancient|Sewer>_Breach_150 / _300`, Full and Cut). The wall is knocked through to the floor.
   Both ends stay intact (the plain section and coping), and the masonry between them breaks down in ragged steps
   (Full from ~2.5 m, Cut from 0.85 m) to reveals 0.7 m tall either side of the opening (150: x 0.33–1.17; 300:
   x 0.90–2.10). The rubble core shows on the break, with loose blocks on the Full break. Earth mounds and fallen
@@ -309,9 +309,10 @@ Every use point and trigger is reached from every spawn; the few unreached raste
 (pockets between rock lobes and the chasm, corners behind props). The only warning left is B4's corner web rising
 over a walk lane (R-occ3); it is see-through.
 
-`VKI_Adventure_Catalog` shows every adventure master, labelled, in twenty-four groups, with a camera each
-(`VKI_AdvCat_Cam_G0`…`G23`). The rock tiles take four rows, the ground tiles four (one per parity), the Cave walls
-one, the breaches and the spill one, and the wall-backed rock tiles five. The vault and the secret door show their leaves; the floor leaves the pits open.
+`VKI_Adventure_Catalog` shows every adventure master, labelled, in twenty-six groups, with a camera each
+(`VKI_AdvCat_Cam_G0`…`G25`). The rock tiles take four rows, the ground tiles four (one per parity), the Cave walls
+one, the breaches and the spill one, the wall-backed rock tiles five, and the sewer kit two
+([SEWER_KIT.md](SEWER_KIT.md)). The vault and the secret door show their leaves; the floor leaves the pits open.
 
 <table>
 <tr>
@@ -348,7 +349,8 @@ Changes to the shared texts:
 - `vki_test`: the pit budget (6000 tris, as links); the rock and ground classes (budgets 1200 / 1500, lattice,
   `vki_corners`, the ground tiles' node parity); the quarter floors' 0.75 lattice and parity (T11).
 
-The nine interiors still check at 0 errors, and `vki_test_all()` passes for all 525 masters.
+The nine interiors still check at 0 errors, and `vki_test_all()` passes for all 555 masters (with the sewer kit's
+30, [SEWER_KIT.md](SEWER_KIT.md)).
 
 ```python
 g0={}; exec(bpy.data.texts["vki_core"].as_string(), g0); g=g0["vki_ns"]()
@@ -476,10 +478,12 @@ every X / O corner code but OOOO (XXXX has one master, the others four).
 
 | Piece | Tris | Cells |
 |---|---|---|
-| `SM_VKI_Wall_Dungeon_Breach_150_Full` / `_Cut` | 1000 / 680 | 1,1 |
-| `SM_VKI_Wall_Dungeon_Breach_300_Full` / `_Cut` | 1556 / 1084 | 2,1 |
-| `SM_VKI_Wall_Ancient_Breach_150_Full` / `_Cut` | 1076 / 680 | 1,1 |
-| `SM_VKI_Wall_Ancient_Breach_300_Full` / `_Cut` | 1664 / 1096 | 2,1 |
+| `SM_VKI_Wall_Dungeon_Breach_150_Full` / `_Cut` | 1020 / 700 | 1,1 |
+| `SM_VKI_Wall_Dungeon_Breach_300_Full` / `_Cut` | 1576 / 1104 | 2,1 |
+| `SM_VKI_Wall_Ancient_Breach_150_Full` / `_Cut` | 1096 / 700 | 1,1 |
+| `SM_VKI_Wall_Ancient_Breach_300_Full` / `_Cut` | 1684 / 1116 | 2,1 |
+
+The Sewer family has the same four breaches ([SEWER_KIT.md](SEWER_KIT.md)).
 
 ### Dungeon family additions (6)
 

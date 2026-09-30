@@ -14,9 +14,9 @@ VKI_ROOT = r"E:\Unity\Projects\GameArtGeneration\MedievalVillageKit"
 VKI_RENDERS = os.path.join(VKI_ROOT, "renders", "interior")
 # load order of the package texts (vki_tex / vki_textiles are generators, executed on demand, not listed)
 VKI_TEXTS = ["vki_fam_timber", "vki_floors", "vki_fam_stone", "vki_fam_board", "vki_fam_wattle", "vki_fam_ashlar",
-             "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_props_home", "vki_props_tavern",
+             "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_fam_sewer", "vki_props_home", "vki_props_tavern",
              "vki_props_smithy", "vki_props_chapel", "vki_props_dungeon", "vki_props_adventure", "vki_props_lair",
-             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_test"]
+             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_test"]
 
 
 VKI_CORE_TEXTS = ("vki_fam_timber", "vki_floors", "vki_test")    # a failure here raises; package texts only warn
@@ -50,7 +50,7 @@ def vki_ns(strict=False):
 VKI_IG = 1.5                                   # interior grid
 VKI_T = {"O": 0.50, "P": 0.30}                 # wall thickness by class
 VKI_H_FULL = {"Timber": 3.0, "Stone": 3.0, "Board": 3.0, "Wattle": 2.4, "Ashlar": 4.5, "Dungeon": 3.0, "Bars": 3.0,
-              "Ancient": 3.0, "Cave": 3.0}
+              "Ancient": 3.0, "Cave": 3.0, "Sewer": 3.0}
 VKI_H_UPPER = 3.0                              # upper floors use 3.0
 VKI_PROUD = 0.03
 VKI_CAP_HW = {"O": 0.28, "P": 0.18}            # caps, rails, skirtings, oak members
@@ -118,8 +118,13 @@ VKI_FAMILIES = {
                  cut_cap="the rock itself, sliced flat (CAP top)", full_top="sliced flat at 3.0, a ragged skyline",
                  posts="rock masses", b_variant="another rock face with a crystal vein", rake=True, rhythm=False,
                  prio=8, h_fit=3.0, sag=0.0),
+    # sewer kit (docs/SEWER_KIT.md, text vki_fam_sewer): old wet brick on the Stone construction
+    "Sewer": dict(cls="O", H=3.0, wall_a="SewerBrick", cap="SewerCap", base=None,
+                  cut_cap="dressed stone coping in 0.75 m units, SewerCap top", full_top="same coping",
+                  posts="Corner: brick pier with stone quoins; Mid: pilaster", b_variant="a barred drain low in face A",
+                  rake=True, rhythm=False, prio=5, h_fit=3.0, sag=0.0, coping_jitter=0.010),
 }
-VKI_POST_PRIO = ["Cave", "Ancient", "Dungeon", "Stone", "Ashlar", "Timber", "Wattle", "Board", "Bars"]  # §2.3
+VKI_POST_PRIO = ["Cave", "Ancient", "Dungeon", "Sewer", "Stone", "Ashlar", "Timber", "Wattle", "Board", "Bars"]  # §2.3
 
 # ---------------------------------------------------------------- §4.1 slots
 VKI_FLOOR, VKI_WALL_A, VKI_WALL_B, VKI_CAP, VKI_STONE_BLOCK_IN, VKI_BRICK, VKI_STRAW, VKI_ASH, VKI_TEXTILE, \
@@ -301,7 +306,7 @@ class VKIKit(Kit):
             if mi == STONE and abs(n.z) > 0.7:
                 m2 = STONE_BLOCK
             elif mi in (VKI_WALL_A, VKI_WALL_B) and abs(n.z) > 0.7 and s.fam in ("Stone", "Ashlar", "Dungeon", "Bars",
-                                                                                "Ancient"):
+                                                                                "Ancient", "Sewer"):
                 m2 = VKI_STONE_BLOCK_IN
             f.material_index = m2
             tt = (tile or vki_tile(mi)) if m2 == mi else vki_tile(m2)
@@ -568,7 +573,7 @@ def vki_default_meta(piece, k, bbox):
 
 # ---------------------------------------------------------------- §2.6 seam rule (wobble)
 VKI_AMP = {"Timber": .012, "Stone": .020, "Ashlar": .010, "Wattle": .020, "Board": 0.0, "Dungeon": .020, "Bars": 0.0,
-           "Ancient": .020, "Cave": 0.0}
+           "Ancient": .020, "Cave": 0.0, "Sewer": .015}
 VKI_SECOND = {"A": "B", "B": "A"}
 
 
@@ -698,6 +703,15 @@ VKI_MAT_MAP = {
     "M_VKI_CaveCut": dict(tex="T_VKI_CaveTop", tint=(1.58, 1.55, 1.50), ph="#8A8076", nstr=0.6, spec=0.2),
     "M_VKI_CaveFloor": dict(tex="T_VKI_CaveFloor", tint=(0.70, 0.72, 0.80), ph="#4E463E", nstr=1.2, spec=0.25),
     "M_VKI_Web": dict(kind="web"),
+    # sewer kit: old wet brick walls and brick paving (vki_tex_dungeon), dressed stone from T_VKI_StoneBlockIn (caps a
+    # step paler than the brick), murky channel water (glossy, 88 % opaque over the dark bed), sludge, falling foam
+    "M_VKI_SewerBrick": dict(tex="T_VKI_SewerBrick", ph="#4A3228", nstr=1.1, spec=0.35),
+    "M_VKI_SewerFloor": dict(tex="T_VKI_SewerFloor", tint=(1.22, 1.18, 1.12), ph="#40362C", nstr=1.1, spec=0.35),
+    "M_VKI_SewerCap": dict(tex="T_VKI_StoneBlockIn", tint=(1.08, 1.10, 1.02), ph="#86847A", nstr=0.8, spec=0.3),
+    "M_VKI_SewerBlock": dict(tex="T_VKI_StoneBlockIn", tint=(0.56, 0.60, 0.52), ph="#5E5E54", nstr=0.9, spec=0.3),
+    "M_VKI_SewerWater": dict(kind="gloss", col=(.10, .11, .065), rough=0.08, alpha=0.93),
+    "M_VKI_Sludge": dict(kind="gloss", col=(.060, .064, .028), rough=0.30, alpha=0.90),
+    "M_VKI_Foam": dict(kind="flat", col=(.40, .44, .36), rough=0.7),
 }
 VKI_SLOT_DEFAULTS = ["M_VKI_Boards_NS", "M_VKI_PlasterCream", "M_VKI_PlasterCream", "M_VK_Hewn",
                      "M_VKI_StoneBlockIn", "M_VKI_Brick", "M_VKI_Straw", "M_VKI_Ash", "M_VKI_Textiles", "M_VKI_Wax",
@@ -705,16 +719,18 @@ VKI_SLOT_DEFAULTS = ["M_VKI_Boards_NS", "M_VKI_PlasterCream", "M_VKI_PlasterCrea
 VKI_WALL_MATS = {**{k_: "M_VKI_" + k_ for k_ in VKI_WALL_STYLES},
                  **{k_: "M_VKI_" + k_ for k_ in ("StoneIn", "StoneInWarm", "StoneInCool", "AshlarIn", "WattleIn",
                                                  "BoardsV", "Brick", "DungeonIn", "DungeonInDamp", "DungeonInWarm",
-                                                 "AncientIn", "CaveRock", "CaveRockDamp")}}
+                                                 "AncientIn", "CaveRock", "CaveRockDamp", "SewerBrick")}}
 VKI_STYLE_MATS = {
     "floor": {k_: "M_VKI_" + k_ for k_ in ("Boards_NS", "Boards_EW", "BoardsDark_NS", "BoardsDark_EW",
                                            "BoardsPale_NS", "BoardsPale_EW", "Flag", "FlagWarm", "FlagRustic",
                                            "Earth", "EarthSooty", "ApronCobble", "ApronDirt", "ApronGrass",
-                                           "DungeonFlag", "DungeonFlagWarm", "EarthDamp", "AncientFlag", "CaveFloor")},
+                                           "DungeonFlag", "DungeonFlagWarm", "EarthDamp", "AncientFlag", "CaveFloor",
+                                           "SewerFloor")},
     "wall_a": VKI_WALL_MATS, "wall_b": VKI_WALL_MATS, "infill": VKI_WALL_MATS,
     "cap": {"Hewn": "M_VK_Hewn", "StoneBlockIn": "M_VKI_StoneBlockIn", "Dress": "M_VKI_Dress",
             "PlasterDaub": "M_VKI_PlasterDaub", "DungeonCap": "M_VKI_DungeonCap", "DungeonBlock": "M_VKI_DungeonBlock",
-            "AncientCap": "M_VKI_AncientCap", "AncientBlock": "M_VKI_AncientBlock", "CaveCut": "M_VKI_CaveCut"},
+            "AncientCap": "M_VKI_AncientCap", "AncientBlock": "M_VKI_AncientBlock", "CaveCut": "M_VKI_CaveCut",
+            "SewerCap": "M_VKI_SewerCap", "SewerBlock": "M_VKI_SewerBlock"},
     "wood": {"Oak": "M_VK_Wood", "Dark": "M_VKI_WoodDark"},
     "planks": {"Scrubbed": "M_VKI_WoodScrubbed", "Planks": "M_VK_Planks"},
     "window": {"Day": "M_VKI_Window_Day", "Window_Day": "M_VKI_Window_Day", "Night": "M_VKI_Window_Night",
@@ -722,7 +738,8 @@ VKI_STYLE_MATS = {
     "stained": {"In": "M_VKI_Stained_In", "Stained_In": "M_VKI_Stained_In", "Night": "M_VKI_Stained_Night",
                 "Stained_Night": "M_VKI_Stained_Night"},
     "glow": {"GlowIn": "M_VKI_GlowIn", "Glow": "M_VK_Glow"},
-    "water": {"Water": "M_VK_Water", "Ale": "M_VKI_Ale", "WaterMurky": "M_VKI_WaterMurky", "Puddle": "M_VKI_Puddle"},
+    "water": {"Water": "M_VK_Water", "Ale": "M_VKI_Ale", "WaterMurky": "M_VKI_WaterMurky", "Puddle": "M_VKI_Puddle",
+              "SewerWater": "M_VKI_SewerWater", "Sludge": "M_VKI_Sludge"},
     # "shutter", "cloth", "cloth_b": the exterior variants (variant_mat), e.g. shutter "Red", cloth "Blue"
 }
 VKI_FAMILY_SLOT_MATS = {
@@ -739,6 +756,8 @@ VKI_FAMILY_SLOT_MATS = {
                 VKI_STONE_BLOCK_IN: "M_VKI_AncientBlock"},
     "Cave": {VKI_WALL_A: "M_VKI_CaveRock", VKI_WALL_B: "M_VKI_CaveRock", VKI_CAP: "M_VKI_CaveCut",
              VKI_STONE_BLOCK_IN: "M_VKI_CaveRock"},
+    "Sewer": {VKI_WALL_A: "M_VKI_SewerBrick", VKI_WALL_B: "M_VKI_SewerBrick", VKI_CAP: "M_VKI_SewerCap",
+              VKI_STONE_BLOCK_IN: "M_VKI_SewerBlock"},
 }
 VKI_MASTER_MATS = {GLOW: "M_VKI_GlowIn", WINDOW: "M_VKI_Window_Day", STAINED: "M_VKI_Stained_In",
                    DRESS: "M_VKI_Dress"}                     # on every VKI master (§4.1)
@@ -1572,8 +1591,11 @@ VKI_PRESETS = {
     # (the Dungeon key left the rock tops too close to the floor, palette rule caps >= floor + 0.15)
     "Cavern": dict(world=(0.09, 0.11, 0.14), world_strength=0.90, key=0.85, key_color=(.58, .74, 1.0),
                    fill=0.95, fill_color=(.60, .72, 1.0), window_w=700.0, window_color=(.78, .86, 1.0)),
+    # sewer kit: torch-lit tunnels with a faint green cast (the Dungeon key left the brick paving under the dark target)
+    "Sewer": dict(world=(0.09, 0.11, 0.10), world_strength=0.90, key=0.70, key_color=(.66, .80, .72),
+                  fill=0.95, fill_color=(.62, .76, .70), window_w=700.0, window_color=(.78, .86, 1.0)),
 }
-VKI_DARK_PRESETS = ("Night", "Dungeon", "Cavern")   # floor-level target 0.15 (vki_check), torch-lit
+VKI_DARK_PRESETS = ("Night", "Dungeon", "Cavern", "Sewer")   # floor-level target 0.15 (vki_check), torch-lit
 VKI_NIGHT_SPEC = dict(world_strength=0.35, key=0.35, fill=0.2)     # §6 start values (moodier, darker)
 VKI_KEY_DIR = (-0.1797, -0.4338, 0.8829)       # toward the light: elevation 62 deg, from the SSW (azimuth 202.5)
 VKI_FILL_DIR = (0.0, -0.6428, 0.7660)          # toward the camera: the fill shines along the view direction

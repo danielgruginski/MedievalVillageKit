@@ -727,10 +727,12 @@ def vki_gen_stoneblock_in(S=2048, seed=18, T=1.5, depth=0.05, nf=4, out_prefix="
 
 
 # ------------------------------------------------------------------ brick (the BRICK slot: oven, firebox, breasts)
-def vki_gen_brick(S=2048, seed=621, T=1.5, depth=0.02, nr=20, nbk=6, out_prefix="T_VKI_Brick", write=True):
+def vki_gen_brick(S=2048, seed=621, T=1.5, depth=0.02, nr=20, nbk=6, out_prefix="T_VKI_Brick", write=True,
+                  pal=None, mortar="#9C9284", over=0.10, over_col="#5C3324", vrange=(0.88, 1.08)):
     """running bond from vk_texgen.gen_plaster's brick patch (nr rows, even so it wraps; nbk bricks per row), 8 mm lime
     joints #9C9284, gen_plaster's brick palette with per-brick value U(.88,1.08), 10 % overfired #5C3324, edge chips.
-    Soot is vertex colour, not texture."""
+    Soot is vertex colour, not texture. Sewer kit: pal (brick colours), mortar, over (overfired share), over_col and
+    vrange may be changed; the defaults keep T_VKI_Brick as it was."""
     assert nr % 2 == 0, "nr must be even for the running bond to wrap"
     rng = np.random.default_rng(seed); px = T / S
     x, y = grid(S)
@@ -741,18 +743,19 @@ def vki_gen_brick(S=2048, seed=621, T=1.5, depth=0.02, nr=20, nbk=6, out_prefix=
     d = (np.minimum(np.minimum(bu, 1 - bu) * T / nbk, np.minimum(bv, 1 - bv) * T / nr) + 0.0012 * fbm(S, 2.4, seed + 3, fmin=20, fmax=200)).astype(f32)
     g = 0.004
     mask = smooth(g, g + 0.0015, d); prof = smooth(g, g + 0.012, d)
-    bpal = np.array([(0.60, 0.33, 0.22), (0.52, 0.29, 0.20), (0.64, 0.40, 0.27), (0.56, 0.36, 0.25)], f32)
-    pid = rng.integers(0, 4, nb_); val = rng.uniform(0.88, 1.08, nb_).astype(f32)
+    bpal = np.array(pal if pal is not None else
+                    [(0.60, 0.33, 0.22), (0.52, 0.29, 0.20), (0.64, 0.40, 0.27), (0.56, 0.36, 0.25)], f32)
+    pid = rng.integers(0, len(bpal), nb_); val = rng.uniform(vrange[0], vrange[1], nb_).astype(f32)
     brgb = bpal[pid] * val[:, None]
-    over = rng.choice(nb_, int(round(0.10 * nb_)), replace=False)                  # overfired: darker, not black holes
-    brgb[over] = lerp(brgb[over], hx("#5C3324") * rng.uniform(0.9, 1.1, (len(over), 1)), 0.65)
+    over_ = rng.choice(nb_, int(round(over * nb_)), replace=False)                 # overfired: darker, not black holes
+    brgb[over_] = lerp(brgb[over_], hx(over_col) * rng.uniform(0.9, 1.1, (len(over_), 1)), 0.65)
     tilt = rng.uniform(-1, 1, (nb_, 2)).astype(f32); proud = rng.uniform(-0.04, 0.04, nb_).astype(f32)
     chip = smooth(1.4, 1.9, fbm(S, 2.6, seed + 5, fmin=8, fmax=80)) * (1 - smooth(g + 0.002, g + 0.02, d))
     face = 0.55 + 0.25 * prof + proud[bid] + (tilt[bid, 0] * (bu - 0.5) + tilt[bid, 1] * (bv - 0.5)) * 0.05 + 0.02 * fbm(S, 2.0, seed + 6, fmin=30, fmax=300) - 0.25 * chip
     h = blur(np.clip(mask * face + (1 - mask) * 0.2, 0, 1), 1.4).astype(f32); del face
     mott = fbm(S, 2.2, seed + 7, fmin=12, fmax=120)
     col = brgb[bid] * (0.92 + 0.12 * prof)[..., None] * (1 + 0.06 * mott)[..., None]
-    mcol = hx("#9C9284") * (1 + 0.05 * fbm(S, 1.5, seed + 8, fmin=20, fmax=200))[..., None]
+    mcol = hx(mortar) * (1 + 0.05 * fbm(S, 1.5, seed + 8, fmin=20, fmax=200))[..., None]
     col = lerp(mcol, col, mask[..., None]).astype(f32); del mcol, mott
     col, n_s = paint_form_light(col, h, depth, T, hig=0.15, log=0.22, post=0.25)
     col = lerp(col, lerp(col, luma(col)[..., None], 0.4) * 1.08, 0.6 * chip[..., None])

@@ -154,6 +154,29 @@ def vki_cave_ground(R, P, zmap, problems):
     return tiles, cov
 
 
+def vki_cave_channels(R, P, problems):
+    """the sewer channels (sewer kit, vki_fam_sewer): cells coded "ww" are channel (X). A channel tile stands on every
+    node with channel among its four cells: the master of the code's rotation class (SW SE NE NW, X / O), turned to
+    show it. It carries the channel over its X quarters only, and no floor, so the cells round a channel keep whole
+    floors. -> (tiles [dict(piece, x, y, rot, node, code)], the channel cells)"""
+    nc, nr, codes = P["nc"], P["nr"], P["codes"]
+    xs = {c for c, v in codes.items() if v == "ww" and 0 <= c[0] < nc and 0 <= c[1] < nr}
+    chasm = {c for c, v in codes.items() if v in ("vv", "==")}
+    tiles = []
+    for i in range(nc + 1):
+        for j in range(nr + 1):
+            cs = ((i - 1, j - 1), (i, j - 1), (i, j), (i - 1, j))
+            if not any(c in xs for c in cs):
+                continue
+            if any(c in chasm for c in cs):
+                problems.append(f"cave: the channel at node ({i},{j}) touches the chasm")
+            code = "".join("X" if c in xs else "O" for c in cs)
+            m, kk = vki_cav_canon(code)
+            tiles.append(dict(piece=f"SM_VKI_Ground_Sewer_{m}", x=VKI_IG * i, y=VKI_IG * j,
+                              rot=(90 * kk + 180) % 360 - 180, node=(i, j), code=code))
+    return tiles, xs
+
+
 def vki_cave_layout(name, R, P, zmap):
     """vki_rooms_layout for a cave level: no wall pieces or posts; rock tiles; the chasm's ground tiles; floors --
     Floor_150 on every map cell (rock or open: the rock never recedes off its own cells, so the ring needs none) that
@@ -164,11 +187,12 @@ def vki_cave_layout(name, R, P, zmap):
     cells = vki_cave_cells(R, P)
     rocks = vki_cave_tiles(R, P, cells, problems, WL["arms"])
     grounds, cov = vki_cave_ground(R, P, zmap, problems)
+    chans, ccells = vki_cave_channels(R, P, problems)
     pcells = vki_rooms_pit_cells(R)
     floors = []
     for c in range(nc):
         for r in range(nr):
-            if (c, r) in pcells:
+            if (c, r) in pcells or (c, r) in ccells:
                 continue
             zn = zmap.get((c, r))
             st = {"floor": R["zones"][zn]["floor"]}
@@ -184,7 +208,7 @@ def vki_cave_layout(name, R, P, zmap):
                                            x=VKI_IG * c + 0.75 * qa, y=VKI_IG * r + 0.75 * qb, zone=zn, style=st))
     return dict(name=name, R=R, P=P, nc=nc, nr=nr, W=P["W"], D=P["D"], zmap=zmap, segs=WL["segs"],
                 pieces=WL["pieces"], posts=WL["posts"], floors=floors, doors=WL["doors"], stair_cells={},
-                pit_cells=pcells, problems=problems, rocks=rocks, grounds=grounds, cells=cells)
+                pit_cells=pcells, problems=problems, rocks=rocks, grounds=grounds + chans, cells=cells)
 
 
 def vki_cave_tunnel(ctx, rk, o):
@@ -468,7 +492,8 @@ def vki_adventure_catalog():
     """(re)build VKI_Adventure_Catalog; returns {group: camera name}"""
     return vki_kit_catalog("VKI_Adventure_Catalog", VKI_ADVENTURE_CATALOG, "VKI_AdvCat_", "AncientFlag",
                            host=("SM_VKI_Wall_Ancient_Plain_150A_Full", "SM_VKI_Post_Ancient_Mid_Full"),
-                           leaf_on=(("Vault_300_Full", 0.0), ("Secret_150_Full", 0.0)), fy=(-144, 6))
+                           leaf_on=(("Vault_300_Full", 0.0), ("Secret_150_Full", 0.0)),
+                           fy=(int(math.floor(min(gr[1] for gr in VKI_ADVENTURE_CATALOG) - 4.5)), 6))
 
 
 # ---------------------------------------------------------------- a generated cave: a large map to test the tileset

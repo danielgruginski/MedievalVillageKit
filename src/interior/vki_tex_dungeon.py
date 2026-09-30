@@ -183,3 +183,16 @@ def vki_gen_rocktop(S=2048, seed=97, T=1.2, depth=0.012, tone=1.0, out_prefix="T
 
 
 VKI_TEX_JOBS.update({"T_VKI_CaveTop": lambda: vki_gen_rocktop()})
+
+# sewer kit (docs/SEWER_KIT.md): old wet brick -- grimy dark red-browns, a few near-black overfired bricks,
+# dark mortar -- for the walls (t 1.5, bricks 0.25 x 0.075); brick paving for the walkways (t 3.0, pavers 0.50 x 0.25)
+VKI_TEX_JOBS.update({
+    "T_VKI_SewerBrick": lambda: vki_gen_brick(seed=641, T=1.5, nr=20, nbk=6, out_prefix="T_VKI_SewerBrick",
+                                              pal=[(0.33, 0.21, 0.16), (0.29, 0.19, 0.15), (0.36, 0.24, 0.18),
+                                                   (0.30, 0.22, 0.17), (0.27, 0.22, 0.18)],
+                                              mortar="#3E3A33", over=0.18, over_col="#231915", vrange=(0.80, 1.06)),
+    "T_VKI_SewerFloor": lambda: vki_gen_brick(seed=642, T=3.0, nr=12, nbk=6, depth=0.025, out_prefix="T_VKI_SewerFloor",
+                                              pal=[(0.36, 0.25, 0.19), (0.31, 0.24, 0.19), (0.40, 0.29, 0.21),
+                                                   (0.28, 0.25, 0.21)],
+                                              mortar="#3C3730", over=0.12, over_col="#2A221C", vrange=(0.84, 1.06)),
+})

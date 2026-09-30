@@ -641,7 +641,7 @@ def vki_rooms_layout(name, R=None, P=None):
                 limewash = fam == "Stone" and any(str(R["zones"].get(zmap.get(c_), {}).get("wall", "")).startswith("Plaster")
                                                   for c_ in fa)
                 if kind == "Plain" and n == 1 and ht == "Full" and role != "part" and \
-                        fam in ("Timber", "Stone", "Wattle", "Dungeon", "Ancient") \
+                        fam in ("Timber", "Stone", "Wattle", "Dungeon", "Ancient", "Sewer") \
                         and k % 2 == 1 and not limewash:
                     mx, my = ((x0 + VKI_IG * 0.5, y0) if ori == "EW" else (x0, y0 + VKI_IG * 0.5))
                     if not any(math.hypot(px - mx, py - my) < 1.3 for px, py in ppts):
@@ -1599,6 +1599,8 @@ def vki_rooms_mats(ctx):
     """every N-S Cut doorway gets a RushMat on each side, never across the threshold (§10.7); shifted along the
     doorway by 0.75 when a wall, post, prop or overlay is in the way, skipped when no spot is free"""
     L, props = ctx["L"], ctx["colls"]["Props"]
+    if ctx["R"].get("rush_mats") is False:            # e.g. the sewers
+        return
     for pc in L["pieces"]:
         if pc["kind"] != "Door" or pc["ori"] != "NS":
             continue
@@ -1797,12 +1799,14 @@ def vki_build_scene(name):
                 vki_rooms_exit(ctx, pc, o)
             elif pc["kind"] == "BarsGate":
                 vki_rooms_gate(ctx, pc, o)
-            elif pc["kind"] == "Passage":
-                vki_rooms_passage(ctx, pc, o)
+            elif pc["kind"] == "Passage" or (pc["kind"] == "Named" and
+                                              (pc["ori"], pc["k"], pc["line"]) in R.get("passages", {})):
+                vki_rooms_passage(ctx, pc, o)          # a named piece may be a link too (the sewer's ladder)
             if (pc["ori"], pc["k"], pc["line"]) in R.get("door_leaves", {}):
                 vki_rooms_door_leaf(ctx, pc, o)
-        for gt in L.get("grounds", []):                 # cave levels: the chasm's dual-grid ground tiles
-            o = vki_rooms_put(ctx, shell, gt["piece"], gt["x"], gt["y"], 0, style=gt.get("style"), walls=[])
+        for gt in L.get("grounds", []):                 # cave levels: the chasm's / channels' dual-grid ground tiles
+            o = vki_rooms_put(ctx, shell, gt["piece"], gt["x"], gt["y"], gt.get("rot", 0), style=gt.get("style"),
+                              walls=[])
             o["vki_node"] = json.dumps(list(gt["node"]))
         for rk in L.get("rocks", []):                   # cave levels: the dual-grid rock tiles
             o = vki_rooms_put(ctx, shell, rk["piece"], rk["x"], rk["y"], rk["rot"], walls=[])
@@ -2130,7 +2134,8 @@ def vki_check(scene, full=False, t19=True, bfs=True, palette=True):
     overlays = [o for o in objs if cls_of(o) == "overlay" and o.type == "MESH"]
     links = [o for o in objs if o.get("vki_link") in ("stair_up", "stair_down")]
     leaves = [o for o in objs if cls_of(o) == "leaf"]
-    floors = [o for o in objs if (cls_of(o) == "floor" and o.get("vki_kind") != "Sill") or cls_of(o) == "ground"]
+    floors = [o for o in objs if (cls_of(o) == "floor" and o.get("vki_kind") != "Sill") or
+              (cls_of(o) == "ground" and not o.get("vki_covers_floor"))]   # channel tiles: their X quarters, below
     sills = [o for o in objs if cls_of(o) == "floor" and o.get("vki_kind") == "Sill"]
     cache = {}
     # 1 posts (§2.3 / §10.1)
@@ -2153,8 +2158,10 @@ def vki_check(scene, full=False, t19=True, bfs=True, palette=True):
     for o in objs:
         if o.get("vki_link") == "stair_down" or o.get("vki_covers_floor"):
             cf = vki_get(o, "vki_covers_floor", None) or [0.0, 0.0, 1.5, 4.5]
-            bb = vki_rooms_boxes_of(o, [[(cf[0] + cf[2]) / 2, (cf[1] + cf[3]) / 2, 0.0, cf[2] - cf[0], cf[3] - cf[1], 0.1]])[0]
-            mark(o.name, bb[0][0], bb[0][1], bb[1][0], bb[1][1])
+            for cf_ in (cf if isinstance(cf[0], (list, tuple)) else [cf]):      # a rect, or a list of them
+                bb = vki_rooms_boxes_of(o, [[(cf_[0] + cf_[2]) / 2, (cf_[1] + cf_[3]) / 2, 0.0, cf_[2] - cf_[0],
+                                             cf_[3] - cf_[1], 0.1]])[0]
+                mark(o.name, bb[0][0], bb[0][1], bb[1][0], bb[1][1])
     for c in range(L["nc"]):
         for r in range(L["nr"]):
             ns_ = [len(cover.get((c, r, qi), [])) for qi in range(4)]
