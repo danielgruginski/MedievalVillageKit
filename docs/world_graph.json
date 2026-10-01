@@ -1,0 +1,349 @@
+{
+ "version": 1,
+ "start": "VK_ValleyTown",
+ "holes": {
+  "@return": "back to wherever the game came from (building interiors, demos)",
+  "@deep": "an open end below (the mine's lift; no deeper level is built yet)"
+ },
+ "levels": {
+  "VKI_Cave_Breach": {
+   "kind": "Dungeon",
+   "links": [
+    {
+     "id": "east",
+     "kind": "passage",
+     "target": "@return",
+     "arrive": null
+    }
+   ]
+  },
+  "VKI_Cave_Falls": {
+   "kind": "Dungeon",
+   "links": [
+    {
+     "id": "west",
+     "kind": "passage",
+     "target": "VKI_Dungeon_B4",
+     "arrive": "falls"
+    },
+    {
+     "id": "east",
+     "kind": "passage",
+     "target": "VK_ValleyTown",
+     "arrive": "spring_cave"
+    }
+   ]
+  },
+  "VKI_Chapel_F0": {
+   "kind": "Chapel",
+   "links": [
+    {
+     "id": "front",
+     "kind": "exit",
+     "target": "@return",
+     "arrive": null
+    }
+   ]
+  },
+  "VKI_Cottage_F0": {
+   "kind": "Cottage",
+   "links": [
+    {
+     "id": "front",
+     "kind": "exit",
+     "target": "@return",
+     "arrive": null
+    }
+   ]
+  },
+  "VKI_Dungeon_B1": {
+   "kind": "Dungeon",
+   "links": [
+    {
+     "id": "surface",
+     "kind": "stair_up",
+     "target": "VK_ValleyTown",
+     "arrive": "gaol_lockup"
+    },
+    {
+     "id": "crypt",
+     "kind": "stair_down",
+     "target": "VKI_Dungeon_B2",
+     "arrive": "above"
+    },
+    {
+     "id": "sewer",
+     "kind": "passage",
+     "target": "VKI_Sewer_S1",
+     "arrive": "gaol"
+    }
+   ]
+  },
+  "VKI_Dungeon_B2": {
+   "kind": "Dungeon",
+   "links": [
+    {
+     "id": "above",
+     "kind": "stair_up",
+     "target": "VKI_Dungeon_B1",
+     "arrive": "crypt"
+    },
+    {
+     "id": "temple",
+     "kind": "passage",
+     "target": "VKI_Dungeon_B3",
+     "arrive": "crypt"
+    }
+   ]
+  },
+  "VKI_Dungeon_B3": {
+   "kind": "Dungeon",
+   "links": [
+    {
+     "id": "crypt",
+     "kind": "passage",
+     "target": "VKI_Dungeon_B2",
+     "arrive": "temple"
+    },
+    {
+     "id": "caverns",
+     "kind": "passage",
+     "target": "VKI_Dungeon_B4",
+     "arrive": "temple"
+    }
+   ]
+  },
+  "VKI_Dungeon_B4": {
+   "kind": "Dungeon",
+   "links": [
+    {
+     "id": "temple",
+     "kind": "passage",
+     "target": "VKI_Dungeon_B3",
+     "arrive": "caverns"
+    },
+    {
+     "id": "warren",
+     "kind": "passage",
+     "target": "VKI_Dungeon_B5",
+     "arrive": "caverns"
+    },
+    {
+     "id": "falls",
+     "kind": "passage",
+     "target": "VKI_Cave_Falls",
+     "arrive": "west"
+    },
+    {
+     "id": "sewer",
+     "kind": "passage",
+     "target": "VKI_Sewer_S1",
+     "arrive": "caverns"
+    }
+   ]
+  },
+  "VKI_Dungeon_B5": {
+   "kind": "Dungeon",
+   "links": [
+    {
+     "id": "caverns",
+     "kind": "passage",
+     "target": "VKI_Dungeon_B4",
+     "arrive": "warren"
+    }
+   ]
+  },
+  "VKI_Dwarf_Hall": {
+   "kind": "Dwarf",
+   "links": [
+    {
+     "id": "gate",
+     "kind": "passage",
+     "target": "VK_ValleyTown",
+     "arrive": "dwarf_gate"
+    },
+    {
+     "id": "mines",
+     "kind": "passage",
+     "target": "VKI_Mine_M1",
+     "arrive": "hall"
+    }
+   ]
+  },
+  "VKI_Hovel_F0": {
+   "kind": "Hovel",
+   "links": [
+    {
+     "id": "front",
+     "kind": "exit",
+     "target": "@return",
+     "arrive": null
+    }
+   ]
+  },
+  "VKI_Mine_M1": {
+   "kind": "Mine",
+   "links": [
+    {
+     "id": "surface",
+     "kind": "passage",
+     "target": "VK_ValleyTown",
+     "arrive": "mine_adit"
+    },
+    {
+     "id": "hall",
+     "kind": "passage",
+     "target": "VKI_Dwarf_Hall",
+     "arrive": "mines"
+    },
+    {
+     "id": "deep",
+     "kind": "lift",
+     "target": "@deep",
+     "arrive": null
+    }
+   ]
+  },
+  "VKI_Sewer_S1": {
+   "kind": "Sewer",
+   "links": [
+    {
+     "id": "gaol",
+     "kind": "passage",
+     "target": "VKI_Dungeon_B1",
+     "arrive": "sewer"
+    },
+    {
+     "id": "street",
+     "kind": "passage",
+     "target": "VK_ValleyTown",
+     "arrive": "sewer_grate"
+    },
+    {
+     "id": "caverns",
+     "kind": "passage",
+     "target": "VKI_Dungeon_B4",
+     "arrive": "sewer"
+    }
+   ]
+  },
+  "VKI_Smithy_F0": {
+   "kind": "Smithy",
+   "links": [
+    {
+     "id": "front",
+     "kind": "exit",
+     "target": "@return",
+     "arrive": null
+    }
+   ]
+  },
+  "VKI_Tavern_F0": {
+   "kind": "Tavern",
+   "links": [
+    {
+     "id": "front",
+     "kind": "exit",
+     "target": "@return",
+     "arrive": null
+    },
+    {
+     "id": "stairA",
+     "kind": "stair_up",
+     "target": "VKI_Tavern_F1",
+     "arrive": "stairA"
+    }
+   ]
+  },
+  "VKI_Tavern_F1": {
+   "kind": "Tavern",
+   "links": [
+    {
+     "id": "stairA",
+     "kind": "stair_down",
+     "target": "VKI_Tavern_F0",
+     "arrive": "stairA"
+    }
+   ]
+  },
+  "VKI_Townhouse_F0": {
+   "kind": "Townhouse",
+   "links": [
+    {
+     "id": "front",
+     "kind": "exit",
+     "target": "@return",
+     "arrive": null
+    },
+    {
+     "id": "stairA",
+     "kind": "stair_up",
+     "target": "VKI_Townhouse_F1",
+     "arrive": "stairA"
+    }
+   ]
+  },
+  "VKI_Townhouse_F1": {
+   "kind": "Townhouse",
+   "links": [
+    {
+     "id": "stairA",
+     "kind": "stair_down",
+     "target": "VKI_Townhouse_F0",
+     "arrive": "stairA"
+    }
+   ]
+  },
+  "VKI_Workshop_F0": {
+   "kind": "Workshop",
+   "links": [
+    {
+     "id": "front",
+     "kind": "exit",
+     "target": "@return",
+     "arrive": null
+    }
+   ]
+  },
+  "VK_ValleyTown": {
+   "kind": "exterior",
+   "links": [
+    {
+     "id": "mine_adit",
+     "kind": "passage",
+     "target": "VKI_Mine_M1",
+     "arrive": "surface",
+     "piece": "SM_VK_Mine_Portal"
+    },
+    {
+     "id": "dwarf_gate",
+     "kind": "passage",
+     "target": "VKI_Dwarf_Hall",
+     "arrive": "gate",
+     "piece": "SM_VK_Entrance_DwarfGate"
+    },
+    {
+     "id": "spring_cave",
+     "kind": "passage",
+     "target": "VKI_Cave_Falls",
+     "arrive": "east",
+     "piece": "SM_VK_Entrance_SpringCave"
+    },
+    {
+     "id": "sewer_grate",
+     "kind": "passage",
+     "target": "VKI_Sewer_S1",
+     "arrive": "street",
+     "piece": "SM_VK_Entrance_SewerGrate"
+    },
+    {
+     "id": "gaol_lockup",
+     "kind": "stair_down",
+     "target": "VKI_Dungeon_B1",
+     "arrive": "surface",
+     "piece": "SM_VK_Entrance_LockUp"
+    }
+   ]
+  }
+ }
+}

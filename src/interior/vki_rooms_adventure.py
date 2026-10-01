@@ -13,7 +13,8 @@
 #   VKI_Dungeon_B4  the caverns (a cave map), 10 x 6: a chasm splits the cave east-west, crossed by one rope bridge;
 #                   the south shelf has a rock bulge, an underground pool, glowing mushrooms and crystals; the north
 #                   shelf a rock mass in its west corner, a spur from the back wall, a fallen adventurer and a spider
-#                   nest (corner webs, egg sacs, a cocoon, webbed floor) before the tunnel on down
+#                   nest (corner webs, egg sacs, a cocoon, webbed floor) before the tunnel on down; two tunnels in the
+#                   north shelf's back wall lead back to the sewer and the falls (the world graph, vki_world)
 #   VKI_Dungeon_B5  the goblin warren (a cave map), 10 x 6: rock tongues part three chambers off a hall -- the
 #                   rat-run entry behind a stake barricade (burrow, rat hole, refuse, totem), the camp (fire pit with
 #                   a spitted haunch, lean-to, bedrolls), the chief's hoard (loot heap, coins, iron chest, bones)
@@ -420,8 +421,11 @@ VKI_ROOMS.update({
         pools=False,
         debris=dict(density=0.50, seed=14),                                  # loose debris (vki_props_debris)
         zones={"cavern": dict(cells="rest", floor="CaveFloor")},
-        tunnels={(0, 1): "temple", (12, 6): "warren"},
-        links=[("temple", "passage", "VKI_Dungeon_B3"), ("warren", "passage", "VKI_Dungeon_B5")],
+        # the town connection (vki_world): the ways back to the sewer (S1's "caverns") and the falls (VKI_Cave_Falls'
+        # "west") are two more tunnels in the back wall of the north shelf
+        tunnels={(0, 1): "temple", (12, 6): "warren", (7, 7): "falls", (9, 7): "sewer"},
+        links=[("temple", "passage", "VKI_Dungeon_B3"), ("warren", "passage", "VKI_Dungeon_B5"),
+               ("falls", "passage", "VKI_Cave_Falls"), ("sewer", "passage", "VKI_Sewer_S1")],
         # 12 x 7: the chasm ("vv") winds the width of the cave from under the west rock to under the east rock, one
         # to two cells wide, swinging up and down round row 3; one rope bridge crosses it where it runs two cells
         # wide (cells (7,3)-(7,4), "=="); the pool on the south shelf keeps a cell clear of it

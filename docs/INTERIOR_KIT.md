@@ -118,7 +118,7 @@ Export is not done yet (see HANDOFF). Everything a game needs is stored as custo
 | Where | Properties |
 |---|---|
 | Every piece | `vki_class`, `vki_family`, `vki_kind`, `vki_footprint`, `vki_fp_cells`, `vki_collider`, `vki_nav`, `vki_mount`, `vki_cut_pair` / `vki_cut_to` (the Full↔Cut twin), `vki_lights`, `vki_fx` |
-| Exit doors and stairs (instances) | `vki_link` (exit / stair_up / stair_down), `vki_link_id`, `vki_target` (`@return` for exits, else a scene name), `vki_prompt`, `vki_trigger` (box in piece-local coordinates), `vki_facing_min` |
+| Exit doors and stairs (instances) | `vki_link` (exit / stair_up / stair_down), `vki_link_id`, `vki_target` (`@return` for exits, else a scene name; the valley town is `VK_ValleyTown`, [WORLD_GRAPH.md](WORLD_GRAPH.md)), `vki_prompt`, `vki_trigger` (box in piece-local coordinates), `vki_facing_min` |
 | `SPN_<id>` empties | spawn points: `vki_spawn_id`, `vki_facing_deg` |
 | `VKI_Root` (one per scene) | `vki_building`, `vki_floor`, camera (`vki_cam_mode`, `vki_cam_dist`, `vki_cam_target`, `vki_cam_pitch` 50, `vki_cam_yaw` 0), `vki_bounds`, `vki_default_spawn` |
 | `LGT_*` / `FXA_*` empties | light JSON (`vki_light`) and effect anchors (`vki_fx`) |

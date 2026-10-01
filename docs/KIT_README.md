@@ -31,7 +31,7 @@ Other scenes: `MedievalColony` (first colony diorama, `mc_helpers`), `StoneWallK
 | `vk_render` | `src/core/` | `shot(name, cam_loc, target, lens, res, ...)` render helper (default output `renders/wip/`). |
 | `vk_tex`, `vk_texgen`, `vk_tex2` | `src/textures/` | Procedural PBR texture generators (`_BC/_N/_H/_R/_AO`), written to `assets/textures/` and packed. `vk_tex2`: stone rework, wattle, net, slate/shingle roofs, terrain textures (current: `gen_grass_v2`, `gen_dirt_v2`, `gen_cliff_v2`; the older generators are kept). |
 | `vk_leafgen` | `src/textures/` | Leaf/flower atlas `T_VK_Leaves_*` (one cell per plant), `repaint_leaf_cell(cell)`. |
-| `vk_mod_humble` … `vk_mod_defence` | `src/modules/` | 8 expansion modules: pieces (`WS_SPECS` → `EXTRA_SPECS`) and builders `build_*`. |
+| `vk_mod_humble` … `vk_mod_defence`, `vk_mod_entrances` | `src/modules/` | 9 expansion modules: pieces (`WS_SPECS` → `EXTRA_SPECS`) and builders `build_*`. The last holds the valley's ways underground and their link data ([WORLD_GRAPH.md](WORLD_GRAPH.md)). |
 | `vk_nature` | `src/nature/` | Nature kit (trees, bushes, rocks…), `NATURE_SPECS` + `rebuild_nature()` + `check_nature_specs()`. Broadleaf trees and bushes grow their leaf sprigs out of the wood: `sprig_foliage()` hangs twigs off the nearest branch (`Anchors`) and the sprig cards off the twigs. |
 | `vk_terrain` | `src/terrain/` | Marching-squares terrain kit: tiles, ramps/stairs (with cliff transition), chunk assembler, displacement, materials, paving/curbs, ramp dressing, tests. |
 | `vk_terrain_demo`, `vk_town_map` | `src/terrain/`, `src/maps/` | The two terrain showcase maps. |

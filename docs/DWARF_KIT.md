@@ -137,8 +137,8 @@ warm key, which flattened the fires' warm pools. It is a dark preset (floor targ
 
 ## 5. The level
 
-**`VKI_Dwarf_Hall`, the great hall** (19 × 11 cells, Hall preset). Links: `gate` → `@surface` (a passage in the
-vestibule) and `mines` → `VKI_Mine_M1` (a tunnel to the mine, [MINE_KIT.md](MINE_KIT.md)).
+**`VKI_Dwarf_Hall`, the great hall** (19 × 11 cells, Hall preset). Links: `gate` → `VK_ValleyTown` (a passage in the
+vestibule; the valley's dwarves' gate, [WORLD_GRAPH.md](WORLD_GRAPH.md)) and `mines` → `VKI_Mine_M1` (a tunnel to the mine, [MINE_KIT.md](MINE_KIT.md)).
 
 - **The vestibule.** A vestibule from the surface gate has two braziers by its wide corbelled doorway into the great
   hall (8 × 6 cells).

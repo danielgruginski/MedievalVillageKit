@@ -118,7 +118,7 @@ VKI_ROOMS.update({
         debris=dict(density=0.36, seed=23, zones={"store": 0.18}, themes={"mine": "mine", "store": "mine"}),
         tunnels={(0, 7): "surface", (22, 7): "hall"},
         tunnel_kinds={"surface": "Adit"},
-        links=[("surface", "passage", "@surface"), ("hall", "passage", "VKI_Dwarf_Hall"), ("deep", "lift", "@deep")],
+        links=[("surface", "passage", VKI_TOWN), ("hall", "passage", "VKI_Dwarf_Hall"), ("deep", "lift", "@deep")],
         pits=[("Pit_Shaft_300x300", 16.5, 4.5)],
         # the main line from the adit (it runs on out of it) along the gallery's centre line, turning south into the
         # iron drift; spurs north into the gold stope and south to the shaft's rim (turntables where they leave it)

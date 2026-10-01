@@ -264,7 +264,7 @@ surface → B1 gaol → B2 crypt → **B3 temple** → **B4 caverns** → **B5 g
 | Scene | Walls | Preset | Links | Contents |
 |---|---|---|---|---|
 | `VKI_Dungeon_B3` | Ancient (+ a Dungeon dart wall) | Dungeon | `crypt` passage → B2, `caverns` passage → B4 | the sunken temple. A gallery of traps: two spike pits across the direct way, a pressure plate under the dart wall, a blade slot with its victim, a boulder, a lever. A trilithon gateway with a half-raised portcullis. The sanctum: guardian statues, the golden idol on its altar, stone braziers, columns standing, broken and fallen, roots by a broken wall, a relief. A vault (low front wall) behind a stone disc rolled a metre aside, with a chest and a heap of gold. |
-| `VKI_Dungeon_B4` | cave map, 12 × 7 | Cavern | `temple` tunnel → B3, `warren` tunnel → B5 | the caverns. A chasm winds the width of the cave from under the west rock to under the east rock: one to two cells wide, swinging up and down, pinching twice. One rope bridge crosses it where it runs two cells wide. The south shelf has an underground pool, glowing mushrooms and crystals. The north shelf has a mass of rock in its west corner and a knob from the back wall, a fallen adventurer, stalagmites, and a spider nest (a corner web, egg sacs, a cocoon, webbed floor) before the tunnel on down. |
+| `VKI_Dungeon_B4` | cave map, 12 × 7 | Cavern | `temple` tunnel → B3, `warren` tunnel → B5, `falls` and `sewer` tunnels (the north shelf's back wall) → `VKI_Cave_Falls`, `VKI_Sewer_S1` | the caverns. A chasm winds the width of the cave from under the west rock to under the east rock: one to two cells wide, swinging up and down, pinching twice. One rope bridge crosses it where it runs two cells wide. The south shelf has an underground pool, glowing mushrooms and crystals. The north shelf has a mass of rock in its west corner and a knob from the back wall, a fallen adventurer, stalagmites, and a spider nest (a corner web, egg sacs, a cocoon, webbed floor) before the tunnel on down. |
 | `VKI_Dungeon_B5` | cave map | Cavern | `caverns` tunnel → B4 | the goblin warren. Tall rock tongues from the back wall and low ones from the front part three chambers off a hall that runs the width of the cave. The rat-run entry behind a stake barricade (burrow, rat hole, refuse, a totem). The camp: fire pit with a spitted haunch, lean-to, bedrolls. The chief's hoard: loot heap, coins, iron chest, a skeleton, bones, urns. Braziers light the side chambers. |
 
 **Transitions demo: `VKI_Cave_Breach`** (a cave map with walls, 14 × 9, Cavern preset, a tunnel on east). A dungeon
@@ -311,15 +311,16 @@ g["vki_cave_generate"]("VKI_Cave_Test", nc=24, nr=16, seed=7, chasm=True, pools=
 ![A generated cave, VKI_Cave_Test (seed 7)](images/adventure_cave_test.jpg)
 
 B3 and B5 are 10 × 6 cells and frame at D 20.6. B4 is 12 × 7, which gives the chasm room to wind. `vki_check`
-reports **0 errors** in each; B1 and B2 stay at 0.
+reports **0 errors** in each; B1 and B2 stay at 0. B4's figures are from after the town connection, which added its
+tunnels to the falls and the sewer ([WORLD_GRAPH.md](WORLD_GRAPH.md)).
 
 | | B3 | B4 | B5 |
 |---|---|---|---|
-| Triangles (whole level) | 40,742 | 26,274 (44 rock tiles, 11,456; 40 ground tiles, 8,344) | 24,042 (51 rock tiles, 13,136) |
-| With the debris ([DEBRIS.md](DEBRIS.md)) | 46,922 (22 pieces) | 32,016 (22 pieces) | 27,814 (16 pieces) |
-| Walk BFS reach (raster nodes) | 952 / 956 | 916 / 940 | 703 / 705 |
-| Floor luma | 0.220 | 0.153 | 0.168 |
-| Cap tops luma | 0.378 | 0.340 | 0.354 |
+| Triangles (whole level) | 40,742 | 26,278 (44 rock tiles, 11,460; 40 ground tiles, 8,344) | 24,042 (51 rock tiles, 13,136) |
+| With the debris ([DEBRIS.md](DEBRIS.md)) | 46,922 (22 pieces) | 31,520 (20 pieces) | 27,814 (16 pieces) |
+| Walk BFS reach (raster nodes) | 952 / 956 | 924 / 948 | 703 / 705 |
+| Floor luma | 0.220 | 0.154 | 0.168 |
+| Cap tops luma | 0.378 | 0.362 | 0.354 |
 
 Every use point and trigger is reached from every spawn; the few unreached raster nodes are pockets behind props
 (pockets between rock lobes and the chasm, corners behind props). The only warning left is B4's corner web rising

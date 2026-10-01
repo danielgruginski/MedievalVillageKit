@@ -2,8 +2,8 @@
 
 Modular dungeons built on the interior kit ([INTERIOR_KIT.md](INTERIOR_KIT.md)): the same 1.5 m grid, top-down camera,
 Full / Cut cutaway, posts, floors, scene links, prop mounts, tests and Unity metadata. Nothing in the interior kit's rules
-changes. A dungeon is a set of interior scenes, one per level, linked by stairs. The top level's stair up leads back to
-the surface (`@return`).
+changes. A dungeon is a set of interior scenes, one per level, linked by stairs. The top level's stair up leads to the
+valley town's lock-up on the market place (`VK_ValleyTown`; [WORLD_GRAPH.md](WORLD_GRAPH.md)).
 
 The kit adds:
 - two wall families: **Dungeon** (dark masonry) and **Bars** (iron cell fronts);
@@ -97,15 +97,15 @@ Stairs at rot ±90 now get correct footprint cells and forbidden post nodes, and
 
 | Scene | Size | Walls | Preset | Links | Contents |
 |---|---|---|---|---|---|
-| `VKI_Dungeon_B1` | 10 × 6 | Dungeon, Bars | Dungeon | `surface` stair up → `@return`, `crypt` stair down → B2 | the gaol: two barred cells under light grates (straw, bucket, chains, a skeleton), a cage, a barred holding pen, a guard table with dice and cards, weapon rack, brazier, puddles, a drain, rubble, seven torches |
+| `VKI_Dungeon_B1` | 10 × 6 | Dungeon, Bars | Dungeon | `surface` stair up → `VK_ValleyTown` (the lock-up), `crypt` stair down → B2, `sewer` passage (east wall) → `VKI_Sewer_S1` | the gaol: two barred cells under light grates (straw, bucket, chains, a skeleton), a cage, a barred holding pen, a guard table with dice and cards, weapon rack, brazier, puddles, a drain, rubble, seven torches |
 | `VKI_Dungeon_B2` | 10 × 6 | Dungeon, Bars | Dungeon | `above` stair up → B1 (same origin and rotation as B1's stair down) | the crypt: ossuary niches, four cut pillars round a necromancer's circle about an opened sarcophagus (the point of interest `POI_NecroCircle`, [POINTS_OF_INTEREST.md](POINTS_OF_INTEREST.md); it replaced the sarcophagus with its effigy), floor candles, coffins, grave slabs, a skeleton, bones, rubble, a barred treasure vault with an open chest of gold |
 
 Both levels are 10 × 6 cells and frame at D 20.6. `vki_check` reports **0 errors** in both.
 
 | | B1 | B2 |
 |---|---|---|
-| Walk BFS reach | 1045 / 1045 | 1175 / 1175 |
-| Floor luma | 0.158 | 0.154 |
+| Walk BFS reach | 1048 / 1048 (with the sewer passage) | 1175 / 1175 |
+| Floor luma | 0.156 | 0.154 |
 
 The remaining warnings are listed in HANDOFF (issue 25).
 

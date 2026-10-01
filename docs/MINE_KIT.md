@@ -1,7 +1,7 @@
 # Mine kit
 
 Mines for the interior framework ([INTERIOR_KIT.md](INTERIOR_KIT.md)), reached from the dwarven halls
-([DWARF_KIT.md](DWARF_KIT.md)) and, later, from the town.
+([DWARF_KIT.md](DWARF_KIT.md)) and from the town: its adit is the valley's mine portal ([WORLD_GRAPH.md](WORLD_GRAPH.md)).
 
 A mine level is a cave map ([ADVENTURE_KIT.md](ADVENTURE_KIT.md)): galleries two cells wide driven through the rock,
 stopes where the veins are worked, a shaft down to deeper workings. The kit adds:
@@ -19,8 +19,8 @@ stopes where the veins are worked, a shaft down to deeper workings. The kit adds
 - **debris:** two new pieces and a "mine" theme for the debris scatter;
 - **looks:** three materials and the **Mine** preset.
 
-That is 35 masters (16,758 triangles) and one level, `VKI_Mine_M1`, which links to the dwarf hall, the surface (the
-future way to the town) and the deep workings.
+That is 35 masters (16,758 triangles) and one level, `VKI_Mine_M1`, which links to the dwarf hall, the valley town (the
+mine portal) and the deep workings.
 
 ![The mine, VKI_Mine_M1, from high over its centre](images/mine_overview.jpg)
 
@@ -238,7 +238,7 @@ Timber lining for the galleries (`vki_fam_mine`; family `Mine`, class O, T 0.50,
 `VKI_Mine_M1`, 22 × 13 cells: the mine under the dwarf hall.
 
 - **The haulage gallery.** It runs the width of the map, two cells wide and timber-lined on both sides. The adit in the
-  west (timbered, a link up to the surface: the way to the town) leads to the tunnel back to the dwarf hall in the
+  west (timbered, the link up to the valley town's mine portal) leads to the tunnel back to the dwarf hall in the
   east. The track runs down its centre line under a timber set every few metres, with lanterns on every other set.
 - **The lining.** The gallery is lined wherever rock borders it: Full on its north side where the rock behind is Full
   (x 15–21 and 30–33), Cut elsewhere. So are the mouths of the drifts off it (to the stope, the crystal cave, the store,
@@ -252,7 +252,7 @@ Timber lining for the galleries (`vki_fam_mine`; family `Mine`, class O, T 0.50,
   cart and a broken set lie at the drift's mouth.
 - **The crystal cave** (north-east) is a natural cave the miners broke into.
 - **The miners' store** is by the adit: a sorting bench, a tool rack, barrels, a crate, spare sleepers.
-- **Links:** `("surface", "passage", "@surface")` (the adit), `("hall", "passage", "VKI_Dwarf_Hall")` (the tunnel),
+- **Links:** `("surface", "passage", VKI_TOWN)` (the adit, to the valley's `mine_adit`; [WORLD_GRAPH.md](WORLD_GRAPH.md)), `("hall", "passage", "VKI_Dwarf_Hall")` (the tunnel),
   `("deep", "lift", "@deep")` (the treadwheel). The dwarf hall's "mines" tunnel now targets `VKI_Mine_M1`.
 - **Track:** 29 tiles (23 straights, 2 turntables, 3 buffer stops, a curve).
 - **Timber:** 13 sets (6 with lanterns, 1 broken).

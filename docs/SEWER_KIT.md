@@ -103,7 +103,9 @@ The sewers reuse `Torch_Wall`, `Overlay_Puddle`, the pool pit and the cave dress
 ## 3. The level
 
 **`VKI_Sewer_S1`, the town sewer** (16 × 10 cells, 24 × 15 m, Sewer preset). Links: `gaol` → `VKI_Dungeon_B1` (a
-passage), `street` → `@surface` (the ladder), `caverns` → `VKI_Dungeon_B4` (a tunnel in the east cave's rock).
+passage), `street` → `VK_ValleyTown` (the ladder, up to the valley's sewer grate in the main street), `caverns` →
+`VKI_Dungeon_B4` (a tunnel in the east cave's rock). The gaol and the caverns now have their ways back (their `sewer`
+links; [WORLD_GRAPH.md](WORLD_GRAPH.md)).
 
 - **The tunnel.** A west–east brick tunnel runs with a walkway either side of the channel. It starts from the gaol's
   drain (a brick passage in the west end wall) and passes a ladder up to a street manhole.

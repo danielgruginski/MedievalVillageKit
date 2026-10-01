@@ -123,10 +123,10 @@ debris=dict(density=0.40, seed=19,                      # a fraction of each zon
 
 | Level | Density | Pieces | Their triangles | Level triangles |
 |---|---|---|---|---|
-| `VKI_Dungeon_B1` (gaol) | 0.26; the cells as dungeon | 15 | 3,632 | 41,260 |
+| `VKI_Dungeon_B1` (gaol) | 0.26; the cells as dungeon | 15 | 3,632 | 41,968 |
 | `VKI_Dungeon_B2` (crypt) | 0.26 | 16 | 4,132 | 37,988 |
 | `VKI_Dungeon_B3` (ruins) | 0.40 | 22 | 6,180 | 46,922 |
-| `VKI_Dungeon_B4` (caverns) | 0.50 | 22 | 5,742 | 32,016 |
+| `VKI_Dungeon_B4` (caverns) | 0.50 | 20 | 5,242 | 31,520 |
 | `VKI_Dungeon_B5` (warren) | 0.38 | 16 | 3,772 | 27,814 |
 | `VKI_Cave_Breach` | 0.40 | 25 | 6,610 | 56,322 |
 | `VKI_Sewer_S1` | 0.36 | 25 | 6,604 | 69,434 |
@@ -135,6 +135,8 @@ debris=dict(density=0.40, seed=19,                      # a fraction of each zon
 | `VKI_Cave_Test` (generated) | 0.34 | 79 | 21,764 | 98,484 |
 | `VKI_Mine_M1` ([MINE_KIT.md](MINE_KIT.md)) | 0.36, the "mine" theme; the store 0.18 | 35 | 9,104 | 98,398 |
 
+- **Since the town connection** ([WORLD_GRAPH.md](WORLD_GRAPH.md)): B1 has a passage to the sewer (+708 triangles),
+  and B4 two more tunnels, whose spawns keep two pieces of debris away.
 - **Checks.** All eleven check at 0 errors, and debris added no warnings (the ones left are listed in their kits'
   docs). `vki_test_all()` passes for all 713 masters (with the mine kit's).
 - **Placed vs wanted.** Fewer pieces land than the density asks for where a level is crowded: a piece needs its whole

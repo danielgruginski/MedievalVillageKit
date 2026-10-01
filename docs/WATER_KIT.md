@@ -77,7 +77,8 @@ ground tiles:
 ## 3. The level
 
 **`VKI_Cave_Falls`, an underground river** (16 × 10 cells, Cavern preset). Links: `west` → `VKI_Dungeon_B4` and
-`east` → `@return` (tunnels).
+`east` → `VK_ValleyTown` (tunnels; east comes out at the valley's spring cave, [WORLD_GRAPH.md](WORLD_GRAPH.md)). The caverns have a
+`falls` tunnel back.
 
 - **The river.** A spring falls from a cleft high in the north wall into a stream that winds south. A tributary falls
   from the west wall and joins it in a wide confluence (a 2 × 2 pool of stream cells).

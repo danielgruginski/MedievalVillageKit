@@ -16,7 +16,7 @@ VKI_RENDERS = os.path.join(VKI_ROOT, "renders", "interior")
 VKI_TEXTS = ["vki_fam_timber", "vki_floors", "vki_fam_stone", "vki_fam_board", "vki_fam_wattle", "vki_fam_ashlar",
              "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_fam_sewer", "vki_fam_water", "vki_fam_dwarf", "vki_props_home", "vki_props_tavern",
              "vki_props_smithy", "vki_props_chapel", "vki_props_dungeon", "vki_props_adventure", "vki_props_lair",
-             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_rooms_dwarf", "vki_props_poi", "vki_props_debris", "vki_fam_mine", "vki_rooms_mine", "vki_test"]
+             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_rooms_dwarf", "vki_props_poi", "vki_props_debris", "vki_fam_mine", "vki_rooms_mine", "vki_world", "vki_test"]
 
 
 VKI_CORE_TEXTS = ("vki_fam_timber", "vki_floors", "vki_test")    # a failure here raises; package texts only warn
@@ -47,6 +47,7 @@ def vki_ns(strict=False):
 
 
 # ---------------------------------------------------------------- §2.1 grid and constants
+VKI_TOWN = "VK_ValleyTown"                     # the valley's level id: the target of the underground's ways up (vki_world)
 VKI_IG = 1.5                                   # interior grid
 VKI_T = {"O": 0.50, "P": 0.30}                 # wall thickness by class
 VKI_H_FULL = {"Timber": 3.0, "Stone": 3.0, "Board": 3.0, "Wattle": 2.4, "Ashlar": 4.5, "Dungeon": 3.0, "Bars": 3.0,

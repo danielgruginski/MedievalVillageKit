@@ -45,7 +45,7 @@ VKI_ROOMS.update({
         debris=dict(density=0.38, seed=18),                                  # loose debris (vki_props_debris)
         zones={"cave": dict(cells="rest", floor="CaveFloor")},
         tunnels={(0, 3): "west", (16, 5): "east"},
-        links=[("west", "passage", "VKI_Dungeon_B4"), ("east", "passage", "@return")],
+        links=[("west", "passage", "VKI_Dungeon_B4"), ("east", "passage", VKI_TOWN)],  # east: the valley's spring cave
         pits=[("Pit_Pool_300x300", 3.0, 1.5)],
         # the spring (north wall, over cell (4, 8)) and the tributary (west wall, beside cell (1, 5)); the falls into
         # the chasm are placed by the assembler; stepping stones on the tributary and the river; the rope bridge

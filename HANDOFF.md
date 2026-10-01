@@ -6,6 +6,7 @@ Overview and folder map: [README.md](README.md). Kit reference: [docs/KIT_README
 Interior kit (built 2026-09-25/26): [docs/INTERIOR_KIT.md](docs/INTERIOR_KIT.md).
 Dungeon kit (built 2026-09-29 on the interior kit): [docs/DUNGEON_KIT.md](docs/DUNGEON_KIT.md).
 Adventure kit (built 2026-09-29 on the dungeon kit): [docs/ADVENTURE_KIT.md](docs/ADVENTURE_KIT.md).
+The town connection, the world graph (2026-09-30): [docs/WORLD_GRAPH.md](docs/WORLD_GRAPH.md).
 
 ---
 
@@ -72,7 +73,7 @@ Adventure kit (built 2026-09-29 on the dungeon kit): [docs/ADVENTURE_KIT.md](doc
   name): edit the file, then push it with `tools/kit_sync.py`. `status()` shows any drift; `pull()` saves texts edited
   in Blender back to `src/`. At handoff all 26 texts were identical to their files.
 - Loader: `exec(bpy.data.texts["vk_kit"].as_string()); g=vk_kit_ns()`. It loads `vk_helpers` (which runs `vk_mat`),
-  the 8 `vk_mod_*` modules, `vk_nature`, `vk_terrain` and `vk_terrain_demo`. Exec separately when needed:
+  the 9 `vk_mod_*` modules, `vk_nature`, `vk_terrain` and `vk_terrain_demo`. Exec separately when needed:
   `vk_town_map` (into `g`), `vk_render` (`shot()`), `vk_leafgen` and the texture generators `vk_tex`/`vk_texgen`/`vk_tex2`.
 - Everything is rebuilt **in place**: `full_rebuild(names)` for kit pieces, `rebuild_nature(names)` for nature
   (recipes in `NATURE_SPECS`, verified exact), `tk_build_ramps()`/`tk_build_stairs()` for tiles. Instances share the
@@ -98,8 +99,8 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
 
 - **Scenes:** `VillageKit` (main), `MedievalColony` (first diorama), `StoneWallKit`, `TreeAsset` (hero oak with LODs
   and impostor, predates the no-LOD rule), `SpriteRig` (from the user's sprite pipeline), `Scene`.
-- **Kit (`VK_Pieces`, 417 masters):** core pieces + modules humble, frontier, construction, skyline, town, water,
-  industry, defence; town-wall postern; landmarks `build_smithy` (9 m forge stack, glowing hearth, open workshop,
+- **Kit (`VK_Pieces`, 421 masters):** core pieces + modules humble, frontier, construction, skyline, town, water,
+  industry, defence, entrances (the valley's ways underground); town-wall postern; landmarks `build_smithy` (9 m forge stack, glowing hearth, open workshop,
   bellows, tool wall, sign) and `build_inn` (3 storeys, lit windows, tankard sign, ale cask, beer garden); 8 market
   stall trades; lit-window style; worn/fresh shutter styles; roof palette + per-instance brightness jitter.
   Gatehouse (`SM_VK_Gatehouse_*`, sizes in the `GH_*` constants of `vk_mod_defence`): 4 cells wide, 3.5 m passage
@@ -252,6 +253,28 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
       is still 0 errors, 0 warnings, and has 98,398 triangles (+4.3k).
     - **Looks.** The first boards (dark oak) read as black panels, and square corner posts as stumps. Now: hewn boards
       darkened a board at a time, on the SHUTTER slot for the grain, and cribs.
+- **The town connection (4 exterior masters, 421 in `VK_Pieces`; see [docs/WORLD_GRAPH.md](docs/WORLD_GRAPH.md)).** The
+  user: "start the connection to the town" (last in his queue after the dwarven halls and the mines).
+  - **Five ways down from the valley** (`vk_mod_entrances`, placed by `vk_town_map`):
+    - the mine portal (existing) → `VKI_Mine_M1`;
+    - the dwarves' gate, a corbelled doorway in a crag on the west bench beside the mine → `VKI_Dwarf_Hall`;
+    - the spring cave at the river's head → `VKI_Cave_Falls`;
+    - a sewer grate in the main street → `VKI_Sewer_S1`;
+    - a stone lock-up on the market place, by the inn's garden → `VKI_Dungeon_B1` (stair down).
+  - **Link data.** Each entrance instance carries the interior kit's link props, plus an `SPN_<id>` spawn in
+    `VK_ValleyTown` (`town_links`, run last in `build_valley_town`). The valley is level `VK_ValleyTown` (`VKI_TOWN`).
+  - **Underground.** The five surface links (`@surface` / `@return` before) now target the valley. Three one-way links
+    got their way back: B1 has a passage to the sewer, and B4 has tunnels to the falls and the sewer.
+  - **The world graph** (`vki_world`): `vki_world_check` (two-way, unambiguous arrival, kinds that pair, built link
+    objects and spawns) and `vki_world_json` (`docs/world_graph.json`).
+  - **Result.** 0 errors and 9 notes (the building interiors' and the breach demo's `@return`, the mine's `@deep`).
+    The six levels touched check at 0 errors.
+  - **Lessons.**
+    - The terrain has no holes, so every way down starts above ground and its passage must end in front of the cliff
+      behind it. Rock round an opening must be carved (faces spanning it deleted), not only pushed out of a box.
+    - The colony camera hides the ground about 8 m north of a two-storey house: the lock-up moved from beside the
+      keep to the market place.
+    - Metallic bronze facing the camera reads as a hole.
 
 ## 5. Open issues and ideas (none started unless marked done)
 
@@ -341,7 +364,8 @@ Dungeon kit (2026-09-29; details in docs/DUNGEON_KIT.md):
     - stocks or a rack;
     - ~~a rough rock / cave wall family~~ (adventure kit: the Cave family);
     - ~~goblin-lair dressing (bedrolls, totems)~~ (adventure kit: `vki_props_lair`);
-    - an exterior entrance (cellar stair, crypt door).
+    - ~~an exterior entrance (cellar stair, crypt door)~~ (the town connection: the lock-up on the market place,
+      [docs/WORLD_GRAPH.md](docs/WORLD_GRAPH.md)).
     `@return` sends the player back to wherever the game entered the dungeon.
 28. Unity export (issue 19) also needs:
     - the `vki_see_through` flag: bars, gates and the cage don't block sight lines;
@@ -404,10 +428,26 @@ Adventure kit (2026-09-29; details in docs/ADVENTURE_KIT.md):
     the rock behind it (Cut where the rock is Cut). Veins read best on north faces: the iron vein on the drift's east
     end reads side-on. The barricade across an E-W drift is seen edge-on. Unity: `vki_track` (conn bits turned by the
     tile's rotation give the cart graph), link kind "lift" (new), `vki_lift`, `vki_vein`, `vki_cart`. The treadwheel
-    is one mesh (split it to animate). The adit `@surface` is where the town connection plugs in.
+    is one mesh (split it to animate). The adit links to the valley's mine portal (WORLD_GRAPH).
 42. T19 checks a follow-mode level from one camera over its centre, so tall props near the level's ends (the timber
     sets by the mine's tunnels) can hide a spawn or trigger they would not hide in play. `VKI_Mine_M1` moved its sets
     off those rays; a follow grid of cameras (`vki_t19_visibility` accepts several) would test what the game sees.
+
+Town connection (2026-09-30; details in docs/WORLD_GRAPH.md):
+
+43. The world graph: run `vki_world_check(built=True)` after changing any level's links (a level built before its
+    links changed reports "rebuild the level"), then `vki_world_json(VKI_WORLD_JSON)`. The arrival rule needs exactly
+    one link back per pair of levels. The valley's links live in `ENT_TOWN_LINKS` (`vk_mod_entrances`), placements in
+    `TOWN_ENTRANCES` / `TOWN_SPRING_CAVE` (`vk_town_map`).
+44. Not done yet:
+    - The valley's building doors carry no links: the building interiors keep `@return`, and which buildings are
+      enterable is still issue 21.
+    - `@deep` (the mine's lift) has no level.
+    - B1's sewer passage (like S1's to the gaol) is in a north–south wall, edge-on to the game camera (issue 30).
+    - The entrances' passages are shallow (at most 2.2 m) because the terrain has no holes. A real cellar stair would
+      need holes in the terrain tiles.
+    - The valley's `SPN_` spawns are in world coordinates (the valley at x 1500): shift them if the valley is
+      exported at the origin.
 
 ## 6. Gotchas
 

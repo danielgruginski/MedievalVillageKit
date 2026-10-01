@@ -304,19 +304,52 @@ def town_river(T):
     T.P("SM_VK_Prop_Rowboat",3*68,42.0,-70,z=-0.6,style={"shutter":"Blue"})
 
 def town_spring(T,disp=None):
-    """where the river rises (west end): a rock outcrop at the valley head over the pool, boulders where the water
-    wells up, reeds and ferns on the sand. The spot is kept free of scatter and cliff dressing."""
+    """where the river rises (west end): the spring cave (vk_mod_entrances; the way into VKI_Cave_Falls) at the valley
+    head, its mouth on the sand turned a little toward the pool, boulders where the water wells up, reeds and ferns on
+    the sand. The spot is kept free of scatter and cliff dressing."""
     def put(n,x,y,z,r,s=1.0):
         if disp is not None: d=disp(np.array([[x,y,z]],float))[0]; x,y=x+d[0],y+d[1]
-        T.P(n,x,y,r,z=z,scale=s)
-    put("SM_VK_Rock_Outcrop",4.6,42.5,0.0,90)
-    for (n,x,y,z,r,s) in (("SM_VK_Rock_Boulder_B",8.4,45.8,-0.4,20,1.0),("SM_VK_Rock_Boulder_A",8.9,39.6,-0.3,-35,1.0),
-                          ("SM_VK_Rock_Boulder_Flat",10.3,42.8,-0.45,75,0.9),("SM_VK_Rock_Small_A",11.6,40.6,-0.5,0,1.3),
-                          ("SM_VK_Rock_Small_B",11.2,46.7,-0.45,40,1.2),("SM_VK_Plant_Reeds",11.0,34.3,0.0,10,1.0),
-                          ("SM_VK_Plant_Reeds",19.8,50.0,0.0,70,0.9),("SM_VK_Plant_Reeds",7.3,49.3,0.0,-20,1.0),
-                          ("SM_VK_Plant_Fern",6.8,36.4,0.0,30,1.0),("SM_VK_Plant_Fern",6.9,50.4,0.0,-60,0.9)):
+        return T.P(n,x,y,r,z=z,scale=s)
+    put("SM_VK_Entrance_SpringCave",*TOWN_SPRING_CAVE)
+    for (n,x,y,z,r,s) in (("SM_VK_Rock_Boulder_A",9.4,38.6,-0.3,-35,1.0),
+                          ("SM_VK_Rock_Boulder_Flat",12.6,38.2,-0.45,75,0.8),("SM_VK_Rock_Small_A",11.6,40.6,-0.5,0,1.3),
+                          ("SM_VK_Rock_Small_B",11.4,47.2,-0.45,40,1.2),("SM_VK_Plant_Reeds",11.0,34.3,0.0,10,1.0),
+                          ("SM_VK_Plant_Reeds",19.8,50.0,0.0,70,0.9),("SM_VK_Plant_Fern",6.8,36.4,0.0,30,1.0),
+                          ("SM_VK_Plant_Fern",6.4,40.9,0.0,-60,0.9),("SM_VK_Plant_Fern",10.2,44.9,0.0,110,0.8)):
         put(n,x,y,z,r,s)
     T.occupy((3.0,12.0,33.0,51.0))
+
+# the valley's ways underground (vk_mod_entrances, docs/WORLD_GRAPH.md): (label = link id, piece, map-local x, y, rot,
+# level). The spring cave goes in with town_spring (TOWN_SPRING_CAVE: x, y, z, rot), the mine portal with build_mine.
+TOWN_ENTRANCES=[("dwarf_gate","SM_VK_Entrance_DwarfGate",21.7,99.0,0.0,2),      # west bench, against the ridge, east of the mine
+                ("sewer_grate","SM_VK_Entrance_SewerGrate",125.4,88.5,0.0,2),   # main street, between the gate and the plaza
+                ("gaol_lockup","SM_VK_Entrance_LockUp",108.5,106.0,0.0,2)]      # the market place, by the inn's garden
+TOWN_SPRING_CAVE=(7.9,44.2,0.0,20.0)
+def town_entrances(T):
+    """the dwarves' gate, the sewer grate and the lock-up, each registered like a building (footprint, clash check,
+    stiff cells); run before the infill so the plaza lamps dodge the lock-up"""
+    for (lid,piece,x,y,rot,lv) in TOWN_ENTRANCES:
+        if bpy.data.objects.get(piece) is None: T.log.append((piece,"missing")); continue
+        T.build(lid,lambda c,o,p=piece: place_v(c,p,0,0,0,0,o,{}),x,y,rot,level=lv,allow_higher=True)
+        if lid=="dwarf_gate": T.G.wear_marks.append((x,y-4.2,1.9,1.5,0.0,0.8))      # trodden ground before the steps
+
+def town_links(T):
+    """tag the valley's five entrances with their scene links and put their SPN_ spawns (vk_mod_entrances ent_link);
+    run last (after the paving lift, so spawns on cobbles sit on the paving)"""
+    ent_stamp_meta()
+    found={}
+    for o in T.coll.all_objects:
+        if o.type=="MESH":
+            for (lid,kind,target,piece) in ENT_TOWN_LINKS:
+                if base_name(o)==piece: found.setdefault(lid,[]).append(o)
+    for (lid,kind,target,piece) in ENT_TOWN_LINKS:
+        objs=found.get(lid,[])
+        if len(objs)!=1: T.log.append(("link",lid,"needs one "+piece,len(objs))); continue
+        sp=ent_link(objs[0],lid,T.coll); z=sp.location.z
+        i,j=int((sp.location.x-TOWN_ORIGIN[0])//3),int(sp.location.y//3)
+        if 0<=i<T.G.W and 0<=j<T.G.H and T.G.ground[j,i]==2 and abs(z-T.G.level[j,i]*TIER)<0.03: sp.location.z+=0.06
+    T.links={lid:o[0].name for lid,o in found.items() if len(o)==1}
+    return T.links
 
 def town_south(T):
     G=T.G
@@ -682,6 +715,7 @@ def build_valley_town(seed=11,districts=("walls","river","south","meadow","west"
     T=TownPlacer(G,vcoll)
     fns=dict(walls=town_walls,river=town_river,south=town_south,meadow=town_meadow,west=town_west,inside=town_inside)
     for d in districts: fns[d](T)
+    town_entrances(T)
     if "inside" in districts:
         T.infilled=town_infill(T); town_plaza_lamps(T)
     disp=make_displace(G)
@@ -696,4 +730,5 @@ def build_valley_town(seed=11,districts=("walls","river","south","meadow","west"
         if "Chunk" in o.name: o.data.materials[0]=bpy.data.materials["M_VK_TerrainTown"]
     tk_ramp_dress(G,vcoll,origin=TOWN_ORIGIN)
     tk_build_paving(G,tcoll,origin=TOWN_ORIGIN,name="VKV_Paving",exclude=town_paving_exclude()); town_lift_on_paving(T)
+    town_links(T)
     return G,T,objs

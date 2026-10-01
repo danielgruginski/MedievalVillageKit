@@ -2,9 +2,9 @@
 # Loaded by vki_ns() right after vki_rooms, whose tables it extends: VKI_PLANS / VKI_ROOMS get two linked levels, built
 # and checked like every interior (vki_build_scene, vki_check, vki_rooms_shots). They are not in VKI_ROOMS_SCENES (the
 # nine interiors); build them with vki_build_all(VKI_DUNGEON_SCENES).
-#   VKI_Dungeon_B1  the gaol, 10 x 6: a stone stair up to the surface (the exit, @return), two barred cells under the
-#                   north wall's light grates, a barred holding pen in the SE, the guard table, a brazier, and the
-#                   stone stair down to the crypt in the NE
+#   VKI_Dungeon_B1  the gaol, 10 x 6: a stone stair up to the town (the valley's lock-up, VKI_TOWN), two barred cells
+#                   under the north wall's light grates, a barred holding pen in the SE, the guard table, a brazier,
+#                   the stone stair down to the crypt in the NE, and a passage in the east wall to the sewer (S1)
 #   VKI_Dungeon_B2  the crypt, 10 x 6: the stair up (same origin and rotation as B1's stair down), ossuary niches in the
 #                   north and side walls, four cut pillars round a sarcophagus, coffins, tomb slabs, a barred treasure
 #                   vault in the SW; a breach in the east wall (a passage) leads on to the adventure kit's B3
@@ -22,7 +22,7 @@ VKI_PLANS.update({
      +                             +
    4 #^^r..:bu ..:bo ..:.. .. .. Sd#
      +      ||+gg+||+gg+           +
-   3 #^^r.. .. .. .. .. .. .. .. ..#
+   3 #^^r.. .. .. .. .. .. .. .. ..P
      +                        ||+||+
    2 #Ss .. .. .. BR .. .. pd|.. sk#
      +                             +
@@ -57,7 +57,9 @@ VKI_ROOMS.update({
         zones={"cells": dict(cells=[(2, 5, 4, 5), (8, 9, 0, 2)], floor="EarthDamp", wall="DungeonInDamp"),
                "hall": dict(cells="rest", floor="DungeonFlag", wall="DungeonIn")},
         stairs=[("Up", 0.0, 4.5, 0, "surface", "Stone"), ("Down", 10.5, 9.0, -90, "crypt", "Stone")],
-        links=[("surface", "stair_up", "@return"), ("crypt", "stair_down", "VKI_Dungeon_B2")],
+        passages={("NS", 3, 10): "sewer"},       # the town connection: the way through to the sewer (S1's "gaol")
+        links=[("surface", "stair_up", VKI_TOWN), ("crypt", "stair_down", "VKI_Dungeon_B2"),
+               ("sewer", "passage", "VKI_Sewer_S1")],
         spawns={"surface": (0.75, 3.75, 180), "crypt": (14.25, 6.75, 180)},
         props=[("Cage", 2.25, 7.5, 0, None, None),          # clear of the NW corner post of cell A
                ("Torch_Wall", 2.25, 8.25, 0, None, "wall_hung"),                   # lights the cage
@@ -77,7 +79,7 @@ VKI_ROOMS.update({
                ("Brazier", 6.75, 3.75, 0, None, None),
                ("Overlay_Puddle", 5.25, 0.75, 0, None, None), ("Overlay_DrainGrate", 6.75, 0.75, 0, None, None),
                ("Rubble", 9.75, 0.75, 0, None, None), ("Overlay_Puddle", 11.25, 3.75, 0, None, None),
-               ("Torch_Wall", 0.75, 3.75, 90, None, "wall_hung"), ("Torch_Wall", 14.25, 5.25, -90, None, "wall_hung"),
+               ("Torch_Wall", 0.75, 3.75, 90, None, "wall_hung"), ("Torch_Wall", 14.25, 6.75, -90, None, "wall_hung"),
                # the holding pen (x 12.0-15.0, y 0-4.5)
                ("Skeleton_Sitting", 14.25, 3.75, -90, None, None), ("Overlay_StrawPile", 14.25, 0.75, 0, None, None),
                ("Bucket", 12.75, 0.75, 0, None, None), ("Torch_Wall", 14.25, 2.25, -90, None, "wall_hung")]),
