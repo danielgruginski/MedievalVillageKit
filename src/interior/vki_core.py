@@ -311,12 +311,17 @@ class VKIKit(Kit):
             v[s.body] = 1
 
     # -- UVs: VKI_TILE for slots >= 55; Stone/Ashlar coping switch; CAP grain along the long box axis
-    def project(s, faces, mi, axes=None, sizes=None, offset=(0.0, 0.0), tile=None):
+    def project(s, faces, mi, axes=None, sizes=None, offset=(0.0, 0.0), tile=None, snap_axes=None):
+        """snap_axes: each face is projected as if its normal were the nearest of these axes (bevel strips take the
+        projection of the box face beside them)"""
         for f in faces:
             if not f.is_valid:
                 continue
             f.normal_update()
             n = f.normal
+            if snap_axes:
+                ax = max(snap_axes, key=lambda a: abs(a.dot(n)))
+                n = ax * (1 if ax.dot(n) > 0 else -1)
             m2 = mi
             if mi == STONE and abs(n.z) > 0.7:
                 m2 = STONE_BLOCK
@@ -370,7 +375,13 @@ class VKIKit(Kit):
         else:
             h = abs(hash((round(c.x, 2), round(c.y, 2), round(c.z, 2))))
             off = ((h % 997) / 997.0, (h // 997 % 991) / 991.0)
-        s.project(faces, mi, axes, size, offset=off, tile=tile)
+        if bevel > 0:
+            # Bevelling replaces the box's big faces, which vki_build_tmp then textures with the default projection
+            # (no axes, the slot's tile, no offset); the bevel strips get that same projection, each as the box face
+            # it leans towards, so they no longer show another part of the texture (2026-10-01, as Kit.box)
+            s.project(faces, mi, snap_axes=axes)
+        else:
+            s.project(faces, mi, axes, size, offset=off, tile=tile)
         return [v for f in faces for v in f.verts]
 
     def body_box(s, x0, x1, z0, z1, y0=None, y1=None, step=0.25, mi_a=None, mi_b=None):

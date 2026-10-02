@@ -202,12 +202,17 @@ def variant_mesh(piece,style):
     return me
 class Kit:
     def __init__(s): s.bm=bmesh.new(); s.uv=s.bm.loops.layers.uv.new("UVMap"); s.cl=s.bm.loops.layers.color.new("Col")
-    def project(s,faces,mi,axes=None,sizes=None,offset=(0.0,0.0),tile=None):
+    def project(s,faces,mi,axes=None,sizes=None,offset=(0.0,0.0),tile=None,snap_axes=None):
+        """snap_axes: each face is projected as if its normal were the nearest of these axes (bevel strips take the
+        projection of the box face beside them)"""
         t=tile or TILE.get(mi,1.0)
         for f in faces:
             if not f.is_valid: continue
             f.material_index=mi
             n=f.normal
+            if snap_axes:
+                ax=max(snap_axes,key=lambda a:abs(a.dot(n)))
+                n=ax*(1 if ax.dot(n)>0 else -1)
             tt=t
             if mi==STONE and abs(n.z)>0.7: f.material_index=STONE_BLOCK; tt=TILE[STONE_BLOCK]
             if mi in (WOOD,SHUTTER) and axes:
@@ -222,8 +227,44 @@ class Kit:
                 U=n.cross(Vector((0,0,1))); U.normalize(); V=Vector((0,0,1))
             for l in f.loops:
                 p=l.vert.co; l[s.uv].uv=(p.dot(U)/tt+offset[0],p.dot(V)/tt+offset[1])
-    def box(s,center,size,mi,rot=(0,0,0),bevel=0.04,segs=1,jitter=0.0,seed=0,xform=None,tile=None):
+    def wrap_uv(s,faces,center,axes,size,bevel,tile,offset=(0.0,0.0)):
+        """a box's side faces textured as one band: u = distance along the bevelled outline (sides and corner arcs),
+        v = height, so the texture runs on around every corner. The band closes on the back-left corner (+Y / -X,
+        away from the game camera)."""
+        hx,hy=size[0]/2,size[1]/2; b=min(bevel,min(size)*0.45); ix,iy=hx-b,hy-b; arc=b*math.pi/2
+        c=Vector(center); X,Y=axes[0],axes[1]
+        # outline from the front-left corner, counter-clockwise seen from above: front, arc, right, arc, back, arc, left, arc
+        starts=[0.0]; lens=[2*ix,arc,2*iy,arc,2*ix,arc,2*iy,arc]
+        for L_ in lens[:-1]: starts.append(starts[-1]+L_)
+        P_=sum(lens); wrap_at=starts[5]+arc/2       # the middle of the back-left arc
+        def u_of(p):
+            d=p-c; lx,ly=d.dot(X),d.dot(Y)
+            qx=max(-ix,min(ix,lx)); qy=max(-iy,min(iy,ly))
+            cx,cy=(abs(qx)>=ix-1e-6),(abs(qy)>=iy-1e-6)
+            ox,oy=lx-qx,ly-qy
+            if cx and cy and (abs(ox)>1e-6 or abs(oy)>1e-6):           # on a corner arc
+                a_=math.atan2(oy,ox)
+                if qx>0 and qy<0: k_,a0=1,-math.pi/2
+                elif qx>0 and qy>0: k_,a0=3,0.0
+                elif qx<0 and qy>0: k_,a0=5,math.pi/2
+                else: k_,a0=7,math.pi
+                da=(a_-a0)%(2*math.pi)
+                if da>math.pi: da=0.0 if da>1.5*math.pi else math.pi/2
+                u=starts[k_]+b*min(da,math.pi/2)
+            elif abs(ly-(-hy))<=b+1e-4 and oy<=0: u=starts[0]+(qx+ix)       # front
+            elif abs(lx-hx)<=b+1e-4 and ox>=0: u=starts[2]+(qy+iy)          # right
+            elif abs(ly-hy)<=b+1e-4 and oy>=0: u=starts[4]+(ix-qx)          # back
+            else: u=starts[6]+(iy-qy)                                        # left
+            return (u-wrap_at)%P_
+        for f in faces:
+            if not f.is_valid or abs(f.normal.dot(axes[2]))>0.7: continue
+            us=[u_of(l.vert.co) for l in f.loops]
+            if max(us)-min(us)>P_/2: us=[u+P_ if u<P_/2 else u for u in us]   # a face across the closing seam
+            for l,u in zip(f.loops,us):
+                l[s.uv].uv=(u/tile+offset[0],l.vert.co.dot(axes[2])/tile+offset[1])
+    def box(s,center,size,mi,rot=(0,0,0),bevel=0.04,segs=1,jitter=0.0,seed=0,xform=None,tile=None,wrap=False):
         if mi==STONE and bevel>0 and (sorted(size)[1]<0.7 or min(size)<0.25): mi=STONE_BLOCK
+        before=set(s.bm.faces)
         r=bmesh.ops.create_cube(s.bm,size=1.0); vs=r["verts"]
         R=Matrix.Rotation(rot[2],4,"Z")@Matrix.Rotation(rot[1],4,"Y")@Matrix.Rotation(rot[0],4,"X")
         M=Matrix.Translation(Vector(center))@R@Matrix.Diagonal((*size,1))
@@ -244,7 +285,16 @@ class Kit:
         c=Vector(center) if xform is None else xform@Vector(center)
         h=abs(hash((round(c.x,2),round(c.y,2),round(c.z,2))))
         off=(0.0,0.0) if (mi in (STONE,ASHLAR,FIELDSTONE) and bevel==0) else ((h%997)/997.0,(h//997%991)/991.0)
-        s.project(faces,mi,axes,size,offset=off,tile=tile)
+        if bevel>0:
+            # Bevelling replaces the box's big faces, which then get rebuild()'s default projection (no axes, the
+            # material's tile, no offset). The bevel strips get that same projection, each as the box face it leans
+            # towards, so they continue their neighbours instead of showing another part of the texture (2026-10-01).
+            s.project(faces,mi,snap_axes=axes)
+        else:
+            s.project(faces,mi,axes,size,offset=off,tile=tile)
+        if wrap and xform is None:
+            allf=[f for f in s.bm.faces if f not in before and f.is_valid]
+            s.wrap_uv(allf,center,axes,size,bevel,TILE.get(mi,1.0))
         return [v for f in faces for v in f.verts]
     def quad(s,pts,mi,uvs=None):
         vs=[s.bm.verts.new(p) for p in pts]; f=s.bm.faces.new(vs); f.material_index=mi; s.bm.normal_update()
@@ -518,7 +568,8 @@ def gable_end(k,kind='timber',trim=True):
     k.box((XF+0.02,0,wz+0.4),(0.06,0.05,0.8),WOOD,bevel=0.01)
 def chimney(k):
     y0=1.3
-    k.box((0,y0,(RIDGE+1.5)/2),(1.0,1.0,RIDGE+1.5),STONE,bevel=0.06,segs=2,tile=1.8)
+    # wrap: the shaft's stones run on around its corners (the corners showed as seams, 2026-10-01)
+    k.box((0,y0,(RIDGE+1.5)/2),(1.0,1.0,RIDGE+1.5),STONE,bevel=0.06,segs=2,tile=1.8,wrap=True)
     k.box((0,y0,RIDGE+1.55),(1.25,1.25,0.22),STONE,bevel=0.07,segs=2)
     for dx in(-0.22,0.22):
         k.box((dx,y0,RIDGE+1.9),(0.3,0.3,0.5),STONE,bevel=0.06,segs=2)
@@ -2388,7 +2439,8 @@ def roof_L_corner(k):
     eave_tabs(k,GO,3.0,-1)
 def chimney(k):
     y0=1.3
-    k.box((0,y0,(RIDGE+1.5)/2),(1.0,1.0,RIDGE+1.5),STONE,bevel=0.06,segs=2,tile=1.8)
+    # wrap: the shaft's stones run on around its corners (the corners showed as seams, 2026-10-01)
+    k.box((0,y0,(RIDGE+1.5)/2),(1.0,1.0,RIDGE+1.5),STONE,bevel=0.06,segs=2,tile=1.8,wrap=True)
     rock(k,(0,y0,RIDGE+1.55),(1.25,1.25,0.22),seed=21,tilt=0.02)
     rock(k,(0,y0,RIDGE+1.0),(1.12,1.12,0.16),seed=22,tilt=0.01,segs=1)
     for dx in(-0.22,0.22):

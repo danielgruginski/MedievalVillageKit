@@ -1,4 +1,37 @@
 
+def fresh_paint_set(prefix,grow=3,offsets=((0.37,0.61),(0.71,0.23),(0.13,0.83))):
+    """<prefix>Fresh_BC/_N/_R: the painted-wood set with its chips (the _Mask zeros, grown by `grow` px to take the
+    painted lip around each chip too) filled from the same texture at offset positions, so fresh paint covers the
+    whole board. Built once and packed; files go next to the other kit textures."""
+    out=prefix+"Fresh"
+    if all(bpy.data.images.get(out+x) for x in ("_BC","_N","_R")): return out
+    import numpy as np, os
+    def arr(name):
+        im=bpy.data.images[name]; a=np.empty(len(im.pixels),dtype=np.float32); im.pixels.foreach_get(a)
+        return a.reshape(im.size[1],im.size[0],4)
+    m=arr(prefix+"_Mask")[...,0]; H,W=m.shape
+    chip=m<0.5
+    for _ in range(grow):
+        c=chip.copy(); c[1:]|=chip[:-1]; c[:-1]|=chip[1:]; c[:,1:]|=chip[:,:-1]; c[:,:-1]|=chip[:,1:]; chip=c
+    src=np.zeros((H,W),dtype=np.int32)-1          # which offset fills each chip pixel (-1: none)
+    todo=chip.copy()
+    for k,(ox,oy) in enumerate(offsets):
+        sh=np.roll(np.roll(chip,-int(oy*H),axis=0),-int(ox*W),axis=1)
+        ok=todo&~sh; src[ok]=k; todo&=~ok
+    root=os.path.dirname(bpy.path.abspath(bpy.data.images[prefix+"_BC"].filepath)) or bpy.path.abspath("//")
+    for suf in ("_BC","_N","_R"):
+        a=arr(prefix+suf); b=a.copy()
+        for k,(ox,oy) in enumerate(offsets):
+            sh=np.roll(np.roll(a,-int(oy*H),axis=0),-int(ox*W),axis=1)
+            b[src==k]=sh[src==k]
+        img=bpy.data.images.get(out+suf) or bpy.data.images.new(out+suf,W,H,alpha=True)
+        img.colorspace_settings.name=bpy.data.images[prefix+suf].colorspace_settings.name
+        img.pixels.foreach_set(b.ravel())
+        img.filepath_raw=os.path.join(root,out+suf+".png"); img.file_format="PNG"
+        try: img.save()
+        except Exception: pass
+        img.pack()
+    return out
 def pbr_material(mat,prefix,tint=None,nstr=1.0,metallic=0.0,rough_mul=1.0,emission=0.0,flat=None,paint=None,spec=0.3,metal_map=False,hsv=None,jitter=0.0,wear=0.15):
     mat.use_nodes=True; nt=mat.node_tree; nt.nodes.clear(); L=nt.links
     out=nt.nodes.new("ShaderNodeOutputMaterial"); out.location=(900,0)
@@ -17,17 +50,21 @@ def pbr_material(mat,prefix,tint=None,nstr=1.0,metallic=0.0,rough_mul=1.0,emissi
         mf.inputs[6].default_value=(*flat,1); L.new(bw.outputs[0],mf.inputs[7]); mf.location=(-150,300)
         col_out=mf.outputs[2]
     elif paint is not None:
-        mk=tex("_Mask",600)
+        if wear<1.0: prefix=fresh_paint_set(prefix); bc.image=bpy.data.images[prefix+"_BC"]; nm.image=bpy.data.images[prefix+"_N"]; rg.image=bpy.data.images[prefix+"_R"]
+        mk=tex("_Mask",600) if wear>=1.0 else None
         mp=nt.nodes.new("ShaderNodeMix"); mp.data_type="RGBA"; mp.blend_type="MULTIPLY"; mp.inputs[0].default_value=1.0
         L.new(bc.outputs[0],mp.inputs[6]); mp.inputs[7].default_value=(*paint,1); mp.location=(-300,300)
-        mm=nt.nodes.new("ShaderNodeMix"); mm.data_type="RGBA"; mm.blend_type="MIX"; mm.location=(-120,300)
-        # wear: 1 = the painted mask as authored (chipped, lots of bare wood); small = fresh paint with only a
-        # few scuffs at the very edges
-        mr=nt.nodes.new("ShaderNodeMapRange"); mr.clamp=True; mr.location=(-300,600)
-        mr.inputs["From Min"].default_value=0.0; mr.inputs["From Max"].default_value=max(0.02,wear)
-        L.new(mk.outputs[0],mr.inputs["Value"])
-        L.new(mr.outputs[0],mm.inputs[0]); L.new(bc.outputs[0],mm.inputs[6]); L.new(mp.outputs[2],mm.inputs[7])
-        col_out=mm.outputs[2]
+        if wear>=1.0:
+            # worn (about 1 in 5 shutters): the chips as authored, bare wood where _Mask is 0
+            mm=nt.nodes.new("ShaderNodeMix"); mm.data_type="RGBA"; mm.blend_type="MIX"; mm.location=(-120,300)
+            mr=nt.nodes.new("ShaderNodeMapRange"); mr.clamp=True; mr.location=(-300,600)
+            mr.inputs["From Min"].default_value=0.0; mr.inputs["From Max"].default_value=1.0
+            L.new(mk.outputs[0],mr.inputs["Value"])
+            L.new(mr.outputs[0],mm.inputs[0]); L.new(bc.outputs[0],mm.inputs[6]); L.new(mp.outputs[2],mm.inputs[7])
+            col_out=mm.outputs[2]
+        else:
+            # fresh paint: a chip-free texture set (fresh_paint_set) painted all over
+            col_out=mp.outputs[2]
     elif tint is not None:
         mt=nt.nodes.new("ShaderNodeMix"); mt.data_type="RGBA"; mt.blend_type="MULTIPLY"; mt.inputs[0].default_value=1.0
         L.new(bc.outputs[0],mt.inputs[6]); mt.inputs[7].default_value=(*tint,1); mt.location=(-150,300)

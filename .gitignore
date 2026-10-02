@@ -8,5 +8,15 @@
 /archive/backups/*.png
 /archive/dev_data/*.png
 
+# Unity package: the exporter's output (Art/, Data/: src/export/vkx_export.py) and what Tools > Medieval Kit > Build All
+# makes from it in Unity (Generated/) are regenerated, not versioned (~500 MB of FBX, textures, prefabs, scenes); the
+# package's code, shaders and their .meta files are. The finished package ships as a download, not through git.
+/unity/com.danielgruginski.medievalkit/Art/
+/unity/com.danielgruginski.medievalkit/Art.meta
+/unity/com.danielgruginski.medievalkit/Data/
+/unity/com.danielgruginski.medievalkit/Data.meta
+/unity/com.danielgruginski.medievalkit/Generated/
+/unity/com.danielgruginski.medievalkit/Generated.meta
+
 __pycache__/
 *.pyc

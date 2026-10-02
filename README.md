@@ -142,4 +142,7 @@ enough LFS storage is used.
 The .blend is not published for a second reason: besides the kit it holds a `SpriteRig` scene with third-party
 character assets that may not be redistributed. Strip that scene (and anything it references) before sharing the file.
 
-Unity export is deliberately deferred until the Blender files are finished. Target project: `E:\Unity\Projects\MedievalSetting`.
+The Unity side is a package, `unity/com.danielgruginski.medievalkit` (docs/UNITY_EXPORT.md): its code (runtime,
+editor tools, generators) and shaders are tracked; its content is not -- `Art/` and `Data/` are written by the exporter
+(`src/export/vkx_export.py`, run in Blender) and `Generated/` by Tools > Medieval Kit > Build All in Unity, so a clone
+plus the .blend rebuilds the whole package. The ready-made package is published as a download.

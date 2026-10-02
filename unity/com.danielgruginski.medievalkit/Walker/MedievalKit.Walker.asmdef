@@ -1,0 +1,6 @@
+{
+  "name": "MedievalKit.Walker",
+  "rootNamespace": "MedievalKit",
+  "references": ["MedievalKit.Runtime", "Unity.InputSystem"],
+  "autoReferenced": true
+}

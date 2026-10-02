@@ -1,0 +1,8 @@
+{
+  "name": "MedievalKit.Runtime",
+  "rootNamespace": "MedievalKit",
+  "references": ["Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime"],
+  "precompiledReferences": ["Newtonsoft.Json.dll"],
+  "overrideReferences": true,
+  "autoReferenced": true
+}

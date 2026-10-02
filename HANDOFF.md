@@ -7,6 +7,7 @@ Interior kit (built 2026-09-25/26): [docs/INTERIOR_KIT.md](docs/INTERIOR_KIT.md)
 Dungeon kit (built 2026-09-29 on the interior kit): [docs/DUNGEON_KIT.md](docs/DUNGEON_KIT.md).
 Adventure kit (built 2026-09-29 on the dungeon kit): [docs/ADVENTURE_KIT.md](docs/ADVENTURE_KIT.md).
 The town connection, the world graph (2026-09-30): [docs/WORLD_GRAPH.md](docs/WORLD_GRAPH.md).
+Unity export (vertical slice, 2026-09-30): [docs/UNITY_EXPORT.md](docs/UNITY_EXPORT.md).
 
 ---
 
@@ -17,7 +18,7 @@ The town connection, the world graph (2026-09-30): [docs/WORLD_GRAPH.md](docs/WO
 - **Terrain is geometry:** marching-squares tiles connected by their corners (dual grid). Fix terrain problems in the
   tiles (e.g. the ramp/cliff transition tile) rather than painting over them; props are fine for hiding texture seams.
 - **Blender first, Unity later:** finish the Blender files before exporting. Target Unity project:
-  `E:\Unity\Projects\MedievalSetting`. Do not export until the user asks.
+  `E:\Unity\Projects\MedievalSetting`. Export started 2026-09-30 at the user's request (docs/UNITY_EXPORT.md).
 - **Verify visually:** after a change, render (`shot()`), look at the PNG, fix what is wrong, then report.
 - **Save the .blend** after each completed step (`bpy.ops.wm.save_mainfile()`).
 - **The user steers:** finish the task at hand and report; don't start big new directions or spend a lot of
@@ -448,6 +449,73 @@ Town connection (2026-09-30; details in docs/WORLD_GRAPH.md):
       need holes in the terrain tiles.
     - The valley's `SPN_` spawns are in world coordinates (the valley at x 1500): shift them if the valley is
       exported at the origin.
+
+Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
+
+45. Vertical slice exported and verified (valley house, `VKI_Tavern_F0`, `VKI_Dungeon_B4`): the local UPM package
+    `unity/com.danielgruginski.medievalkit` (referenced from MedievalSetting's manifest), exporter
+    `src/export/vkx_export.py` (`vkx_export_slice()`), Unity `Tools > Medieval Kit > Build All`. Unity renders match the
+    Blender renders from the same cameras (AgX reproduced by `KitAgX`). Test scene `VKX_Slice_House` holds the house.
+    Next: the full piece export, the valley and other levels, runtime behaviour for links / doors / Full-Cut /
+    traps / water (UNITY_EXPORT section 6). Issues 11, 19, 28 and 33 are partly covered there.
+46. 2026-10-01: all 1199 master pieces exported (`vkx_export_pieces`), checked against Blender through the
+    verification catalogs `VKX_Catalog_Exterior` / `VKX_Catalog_Interior` (UNITY_EXPORT section 7). Open: the
+    world-projected terrain / stair / river materials (placeholders), trees ~10-15 % brighter in Unity, the stray
+    `tmp_tw` object in `VK_Pieces`.
+47. 2026-10-01: KitTerrain (terrain / stair / paving / curb / river water ported from vk_terrain as one URP shader)
+    and the valley exported as level `Valley` (origin x 1500 -> 0, sky probed for ambient, verification cameras in
+    `VKX_ValleyCams`). Matches Blender except cast shadows (off in the Blender scene) and trees. 9.37 M tris, 3.9 M of
+    them pines.
+48. 2026-10-01: all 20 world-graph levels exported (`vkx_export_world`) and linked in Unity (KitWorld / KitLink / KitSpawn /
+    KitTravel, a test walker; UNITY_EXPORT section 8). Next decided with the user: how levels and buildings are made
+    in Unity (generators vs Blender-baked layouts).
+49. 2026-10-01: Unity house generator (UNITY_EXPORT section 9), rules-compatible with build_house_v, not seed-identical.
+50. 2026-10-01: shutters. The user had asked for fresh paint on most shutters, yet nearly all read worn: the chips are
+    painted into T_VK_PaintedWood_BC / _N / _R (bare wood where _Mask is 0, ~11 %), and "fresh" only moved a mask
+    threshold. Fixed in `vk_mat.pbr_material` / `fresh_paint_set`: fresh shutters use T_VK_PaintedWoodFresh_* (chips
+    grown 3 px and filled from offset samples of the same set); the *Worn variants keep the chips. The valley had no
+    worn shutters at all (all 128 painted ones fresh) although its infill houses use `random_style` (with
+    `_maybe_worn`); not checked why (other modules set shutters explicitly).
+51. 2026-10-01: bevel seams (the user saw it on the chimney, in Blender and Unity). Cause, in `Kit.box`: bevelling
+    replaces the box's big faces, which `box` then never textured; `rebuild()` gave them its default projection
+    (material tile, no offset) while the bevel strips got `box`'s own (its tile, a random offset), so every bevelled
+    box showed strips of another part of the texture. Fixed kit-wide: bevel strips now get the default projection, each
+    as the box face it leans towards (`project(..., snap_axes=)`); the big faces are unchanged. Rebuilt all 420
+    exterior masters: geometry identical, 151k bevel faces + 612 flat faces (left unreplaced by the bevel) re-textured,
+    catalog renders differ by <=1.3 % of pixels. A planar projection still breaks at a box corner; the chimney shaft
+    uses `box(..., wrap=True)` (`Kit.wrap_uv`: u = distance around the bevelled outline, closing on the back-left
+    corner), so its stones run on round the corners. Found on the way: `SM_VK_TownWall_Tower_Round` in the .blend
+    differs (up to 3.8 m) from what its builder makes today, and `fro_staddle` jitters vertices in set order (not
+    reproducible); both left as stored, the tower excluded from the rebuild.
+    Interior side (same day): `VKIKit` overrides `box` / `project` with a copy of the old code, so it had the same bug;
+    fixed the same way and all 713 VKI masters rebuilt (`vki_rebuild`, VARI_* refreshed): 37k bevel faces + 59 flat
+    faces re-textured, 261 pieces only renumbered vertices (same shapes), 3 (Bed_Straw, Bed_Box, Hearth_Open) came out
+    ~1.2 cm different from builder randomness, so they kept their stored geometry with the new UVs transferred
+    (faces matched <= 8 mm). 14 mine props changed materials only in unused slots 56-59. Interior catalog renders differ
+    by <= 1.5 % of pixels. The exterior VAR_ meshes already carried the new UVs. Both kits re-exported to Unity.
+52. 2026-10-01: Unity L-houses (KitHouseGenerator Shape L), the Kit Palette for building by hand (UNITY_EXPORT 9-10),
+    and a material signature cache in the exporter (UNITY_EXPORT 11).
+53. 2026-10-01: 45 premade structures (landmarks + module buildings) exported as Unity prefabs (UNITY_EXPORT 12);
+    scene `VKX_Structures` shows them in a row. Next: generators for interiors and caves.
+54. 2026-10-01: rooms from typed plans in Unity (UNITY_EXPORT 13), phase 1 of 4 (structure; then props from plan
+    codes, caves, a random room generator). `vkx_export_interior_rules` -> `Data/interior_rules.json`; `KitRoomLayout`
+    + `KitRoom` port `vki_parse_plan` / `vki_rooms_layout` / `vki_build_scene`'s shell. Golden test: the 12 walled
+    rooms match Blender piece for piece (720 pieces, materials, spawns, links, lights); 14 rhythm posts / doorway mats
+    differ only because props are not placed yet.
+55. 2026-10-01: phase 2, furniture in `KitRoom` (UNITY_EXPORT 13): the record's props by mount (wall_floor, wall_hung,
+    table, floor hug, prop links), or furniture from the plan's cell codes, and bare plans build with defaults. The
+    user asked for the general idea, not a Blender-exact match: props are tested to 5 cm (10 of 12 rooms match; 3 props
+    0.3 m off), codes alone find 158 / 165 coded props. Debris not ported. Next: caves (phase 3), random rooms (4).
+56. 2026-10-01: phase 3, caves in `KitRoom` (UNITY_EXPORT 13): cave maps (rock tiles by corner code, wall-backed
+    tiles, chasm / stream ground tiles, sewer / lava channels with flow, quarter floors, tunnels, mine track) and
+    `KitCaveGenerator` (the cellular automaton in outline). The 7 cave levels match Blender piece for piece (2,437).
+    The export now keeps rooms' zone order (`zone_order`). Next: the random room generator (phase 4).
+57. 2026-10-01: phase 4, generators (UNITY_EXPORT 13): `KitDungeonGenerator` (rooms + corridors in rock, doors, stairs
+    up / down, themed rooms via `KitFurnisher`, torches, debris, `KitEncounter` markers for the game's monsters) and
+    `KitInteriorGenerator` (house ground floors). The user asked whether this makes playable levels: layout, markers
+    and walkability yes; monster AI / combat is game code still to design. Walkability fixes found on the way (kit-wide):
+    chasm / stream tiles had no floor collider on their open quarters (prefab builder `AddGroundFloor`), bridge decks
+    were not walkable (`KitDecks`), and the walk test (navmesh) shows openable leaves must carve, agents <= 0.35 m.
 
 ## 6. Gotchas
 
