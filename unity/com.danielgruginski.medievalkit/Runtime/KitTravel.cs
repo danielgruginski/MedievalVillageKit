@@ -1,6 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
 namespace MedievalKit
@@ -10,24 +13,77 @@ namespace MedievalKit
     /// "@return" goes back through the link the walker came in by (building doors). The walker is whatever was
     /// registered with <see cref="SetWalker"/> (or the object tagged Player); it should survive scene loads
     /// (DontDestroyOnLoad). Games can listen to <see cref="Arrived"/> instead of relying on the default placement.
+    /// The arrival spawn: the link's `arrive`, else the kit world's rule (its one link back), else the spawn named like
+    /// the link (both ends of a stair share its id). A spawn in a chain's piece (a play scene with a
+    /// <see cref="KitChainStreamer"/>) is reached once the streamer has loaded that piece.
+    /// <para>Preloading (<see cref="Preload"/>, off by default): the levels the current one's links lead to are loaded
+    /// beside it in the background and held switched off (their root objects inactive: unseen, no colliders, lights or
+    /// navmesh), so taking a link is an instant cut: the level left is switched off, the target switched on and made the
+    /// active scene (its lighting), the walker placed; the level left stays held while it is one link away, else it is
+    /// unloaded. A level not held yet, a chain's play scene (it streams its own pieces) and the way out of a chain load
+    /// the plain way behind a short fade.</para>
     /// </summary>
     public static class KitTravel
     {
         public static event Action<string, KitSpawn> Arrived;       // level, spawn (null if none was found)
         public static event Action<KitLink> Leaving;
 
+        /// <summary>hold the current level's link targets loaded and switched off, for instant cuts</summary>
+        public static bool Preload
+        {
+            get => preload;
+            set { preload = value; Hook(); if (value) Host.Refresh(); }
+        }
+        /// <summary>the fade of a plain load (seconds each way)</summary>
+        public static float FadeSeconds = 0.18f;
+        /// <summary>the levels held switched off, ready for an instant cut</summary>
+        public static IEnumerable<string> Held => held.Keys;
+        public static bool Travelling => host != null && host.Fading;
+
+        static bool preload;
         static Transform walker;
         static string pendingSpawn;
+        static (string level, string link)? pendingReturn;              // the way back, kept if one arrives on a "@return" door
         static readonly Stack<(string level, string link)> returns = new Stack<(string, string)>();
+        static readonly Dictionary<string, (Scene scene, List<GameObject> roots)> held = new Dictionary<string, (Scene, List<GameObject>)>();
+        static readonly HashSet<string> preloading = new HashSet<string>();
+        static readonly HashSet<string> noPreload = new HashSet<string>();    // chains' play scenes: they stream themselves
+        static (string target, string arrive)? waiting;                         // a link taken while its level was still loading
         static bool hooked;
+        static KitTravelHost host;
 
         public static void SetWalker(Transform t) => walker = t;
         public static Transform Walker => walker != null ? walker : GameObject.FindWithTag("Player")?.transform;
+        /// <summary>a walker was registered (a game's player): stand-ins (KitTestWalker) step aside</summary>
+        public static bool HasWalker => walker != null;
         public static string CurrentLevel => SceneManager.GetActiveScene().name;
         public static int ReturnDepth => returns.Count;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void Reset() { walker = null; pendingSpawn = null; returns.Clear(); hooked = false; }
+        static void Reset()
+        {
+            walker = null; pendingSpawn = null; pendingReturn = null; returns.Clear(); hooked = false;
+            preload = false; held.Clear(); preloading.Clear(); noPreload.Clear(); waiting = null; host = null;
+        }
+
+        static void Hook()
+        {
+            if (!hooked) { SceneManager.sceneLoaded += OnLoaded; hooked = true; }
+        }
+
+        static KitTravelHost Host
+        {
+            get
+            {
+                if (host == null)
+                {
+                    var go = new GameObject("KitTravel");
+                    UnityEngine.Object.DontDestroyOnLoad(go);
+                    host = go.AddComponent<KitTravelHost>();
+                }
+                return host;
+            }
+        }
 
         public static bool Go(KitLink link)
         {
@@ -41,6 +97,7 @@ namespace MedievalKit
             {
                 if (returns.Count == 0) { Debug.LogWarning($"[KitTravel] {from}: nowhere to return to"); return false; }
                 (target, arrive) = returns.Pop();
+                pendingReturn = null;
             }
             else
             {
@@ -49,47 +106,218 @@ namespace MedievalKit
                     var world = UnityEngine.Object.FindAnyObjectByType<KitLevel>()?.world;
                     arrive = world != null ? world.ArrivalFor(from, link.linkId, target) : null;
                 }
-                // arriving on a building's "@return" door: remember where we came from for the way back
-                // (not when coming down its own stairs: those land on the stair, not the door)
-                var tw = UnityEngine.Object.FindAnyObjectByType<KitLevel>()?.world?.Find(target);
-                if (tw != null && tw.links.Exists(l => l.id == arrive && l.target == "@return"))
-                    returns.Push((from, link.linkId));
+                if (string.IsNullOrEmpty(arrive)) arrive = link.linkId;
+                // arriving on a building's "@return" door, the way back is remembered (Arrive; not when coming down its
+                // own stairs: those land on the stair, not the door)
+                pendingReturn = (from, link.linkId);
             }
             if (!Application.CanStreamedLevelBeLoaded(target))
             {
                 Debug.LogError($"[KitTravel] level '{target}' is not in the build settings");
                 return false;
             }
+            if (host != null && host.Fading) return false;          // one journey at a time
             Leaving?.Invoke(link);
+            Hook();
+            bool inChain = UnityEngine.Object.FindAnyObjectByType<KitChainStreamer>() != null;
+            if (preload && !inChain && held.ContainsKey(target)) { Switch(target, arrive); return true; }
+            if (preload && !inChain && preloading.Contains(target)) { waiting = (target, arrive); return true; }
             pendingSpawn = arrive;
-            if (!hooked) { SceneManager.sceneLoaded += OnLoaded; hooked = true; }
-            SceneManager.LoadScene(target);
+            if (preload) Host.FadeLoad(target);
+            else SceneManager.LoadScene(target);
             return true;
+        }
+
+        /// <summary>the instant cut: the level here switched off (its surface and colliders out of the way first), the
+        /// held target switched on, made active, the walker placed</summary>
+        static void Switch(string target, string arrive)
+        {
+            var from = SceneManager.GetActiveScene();
+            var (sc, roots) = held[target];
+            held.Remove(target);
+            Hold(from);
+            foreach (var r in roots) if (r != null) r.SetActive(true);
+            SceneManager.SetActiveScene(sc);
+            Arrive(sc, arrive);
+            Host.Refresh();
+        }
+
+        static void Hold(Scene s)
+        {
+            var roots = s.GetRootGameObjects().Where(g => g.activeSelf).ToList();
+            foreach (var r in roots) r.SetActive(false);
+            held[s.name] = (s, roots);
         }
 
         static void OnLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (pendingSpawn == null) return;
+            if (mode == LoadSceneMode.Additive && preloading.Remove(scene.name))
+            {
+                if (scene.GetRootGameObjects().Any(g => g.GetComponentInChildren<KitChainStreamer>(true) != null))
+                {
+                    noPreload.Add(scene.name);
+                    foreach (var r in scene.GetRootGameObjects()) r.SetActive(false);
+                    SceneManager.UnloadSceneAsync(scene);
+                }
+                else Hold(scene);
+                if (waiting.HasValue && waiting.Value.target == scene.name)
+                {
+                    var (t, a) = waiting.Value;
+                    waiting = null;
+                    if (held.ContainsKey(t)) Switch(t, a);
+                    else { pendingSpawn = a; Host.FadeLoad(t); }
+                }
+                return;
+            }
+            if (pendingSpawn == null || mode != LoadSceneMode.Single) return;
             string id = pendingSpawn;
             pendingSpawn = null;
-            KitSpawn spawn = null;
-            foreach (var s in UnityEngine.Object.FindObjectsByType<KitSpawn>(FindObjectsSortMode.None))
-                if (s.spawnId == id) { spawn = s; break; }
+            held.Clear();                       // a plain load unloaded everything else
+            Arrive(scene, id);
+            if (preload) Host.Refresh();
+        }
+
+        static T Find<T>(Scene s, Func<T, bool> f) where T : Component =>
+            s.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<T>()).FirstOrDefault(f);
+
+        static void Arrive(Scene scene, string id)
+        {
+            var spawn = Find<KitSpawn>(scene, s => s.spawnId == id);
+            if (spawn == null)      // a chain's play scene: its streamer loads the piece holding the spawn and places the walker
+            {
+                var st = Find<KitChainStreamer>(scene, _ => true);
+                if (st != null && st.chain != null && st.chain.WithSpawn(id) != null) { st.Arrive(id); pendingReturn = null; return; }
+            }
             Transform at = spawn != null ? spawn.transform : null;
-            if (at == null)      // no spawn: stand at the link itself (a hand-made door without a KitSpawn)
-                foreach (var l in UnityEngine.Object.FindObjectsByType<KitLink>(FindObjectsSortMode.None))
-                    if (l.linkId == id) { at = l.transform; break; }
+            var back = Find<KitLink>(scene, l => l.linkId == id);
+            if (at == null && back != null) at = back.transform;     // no spawn: stand at the link itself (a hand-made door without a KitSpawn)
+            if (pendingReturn != null && back != null && back.target == "@return") returns.Push(pendingReturn.Value);
+            pendingReturn = null;
             if (at == null) Debug.LogWarning($"[KitTravel] {scene.name}: no spawn or link '{id}'");
             else if (spawn == null) Debug.Log($"[KitTravel] {scene.name}: no spawn '{id}', placed at its link");
             var w = Walker;
-            if (at != null && w != null)
-            {
-                var cc = w.GetComponent<CharacterController>();
-                if (cc) cc.enabled = false;
-                w.SetPositionAndRotation(at.position, at.rotation);
-                if (cc) cc.enabled = true;
-            }
+            if (at != null && w != null) Place(w, at.position, at.rotation);
             Arrived?.Invoke(scene.name, spawn);
+        }
+
+        /// <summary>put a walker somewhere: a NavMeshAgent is warped (onto the surface there), a CharacterController
+        /// switched off while it moves</summary>
+        public static void Place(Transform w, Vector3 p, Quaternion r)
+        {
+            var cc = w.GetComponent<CharacterController>();
+            var agent = w.GetComponent<NavMeshAgent>();
+            if (cc) cc.enabled = false;
+            if (agent != null && agent.enabled)
+            {
+                if (!agent.Warp(p)) { agent.enabled = false; w.position = p; agent.enabled = true; }
+                if (agent.isOnNavMesh) agent.ResetPath();
+                w.rotation = r;
+            }
+            else w.SetPositionAndRotation(p, r);
+            if (cc) cc.enabled = true;
+        }
+
+        /// <summary>the levels the current one's links lead to (its "@return" door: the level it returns to)</summary>
+        static HashSet<string> Neighbours(Scene s)
+        {
+            var set = new HashSet<string>();
+            foreach (var l in s.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<KitLink>()))
+            {
+                string t = l.target == "@return" ? (returns.Count > 0 ? returns.Peek().level : null) : l.target;
+                if (!string.IsNullOrEmpty(t) && t != "@deep" && t != s.name && Application.CanStreamedLevelBeLoaded(t)) set.Add(t);
+            }
+            return set;
+        }
+
+        /// <summary>held and loading round the current level: what it no longer links to unloaded, what it does loaded
+        /// (one at a time, in the background)</summary>
+        internal static IEnumerator Refresh()
+        {
+            yield return null;                                     // let a cut settle first
+            var cur = SceneManager.GetActiveScene();
+            if (UnityEngine.Object.FindAnyObjectByType<KitChainStreamer>() != null) yield break;   // a chain streams itself
+            var want = Neighbours(cur);
+            foreach (var name in held.Keys.ToList())
+                if (!want.Contains(name))
+                {
+                    var s = held[name].scene;
+                    held.Remove(name);
+                    if (s.isLoaded) yield return SceneManager.UnloadSceneAsync(s);
+                }
+            foreach (var name in want)
+            {
+                if (held.ContainsKey(name) || preloading.Contains(name) || noPreload.Contains(name)) continue;
+                if (SceneManager.GetSceneByName(name).isLoaded) continue;
+                preloading.Add(name);
+                var op = SceneManager.LoadSceneAsync(name, LoadSceneMode.Additive);
+                if (op == null) { preloading.Remove(name); continue; }
+                yield return op;
+                if (SceneManager.GetActiveScene() != cur) yield break;   // moved on meanwhile: the next refresh takes over
+            }
+        }
+
+        /// <summary>a walker placed by someone else (a chain's streamer): tells the listeners</summary>
+        internal static void NotifyArrived(string level, KitSpawn spawn) => Arrived?.Invoke(level, spawn);
+    }
+
+    /// <summary>KitTravel's helper (made on demand, kept across loads): runs the background preloading and the fade
+    /// over a plain load</summary>
+    [AddComponentMenu("")]
+    public class KitTravelHost : MonoBehaviour
+    {
+        float alpha;
+        bool arrived, refreshAgain, refreshing;
+        Texture2D black;
+        public bool Fading { get; private set; }
+
+        void Awake()
+        {
+            black = new Texture2D(1, 1); black.SetPixel(0, 0, Color.black); black.Apply();
+            KitTravel.Arrived += (_, __) => arrived = true;
+        }
+
+        public void Refresh()
+        {
+            refreshAgain = true;
+            if (!refreshing) StartCoroutine(RefreshLoop());
+        }
+
+        IEnumerator RefreshLoop()
+        {
+            refreshing = true;
+            while (refreshAgain)
+            {
+                refreshAgain = false;
+                yield return KitTravel.Refresh();
+            }
+            refreshing = false;
+        }
+
+        public void FadeLoad(string target) => StartCoroutine(Fade(target));
+
+        IEnumerator Fade(string target)
+        {
+            Fading = true;
+            float t = KitTravel.FadeSeconds;
+            for (float s = 0; s < t; s += Time.unscaledDeltaTime) { alpha = s / t; yield return null; }
+            alpha = 1f;
+            arrived = false;
+            yield return null;                                     // the black frame shows before the load stalls
+            SceneManager.LoadScene(target);
+            for (float w = 0; !arrived && w < 5f; w += Time.unscaledDeltaTime) yield return null;   // a chain places its walker later
+            yield return null;
+            for (float s = 0; s < t; s += Time.unscaledDeltaTime) { alpha = 1f - s / t; yield return null; }
+            alpha = 0f;
+            Fading = false;
+        }
+
+        void OnGUI()
+        {
+            if (alpha <= 0f) return;
+            GUI.depth = -1000;
+            var c = GUI.color; GUI.color = new Color(0, 0, 0, alpha);
+            GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), black);
+            GUI.color = c;
         }
     }
 }

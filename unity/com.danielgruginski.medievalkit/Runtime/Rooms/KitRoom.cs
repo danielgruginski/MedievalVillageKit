@@ -33,6 +33,8 @@ namespace MedievalKit
         public KitDungeonGenerator.Options dungeon = new KitDungeonGenerator.Options();
         [Tooltip("Random Interior: kind (Cottage / Townhouse / Tavern / Workshop), seed, size (0: by kind).")]
         public KitInteriorGenerator.Options interior = new KitInteriorGenerator.Options();
+        [Tooltip("Random Connector: a short passage between two maps of a chain (from / to edges, length, openings, seed).")]
+        public KitConnectorGenerator.Options connector = new KitConnectorGenerator.Options();
 
         /// <summary>How pieces are instantiated (the editor keeps prefab links).</summary>
         public static Func<GameObject, Transform, GameObject> Spawn = (prefab, parent) => Instantiate(prefab, parent);
@@ -136,6 +138,16 @@ namespace MedievalKit
             Generate();
         }
 
+        /// <summary>a connector between two maps of a chain (KitConnectorGenerator) from the `connector` settings</summary>
+        public void RandomConnector()
+        {
+            var (p, r) = KitConnectorGenerator.Generate(connector);
+            preset = "";
+            plan = p;
+            record = r.ToString(Newtonsoft.Json.Formatting.Indented);
+            Generate();
+        }
+
         public void Clear()
         {
             for (int i = transform.childCount - 1; i >= 0; i--)
@@ -200,11 +212,14 @@ namespace MedievalKit
                 Stair((string)s[0], (float)s[1], (float)s[2], (float)s[3], (string)s[4], s.Count() > 5 ? (string)s[5] : "RailR");
             foreach (var pt in R["pits"] as JArray ?? new JArray())
                 Put(shell, KitInteriorRules.Full((string)pt[0]), (float)pt[1], (float)pt[2], 0f, 0f, null, "pit");
-            Furnish();                      // before the rhythm posts and doorway mats, which make room for props
+            Portals();
+            Furnish();                     // before the rhythm posts and doorway mats, which make room for props
             Encounters();
+            Markers();
             Rhythm();
             Mats();
             Pools();
+            Debris();                       // loose debris by zone theme (R["debris"])
             KitDecks.Apply(transform);      // bridges: walkable decks, the chasm's blocking boxes cut round them
             if (buildLights) Lights();
         }
@@ -348,6 +363,7 @@ namespace MedievalKit
             kp?.Set("vki_prompt", prompt); kp?.Set("vki_facing_min", "60");
             var l = o.go.GetComponent<KitLink>() ?? o.go.AddComponent<KitLink>();
             l.linkId = id; l.kind = kind; l.target = target; l.prompt = prompt; l.facingMin = 60f;
+            if (LinkEntry(id) is JArray le && le.Count > 3 && le[3].Type == JTokenType.String) l.arrive = (string)le[3];   // [id, kind, target, arrive]
             if (PropJ(kp, "vki_trigger") is JArray b && b.Count >= 6 && o.go.GetComponents<BoxCollider>().All(c => !c.isTrigger))
             {
                 var c = o.go.AddComponent<BoxCollider>();
@@ -356,6 +372,26 @@ namespace MedievalKit
                 c.size = new Vector3(Mathf.Abs((float)b[3]), Mathf.Abs((float)b[5]), Mathf.Abs((float)b[4]));
             }
             linkObjs[id] = o.go.transform;
+        }
+
+        /// <summary>R["portals"] (generated maps chained into a world): a KitPortalMarker on the middle of each opening
+        /// on the map's edge, facing out, and a spawn a cell and a half in, facing in</summary>
+        void Portals()
+        {
+            foreach (var pt in KitPortal.Of(R))
+            {
+                if (pt.at < 0) { notes.Add($"portal {pt.id}: no opening (at -1)"); continue; }
+                var sp = pt.SeamPoint(Layout.P.nc, Layout.P.nr, Layout.IG);
+                var go = new GameObject("PRT_" + pt.id);
+                go.transform.SetParent(logic, false);
+                go.transform.localPosition = new Vector3(-sp.x, 0f, -sp.y);
+                go.transform.localRotation = KitSpawn.FromBearing(KitPortal.Inward(pt.Side) + 180f);
+                var m = go.AddComponent<KitPortalMarker>();
+                m.portalId = pt.id; m.side = pt.Side.ToString(); m.at = pt.at; m.width = pt.width; m.target = pt.target; m.seam = pt.seam;
+                var (dx, dy) = KitPortal.Outward(pt.Side);
+                float inset = 1.5f * Layout.IG;
+                SpawnPoint(pt.id, R4(sp.x - dx * inset), R4(sp.y - dy * inset), KitPortal.Inward(pt.Side), null);
+            }
         }
 
         void SpawnPoint(string id, float x, float y, float facing, Placed host)
@@ -476,6 +512,31 @@ namespace MedievalKit
                     sp.SetParent(go.transform, false);
                     sp.localPosition = new Vector3(-(float)pt[0], 0f, -(float)pt[1]) - go.transform.localPosition;
                 }
+            }
+        }
+
+        /// <summary>R["markers"] ([{id, role, at: [x, y], facing, note}]: loot to search, an npc's place...): a KitMarker each
+        /// (vki_role, vki_marker_id, vki_facing_deg, vki_note) for the game</summary>
+        void Markers()
+        {
+            foreach (var m in R["markers"] as JArray ?? new JArray())
+            {
+                var at = m["at"] as JArray;
+                if (at == null || at.Count < 2) continue;
+                float facing = (float?)m["facing"] ?? 0f;
+                var go = new GameObject($"MRK_{(string)m["role"]}_{(string)m["id"]}");
+                go.transform.SetParent(logic, false);
+                go.transform.localPosition = new Vector3(-(float)at[0], 0f, -(float)at[1]);
+                go.transform.localRotation = KitSpawn.FromBearing(facing);
+                var mk = go.AddComponent<KitMarker>();
+                mk.kind = KitMarker.Kind.Other;
+                mk.props = new List<KitProp>
+                {
+                    new KitProp { key = "vki_role", value = (string)m["role"] ?? "" },
+                    new KitProp { key = "vki_marker_id", value = (string)m["id"] ?? "" },
+                    new KitProp { key = "vki_facing_deg", value = facing.ToString(System.Globalization.CultureInfo.InvariantCulture) },
+                };
+                if (m["note"] != null) mk.props.Add(new KitProp { key = "vki_note", value = (string)m["note"] });
             }
         }
 

@@ -365,6 +365,15 @@ namespace MedievalKit.Editor
         }
 
         // ------------------------------------------------------------------ prefabs
+        /// <summary>where the Unity kit's pieces depart from Blender's materials: painted furniture is plain wood (the
+        /// user's call, 2026-10-02: no teal chests); shutters, stalls and boats keep their paint. A style on the "shutter"
+        /// slot still paints them.</summary>
+        static readonly Dictionary<string, (string from, string to)> MaterialDefaults = new Dictionary<string, (string, string)>
+        {
+            ["SM_VKI_Prop_Chest"] = ("M_VK_Shutter_Teal", "M_VK_Shutter_Natural"),
+            ["SM_VKI_Prop_Dresser"] = ("M_VK_Shutter_Teal", "M_VK_Shutter_Natural"),
+        };
+
         public static void BuildPrefabs() => BuildPrefabs(null);
 
         /// <summary>`only`: rebuild just the pieces whose name it accepts (null: all)</summary>
@@ -387,6 +396,8 @@ namespace MedievalKit.Editor
                 var real = d["materials"].Select(x => (string)x).ToList();
                 var subs = SubmeshMaterialNames(fbx);
                 var names = subs.Select(n => fbxNames.IndexOf(n) is int i && i >= 0 ? real[i] : null).ToArray();
+                if (MaterialDefaults.TryGetValue(kv.Key, out var md))
+                    names = names.Select(n => n == md.from ? md.to : n).ToArray();
                 if (mesh.subMeshCount != fbxNames.Count || names.Any(n => n == null))
                     Log.AppendLine($"WARN {kv.Key}: submeshes [{string.Join(",", subs)}] vs export [{string.Join(",", fbxNames)}]");
                 CheckBounds(kv.Key, mesh, d["bounds_blender"]);
@@ -406,7 +417,8 @@ namespace MedievalKit.Editor
                     return hit != null ? int.Parse(hit.Name) : -1;
                 }).ToArray();
                 kp.props = Props(d["props"]);
-                AddColliders(go, kp.Get("vki_collider"));
+                // walk-over overlays (vki_nav "none": debris, rugs, gravel, puddles) block nothing, as in the kit's walk check
+                if (!(kp.Get("vki_class") == "overlay" && kp.Get("vki_nav") == "none")) AddColliders(go, kp.Get("vki_collider"));
                 AddGroundFloor(go, kv.Key);
                 if (names.Any(IsGroundMaterial)) go.AddComponent<MeshCollider>().sharedMesh = mesh;   // walkable terrain / paving
                 string dir = $"{KitPaths.Prefabs}/{PrefabSubdir((string)d["fbx"])}";

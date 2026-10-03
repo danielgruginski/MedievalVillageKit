@@ -1,0 +1,168 @@
+{
+  "name": "Hamlet",
+  "size": [140, 160],
+  "seed": 7,
+  "start": "arrival",
+  "relief": 0.35,
+  "rim": 2.8,
+  "clearing": { "centre": [70, 80], "radius": [54, 62], "lumps": 0.16 },
+  "roads": [
+    { "id": "south", "width": 5, "points": [[73, -24], [74, -3], [75, 12], [69, 26], [67, 42], [69, 56], [70, 69]] },
+    { "id": "north", "width": 4.5, "points": [[64, 86], [58, 98], [50, 110], [46, 124], [49, 140], [47, 160], [44, 184]] },
+    { "id": "forest", "width": 4, "points": [[78, 86], [88, 97], [97, 110], [103, 124], [107, 140], [110, 160], [114, 184]] },
+    { "id": "farm", "width": 3.2, "points": [[81, 73], [88, 70], [94, 66]] },
+    { "id": "westlane", "width": 2.6, "points": [[58, 72], [50, 66], [42, 60]] },
+    { "id": "chapellane", "width": 3, "points": [[49, 113], [45, 115.5], [41.5, 117.6]] }
+  ],
+  "areas": [
+    { "id": "green", "centre": [70, 78], "radius": [13, 9], "lumps": 0.2, "surface": "cobble" },
+    { "id": "farmyard", "centre": [96, 54], "radius": [11, 8], "lumps": 0.25, "surface": "dirt" }
+  ],
+  "buildings": [
+    {
+      "id": "inn",
+      "structure": "Inn",
+      "at": [46, 80],
+      "face": [70, 79],
+      "door": { "target": "Hamlet_Inn", "arrive": "front", "prompt": "Enter the inn" }
+    },
+    { "id": "stable", "structure": "Stable", "at": [29, 75], "face": [46, 77] },
+    { "id": "captains_post", "structure": "GuardTower", "at": [56, 62], "face": [68, 66] },
+    {
+      "id": "chapel",
+      "structure": "Chapel",
+      "at": [34, 121],
+      "face": [46, 112],
+      "door": { "target": "VKI_Chapel_F0", "arrive": "front", "prompt": "Enter the chapel" }
+    },
+    {
+      "id": "cottage_1",
+      "house": { "cells": 3, "stories": 2, "seed": 11 },
+      "at": [84, 50],
+      "face": [68, 48]
+    },
+    {
+      "id": "cottage_2",
+      "house": { "cells": 2, "stories": 1, "seed": 12 },
+      "at": [57, 32],
+      "face": [68, 30]
+    },
+    {
+      "id": "cottage_3",
+      "house": { "cells": 2, "stories": 2, "seed": 13 },
+      "at": [85, 113],
+      "face": [99, 112]
+    },
+    {
+      "id": "cottage_4",
+      "house": { "cells": 3, "stories": 1, "seed": 14 },
+      "at": [110, 100],
+      "face": [96, 104]
+    },
+    {
+      "id": "cottage_5",
+      "house": { "cells": 2, "stories": 2, "seed": 15 },
+      "at": [62, 108],
+      "face": [50, 111]
+    },
+    {
+      "id": "cottage_6",
+      "house": { "cells": 2, "stories": 1, "seed": 16 },
+      "at": [36, 52],
+      "face": [46, 58]
+    },
+    {
+      "id": "cottage_7",
+      "house": { "cells": 2, "stories": 1, "seed": 17 },
+      "at": [84, 33],
+      "face": [70, 30]
+    },
+    {
+      "id": "cottage_8",
+      "house": { "cells": 2, "stories": 1, "seed": 18 },
+      "at": [46, 42],
+      "face": [66, 41]
+    },
+    { "id": "woodcutter", "structure": "Woodcutter", "at": [88, 128], "face": [102, 128] },
+    { "id": "barn", "structure": "Barn", "at": [104, 61], "face": [90, 64] },
+    { "id": "pigsty", "structure": "Pigsty", "at": [104, 43], "face": [90, 46] }
+  ],
+  "gardens": [
+    { "id": "garden_south", "at": [47, 33], "rot": 0, "beds": [2, 2], "crops": ["Crop_Cabbage", "Crop_Carrot"], "fence": "Prop_Fence", "gate": "E", "gatePiece": "Prop_FenceGate" },
+    { "id": "garden_north", "at": [73, 106], "rot": 8, "beds": [2, 1], "crops": ["Crop_Pumpkin", "Crop_Lavender"], "fence": "Prop_Fence", "gate": "W", "gatePiece": "Prop_FenceGate" },
+    { "id": "wheat", "at": [106, 112], "rot": -12, "beds": [2, 2], "crops": ["Crop_Wheat"], "fence": "Prop_Fence", "gate": "S", "gatePiece": "Prop_FenceGate" }
+  ],
+  "props": [
+    { "piece": "MarketStall_Tinker", "at": [80, 72], "face": [70, 78] },
+    { "piece": "MarketStall_Greengrocer", "at": [81.5, 78], "face": [70, 78] },
+    { "piece": "MarketStall_Potter", "at": [80, 84], "face": [70, 78] },
+    { "piece": "Prop_Well", "at": [67, 79], "rot": 15 },
+    { "piece": "Prop_Crates", "at": [84, 88], "face": [70, 78] },
+    { "piece": "Prop_Cart", "at": [85, 66], "rot": 30 },
+    { "piece": "Prop_BarrelStack", "at": [54, 86], "face": [70, 79] },
+    { "piece": "Prop_Woodpile", "at": [40, 65], "rot": 80 },
+    { "piece": "Prop_Woodpile", "at": [96, 122], "rot": 10 },
+    { "piece": "Prop_Haystack", "at": [90, 54], "rot": 0 },
+    { "piece": "Prop_Cart", "at": [93, 50], "rot": -60 },
+    { "piece": "Prop_Signpost", "at": [64, 92], "face": [70, 78] },
+    { "piece": "Prop_Signpost", "at": [78, 16], "face": [74, 4] },
+    { "piece": "Grave_Cross", "at": [30, 104], "rot": 6 },
+    { "piece": "Grave_A", "at": [34, 101], "rot": -4 },
+    { "piece": "Grave_A", "at": [28, 99], "rot": 8 },
+    { "piece": "Grave_Obelisk", "at": [33, 96], "rot": 0 },
+    { "piece": "Grave_Cross", "at": [37, 104], "rot": -10 },
+    { "piece": "Grave_A", "at": [26, 104], "rot": 3 },
+    { "piece": "Animal_Chickens", "at": [60, 38], "rot": 30, "collide": false },
+    { "piece": "Animal_Chickens", "at": [40, 57], "rot": -50, "collide": false },
+    { "piece": "Animal_Pig", "at": [103, 42], "rot": 20, "collide": false },
+    { "piece": "Animal_Pig", "at": [105, 45], "rot": 200, "collide": false },
+    { "piece": "Animal_Horse", "at": [30, 64], "rot": 90, "collide": false },
+    { "piece": "Animal_Cow", "at": [93, 58], "rot": 40, "collide": false },
+    { "piece": "Animal_Sheep", "at": [88, 58], "rot": 160, "collide": false },
+    { "piece": "Animal_Sheep", "at": [90, 61], "rot": 10, "collide": false },
+    { "piece": "Animal_Goat", "at": [95, 128], "rot": 250, "collide": false }
+  ],
+  "fences": [
+    { "piece": "Prop_Fence", "points": [[88, 42], [89, 33], [95, 29], [103, 30], [107, 36]] },
+    { "piece": "Prop_Fence", "points": [[23, 94], [21, 101], [23, 108], [30, 110]] }
+  ],
+  "trees": [
+    { "piece": "Tree_Oak_A", "at": [71, 93], "scale": 1.3 },
+    { "piece": "Tree_Apple", "at": [92, 37] },
+    { "piece": "Tree_Apple", "at": [97, 34] },
+    { "piece": "Tree_Apple", "at": [102, 36] },
+    { "piece": "Tree_Birch_Single", "at": [53, 49] },
+    { "piece": "Tree_Blossom", "at": [43, 106] },
+    { "piece": "Tree_Birch_Single", "at": [93, 98] }
+  ],
+  "forest": {
+    "spacing": 3.3,
+    "edge": 0.97,
+    "wallAt": 1.1,
+    "keepRoad": 2.5,
+    "keepBuilt": 4.5,
+    "stragglers": 14,
+    "species": [["Tree_Pine_A", 3], ["Tree_Pine_B", 2], ["Tree_Pine_Young", 1], ["Tree_Oak_A", 2], ["Tree_Oak_B", 1], ["Tree_Birch", 1]],
+    "undergrowth": [["Bush_Large", 2], ["Bush_Round", 1], ["Plant_Fern", 3], ["Stump", 0.4], ["Rock_Small_A", 0.4]],
+    "undergrowthSpacing": 2.4
+  },
+  "scatter": [
+    { "pieces": [["Plant_Wildflowers", 3], ["Plant_TallGrass", 3], ["Bush_Round", 1], ["Rock_Small_B", 1]], "count": 45, "keep": 2.5, "spacing": 4 }
+  ],
+  "spawns": [
+    { "id": "arrival", "at": [74, 8], "facing": 0 },
+    { "id": "respawn", "at": [41, 116], "facing": 135 }
+  ],
+  "markers": [
+    { "id": "captain", "role": "npc", "at": [61, 68], "facing": 90, "note": "the captain: rat bounty quest; stands by his post, near the inn" },
+    { "id": "merchant", "role": "npc", "at": [85, 78], "facing": 270, "note": "sells gear, potions and herbs at the stalls" },
+    { "id": "priest", "role": "npc", "at": [40, 117], "facing": 135, "note": "the chapel's priest" },
+    { "id": "respawn", "role": "respawn", "at": [41, 116], "facing": 135, "note": "players come back here when slain" }
+  ],
+  "exits": [
+    { "id": "south", "road": "south", "end": "start", "target": "@deep", "prompt": "Take the road south" },
+    { "id": "north", "road": "north", "end": "end", "target": "@deep", "prompt": "Take the north road" },
+    { "id": "forest", "road": "forest", "end": "end", "target": "Woods", "arrive": "south", "prompt": "Take the forest track" }
+  ],
+  "margin": 24
+}

@@ -145,4 +145,6 @@ character assets that may not be redistributed. Strip that scene (and anything i
 The Unity side is a package, `unity/com.danielgruginski.medievalkit` (docs/UNITY_EXPORT.md): its code (runtime,
 editor tools, generators) and shaders are tracked; its content is not -- `Art/` and `Data/` are written by the exporter
 (`src/export/vkx_export.py`, run in Blender) and `Generated/` by Tools > Medieval Kit > Build All in Unity, so a clone
-plus the .blend rebuilds the whole package. The ready-made package is published as a download.
+plus the .blend rebuilds the whole package. The ready-made package is published as a download. Building levels with
+it (rooms from plans, the generators, chains of maps, the walk tests), for people and AI agents alike:
+[unity/com.danielgruginski.medievalkit/Documentation~/LEVEL_BUILDING.md](unity/com.danielgruginski.medievalkit/Documentation~/LEVEL_BUILDING.md).

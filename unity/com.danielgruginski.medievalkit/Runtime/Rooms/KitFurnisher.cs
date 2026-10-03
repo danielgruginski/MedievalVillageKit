@@ -11,7 +11,29 @@ namespace MedievalKit
     /// </summary>
     internal static class KitFurnisher
     {
-        internal static readonly HashSet<string> Flat = new HashSet<string> { "br", "st", "gc", "bo", "rf", "rg" };     // overlays: walked over
+        internal static readonly HashSet<string> Flat = new HashSet<string> { "br", "st", "gc", "bo", "rf", "rg", "ts" };     // overlays: walked over
+
+        /// <summary>every walkable cell of the room (no code, a stair's arrival "Ss" or an overlay; not a stair's own cells)
+        /// connects to ONE way in (so every other door and the arrival too)</summary>
+        internal static bool Connected(int c0, int r0, int c1, int r1, Dictionary<(int, int), string> codes, HashSet<(int, int)> ways, HashSet<(int, int)> noWalk)
+        {
+            bool Walk((int, int) p) => p.Item1 >= c0 && p.Item1 <= c1 && p.Item2 >= r0 && p.Item2 <= r1 && !noWalk.Contains(p) &&
+                                      (!codes.TryGetValue(p, out var cc) || cc == ".." || cc == "Ss" || Flat.Contains(cc));
+            var walk = new List<(int, int)>();
+            for (int c = c0; c <= c1; c++) for (int r = r0; r <= r1; r++) if (Walk((c, r))) walk.Add((c, r));
+            if (walk.Count == 0) return true;
+            var seed = walk.Where(q => ways.Contains(q) || (codes.TryGetValue(q, out var cc) && cc == "Ss")).DefaultIfEmpty(walk[0]).First();
+            var seen = new HashSet<(int, int)> { seed };
+            var todo = new Stack<(int, int)>();
+            todo.Push(seed);
+            while (todo.Count > 0)
+            {
+                var (c, r) = todo.Pop();
+                foreach (var q in new[] { (c + 1, r), (c - 1, r), (c, r + 1), (c, r - 1) })
+                    if (Walk(q) && seen.Add(q)) todo.Push(q);
+            }
+            return seen.Count == walk.Count;
+        }
 
         internal static void Place(Random rnd, int c0, int r0, int c1, int r1, IEnumerable<(string code, int min, int max, string place)> table,
                                    Dictionary<(int, int), string> codes, HashSet<(int, int)> reserved, HashSet<(int, int)> ways,
@@ -22,24 +44,7 @@ namespace MedievalKit
             bool Has((int, int) p) => p.Item1 >= c0 && p.Item1 <= c1 && p.Item2 >= r0 && p.Item2 <= r1;
             bool Edge((int, int) p) => p.Item1 == c0 || p.Item1 == c1 || p.Item2 == r0 || p.Item2 == r1;
             bool Free((int, int) p) => Has(p) && !reserved.Contains(p) && (!codes.TryGetValue(p, out var cc) || cc == "..");
-            bool Walk((int, int) p) => Has(p) && !noWalk.Contains(p) &&
-                                      (!codes.TryGetValue(p, out var cc) || cc == ".." || cc == "Ss" || Flat.Contains(cc));
-            bool Connected()
-            {
-                var walk = cells.Where(Walk).ToList();
-                if (walk.Count == 0) return true;
-                var seeds = walk.Where(q => ways.Contains(q) || (codes.TryGetValue(q, out var cc) && cc == "Ss")).ToList();
-                if (seeds.Count == 0) seeds.Add(walk[0]);
-                var seen = new HashSet<(int, int)>(seeds);
-                var todo = new Stack<(int, int)>(seeds);
-                while (todo.Count > 0)
-                {
-                    var (c, r) = todo.Pop();
-                    foreach (var q in new[] { (c + 1, r), (c - 1, r), (c, r + 1), (c, r - 1) })
-                        if (Walk(q) && seen.Add(q)) todo.Push(q);
-                }
-                return seen.Count == walk.Count;
-            }
+            bool Connected() => KitFurnisher.Connected(c0, r0, c1, r1, codes, ways, noWalk);
             foreach (var (code, mn, mx, place) in table)
             {
                 int n = rnd.Next(mn, mx + 1);

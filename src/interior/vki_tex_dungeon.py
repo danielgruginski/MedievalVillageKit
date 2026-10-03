@@ -8,6 +8,7 @@
 #   T_VKI_DungeonIn    walls (t 1.5): big coursed blocks (courses 0.34-0.42 m, blocks 0.5-0.75 m), cool dark greys with
 #                      a few warmer stones, deep rounded arrises and wide dark joints -- chunky, reads block by block
 #   T_VKI_DungeonFlag  floors (t 3.0): worn slabs 0.9-1.5 m in five unequal courses, dark and cool, chipped edges
+#   T_VKI_Hide         sewn hides (t 2.0): twelve wavy-edged pieces in five tones, laced with pale thongs (M_VKI_Hide)
 # Every top-level name starts with vki_/VKI_ (test T18).
 
 VKI_TEX_JOBS.update({
@@ -40,7 +41,85 @@ VKI_TEX_JOBS.update({
     "T_VKI_CaveFloor":   lambda: vki_gen_earthfloor(seed=93, T=3.0, depth=0.03, rushes=0.0, soot=0.35,
                                                     out_prefix="T_VKI_CaveFloor"),
     "T_VKI_Web":         lambda: vki_gen_web(),
+    # sewn hides: a goblin tent's cover, patchwork pieces laced with thongs (M_VKI_Hide, the lair pieces' HIDE slot)
+    "T_VKI_Hide":        lambda: vki_gen_hide(),
 })
+
+
+def vki_gen_hide(S=2048, seed=401, T=2.0, depth=0.006, out_prefix="T_VKI_Hide", write=True):
+    """sewn hides (T 2.0 m): twelve irregular pieces ~0.5 x 0.65 m with wavy edges, in five tones (tan, dark brown,
+    red-brown, grey-brown, a few pale rawhide), each blotched, stained and softly creased, a turned hem raised along
+    its edge, dark gaps between the pieces, laced across every ~7.5 cm with pale thongs (lacing holes at their ends);
+    fine grain. No hair and no thin dark lines (they read as hairs)."""
+    rng = np.random.default_rng(seed); px = T / S
+    x, y = grid(S)
+    pts = []
+    for j in range(3):
+        for i in range(4):
+            pts.append(((i + 0.5 + rng.uniform(-0.3, 0.3) + 0.5 * (j % 2)) / 4, (j + 0.5 + rng.uniform(-0.3, 0.3)) / 3))
+    pts = np.array(pts, f32) % 1; n = len(pts)
+    wx = 0.02 * fbm(S, 3.0, seed + 1, fmin=2, fmax=12); wy = 0.02 * fbm(S, 3.0, seed + 2, fmin=2, fmax=12)
+    ID, E1, _, _, _ = voronoi_edge2(x + wx, y + wy, pts)
+    d = (E1 * T).astype(f32); del wx, wy, x, y
+    PAL = np.array([hx("#8E6C4A"), hx("#5C4230"), hx("#7A4B33"), hx("#6E5A47"), hx("#98805F")], f32)
+    P = [0.30, 0.26, 0.20, 0.18, 0.06]
+    tone = rng.choice(5, n, p=P)
+    for i in range(1, n):
+        while tone[i] == tone[i - 1]: tone[i] = rng.choice(5, p=P)
+    pc = (PAL[tone] * rng.uniform(0.90, 1.08, n)[:, None]).astype(f32)
+    col = pc[ID]
+    bl = fbm(S, 3.0, seed + 3, fmin=3, fmax=24)                                   # blotches
+    col = col * (1 + 0.09 * bl)[..., None]
+    st = smooth(1.3, 2.4, fbm(S, 2.8, seed + 4, fmin=3, fmax=30))                 # old stains
+    col = lerp(col, col * 0.60, (0.55 * st)[..., None])
+    wr = np.where(ID % 2 == 0, fbm(S, 2.6, seed + 5, fmin=5, fmax=24, ax=1.8, angle=0.5),
+                  fbm(S, 2.6, seed + 6, fmin=5, fmax=24, ax=1.8, angle=-1.0)).astype(f32)    # (ax 3.5 read as wood grain)
+    cv = smooth(0.45, 0.0, np.abs(wr))                                             # crease valleys, soft and wide
+    grain = fbm(S, 1.0, seed + 7, fmin=150, fmax=600)
+    edge = smooth(0.006, 0.0, d)                                                   # the gap between two pieces
+    hem = smooth(0.05, 0.0, d)                                                     # the worn, dirty margin
+    welt = smooth(0.004, 0.012, d) * smooth(0.04, 0.022, d)                        # the turned hem, raised
+    h = 0.5 + 0.10 * bl + 0.07 * wr - 0.05 * cv + 0.04 * grain + 0.25 * welt - 0.45 * edge
+    col = col * (1 - 0.03 * cv)[..., None] * (1 + 0.035 * grain)[..., None] * (1 - 0.22 * hem)[..., None]
+    col = lerp(col, hx("#2A1E16"), (0.75 * edge)[..., None])
+    # the lacing: thongs across the seams, from a band just off each seam (where E1's gradient is the seam's normal)
+    gx = np.roll(E1, -1, 1) - np.roll(E1, 1, 1); gy = np.roll(E1, -1, 0) - np.roll(E1, 1, 0)
+    rows, cols = np.nonzero((d > 2.0 * px) & (d < 3.5 * px))
+    sp = 0.075 / px; nb = max(1, int(S // sp)); occ = {}; segs = []; holes = []
+    hl, w, hw = 0.018 / px, 0.007 / px, 0.006 / px
+    for k_ in rng.permutation(len(rows)):
+        r, c = int(rows[k_]), int(cols[k_])
+        g = math.hypot(float(gx[r, c]), float(gy[r, c]))
+        if g < 1e-9: continue
+        nx_, ny_ = float(gx[r, c]) / g, float(gy[r, c]) / g
+        dp = float(d[r, c]) / px
+        cx_, cy_ = (c - nx_ * dp) % S, (r - ny_ * dp) % S
+        key = (int(cy_ // sp) % nb, int(cx_ // sp) % nb)
+        near = False
+        for dr in (-1, 0, 1):
+            for dc in (-1, 0, 1):
+                for (py_, px_) in occ.get(((key[0] + dr) % nb, (key[1] + dc) % nb), ()):
+                    ddy = abs(py_ - cy_); ddx = abs(px_ - cx_)
+                    if math.hypot(min(ddx, S - ddx), min(ddy, S - ddy)) < sp: near = True
+        if near: continue
+        occ.setdefault(key, []).append((cy_, cx_))
+        a = math.atan2(ny_, nx_) + rng.uniform(-0.35, 0.35)
+        ux, uy = math.cos(a), math.sin(a)
+        segs.append((cx_ - ux * hl, cy_ - uy * hl, cx_ + ux * hl, cy_ + uy * hl, w))
+        for sgn in (-1, 1):
+            hx_, hy_ = cx_ + sgn * ux * (hl + 0.003 / px), cy_ + sgn * uy * (hl + 0.003 / px)
+            holes.append((hx_, hy_, hx_ + 0.01, hy_, hw))
+    del gx, gy, rows, cols
+    cov = draw_segments(S, segs); hol = draw_segments(S, holes) * (1 - cov)
+    h = h + 0.35 * cov - 0.25 * hol
+    col = lerp(col, col * 0.45, (0.6 * hol)[..., None])
+    col = lerp(col, hx("#B59A72") * (1 + 0.06 * grain)[..., None], (0.92 * cov)[..., None])
+    h = np.clip(h, 0, 1).astype(f32)
+    col, _ = paint_form_light(np.clip(col, 0, 1).astype(f32), h, depth, T, hig=0.10, log=0.14, post=0.0)
+    R = np.clip(0.80 + 0.05 * fbm(S, 2.0, seed + 8, fmin=4, fmax=60) - 0.08 * st + 0.08 * edge, 0, 1).astype(f32)
+    bc, h1, R1 = down2(np.clip(col, 0, 1).astype(f32)), down2(h), down2(R)
+    if write: vki_write_set(out_prefix, bc, h1, R1, depth, T)
+    return dict(bc=bc, pieces=n, laces=len(segs))
 
 
 def vki_gen_web(S=1024, seed=5, out_prefix="T_VKI_Web"):

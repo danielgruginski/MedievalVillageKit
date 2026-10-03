@@ -21,7 +21,8 @@ namespace MedievalKit
 
         void Awake()
         {
-            if (instance != null && instance != this) { Destroy(gameObject); return; }
+            // another stand-in, or a game's own player registered with KitTravel: step aside
+            if ((instance != null && instance != this) || (KitTravel.HasWalker && KitTravel.Walker != transform)) { Destroy(gameObject); return; }
             instance = this;
             DontDestroyOnLoad(gameObject);
             gameObject.tag = "Player";

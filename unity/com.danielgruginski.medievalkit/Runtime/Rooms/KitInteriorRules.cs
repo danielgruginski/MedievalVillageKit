@@ -50,6 +50,10 @@ namespace MedievalKit
         }
         public string Plan(string name) => (string)Json["plans"]?[name];
 
+        /// <summary>a prefab the kit does not have, by name (the game's own pieces: a dead goblin for a cave's finds). The
+        /// editor looks in the project; a game may set its own lookup. Null: none.</summary>
+        public static Func<string, GameObject> External;
+
         public GameObject Prefab(string name)
         {
             if (pieceMap == null)
@@ -57,7 +61,11 @@ namespace MedievalKit
                 pieceMap = new Dictionary<string, GameObject>();
                 foreach (var p in pieces) if (p.prefab != null) pieceMap[p.name] = p.prefab;
             }
-            return name != null && pieceMap.TryGetValue(name, out var g) ? g : null;
+            if (name == null) return null;
+            if (pieceMap.TryGetValue(name, out var g)) return g;
+            g = !name.StartsWith("SM_") ? External?.Invoke(name) : null;
+            if (g != null) pieceMap[name] = g;
+            return g;
         }
 
         public Material Mat(string name)

@@ -516,8 +516,148 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     and walkability yes; monster AI / combat is game code still to design. Walkability fixes found on the way (kit-wide):
     chasm / stream tiles had no floor collider on their open quarters (prefab builder `AddGroundFloor`), bridge decks
     were not walkable (`KitDecks`), and the walk test (navmesh) shows openable leaves must carve, agents <= 0.35 m.
+58. 2026-10-01: the user found the random caves weak ("an artificial zigzag", no maze, the chasm never widening,
+    narrowing or crossing the cave to a bridge). `KitCaveGenerator` rebuilt: Maze layout (lattice + depth-first maze +
+    loops + alcoves), the chasm a gorge carved across the map with breathing width, forks, ledges, land bridges and
+    rope bridges (either way) where it splits the cave (UNITY_EXPORT 13). Old automaton kept as layout "Open".
+59. 2026-10-02: debris ported (`KitRoom.Debris.cs`); generator validation (Rooms > Validate Generators, WalkMap) and
+    the fixes it drove until seeds 1-120 of all nine generators were walkable (1,080 levels): cave bridge decks need
+    chasm on both sides and no rock beside their landings, decks count as joined only along their span, finds and
+    dressing never cut the floor; dungeon stairs on any wall run (a Down hole's arrival is on the piece's +x side),
+    pocket ways = the middle of each opening; a worktable from codes now backs onto its wall (it had slid 3 m into a
+    doorway). Then the user's "keep going on the other generators": `KitSetPieces` (bar, altar / hoard, pillars on
+    nodes, wall-hung pieces, table dressing, beside-placement) used by both generators (UNITY_EXPORT 13), bigger taverns,
+    a great hall per dungeon, and Rooms > Build Interior Showcase. Seen in renders; not yet seen by the user.
+60. 2026-10-02: chained maps (the user: dungeons, caves, ruins chained by smaller transition maps that load the next
+    seamlessly; transitions read best north-south, north best). His calls: a continuous world (no fade), exits on any
+    edge, maps baked in the editor. Built: `KitPortal` (generator input / record output, any edge), the seam rule in
+    `KitCaveLayout`, `KitConnectorGenerator`, `KitChain` + `KitChainTools.Bake` + `KitChainStreamer` (UNITY_EXPORT 13).
+    Then he asked whether the features are documented for use, since AI will build most levels: the package's
+    `Documentation~/LEVEL_BUILDING.md` (an agent-facing guide), `AGENTS.md` at the root, a package README. Unity could
+    not compile for a while (Windows commit limit exhausted: ComfyUI held 39 GB, the editor 20 GB; it cleared). Then
+    verified: Chains > Create Sample Chain bakes 5 pieces + `SampleChain_Play.unity` (Assets/MedievalKitChains), and in
+    play mode the streamer loads the walker's piece and its neighbours and unloads the rest. Asked what "stairs between
+    heights" meant: seamless descents need new art (a walkable flight, two-storey rock); advised staying flat, with
+    scene-transition stairs for dramatic drops (his decision pending). He said branching is needed: done (a map joins
+    any earlier map's portal, `attachTo` / `attachPortal`; every portal joined once; 20 / 20 branching chains walk).
+    Next: he will feed his own game maps (sketches or "generate it" specs, plus the graph of joins); ruins generator,
+    loops and navmesh across pieces as they come up.
+61. 2026-10-02: outdoor maps, `KitVillage` (Runtime/World) + `KitVillageTools` (Editor). The user's brief for the RPG's
+    starting map (MedievalSetting): a small hamlet with a captain by the dungeon's entrance (rat bounty), one market
+    (potions, gear, herbs), a chapel (respawn), a small inn (part of the game's loop), generic houses, closed by fences
+    or forest too dense to walk, 2-3 road exits; maps only for now (no gameplay), organic, "avoiding the box feel"
+    of square tiles. The rats' way in: the inn's cellar breaks into a cave (bigger infestation) that leads on into the
+    cave network; no sewers, so no old-town ruins (his calls). A layout (JSON, plan metres) -> a scene: a ground mesh
+    with the terrain material and a control map painted along curves (roads, areas, doorsteps), relief rising into
+    the forest, pads under buildings; structures or generated houses turned to face a point; gardens, fences along
+    curves, props, trees; a forest round a lumpy clearing (stragglers, undergrowth, a 24 m margin beyond the map);
+    invisible walls (a ring inside the forest, road corridors, the border); spawns, `KitMarker`s, exits as `KitLink`s
+    at road ends; door links. Walk test (navmesh): every spawn and marker reached, forest probes beyond the wall not.
+    `Assets/MedievalKitWorld/Hamlet.unity` from `Hamlet_layout.json` (also the package's
+    `Documentation~/examples/Hamlet_layout.json`): ok, 7 spawns, 4 markers, 24 forest probes; about 6.5 s to build.
+    Guide section 5.7. Next: the inn interior ("Hamlet_Inn", the inn door's target), stairs down to a hand-made cellar,
+    its breach into a rat cave chain (chains need a hand-made map kind for the cellar). The captain in plate is the
+    Humans track's.
+62. 2026-10-02: the inn and the rats' way in (MedievalSetting `Assets/MedievalKitWorld`). Package: hand-made maps in
+    chains (`KitChain.Kind.Plan`: plan / record files or text, portals from the record), a scene link into a chain
+    (target the play scene, `arrive` a piece's spawn: `KitTravel` hands it to `KitChainStreamer`, which loads that
+    piece first; Bake records each piece's spawns), arrivals without the kit world (a link's `arrive`, a record link's
+    fourth element, a village door's `arrive`, else the spawn named like the link; `@return` remembered when one
+    arrives on a "@return" door), cave encounters (`creature`, `encounters`; the poi is the boss's lair),
+    `KitRoomTools.BuildRoomScene` (+ Rooms > Build Room From Selected Plan). Content: `Hamlet_Inn` (VKI_Tavern_F0
+    widened by a storeroom with a stair down), `Hamlet_Inn_F1` (the kit's, relinked), `Hamlet_Cellar` (hand-made cave
+    map: cellar and vault in dressed stone, a breach north into a rat-dug cave, a north portal, two rat encounters),
+    chain `HamletCellar.asset` -> cellar -> rat cave (Maze, rats x5, POI_RatKing lair) -> cave network (Maze, chasm,
+    no encounters yet). Verified: walk tests (inn 2/2 + floor 28/28, cellar 6/6 + 69/69, rats 34/34 + 230/230,
+    network 299/299), 30 / 30 rat caves over seeds, and in play mode the whole loop: hamlet -> inn door -> inn ->
+    stair down -> chain (walker on the cellar's stair, cellar + connector loaded, the rat cave loading ahead) -> stair
+    up -> inn -> front -> hamlet; chapel door -> VKI_Chapel_F0 -> @return -> the chapel's door. Hamlet.unity still
+    needs a rebuild for its doors' `arrive` (it was open in the editor). The .plan.txt / .record.json files are the
+    source from now on (written once from the tavern preset and the dungeon generator's wall rule; edit by hand).
+63. 2026-10-02: the user saw the hamlet's pines blue-grey with black streaks, then the inn's painted chests light
+    blue. One cause: the kit's levels have no environment reflection (Custom, intensity 0) but
+    `KitHouseTools.CopyLighting` copied only the ambient, suns and volume, so every scene built with it (hamlet, inn,
+    chains' play scenes, showcases) reflected Unity's default procedural sky at full strength, which washes dark leaves
+    and painted wood blue-white at grazing angles. Fixed in CopyLighting; the generated scenes in MedievalSetting
+    patched (Hamlet rebuilt, with its doors' arrivals; Hamlet_Inn_F1 once the user closed it). A first fix
+    in KitLit (foliage without indirect light) treated the symptom and was reverted. The pine atlas tile is green,
+    the leaf vertex colours neutral; the dark whorl stems are Blender's own (vk_nature: "read as shadow"). The chests'
+    teal is Blender's design (the shutter slot 10, M_VK_Shutter_Teal); the user doesn't like it, so in Unity chests
+    and dressers default to M_VK_Shutter_Natural (`KitBuilder.MaterialDefaults`, kit-wide; shutters, the draper's
+    stall and the boats keep their paint).
+64. 2026-10-02: the goblin warcamp (the user: no Rat King; goblin bodies as loot early in the caves, spiders and
+    centipedes deeper, goblins near the camp; the warcamp on the surface in the woods, a cave entrance inside it joined
+    by tunnels to the cellar's breach; the surface way is shorter but the goblins hold their gate; a woods map between
+    the hamlet and the camp; real dead-goblin props). Package: cave `creature` lists by depth, `dressing`, `finds`,
+    `extraFinds`, finds marked as loot (R["markers"] -> KitMarker, also for hand-made records); props may name the
+    game's prefabs (`KitInteriorRules.External`, the editor's `KitRoomTools.ProjectPrefab`); a Warren dungeon is all
+    goblins; a chained dungeon's `exit` stair up to a scene; KitVillage: `clearings` (glades), closed fences with gates
+    at their own width, `offset` / `flip` / `collide` on fences, link pieces as doors (a cave mouth), `encounters`,
+    exits' `arrive`, invisible walls rebuilt as the outline of the walkable ground on a 1 m grid (the ring + road
+    corridor walls left gaps where roads met glades and walled a side trail across the main path), the walk test
+    checks ground encounter points. Content (MedievalSetting): the chain HamletCellar is now cellar -> rats (5 dead
+    goblins to loot) -> deep caves (spiders, then centipedes; chasm, egg sacs, cocoons) -> goblin tunnels -> warren
+    (goblins, a boss by the stair up into the camp); Woods and Warcamp layouts and scenes; the hamlet's forest track
+    leads to the woods. Goblins repo: `GoblinCorpses` (Tools > Goblins > Bake Dead Goblins: four goblins posed at the
+    last frame of the Human Animations death clips, baked to static props in Prefabs/Corpses) and an editor-safe
+    destroy in `GoblinAppearance`. Verified: every map walk-tested (all spawns, markers, encounter points; forests
+    sealed), and in play mode inn -> hamlet -> woods -> warcamp -> cave -> warren -> stair up -> warcamp -> woods ->
+    hamlet, each arrival on its spawn.
+65. 2026-10-02: the warcamp looked human-built (tidy towers, cream tents, a heraldic banner), so the user allowed new
+    Blender assets. Four goblin camp pieces in `vki_props_lair` (package adventure): `Prop_Goblin_Watchtower` (crooked
+    bark legs, lashed braces, a platform at 4.18 of uneven planks, a parapet of stakes with skulls, a lopsided hide
+    awning, a red rag; front -Y outward, ladder +Y; colliders: legs, floor, parapet open at the ladder),
+    `Prop_Goblin_Tent`, `Prop_Goblin_ChiefTent` (a tusk-gated tipi, door -Y), `Prop_Goblin_Bonfire` (light). Helpers
+    `vki_lair_hide` (a closed hide plate split into a grid, sag, mottled vertex tone, ragged hem: M_VK_Hide has no
+    texture, so flat hides read as plain tan boards), `vki_lair_slab`, `vki_lair_log`, `vki_lair_stone`. The
+    `Overlay_Bedroll` hide darkened (it read near white outdoors). KitVillage: props' `scale` and material `swap`
+    (layout palette + per entry). Walk test: a lifted encounter point is judged by its height over the terrain (the
+    lowest hit), not over the first collider (a tower platform under an archer counted as ground). MedievalSetting:
+    Warcamp has the watchtowers astride the wall by the gate (walkways end at them, archers on both), 14 goblin tents
+    in clusters round the bonfire, fire pits with bedrolls, racks, totems instead of the banner poles, the chief tent;
+    the woods' lookout is a watchtower with a goblin tent. Tests {} on the four; walk tests ok (Warcamp 12 encounter
+    points, Woods 7). Renders: game-camera gate, yard, chief, tower.
+66. 2026-10-02: the user found the goblin tent "weird" up close and asked for a leather material. Why: M_VK_Hide is a
+    flat colour, so the hides were smooth vertex-tone gradients (card / plastic up close), strips of different flat
+    tones read as painted boards, and a pale sewn-on patch half under the tied-back flap made an "N". Fix:
+    `T_VKI_Hide` (vki_tex_dungeon `vki_gen_hide`: sewn hide pieces, wavy seams, thong lacing, creases kept soft -- the
+    first, streaky creases read as wood grain) and `M_VKI_Hide`; HIDE joined `VKI_OVERRIDABLE` so the goblin pieces
+    take it per master (`vki_lair_hide_mats`: the four camp pieces, Overlay_Bedroll, Prop_Totem_Goblin,
+    Prop_LeanTo), their hides projected at its 2 m tile; vertex tones lowered; one patch per tent side, clear of the
+    flap. Exterior M_VK_Hide untouched. Tests {} on the seven; seen in Blender and in Unity (close-up, game camera).
+67. 2026-10-02: the user: the warcamp needs a gate the player has to destroy to get in. `Prop_Goblin_Gate` (two leaves
+    of lashed stakes in the exterior Palisade_Gate frame's opening, skulls and a marked hide outside, the bar inside;
+    `vki_breakable` 1, `vki_broken` "SM_VKI_Prop_Goblin_Gate_Broken"; one collider over the frame's posts too, which
+    have none) and `Prop_Goblin_Gate_Broken` (a leaf fallen in face up, one hanging open with two stakes snapped, the
+    bar in two, splinters; colliders: the posts and the hanging leaf; a 1.9 m way through). Both fill the 0.3 m slits
+    between the frame's posts and the palisade (`vki_lair_gate_fill`; they showed the camp through them). KitVillage:
+    fences' `gateDoor` / `gateDoorFlip` (doors at the gate's transform, named GATE_*). WalkVillage: breakables
+    (KitPiece `vki_breakable`) count as broken; a second navmesh with them whole lists what they shut off. Warcamp:
+    `"gateDoor": "Goblin_Gate"`; checked in a throwaway copy of the map (the user had Warcamp open): walk test ok, the
+    gate shuts off 16 of 17 points (all the camp; the cave's way in arrives inside); both states rendered in place.
+68. 2026-10-02: player movement (the user: a capsule placeholder; hold to move, click to interact, like Diablo / Baldur's
+    Gate; the camera never rotates -- people would see the art's flaws; instant cuts where levels can be preloaded,
+    e.g. a town's interiors). Package: `KitNavMesh` (a level's baked NavMeshData, added while it is enabled) and
+    `KitNavBake` (from the colliders the way the walk tests see them; default agent type 0 with radius 0.3; outdoor
+    0.1 m voxels, rooms and chains 0.05; a chain gets one surface over all its pieces in its play scene; breakables carve
+    with NavMeshObstacles), baked by BuildVillage / BuildRoomScene / chain Bake and the Navigation menu; `KitTravel`
+    preloading (the current level's link targets held loaded with their roots inactive; a held target is an instant
+    cut; others, chains and the way out of a chain, a plain load behind a short fade; `Place` warps NavMeshAgents);
+    `KitLink.walkInto` (village road exits); KitTestWalker steps aside for a registered player; the village walk test
+    turns carving obstacles off while it runs. MedievalSetting `Assets/Game/Scripts`: `ClickToMove`, `GameCamera`
+    (looks north at 50 degrees, wheel zoom, copies the level camera's backdrop), `GameBoot` and Game > Play From Hamlet /
+    Play This Level (playModeStartScene: the open scenes are left alone). Verified in play mode: hamlet -> chapel
+    (instant) -> @return -> hamlet -> forest road (walked into) -> woods (instant) -> warcamp (instant); the gate makes a
+    path into the camp partial; the cave -> HamletCellar_Play (fade, the chain streamed, the test walker gone, paths of
+    238 m across unloaded pieces). Baked: Hamlet, Woods, Warcamp (rebuilt), Hamlet_Inn_F1, VKI_Chapel_F0, the HamletCellar
+    chain; Hamlet_Inn not yet (the user had it open). Next: trees / roofs between camera and player, interior doors that
+    open as one comes (agents walk through closed leaves today).
 
 ## 6. Gotchas
+- `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
+  `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
+- Unity RunCommand cannot see the package's editor assembly (`MedievalKit.Editor` is not auto-referenced): call
+  `KitBuilder` / `KitVillageTools` through `System.Type.GetType("MedievalKit.Editor.KitBuilder, MedievalKit.Editor")`.
 
 - **Python on this machine:** `python` resolves to the Python install manager, a *packaged* app. Inside `%APPDATA%`
   it sees a virtualized file view (it cannot see folders other programs created). For file work under `AppData`,

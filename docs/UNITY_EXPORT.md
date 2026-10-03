@@ -75,6 +75,10 @@ plain UVMap, so the bake is exact. Cut-outs built as `alpha > threshold` keep th
   gated by the vertex colour's alpha (`_VKX_MOSS`). Exported as `moss` in materials.json.
 - **Translucency** (leaves 0.32, foliage and crops 0.25): the Translucent BSDF share; KitLit lowers the surface by it
   and adds light from behind (main light + ambient). Trees still render ~10-15 % brighter than in Blender.
+- **No environment reflection.** Every exported level sets Lighting > Environment Reflections to Custom with
+  intensity 0 (Blender's sky is not reflected; its ray tracing would hide it inside crowns and rooms anyway). A scene
+  left on Unity's default (its procedural sky at full strength) washes dark leaves and painted wood blue-white at
+  grazing angles: `KitHouseTools.CopyLighting` copies the setting with the ambient and the suns (fixed 2026-10-02).
 - **Mask cut-outs** (`alpha > t` from a separate mask image, e.g. the net): the mask rides in the baked colour map.
 - **Not baked:** networks reading the surface (Geometry, Attribute, object/world coordinates) can't be baked over the
   UV square. The leaves only use those for their normal, so the painted atlas is kept.
@@ -244,7 +248,8 @@ materials by name).
   pushed off walls; prop links (the lift) get a link and spawn. Rhythm posts and doorway mats then make room for them.
   From codes: each block of one code (not split by walls) takes the largest piece of that code that fits, at the
   block's centre; a block holding several footprints is tiled (a row of pews); trestle tables get forms on their long
-  sides where the cells are free; pieces at a wall turn their back to it. Inspector "Codes -> Record" writes that list
+  sides where the cells are free; pieces at a wall turn their back to it (a worktable too: it has a top, but stands
+  against its wall). Inspector "Codes -> Record" writes that list
   into the record to edit by hand. A bare plan (no record) builds with defaults: Timber / Board walls, board floor, a
   front exit back to where one came from.
 - Caves (phase 3, `KitCaveLayout.cs`): a record with "cave": true makes the plan a cell map ("##" rock, all outside
@@ -255,24 +260,51 @@ materials by name).
   tiles (waterfalls where a stream meets the chasm), sewer ("ww") and lava ("ll") cells channel tiles with a flow
   direction (`vki_flow`); floors are Q150 cells, or 0.75 m quarters round the ground tiles; R["tunnels"] puts a tunnel
   (or the mine's adit) with its passage link and spawn on a straight Full face; R["tracks"] lays the mine's track.
-- Random caves (`KitCaveGenerator`, inspector "Random Cave" / "New Seed" with the Cave settings): the kit's cellular
-  automaton in outline (System.Random, so not Blender's maps for a seed): random rock, a passage carved west to east,
-  round chambers, smoothing, two-cell passages, the largest region; a winding chasm with a rope bridge and land
-  bridges, pools, dressing, west and east tunnels, an optional point of interest. Writes the plan and record.
+- Random caves (`KitCaveGenerator`, inspector "Random Cave" / "New Seed" with the Cave settings; Rooms > Build Cave
+  Showcase). Layout "Maze" (default): nodes on a jittered lattice about 6 cells apart (chambers with noisy outlines, or
+  junctions) joined by winding tunnels 2-3 cells wide along a randomised depth-first spanning tree of the lattice
+  (corridors, turns, dead-end leaves) plus loops and spurs ending in alcoves (loot, a skeleton, a chest); walls
+  roughened and smoothed shut only, so the rock between tunnels stands. Layout "Open": the kit's cellular automaton.
+  The chasm carves its own gorge across the map: a curve from one side, through a point on the cave's floor in the
+  middle, to the other side (a fork optional), its width breathing between Chasm Width x..y cells (pinching to nothing
+  leaves a natural rock bridge), with ledges >= 2 cells along stretches of it. Where it cuts the cave in two: a rope
+  bridge over a two-cell narrows (turned to the crossing), a one-cell gap filled as a land bridge, or a wider stretch
+  pinched to two cells round a bridge; floor islands under 6 cells become rock pillars; the cave kept is the largest
+  region one can walk. A bridge's deck has chasm on both sides (floor beside it would be cut off by the rails, and a rock
+  tile's lobe narrows a landing below an agent's width), its landings have no rock beside them, decks stay two cells
+  apart, and a deck joins only the cells along its span when regions are counted. Alcove finds and dressing (crystals,
+  mushrooms, stalagmites, boulders; against tunnel walls too) never cut the floor: the regions stay as many and no free
+  cell beside one is left in a one-cell squeeze. System.Random: not Blender's maps for a seed (vki_cave_generate is
+  the old automaton).
 - Random dungeons (phase 4, `KitDungeonGenerator`, inspector "Random Dungeon"): a cave map with rooms dug into the
-  rock, joined by corridors two cells wide (a spanning tree plus loops), walled in Dungeon stone on the grid lines
-  between floor and rock (Cut on the camera side, the rock behind Cut / Full) with a door (or an open gap) where a
-  corridor meets a room; some rooms natural cave pockets. A stair up (Stone) where the player arrives, a stair down in
-  the room farthest from it. Room themes (guardroom, cells, crypt, store, shrine, warren, lair) are written into the plan
-  as furniture codes (`KitFurnisher`: along walls / in the middle, a cell apart, and only where every walkable cell of
-  the room stays reachable from its doors and the stair), plus torches, debris and an encounter per room
+  rock (the first a great hall of 7-9 x 5-7 cells, the rest 3-7 x 3-5), joined by corridors two cells wide (a spanning
+  tree plus loops; no checkerboard pinches, no one-cell necks), walled in Dungeon stone on the grid lines between floor
+  and rock (Cut on the camera side, the rock behind Cut / Full) with a door (or an open gap) where a corridor meets a
+  room; some rooms natural cave pockets (their ways in: the middle two cells of each opening onto a tunnel). A stair up
+  (Stone) where the player arrives, a stair down in the room farthest from it: any three cells along a wall, up with
+  its top against the wall it runs into (corners first), down a hole whose arrival is on the piece's local +x side
+  (its spawn), so that side faces into the room; another room when the first has no room. Room themes (guardroom,
+  cells, crypt, store, shrine, warren, lair) are written into the plan as furniture codes (`KitFurnisher`: along walls /
+  in the middle, a cell apart, and only where every walkable cell of the room stays reachable from its doors and the
+  stair) with set-pieces as record props (`KitSetPieces`, below): a shrine's altar between guardian statues with
+  braziers before it, the lair's treasure chest between braziers, chains on the cells' walls, the guards' table laid
+  and a weapon rack, pillars down the larger rooms (rock pillars in pockets); torches, debris and an encounter per room
   (record "encounters" -> `KitEncounter`: creature tag, budget 1 + depth from the entrance, the lair +3 and boss, spawn
-  points spread over free cells). Themes: Dungeon (mixed), Crypt, Warren. Record flag "props_from_codes": the record's
-  props and the plan's codes both furnish.
+  points spread over free cells). Themes: Dungeon (mixed), Crypt, Warren. Record flag "props_from_codes": the plan's
+  codes and then the record's props both furnish (codes first, so the record's table dressing finds its tables).
 - Random house ground floors (`KitInteriorGenerator`, inspector "Random Interior"): Cottage / Townhouse / Tavern /
   Workshop; a hall (taproom, workroom) with the front door and the hearth (Timber Fireplace_300 / Stone Hearth_300),
-  side rooms (bedroom, kitchen, pantry, store, bar) behind partitions with doors, windows, raked side walls, zone
-  styles, furniture codes through `KitFurnisher`.
+  side rooms (bedroom, kitchen, pantry, store) behind partitions with doors (two side rooms only when each is three
+  cells deep), windows, raked side walls, zone styles, furniture codes through `KitFurnisher`. Set-pieces first: the
+  taproom's bar (counters a cell out from a wall, cask racks behind them, an end piece and the barkeep's way in behind
+  it), the kitchen's oven beside its worktable, the workroom's bench under a tool wall; then the codes' furniture; then
+  the dressing: a log basket by the hearth, a chest beside the bed with a candle on it, table dressing by room (tavern
+  mugs, meals), lanterns on full-height walls. Taverns are 9-11 x 6-7 cells (a bar and tables).
+- `KitSetPieces` (runtime, shared by the generators): groups the furniture codes cannot say, as record props. A
+  set-piece holds its cells with the code "@@" (furniture the record places: the codes' furniture skips it, the walk
+  test counts it as a prop), keeps the cells it needs clear (the way up to an altar, behind a bar), and goes in only
+  where the room stays connected (`KitFurnisher.Connected`). Pillars stand on grid nodes (a corner of four cells, all
+  four left walkable). Wall-hung pieces go on full-height plain walls away from doorways.
 - Walkability (`KitDecks`, `AddGroundFloor`, Tools > Medieval Kit > Rooms > Walk Test): chasm / stream tiles block their
   chasm with 1 m boxes and owned the floor of their open quarters without a collider (a 0.75 m strip with nothing to
   stand on along every chasm edge): the prefab builder now gives those quarters a floor slab. Bridges (vki_bridge
@@ -282,11 +314,38 @@ materials by name).
   and paths from the first spawn to every spawn, encounter point and plan cell. Game notes: agents must stay under
   ~0.35 m radius (doors leave 0.84 m, the rope bridge 0.88 m) and need fine voxels on narrow decks; openable leaves
   (portcullis, iron / secret doors, gates) want a carving NavMeshObstacle switched with the door.
+- The walk test bakes one navmesh per room from its own colliders (rooms side by side or another open scene's do not
+  mix); its island check skips stair cells and cells holding a prop's code (a sliver of navmesh between a statue and a
+  wall is not stranded floor). The showcase builders ask to save modified open scenes first (they open a new scene);
+  the cave, dungeon and interior builders also build additively (`Build...Showcase(true)`: a new scene beside the open
+  ones, which the caller closes) and use their own scene's camera.
+- Tools > Medieval Kit > Rooms > Validate Generators (20 seeds): builds seeds of every generator (cave Maze / Open,
+  dungeon Dungeon / Crypt / Warren, interior Cottage / Townhouse / Tavern / Workshop) one at a time in a temporary scene,
+  walk-tests each (every spawn, encounter point and floor cell reachable from the first spawn) and lists the failing
+  seeds (`Logs/MedievalKit/generator_validation.txt`; `KitRoomTools.ValidateGenerators(count, which, firstSeed)`).
+  `KitRoomTools.WalkMap(room)` prints a room's plan marked by the navmesh ('o' reachable, 'x' cut off) for one seed.
+  Verified 2026-10-02: seeds 1-120 of all nine walkable everywhere (1,080 levels).
 - Verified 2026-10-01: the 3 showcase dungeons and 6 random interiors are walkable everywhere (every stair, encounter
   point and floor cell reachable); all 19 kit rooms reach every spawn; a few floor pockets of kit levels are cut off
   (B2 3 cells, Cave_Breach 3, Dwarf_Hall 10, Mine 4 = the caved-in drift, B3 1) and are left for review.
-- Not yet: Blender's debris for the kit rooms (the generators strew their own), monster spawning and combat (the
-  game's: KitEncounter only marks where and how hard).
+- Chains (one continuous world; how to use them: the package's `Documentation~/LEVEL_BUILDING.md` 5.5). A map's
+  way out is a `KitPortal` in its generator's `portals` (side, cell along the edge, width): the generator opens the
+  edge there, runs a straight way in for 3 cells (natural rock in a dungeon) and on to the floor, and records
+  R["portals"]; `KitRoom` puts a `KitPortalMarker` on each opening and a spawn inside. `KitConnectorGenerator` makes
+  the short passages between maps (straight or round a corner, winding, a chamber sometimes, glowing mushrooms);
+  both its ends are seams. Seam rule (`KitCaveLayout.CaveCells` / `CaveTiles`): beyond a map's opening the floor runs
+  on and the `Margin` (2) cells either side are cut rock; the map builds the rock tiles on the seam line, the
+  connector skips them and gives its seam row the heights the map assumes (cut in the band, else what the map makes
+  of its ring there), so the shared cells agree. `KitChain` (asset: maps in order, each joined to an earlier one,
+  the one before by default, through a connector: a tree, every portal joined once) is baked by `KitChainTools.Bake` (pieces lined up in world space, overlap check, walk test, a scene per
+  piece, build settings, a play scene with `KitChainStreamer` and the test walker); the streamer keeps the walker's
+  piece and its neighbours loaded. Verified 2026-10-02: connectors 4 shapes x 30 seeds, sample chains 20 / 20
+  walkable end to end across the seams (`KitChainTools.WalkChain`); with a branch (7 pieces) 20 / 20. Limits: no
+  loops, connectors are level, no navmesh across pieces, no ruins generator.
+- Debris (`KitRoom.Debris.cs`): R["debris"] {density, seed, zones, themes} strews the kit's debris by zone theme
+  (cave, lair, dungeon, ruins, sewer, dwarf, forge, mine) on free floor, clear of walls, posts, props, rock and spawns;
+  the generators set it (caves 0.34, dungeons 0.25). Not compared piece for piece with Blender's (counts are close).
+- Not yet: monster spawning and combat (the game's: KitEncounter only marks where and how hard).
 - Golden test: Tools > Medieval Kit > Rooms > Golden Test rebuilds the 12 walled rooms and compares them with the
   levels Blender exported (`Logs/MedievalKit/room_test.txt`): structure to 2 mm, props to 5 cm (the general idea, by
   the user's call, not Blender's every refinement). Verified 2026-10-01: structure 720 / 720 pieces with materials,
@@ -300,4 +359,40 @@ materials by name).
   generated in rows, then four of them furnished from their codes alone, the 7 cave levels, two random caves
   (seeds 7 and 31, the second with the wyrm bones), six random house ground floors and a plan typed from scratch.
   Rooms > Build Dungeon Showcase: `Assets/MedievalKitRooms/DungeonShowcase.unity`, three generated dungeons (Dungeon
-  seed 11, Crypt 5, Warren 9) lit like VKI_Dungeon_B1.
+  seed 11, Crypt 5, Warren 9) lit like VKI_Dungeon_B1. Rooms > Build Cave Showcase: `CaveShowcase.unity`, four random
+  caves. Rooms > Build Interior Showcase: `InteriorShowcase.unity`, two of each house kind (seeds 3 and 8) lit like
+  VKI_Tavern_F0.
+
+## 14. Outdoor maps (Unity `KitVillage`)
+
+- `KitVillage` (Runtime/World) builds an outdoor map from a JSON layout in plan metres (x east, y north, origin at
+  the south-west corner): a ground mesh (`M_VK_Terrain` instance; control map R dirt / G cobble painted along road
+  curves, lumpy areas and doorsteps, noise-warped edges), relief rising into the forest, level pads under buildings;
+  `Generated/Structures` prefabs or `KitHouseGenerator` houses turned so their door faces a point; gardens, fences
+  along Catmull-Rom curves, props, trees; a dart-thrown forest round a lumpy clearing with a ragged edge, stragglers,
+  undergrowth and a margin beyond the map; scatter; colliders (building walls, props, fences, trunks) and invisible
+  walls (a ring inside the forest with gaps at roads, walls along the roads through it, the map border); `KitSpawn`s,
+  `KitMarker`s, exits (`KitLink` triggers where roads leave the map) and door links. Problems (overlaps, a building
+  on a road or past the forest's wall) go to `notes`.
+- `KitVillageTools.BuildVillage(layout, scene)` (Tools > Medieval Kit > World > Build Village From Selected Layout)
+  builds additively in a scene of its own, saves the ground's mesh, control map and material beside it, lights it
+  like VK_ValleyTown, adds a camera at the start spawn and walk-tests it (`WalkVillage`: navmesh from the start
+  spawn; every spawn and marker reached, probes in the forest beyond the wall not).
+- Verified 2026-10-02: MedievalSetting `Assets/MedievalKitWorld/Hamlet.unity` (140 x 160 m, 14 buildings, 3 exits):
+  walk test ok, 7 spawns, 4 markers, 24 forest probes. Layout schema and rules: the package's
+  `Documentation~/LEVEL_BUILDING.md` 5.7; example `Documentation~/examples/Hamlet_layout.json`.
+- Linking (2026-10-02): `KitTravel` lands on the link's `arrive`, else the kit world's rule, else the spawn named
+  like the link; "@return" is remembered on arrival at a door whose target is "@return". A chain is entered by a
+  scene link whose target is its play scene and whose `arrive` is a spawn of one of its pieces (the streamer starts
+  there). Hand-made maps join chains as `KitChain.Kind.Plan`. Verified in play mode on the hamlet: village -> inn ->
+  cellar chain -> inn -> village, and the chapel's @return.
+- Cave encounters: `KitCaveGenerator.Options.creature` / `encounters` (30 / 30 seeds walkable with every spawn point
+  reached). `KitRoomTools.BuildRoomScene`: a hand-made plan + record (files) as a level scene, walk-tested.
+- Outdoor maps, 2026-10-02: several clearings (glades), palisade rings (closed fences, gates at their own width,
+  walkways along an offset line), link pieces as doors (cave mouths), encounters, exits with arrivals; invisible walls
+  are the outline of the walkable ground on a 1 m grid. Caves: creatures by depth, themed dressing, finds as loot
+  markers, the game's own prefabs by name. Chained dungeons: an exit stair to a scene. Examples: MedievalSetting's
+  Woods and Warcamp, and the HamletCellar chain from the inn's cellar to the warcamp's cave.
+- Navigation and travel, 2026-10-02: every level carries a baked navmesh (`KitNavMesh`, baked by the builders and
+  `KitNavBake`) for the game's NavMeshAgents; `KitTravel.Preload` holds the levels one link away loaded and switched
+  off, so doors are instant cuts. LEVEL_BUILDING 5.8-5.9.

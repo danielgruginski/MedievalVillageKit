@@ -148,7 +148,8 @@ VKI_NSLOTS = 67
 VKI_TILE = {55: 3.0, 56: 1.5, 57: 1.5, 58: 1.2, 59: 1.5, 60: 1.5, 61: 1.5, 62: 0.75, 64: 1.0, 66: 1.5}  # 63, 65: own UVs
 VKI_WORLD_LOCKED = (VKI_FLOOR, VKI_WALL_A, VKI_WALL_B, VKI_INFILL)
 VKI_BANNED = (STONE, PLASTER, ASHLAR, FIELDSTONE, WATTLE, STONE_BLOCK, ROCK, MOSS, ROCK_MOSSY)
-VKI_OVERRIDABLE = (WATER, WOOD, PLANKS, SHUTTER, CLOTH_A, CLOTH_B, WINDOW)   # whitelisted per-master overrides
+VKI_OVERRIDABLE = (WATER, WOOD, PLANKS, SHUTTER, CLOTH_A, CLOTH_B, WINDOW, HIDE)   # whitelisted per-master overrides
+# (HIDE: the exterior's M_VK_Hide is a flat colour; goblin hides take the textured M_VKI_Hide per master)
 VKI_SLOT_NAMES = {VKI_FLOOR: "FLOOR", VKI_WALL_A: "WALL_A", VKI_WALL_B: "WALL_B", VKI_CAP: "CAP",
                   VKI_STONE_BLOCK_IN: "STONE_BLOCK_IN", VKI_BRICK: "BRICK", VKI_STRAW: "STRAW", VKI_ASH: "ASH",
                   VKI_TEXTILE: "TEXTILE", VKI_WAX: "WAX", VKI_FX: "FX", VKI_INFILL: "INFILL"}
@@ -729,6 +730,8 @@ VKI_MAT_MAP = {
     "M_VKI_CaveCut": dict(tex="T_VKI_CaveTop", tint=(1.58, 1.55, 1.50), ph="#8A8076", nstr=0.6, spec=0.2),
     "M_VKI_CaveFloor": dict(tex="T_VKI_CaveFloor", tint=(0.70, 0.72, 0.80), ph="#4E463E", nstr=1.2, spec=0.25),
     "M_VKI_Web": dict(kind="web"),
+    # sewn hides (goblin tents, lean-tos, bedrolls): T_VKI_Hide, patchwork pieces laced together (vki_tex_dungeon)
+    "M_VKI_Hide": dict(tex="T_VKI_Hide", ph="#6E5038", nstr=1.0, spec=0.3),
     # sewer kit: old wet brick walls and brick paving (vki_tex_dungeon), dressed stone from T_VKI_StoneBlockIn (caps a
     # step paler than the brick), murky channel water (glossy, 88 % opaque over the dark bed), sludge, falling foam
     "M_VKI_SewerBrick": dict(tex="T_VKI_SewerBrick", ph="#4A3228", nstr=1.1, spec=0.35),

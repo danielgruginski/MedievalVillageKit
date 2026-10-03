@@ -128,6 +128,9 @@ namespace MedievalKit.Editor
             UnityEngine.SceneManagement.SceneManager.SetActiveScene(src);
             var mode = RenderSettings.ambientMode; var flat = RenderSettings.ambientLight;
             var sky = RenderSettings.ambientSkyColor; var eq = RenderSettings.ambientEquatorColor; var gr = RenderSettings.ambientGroundColor;
+            // the kit's levels have no environment reflection (Custom, intensity 0): Unity's default (its procedural sky at
+            // full strength) washes dark leaves and painted wood blue-white at grazing angles
+            var refl = RenderSettings.defaultReflectionMode; var reflI = RenderSettings.reflectionIntensity; var reflT = RenderSettings.customReflectionTexture;
             UnityEngine.SceneManagement.SceneManager.SetActiveScene(dst);
             foreach (var l in Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
                 if (l.gameObject.scene == dst) Object.DestroyImmediate(l.gameObject);
@@ -149,6 +152,7 @@ namespace MedievalKit.Editor
             EditorSceneManager.CloseScene(src, true);
             RenderSettings.ambientMode = mode; RenderSettings.ambientLight = flat;
             RenderSettings.ambientSkyColor = sky; RenderSettings.ambientEquatorColor = eq; RenderSettings.ambientGroundColor = gr;
+            RenderSettings.defaultReflectionMode = refl; RenderSettings.reflectionIntensity = reflI; RenderSettings.customReflectionTexture = reflT;
         }
 
         [MenuItem("Tools/Medieval Kit/Generate House Set")]

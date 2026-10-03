@@ -11,8 +11,10 @@ namespace MedievalKit
     /// A random ground floor for <see cref="KitRoom"/> (the kit's houses in outline): a footprint by kind, a hall with the
     /// front door in the south wall and the hearth (Timber fireplace / Stone hearth) on its north wall, side rooms split off
     /// by partitions with doors, windows round the walls, the side walls raked at the camera end; each room a type
-    /// (bedroom, kitchen, pantry, store, bar, workroom) with its zone styles and furniture codes, placed so every room stays
-    /// walkable from its door.
+    /// (bedroom, kitchen, pantry, store, workroom) with its zone styles and furniture codes, placed so every room stays
+    /// walkable from its door. Set-pieces go first (<see cref="KitSetPieces"/>: the taproom's bar, the kitchen's oven
+    /// and worktable, the workroom's bench under its tool wall), dressing last (on the tables, a chest by the bed, a log
+    /// basket by the hearth, lanterns on the walls).
     /// </summary>
     public static class KitInteriorGenerator
     {
@@ -31,14 +33,14 @@ namespace MedievalKit
 
         static readonly Dictionary<string, (string code, int min, int max, string place)[]> Furniture = new Dictionary<string, (string, int, int, string)[]>
         {
-            ["hall"] = new[] { ("TB", 1, 1, "mid"), ("PN", 0, 1, "wall"), ("SH", 0, 1, "wall"), ("WP", 1, 1, "wall"), ("ba", 0, 1, "wall"), ("CH", 0, 1, "wall") },
-            ["taproom"] = new[] { ("TB", 2, 3, "mid"), ("tb", 1, 2, "mid"), ("ba", 1, 2, "wall"), ("WP", 1, 1, "wall") },
+            ["hall"] = new[] { ("TB", 1, 1, "mid"), ("tb", 0, 1, "mid"), ("PN", 0, 1, "wall"), ("DR", 0, 1, "wall"), ("SW", 0, 1, "wall"), ("ba", 1, 2, "wall"), ("CH", 0, 1, "wall"), ("rg", 0, 1, "mid") },
+            ["taproom"] = new[] { ("TB", 1, 3, "mid"), ("tb", 1, 3, "mid"), ("ba", 1, 2, "wall"), ("BS", 0, 1, "wall") },
             ["bar"] = new[] { ("CT", 1, 2, "wall"), ("CK", 1, 1, "wall"), ("BS", 0, 1, "wall"), ("ba", 1, 2, "wall") },
-            ["bedroom"] = new[] { ("BX", 1, 1, "wall"), ("CH", 1, 1, "wall"), ("DR", 0, 1, "wall"), ("rg", 0, 1, "mid") },
-            ["kitchen"] = new[] { ("KW", 1, 1, "wall"), ("OV", 0, 1, "wall"), ("PN", 0, 1, "wall"), ("ja", 1, 1, "wall"), ("ba", 1, 1, "wall") },
+            ["bedroom"] = new[] { ("BX", 1, 1, "wall"), ("DR", 0, 1, "wall"), ("rg", 0, 1, "mid") },
+            ["kitchen"] = new[] { ("PN", 0, 1, "wall"), ("ja", 1, 1, "wall"), ("ba", 1, 1, "wall"), ("bu", 0, 1, "wall"), ("tb", 0, 1, "mid") },
             ["pantry"] = new[] { ("PN", 1, 1, "wall"), ("ba", 1, 2, "wall"), ("ja", 1, 1, "wall"), ("bx", 0, 1, "wall") },
-            ["store"] = new[] { ("bx", 2, 3, "wall"), ("ba", 1, 2, "wall"), ("GR", 0, 1, "wall") },
-            ["workroom"] = new[] { ("WB", 1, 2, "wall"), ("GR", 1, 1, "wall"), ("bx", 1, 2, "wall"), ("ir", 0, 1, "wall") },
+            ["store"] = new[] { ("bx", 2, 3, "wall"), ("ba", 1, 2, "wall"), ("GR", 0, 1, "wall"), ("BS", 0, 1, "wall") },
+            ["workroom"] = new[] { ("GR", 1, 1, "wall"), ("bx", 1, 2, "wall"), ("ir", 0, 1, "wall"), ("GS", 0, 1, "wall"), ("SH", 0, 1, "wall") },
         };
         static readonly Dictionary<string, string> FloorOf = new Dictionary<string, string>
         {
@@ -46,14 +48,25 @@ namespace MedievalKit
             ["pantry"] = "Earth", ["store"] = "Earth", ["workroom"] = "FlagRustic",
         };
         static readonly string[] Plasters = { "PlasterCream", "PlasterWhite", "PlasterOchre", "PlasterCream" };
+        // room type -> dressing for its trestle tables, for its small tables; lanterns on its walls
+        static readonly Dictionary<string, (string[] big, string[] small, int lanterns)> Dress = new Dictionary<string, (string[], string[], int)>
+        {
+            ["hall"] = (new[] { "TableDress_Meal_A", "TableDress_Meal_B" }, new[] { "TableDress_Meal_A" }, 2),
+            ["taproom"] = (new[] { "TableDress_Tavern_A", "TableDress_Tavern_B" }, new[] { "TableDress_Tavern_C" }, 3),
+            ["kitchen"] = (new[] { "TableDress_Meal_B" }, new[] { "TableDress_Meal_A" }, 1),
+            ["bedroom"] = (null, null, 1), ["workroom"] = (null, null, 1), ["store"] = (null, null, 0), ["pantry"] = (null, null, 0),
+            ["bar"] = (null, new[] { "TableDress_Tavern_C" }, 1),
+        };
 
         public static (string plan, JObject record) Generate(Options o, Func<string, (int, int)> fp = null)
         {
             var rnd = new System.Random(o.seed);
             fp ??= _ => (1, 1);
+            var fpIn = fp;
+            fp = code => code == "TB" ? (2, 2) : fpIn(code);       // a trestle table and its forms: a 2 x 2 block
             string kind = o.kind;
-            (int a, int b) ncR = kind == "Tavern" ? (8, 10) : kind == "Townhouse" ? (6, 8) : kind == "Workshop" ? (6, 8) : (6, 7);   // halls >= 4 wide: hearth + table
-            (int a, int b) nrR = kind == "Tavern" ? (5, 6) : kind == "Townhouse" ? (5, 6) : (4, 5);
+            (int a, int b) ncR = kind == "Tavern" ? (9, 11) : kind == "Townhouse" ? (6, 8) : kind == "Workshop" ? (6, 8) : (6, 7);   // halls >= 4 wide: hearth + table
+            (int a, int b) nrR = kind == "Tavern" ? (6, 7) : kind == "Townhouse" ? (5, 6) : (4, 5);                                   // a taproom: bar + tables
             int nc = o.nc > 0 ? o.nc : rnd.Next(ncR.a, ncR.b + 1), nr = o.nr > 0 ? o.nr : rnd.Next(nrR.a, nrR.b + 1);
             bool stone = kind == "Tavern" || (kind == "Townhouse" && rnd.Next(2) == 0);
             string perimeter = stone ? "Stone" : "Timber", partition = stone ? "Stone" : "Board";
@@ -62,7 +75,7 @@ namespace MedievalKit
 
             // ---- parts: the hall (with the front door) and a side strip, split once more when deep enough
             string hallType = kind == "Tavern" ? "taproom" : kind == "Workshop" ? "workroom" : "hall";
-            var sideTypes = kind == "Tavern" ? new[] { "bar", "kitchen", "store" } : kind == "Workshop" ? new[] { "store", "pantry" }
+            var sideTypes = kind == "Tavern" ? new[] { "kitchen", "store", "pantry" } : kind == "Workshop" ? new[] { "store", "pantry" }
                           : kind == "Townhouse" ? new[] { "kitchen", "bedroom", "pantry" } : new[] { "bedroom", "pantry" };
             int sideW = Mathf.Clamp(nc / 3, 2, 3);
             bool east = rnd.Next(2) == 0;
@@ -70,9 +83,9 @@ namespace MedievalKit
             var hall = east ? new Part { type = hallType, c0 = 0, c1 = nc - sideW - 1, r0 = 0, r1 = nr - 1 } : new Part { type = hallType, c0 = sideW, c1 = nc - 1, r0 = 0, r1 = nr - 1 };
             int sc0 = east ? nc - sideW : 0, sc1 = east ? nc - 1 : sideW - 1;
             parts.Add(hall);
-            if (nr >= 5 && sideTypes.Length > 1)
+            if (nr >= 6 && sideTypes.Length > 1)                        // two side rooms, each at least three deep (a bed and its door)
             {
-                int split = rnd.Next(2, nr - 1);
+                int split = rnd.Next(3, nr - 2);
                 parts.Add(new Part { type = sideTypes[0], c0 = sc0, c1 = sc1, r0 = split, r1 = nr - 1 });
                 parts.Add(new Part { type = sideTypes[1 + rnd.Next(sideTypes.Length - 1)], c0 = sc0, c1 = sc1, r0 = 0, r1 = split - 1 });
             }
@@ -117,8 +130,49 @@ namespace MedievalKit
             var reserved = new HashSet<(int, int)>(doorCells);
             foreach (var d in doorCells) foreach (var q in new[] { (d.Item1 + 1, d.Item2), (d.Item1 - 1, d.Item2), (d.Item1, d.Item2 + 1), (d.Item1, d.Item2 - 1) }) reserved.Add(q);
             if (hearth is int hh) { reserved.Add((hh, nr - 1)); reserved.Add((hh + 1, nr - 1)); }
+            // what stands on a cell's side: 2 the back wall (and the side walls' back half: they rake toward the camera),
+            // 1 the front wall and the partitions (cut down), 0 a window, a door, the hearth, a rake or nothing
+            int WallAt((int, int) q, char s)
+            {
+                var (c, r) = q;
+                string tok = s == 'N' ? (ew.TryGetValue((c, r + 1), out var tn) ? tn : null) : s == 'S' ? (ew.TryGetValue((c, r), out var ts) ? ts : null)
+                           : s == 'W' ? (ns.TryGetValue((c, r), out var tw) ? tw : null) : (ns.TryGetValue((c + 1, r), out var te) ? te : null);
+                if (tok == "##") return 2;
+                if (tok == "#") return r >= nr / 2 ? 2 : 1;
+                return tok == "==" || tok == ":" ? 1 : 0;
+            }
+            var props = new JArray();
+            var noWalk = new HashSet<(int, int)>();
             foreach (var p in parts)
-                KitFurnisher.Place(rnd, p.c0, p.r0, p.c1, p.r1, Furniture[p.type], codes, reserved, doorCells, new HashSet<(int, int)>(), fp);
+            {
+                var area = new KitSetPieces.Area { c0 = p.c0, r0 = p.r0, c1 = p.c1, r1 = p.r1, codes = codes, reserved = reserved, ways = doorCells, noWalk = noWalk, wall = WallAt };
+                var table = Furniture[p.type].ToList();
+                // set-pieces first, the codes' furniture round them, the dressing last
+                if (p.type == "taproom") KitSetPieces.Bar(rnd, area, props);
+                if (p.type == "kitchen" && KitSetPieces.Strip(rnd, area, rnd.Next(2) == 0 ? new[] { "OV", "KW" } : new[] { "KW", "OV" }) == null)
+                    table.Insert(0, ("KW", 1, 1, "wall"));
+                if (p.type == "workroom")
+                {
+                    if (KitSetPieces.Strip(rnd, area, new[] { "WB", "WB" }) != null) KitSetPieces.WallHung(rnd, area, props, "ToolWall_150", 1, 1, new[] { "WB" });
+                    else table.Insert(0, ("WB", 1, 1, "wall"));
+                }
+                if (p == hall && hearth is int hx && KitSetPieces.Beside(rnd, area, new[] { (hx, nr - 1), (hx + 1, nr - 1) }, "WP", q => q.Item2 == nr - 1) == null)
+                    table.Add(("WP", 0, 1, "wall"));
+                if (p.type == "bedroom" && kind == "Townhouse" && rnd.Next(2) == 0)
+                    table = table.Select(t => t.code == "BX" ? ("HT", t.min, t.max, t.place) : t).ToList();          // a half-tester
+                KitFurnisher.Place(rnd, p.c0, p.r0, p.c1, p.r1, table, codes, reserved, doorCells, noWalk, fp);
+                if (p.type == "bedroom")
+                {
+                    // a chest beside the bed, a candle on it
+                    var bed = area.Cells.Where(q => codes.TryGetValue(q, out var cc) && (cc == "BX" || cc == "HT")).ToList();
+                    var chest = bed.Count > 0 ? KitSetPieces.Beside(rnd, area, bed, "CH") : null;
+                    if (chest is (int, int) cq && rnd.NextDouble() < 0.7)
+                        props.Add(KitSetPieces.Prop("Candle_Plate", IG * (cq.Item1 + 0.5f), IG * (cq.Item2 + 0.5f), 0f, "table", new JObject { ["on"] = true }));
+                }
+                var dress = Dress[p.type];
+                KitSetPieces.TableTops(rnd, area, props, dress.big, dress.small);
+                KitSetPieces.WallHung(rnd, area, props, "Lantern_Wall", dress.lanterns);
+            }
 
             // ---- zones and the record
             var zones = new JObject();
@@ -137,7 +191,7 @@ namespace MedievalKit
             {
                 ["building"] = kind, ["floor"] = 0, ["preset"] = "Day",
                 ["family"] = new JObject { ["perimeter"] = perimeter, ["partition"] = partition },
-                ["partition_wall"] = "zone", ["zones"] = zones, ["links"] = links,
+                ["partition_wall"] = "zone", ["zones"] = zones, ["links"] = links, ["props"] = props, ["props_from_codes"] = true,
                 ["generated"] = new JObject { ["generator"] = "interior", ["kind"] = kind, ["seed"] = o.seed, ["nc"] = nc, ["nr"] = nr },
             };
             if (hearth != null) R["special"] = special;

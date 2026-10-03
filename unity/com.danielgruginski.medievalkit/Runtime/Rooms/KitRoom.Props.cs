@@ -22,10 +22,10 @@ namespace MedievalKit
             {
                 case Furniture.Auto:
                     list = rec != null && rec.Count > 0 ? rec : PropsFromCodes();
-                    if (rec != null && rec.Count > 0 && (bool?)R["props_from_codes"] == true)     // both (generated dungeons)
+                    if (rec != null && rec.Count > 0 && (bool?)R["props_from_codes"] == true)     // both (generated rooms)
                     {
-                        list = new JArray(rec);
-                        foreach (var a in PropsFromCodes()) list.Add(a);
+                        list = PropsFromCodes();                                                  // first: the record's table dressing stands on them
+                        foreach (var a in rec) list.Add(a.DeepClone());
                     }
                     break;
                 case Furniture.Record: list = rec; break;
@@ -69,10 +69,11 @@ namespace MedievalKit
             return o;
         }
 
-        /// <summary>vki_rooms_resolve: "Chest" -> SM_VKI_Prop_Chest, "Prop_Loom" -> SM_VK_Prop_Loom, full names as they are</summary>
+        /// <summary>vki_rooms_resolve: "Chest" -> SM_VKI_Prop_Chest, "Prop_Loom" -> SM_VK_Prop_Loom, full names as they are;
+        /// else the name itself, which the rules look up among the game's prefabs (KitInteriorRules.External)</summary>
         string Resolve(string s)
         {
-            var c = s.StartsWith("SM_") ? new[] { s } : s.StartsWith("Prop_") ? new[] { "SM_VK_" + s, "SM_VKI_" + s } : new[] { "SM_VKI_Prop_" + s, "SM_VKI_" + s };
+            var c = s.StartsWith("SM_") ? new[] { s } : s.StartsWith("Prop_") ? new[] { "SM_VK_" + s, "SM_VKI_" + s, s } : new[] { "SM_VKI_Prop_" + s, "SM_VKI_" + s, s };
             return c.FirstOrDefault(n => rules.Prefab(n) != null);
         }
 
@@ -366,9 +367,10 @@ namespace MedievalKit
                         int gw = gc1 - gc0 + 1, gh = gr1 - gr0 + 1;
                         float x = Layout.IG * (gc0 + gc1 + 1) / 2f, y = Layout.IG * (gr0 + gr1 + 1) / 2f;
                         float rot = pick.w > pick.d && gh > gw ? 90f : 0f;                 // along the block
-                        if (!table && !flat)
+                        if ((!table || pick.mount == "wall_floor" || pick.mount == "wall_hung") && !flat)
                         {
-                            // the back to the side of the block with the most wall: N 0, S 180, W 90, E -90
+                            // the back to the side of the block with the most wall: N 0, S 180, W 90, E -90 (a worktable
+                            // too: it has a top, but stands against a wall)
                             float Cover(string side)
                             {
                                 float s = 0f;

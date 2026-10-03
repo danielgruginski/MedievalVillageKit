@@ -18,6 +18,8 @@ namespace MedievalKit
         public string prompt = "Enter";
         [Tooltip("The walker must face the link within this angle (degrees). 0 = any direction.")]
         public float facingMin = 60f;
+        [Tooltip("Taken by walking into its trigger (a road's end at the map's edge), not by using it (doors, stairs).")]
+        public bool walkInto;
 
         public bool CanUse(Transform walker)
         {

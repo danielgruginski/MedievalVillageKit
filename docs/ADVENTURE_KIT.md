@@ -177,7 +177,7 @@ cells (`vki_covers_floor`), so the assembler leaves the room floor out there. It
 | Traps | `Overlay_PressurePlate`, `Overlay_BladeSlot_150`, `Prop_Boulder` (a rolling-boulder trap), `Prop_Lever_Wall` (`vki_mechanism`) |
 | Loot | `Prop_Chest_Iron` (closed, padlocked), `Prop_Urns` (breakable: an amphora, a pot, shards), `Prop_LootPile`, `Overlay_GoldCoins`, `Prop_Skeleton_Fallen` (a dead adventurer with sword and shield) |
 | Temple | `Prop_Statue_Guardian`, `Prop_Statue_Broken`, `Prop_Altar_Idol` (a gold idol, candles, light), `Prop_Column_Ancient` / `_Broken` / `_Fallen`, `Prop_Brazier_Stone` (fire, light), `Overlay_CrackedFloor`, `Prop_Roots_Floor`, `Prop_Roots_Wall` |
-| Lairs | `Overlay_Bedroll`, `Prop_FirePit_Camp` (a spitted haunch, light), `Prop_Totem_Goblin`, `Prop_LeanTo`, `Prop_Barricade_Stakes`, `Overlay_Refuse`, `Prop_Web_Corner`, `Overlay_WebFloor`, `Prop_EggSacs`, `Prop_Cocoon`, `Prop_Burrow`, `Prop_RatHole_Wall` |
+| Lairs | `Overlay_Bedroll`, `Prop_FirePit_Camp` (a spitted haunch, light), `Prop_Totem_Goblin`, `Prop_LeanTo`, `Prop_Barricade_Stakes`, `Overlay_Refuse`, `Prop_Web_Corner`, `Overlay_WebFloor`, `Prop_EggSacs`, `Prop_Cocoon`, `Prop_Burrow`, `Prop_RatHole_Wall`; outdoors, a goblin warcamp's own: `Prop_Goblin_Watchtower` (stakes on a platform at 4.18, astride a palisade, front -Y outward, ladder +Y), `Prop_Goblin_Tent` (patched hide A-frame), `Prop_Goblin_ChiefTent` (a tipi behind two tusks), `Prop_Goblin_Bonfire` (light), `Prop_Goblin_Gate` (the doors of the exterior `Palisade_Gate` frame: lashed stakes, barred inside, `vki_breakable`, `vki_broken` = `Prop_Goblin_Gate_Broken`, the smashed state: a leaf fallen in, one hanging open, the bar snapped; both fill the slits beside the frame's posts and collide across them) |
 | Caves | `Prop_Stalagmites`, `Prop_Crystals` (glowing, light), `Prop_Mushrooms_Glow` (light), `Prop_RockPillar_Cut` / `_Full`, `Prop_Boulders`, `Overlay_Gravel` |
 
 **Metadata for the game.**
@@ -203,6 +203,10 @@ cells (`vki_covers_floor`), so the assembler leaves the room floor out there. It
   do not show the 1.5 m repeat (`vki_gen_rocktop`);
 - `T_VKI_CaveFloor`: packed cave earth with pebbles and a grey dust haze;
 - `T_VKI_Web`: an RGBA orb web (alpha-clipped, `M_VKI_Web`).
+- `T_VKI_Hide` (tile 2.0 m): sewn hides, twelve wavy-edged pieces in five tones laced across the seams with pale thongs
+  (`M_VKI_Hide`). The goblin pieces (bedroll, totem banner, lean-to, the warcamp's tents, tipi and tower awning) put it
+  on their HIDE slot per master (`vki_lair_hide_mats`) and project their hides at its tile; the exterior's
+  `M_VK_Hide` (a flat colour) is unchanged.
 
 Floor styles `AncientFlag`, `CaveFloor`; wall style `AncientIn`; cap styles `AncientCap`, `AncientBlock`. Rock tiles
 use `M_VKI_CaveRock` on their cliffs and `M_VKI_CaveCut` (pale) on their tops. Gold is `M_VKI_Gold` (flat, on the TEXTILE slot: BRONZE read dark). Bones use the WAX slot.
@@ -480,7 +484,7 @@ every X / O corner code but OOOO (XXXX has one master, the others four).
 | `SM_VKI_Prop_Roots_Wall` | 544 | 1,1 | wall_hung, furniture |
 | `SM_VKI_Prop_Brazier_Stone` | 1032 | 1,1 | floor, furniture |
 
-### Lairs (12)
+### Lairs (18)
 
 | Piece | Tris | Cells | Mount, tier |
 |---|---|---|---|
@@ -496,6 +500,17 @@ every X / O corner code but OOOO (XXXX has one master, the others four).
 | `SM_VKI_Prop_Cocoon` | 500 | 1,1 | wall_floor, furniture |
 | `SM_VKI_Prop_Burrow` | 300 | 1,1 | floor, furniture |
 | `SM_VKI_Prop_RatHole_Wall` | 328 | 1,1 | wall_floor, dressing |
+| `SM_VKI_Prop_Goblin_Watchtower` | 3818 | 3,3 | floor, hero |
+| `SM_VKI_Prop_Goblin_Tent` | 898 | 3,3 | floor, furniture |
+| `SM_VKI_Prop_Goblin_ChiefTent` | 2242 | 4,5 | floor, hero |
+| `SM_VKI_Prop_Goblin_Bonfire` | 1706 | 3,3 | floor, hero |
+| `SM_VKI_Prop_Goblin_Gate` | 1498 | 3,1 | floor, hero, `vki_breakable` |
+| `SM_VKI_Prop_Goblin_Gate_Broken` | 1778 | 3,4 | floor, hero |
+
+The four goblin camp pieces are for outdoor maps (a KitVillage layout). Their hides are `M_VKI_Hide` (sewn pieces,
+laced) on a grid that sags between its supports, a little mottled and darker at the rim, with a ragged hem
+(`vki_lair_hide`). The watchtower's colliders are its legs, the platform floor and the
+parapet (open at the ladder), so archers can stand on it.
 
 ### Transitions: breaches (8)
 

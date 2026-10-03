@@ -125,10 +125,32 @@ namespace MedievalKit
         }
 
         /// <summary>vki_cave_cells: 'O' open, else rock: Cut in the south ring and row, or with open floor within two
-        /// cells to its north (a 3 m rock would hide it from the camera), else Full. The map plus a ring round it.</summary>
+        /// cells to its north (a 3 m rock would hide it from the camera), else Full. The map plus a ring round it.
+        /// Portals (<see cref="KitPortal"/>): beyond a map's opening the floor runs on (open) with cut rock the band
+        /// either side; a connector's seam row is cut rock in the band and, past it, what the map beyond makes of its
+        /// ring there (its south ring cut, the others full), so both maps agree on every cell they share.</summary>
         Dictionary<(int, int), char> CaveCells()
         {
-            bool IsRock(int c, int r) => !(c >= 0 && c < nc && r >= 0 && r < nr) || (P.codes.TryGetValue((c, r), out var v) && v == "##");
+            var beyondOpen = new HashSet<(int, int)>();
+            var forced = new Dictionary<(int, int), char>();
+            foreach (var pt in KitPortal.Of(R))
+            {
+                if (pt.at < 0) continue;
+                char s = pt.Side;
+                if (pt.seam)
+                {
+                    char ring = s == 'N' ? 'C' : 'F';            // the map beyond: its south ring is cut, the rest full
+                    for (int k = 0; k < KitPortal.EdgeLength(s, nc, nr); k++) forced[pt.Cell(k, 0, nc, nr)] = ring;
+                }
+                for (int k = pt.at - KitPortal.Margin; k < pt.at + pt.width + KitPortal.Margin; k++)
+                {
+                    bool gap = k >= pt.at && k < pt.at + pt.width;
+                    var q = pt.seam ? pt.Cell(k, 0, nc, nr) : pt.Beyond(k, nc, nr);
+                    if (gap) { forced.Remove(q); if (!pt.seam) beyondOpen.Add(q); }
+                    else forced[q] = 'C';
+                }
+            }
+            bool IsRock(int c, int r) => !(c >= 0 && c < nc && r >= 0 && r < nr) ? !beyondOpen.Contains((c, r)) : (P.codes.TryGetValue((c, r), out var v) && v == "##");
             var ov = R["cave_heights"] as JObject;
             var o = new Dictionary<(int, int), char>();
             for (int c = -1; c <= nc; c++)
@@ -137,6 +159,7 @@ namespace MedievalKit
                     if (!IsRock(c, r)) { o[(c, r)] = 'O'; continue; }
                     var h = (string)ov?[$"{c}|{r}"];
                     if (h != null) { o[(c, r)] = h[0]; continue; }
+                    if (forced.TryGetValue((c, r), out var fh)) { o[(c, r)] = fh; continue; }
                     bool south = r == -1 || (r == 0 && c >= 0 && c < nc);
                     o[(c, r)] = south || !IsRock(c, r + 1) || !IsRock(c, r + 2) ? 'C' : 'F';
                 }
@@ -151,9 +174,13 @@ namespace MedievalKit
         {
             var tun = new Dictionary<(int, int), string>();
             if (R["tunnels"] is JObject tj) foreach (var kv in tj) tun[Key(kv.Key)] = (string)kv.Value;
+            // a connector's seam lines: the map beyond builds the rock tiles there
+            var seams = new HashSet<char>(KitPortal.Of(R).Where(pt => pt.seam).Select(pt => pt.Side));
+            bool OnSeam(int i, int j) => (seams.Contains('S') && j == 0) || (seams.Contains('N') && j == nr) || (seams.Contains('W') && i == 0) || (seams.Contains('E') && i == nc);
             for (int i = 0; i <= nc; i++)
                 for (int j = 0; j <= nr; j++)
                 {
+                    if (OnSeam(i, j)) continue;
                     string code = Corner(i, j);
                     tun.TryGetValue((i, j), out var lid);
                     tun.Remove((i, j));
