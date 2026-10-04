@@ -44,6 +44,15 @@ def hewn_material(name="M_VK_Hewn"):
     mx.inputs[6].default_value=(0.24,0.145,0.07,1); mx.inputs[7].default_value=(0.56,0.37,0.18,1)
     nt.links.new(mx.outputs[2],b.inputs["Base Color"])
     return m
+def wild_garlic_material():
+    """wild garlic's own sheet (T_VK_WildGarlic: leaf, star flower, stalk; vk_leafgen.paint_wild_garlic) on the leaves'
+    shader; a flat green stand-in until the sheet is painted. Built once (kit_mats runs for every piece)."""
+    m=bpy.data.materials.get("M_VK_WildGarlic")
+    painted="T_VK_WildGarlic_BCA" in bpy.data.images and "T_VK_WildGarlic_H" in bpy.data.images
+    if m is not None and m.get("vk_wg")==("leaf" if painted else "flat"): return m
+    if painted: m=leaf_material("M_VK_WildGarlic","T_VK_WildGarlic"); m["vk_wg"]="leaf"
+    else: m=tex_mat("M_VK_WildGarlic",None,0.6,flat=(0.30,0.52,0.18)); m["vk_wg"]="flat"
+    return m
 def kit_mats():
     return [tex_mat("M_VK_Stone","T_VK_Stone"), tex_mat("M_VK_Plaster","T_VK_Plaster",0.9), tex_mat("M_VK_Wood","T_VK_Wood",0.8),
             tex_mat("M_VK_RoofRed","T_VK_RoofRed",0.7), tex_mat("M_VK_Window","T_VK_Window",0.25), tex_mat("M_VK_Iron",None,0.5,flat=(0.08,0.08,0.09)),
@@ -66,8 +75,8 @@ def kit_mats():
             tex_mat("M_VK_Hide",None,0.8,flat=(0.50,0.33,0.20)), tex_mat("M_VK_Pigskin",None,0.7,flat=(0.90,0.62,0.56)),
             tex_mat("M_VK_Coal",None,0.95,flat=(0.045,0.043,0.050)), bpy.data.materials["M_VK_Net"],
             tex_mat("M_VK_Goods","T_VK_Goods_BC",0.5),
-            tex_mat("M_VK_StoneDressed","T_VK_StoneBlock",tint=DRESS_TINT), hewn_material()]
-STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS,DRESS,HEWN=range(55)
+            tex_mat("M_VK_StoneDressed","T_VK_StoneBlock",tint=DRESS_TINT), hewn_material(), wild_garlic_material()]
+STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS,DRESS,HEWN,WILD_GARLIC=range(56)
 # ---- goods atlas (T_VK_Goods, painted by vk_goods; keep the cell order in sync with vk_goods.GOODS_CELLS) ----
 GOODS_CELLS=("cabbage","pumpkin","carrot","apple","bread","cheese","fish","fish_smoked",
              "hide","fur","meat","ham","sausage","turnip","herbs","pomace")

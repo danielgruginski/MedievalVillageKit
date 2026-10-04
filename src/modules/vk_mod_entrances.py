@@ -28,6 +28,8 @@ ENT_META={
                                  prompt="Enter the dwarven halls",facing_min=60),
  "SM_VK_Entrance_SpringCave":dict(trigger=[0.0,1.25,1.0,1.8,0.8,2.0],spawn=[0.0,-1.4,0.0],facing=180,
                                   prompt="Go into the cave",facing_min=60),
+ "SM_VK_Entrance_CaveMouth":dict(trigger=[0.0,1.25,1.0,1.8,0.8,2.0],spawn=[0.0,-1.4,0.0],facing=180,
+                                 prompt="Go into the cave",facing_min=60),
  "SM_VK_Entrance_SewerGrate":dict(trigger=[0.0,0.0,1.0,1.1,1.1,2.0],spawn=[0.0,-1.25,0.0],facing=180,
                                   prompt="Climb down",facing_min=180),
  "SM_VK_Entrance_LockUp":dict(trigger=[0.0,-1.95,1.0,0.9,0.7,2.0],spawn=[0.0,-2.75,0.0],facing=180,
@@ -196,10 +198,11 @@ def ent_dwarf_gate(k):
     ind_skirt(k,-4.6,4.6,-2.5,6.0)
 
 # ---------------------------------------------------------------- the spring cave
-def ent_spring_cave(k):
+def ent_spring_cave(k,water=True):
     """the spring cave (VKI_Cave_Falls's way out): a dark mouth between mossy boulders under a lintel rock, water
     trickling out of the dark over pebbles, a mossy hill over it. Origin: the floor at the mouth, face -Y; the cave
-    runs +Y to 1.9 (keep the mouth 2.2 m or more in front of a cliff behind it). A rough arch ~2.3 wide x 2.45 high."""
+    runs +Y to 1.9 (keep the mouth 2.2 m or more in front of a cliff behind it). A rough arch ~2.3 wide x 2.45 high.
+    water=False: dry (SM_VK_Entrance_CaveMouth: a cave mouth on open ground, no spring), a few loose stones instead."""
     hw,deep=1.15,1.9
     arch=[((-a,-9.0,-1.0),(a,deep+0.1,z)) for a,z in ((hw,1.5),(1.05,1.95),(0.9,2.2),(0.65,2.38),(0.35,2.48))]
     # ---- floor: rock in the mouth, darkness further in; dark walls and roof inside the rock's faces
@@ -211,6 +214,12 @@ def ent_spring_cave(k):
     ent_void(k,[(-hw+0.05,1.3,-0.05),(-hw+0.05,deep,-0.05),(-hw+0.05,deep,2.6),(-hw+0.05,1.3,2.6)])   # the ragged
     ent_void(k,[(hw-0.05,deep,-0.05),(hw-0.05,1.3,-0.05),(hw-0.05,1.3,2.6),(hw-0.05,deep,2.6)])      # rock shapes
     ent_void(k,[(-hw,1.0,2.43),(-hw,deep,2.43),(hw,deep,2.43),(hw,1.0,2.43)])                      # the mouth
+    # behind the jamb rocks, to the mouth, and under them: dark (in the valley a cliff stood behind; on open ground the
+    # gaps between the rocks showed the grass and whatever stood behind)
+    xo=hw+0.08
+    ent_void(k,[(-xo,0.35,-0.05),(-xo,deep,-0.05),(-xo,deep,2.6),(-xo,0.35,2.6)])
+    ent_void(k,[(xo,deep,-0.05),(xo,0.35,-0.05),(xo,0.35,2.6),(xo,deep,2.6)])
+    ent_void(k,[(-1.7,0.35,0.025),(1.7,0.35,0.025),(1.7,deep,0.025),(-1.7,deep,0.025)])
     for (c,sz,sd,rz) in (((-0.95,0.1,-0.05),(0.55,0.5,0.38),51,0.4),((1.0,0.35,-0.05),(0.5,0.45,0.3),52,1.2)):
         vs=ind_boulder(k,c,sz,sd,mi=ROCK,rot=rz,sub=1,cuts=5)                        # stones at the mouth's foot
     # ---- the mouth: jamb boulders, the lintel rock, side masses, the hill behind
@@ -223,6 +232,17 @@ def ent_spring_cave(k):
                  ((-2.7,-0.9,-0.1),(0.7,0.6,0.5),47,0.6,ROCK,1)],arch,rough=0.13)
     vs=ind_heap(k,(0.0,2.5,-0.2),3.6,2.7,4.3,MOSS,seed=48,sub=3,rough=0.2,peak=0.85,tile=2.0)
     ent_cut(k,vs,arch); ent_roughen(vs,arch,0.13,48)
+    if not water:                                                                     # dry: a few stones in the mouth
+        rnd=random.Random(49)
+        for i in range(7):
+            p=(rnd.uniform(-0.8,0.8),rnd.uniform(-0.6,0.6)); r=rnd.uniform(0.05,0.11)
+            vs=_ico(k,(p[0],p[1],0.02),r,ROCK,(rnd.uniform(0.9,1.3),rnd.uniform(0.8,1.1),rnd.uniform(0.45,0.7)),
+                    sub=1,jit=r*0.15,seed=490+i)
+            ind_box_uv(k,ind_faces(vs),1.5,(rnd.random(),rnd.random()))
+        rnd=random.Random(50)
+        ent_tufts(k,[(rnd.uniform(-3.6,3.6),rnd.uniform(0.6,4.6)) for _ in range(14)],seed=50,
+                  boxes=[((-1.4,-9.0,-1.0),(1.4,deep+0.2,2.6))])
+        return
     # ---- the trickle: a ribbon of water out of the dark, pebbles along it
     P=[(0.42,1.75),(0.48,0.9),(0.62,0.1),(0.8,-0.5)]                                # ends on the floor in front
     W=[0.12,0.15,0.17,0.15]                                                           # (sand slopes to water past it)
@@ -244,6 +264,10 @@ def ent_spring_cave(k):
     ent_tufts(k,[(rnd.uniform(-3.6,3.6),rnd.uniform(0.6,4.6)) for _ in range(14)],seed=50,
               boxes=[((-1.4,-9.0,-1.0),(1.4,deep+0.2,2.6))])
     # no skirt: the cave stands by water (a skirt's top would show over a pool 0.6 m down)
+
+def ent_cave_mouth(k):
+    """the spring cave's mouth, dry: a dark way into a hill between mossy boulders, on open ground (a camp's cave)"""
+    ent_spring_cave(k,water=False)
 
 # ---------------------------------------------------------------- the sewer grate
 def ent_sewer_grate(k):
@@ -331,6 +355,7 @@ def ent_link(o,lid,coll,scene=ENT_TOWN_SCENE):
 WS_SPECS=[
  ("SM_VK_Entrance_DwarfGate",ent_dwarf_gate,ENT_NG),
  ("SM_VK_Entrance_SpringCave",ent_spring_cave,ENT_NG),
+ ("SM_VK_Entrance_CaveMouth",ent_cave_mouth,ENT_NG),
  ("SM_VK_Entrance_SewerGrate",ent_sewer_grate,ENT_NG),
  ("SM_VK_Entrance_LockUp",ent_lockup,ENT_NG),
 ]

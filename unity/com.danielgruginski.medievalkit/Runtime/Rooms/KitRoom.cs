@@ -285,6 +285,7 @@ namespace MedievalKit
                         if (style == null || !style.ContainsKey(kv.Key)) st[kv.Key] = (string)kv.Value;
             }
             if (st.Count > 0) ApplyStyle(go, kp, st);
+            if (reuse && piece.StartsWith("SM_VK_Prop_")) KitSolid.Box(go);      // an exterior prop has no vki_collider: walked through
             var p = new Placed { piece = piece, group = parent.name, what = what, x = x, y = y, z = z, rot = rot, atX = x, atY = y, go = go, kp = kp, style = st };
             placed.Add(p);
             return p;

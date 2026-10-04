@@ -84,6 +84,7 @@ Shader "MedievalKit/KitLit"
             #define _SPECULAR_SETUP 1
             #include "KitLitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "KitSeeThrough.hlsl"
 
             struct Attributes
             {
@@ -144,6 +145,7 @@ Shader "MedievalKit/KitLit"
                 #ifdef _ALPHATEST_ON
                 clip(alpha - _Cutoff);
                 #endif
+                KitSeeThroughClip(input.positionWS, input.positionCS.xy);
                 half3 n = normalize(input.normalWS);
                 n = frontFace ? n : -n;     // the kit's cards and open-backed pieces render both sides
 
@@ -264,12 +266,19 @@ Shader "MedievalKit/KitLit"
             HLSLPROGRAM
             #pragma target 3.5
             #pragma vertex DepthOnlyVertex
-            #pragma fragment DepthOnlyFragment
+            #pragma fragment KitDepthOnlyFragment
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
             #include "KitLitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
+            #include "KitSeeThrough.hlsl"
+
+            half KitDepthOnlyFragment(Varyings input) : SV_TARGET
+            {
+                KitSeeThroughClipCS(input.positionCS);
+                return DepthOnlyFragment(input);
+            }
             ENDHLSL
         }
 
@@ -283,13 +292,28 @@ Shader "MedievalKit/KitLit"
             HLSLPROGRAM
             #pragma target 3.5
             #pragma vertex DepthNormalsVertex
-            #pragma fragment DepthNormalsFragment
+            #pragma fragment KitDepthNormalsFragment
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
             #include "KitLitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthNormalsPass.hlsl"
+            #include "KitSeeThrough.hlsl"
+
+            void KitDepthNormalsFragment(Varyings input, out half4 outNormalWS : SV_Target0
+            #ifdef _WRITE_RENDERING_LAYERS
+                , out uint outRenderingLayers : SV_Target1
+            #endif
+            )
+            {
+                KitSeeThroughClipCS(input.positionCS);
+                DepthNormalsFragment(input, outNormalWS
+                #ifdef _WRITE_RENDERING_LAYERS
+                    , outRenderingLayers
+                #endif
+                );
+            }
             ENDHLSL
         }
     }

@@ -106,8 +106,11 @@ touches a tower (the road strip is deleted right after). `fix_levels dropped` li
   stall trades; lit-window style; worn/fresh shutter styles; roof palette + per-instance brightness jitter.
   Gatehouse (`SM_VK_Gatehouse_*`, sizes in the `GH_*` constants of `vk_mod_defence`): 4 cells wide, 3.5 m passage
   (3.3 m clear between the open leaves), flanking towers at ±4.4 m, portcullis raised to 3.5 m above the road.
-- **Nature (`VK_NaturePieces`, 39):** oaks, apple, cherry blossom, birches, willow, pines, dead tree, sapling, bushes,
+- **Nature (`VK_NaturePieces`, 40):** oaks, apple, cherry blossom, birches, willow, pines, dead tree, sapling, bushes,
   plants, mushrooms, rocks, stump, log, pond. Leaf atlas `T_VK_Leaves_*` (cherry cell repainted in hero-oak style).
+  Wild garlic (`SM_VK_Plant_WildGarlic`, 2026-10-03, the RPG's gatherable herb): geometry leaves folded along the
+  midrib and white star-flower umbels on its own small sheet `T_VK_WildGarlic` (`vk_leafgen.paint_wild_garlic`),
+  material slot `WILD_GARLIC` (`M_VK_WildGarlic`, the leaves' shader), not a cell of the full leaf atlas.
 - **Terrain (`vk_terrain`):** dual-grid marching squares, 3 m cells, 1.5 m levels; cliff/shore tiles with A/B/C
   variants; ramps whose half tile blends the cliff down and has an earth bank (plus `tk_ramp_dress` props); built
   stairs (all dressed stone: treads, risers, flanking walls with sloped copings and piers);
@@ -652,6 +655,103 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     238 m across unloaded pieces). Baked: Hamlet, Woods, Warcamp (rebuilt), Hamlet_Inn_F1, VKI_Chapel_F0, the HamletCellar
     chain; Hamlet_Inn not yet (the user had it open). Next: trees / roofs between camera and player, interior doors that
     open as one comes (agents walk through closed leaves today).
+69. 2026-10-02: movement, second pass. Hamlet_Inn baked (the user closed it). Interior doors: none of MedievalSetting's
+    levels has one (their only leaves are exit doors, taken by their link first), so doors that open on approach wait
+    for a level that has them. See-through in KitLit (`KitSeeThrough.hlsl`: a cone from the camera to a 2.4 m disc
+    round the walker's chest, above feet + 1.4, dithered with a 4x4 Bayer, a soft rim; the forward, DepthOnly and
+    DepthNormals passes clip -- the PC renderer runs SSAO --, the shadow pass does not), driven by MedievalSetting's
+    GameCamera; checked on the inn's roof in the hamlet and pine branches in the woods (a first capture with one
+    Render lost the instanced trees: render twice). Pointer feedback (`PointerFeedback`: a gold pointer-and-door cursor
+    over a way out, a gold ring shrinking at a click's destination, the prompt with a shadow). Play-mode route checked:
+    hamlet -> inn (instant) -> cellar stair -> HamletCellar_Play (fade, on the chain's navmesh) -> stair up -> inn (fade),
+    the hamlet and F1 held again.
+70. 2026-10-02: the warcamp's cave mouth showed grass inside and a ladder stood in the yard leading nowhere. The spring
+    cave's darkness stopped halfway in (the valley's copy stands before a cliff): now dark side cards to the mouth and a
+    dark floor under the jamb rocks; a dry variant `SM_VK_Entrance_CaveMouth` (no trickle: the user found the blue
+    ribbon weird) is the warcamp's cave. Fences take `along` (pieces on the line at fractions, turned as its pieces):
+    the ladders stand on the walkways' lines and lean on the deck. Grass blades (the user asked; then asked for a
+    compute shader, the proper way): `KitGrass` holds the map's clump list (16 bytes a clump: position, tint, height;
+    KitVillage.Grass places them on the ground mesh, clear of everything placed, thinning on roads, paving, slopes and
+    at the forest's edge); a compute shader (`Resources/KitGrassCull.compute`) culls them per camera into an append
+    buffer, one `RenderPrimitivesIndirect` draws them, the vertex shader (`KitGrassInput.hlsl`) builds 5-7 blades a
+    clump from the index (no meshes; 0.5 s to open the warcamp). The blades take the ground's grass colour (KitTerrain's
+    recipe in the ground's object space), dark roots and sunlit tips, sway, part round the walker (the see-through's
+    globals) and cast shadows (without them the grass vanished from the game camera). Two dead ends: a geometry
+    shader (no Metal, slow); baked meshes (76 MB for the warcamp). Hamlet 36k clumps, Woods 10k, Warcamp 34k; walk
+    tests ok; seen in edit and play mode (instant cut keeps it). Not grass: streaks in the gate's shadow on the path.
+71. 2026-10-03: the see-through cut the wall of a house the player stood in front of. It tested "nearer than the walker"
+    along the line of sight; the camera looks down 50 degrees, so the wall above the walker's head counted as nearer.
+    Now "in front" is measured along the camera's level heading (KitSeeThrough.hlsl; z: kept within z in front, level).
+    Checked in play mode at cottage_2: in front of it the wall stays whole, behind it the roof opens, a pine between
+    camera and walker opens. (Renders right after teleporting the camera can show instanced trees black and leafless:
+    render a few frames before capturing.)
+72. 2026-10-03: the user shared a game draft (Sewer Slice: click-to-fight rats, loot, fever, trader, quest, death recap)
+    and asked to build it on the kit. Game code lives in MedievalSetting `Assets/Game` (README there: stages 1-3); the
+    game project is now in Unity Version Control (cloud repo MedievalSetting, /main, baseline changeset 2). Kit change:
+    `KitTravel.GoTo(level, spawn)` -- travel without a link (a respawn): instant cut when held, fade otherwise, placed
+    in place when already there; the return stack is forgotten. The HamletCellar chain's creature lists now
+    `rat,giant_rat` (rat cave) and `plague_rat,spider,centipede` (deep caves); re-baked. Open: cave rock tops carry
+    navmesh islands (2.2 m up, unreachable): a click or a sampled point can land there -- KitNavBake should leave out
+    surfaces not connected to the level's spawns.
+73. 2026-10-03: the game's stage 2-3 (humanoid player, loot, bag, fever, food, villagers, shop, bounty, campfires, UI
+    Toolkit HUD: MedievalSetting `Assets/Game/README.md`). Kit changes (KitTravel): `GoTo` into a level that is still
+    preloading now waits for it like `Go` does (it used to start a second load of the same scene); `Pending` (a journey
+    waits on a preload) and `CancelPending()` (the game calls it when the player dies, so a door taken a moment before
+    does not carry the dead); `Reset` (domain reload off) also clears `Arrived` / `Leaving` and unhooks `sceneLoaded`;
+    KitTravelHost unsubscribes its Arrived handler. MedievalSetting level data: `Hamlet_layout.json` gained the
+    herbalist marker (64.5, 100) with a cauldron and a herb drying rack, Mara's note; the Hamlet was rebuilt (walk test:
+    7 spawns, 5 markers ok). Campfire spots in the cellar chain are game data (GameRules), in the connector passages
+    01a and 02a: the rat caves have no chamber 7 m by path from every creature.
+74. 2026-10-03: the user saw z-fighting on the cellar's stair (HamletCellar 00 cellar). Cause: its record placed
+    `Stair_Up_150x450_Stone` (rot 0) with its rail side against the room's wall -- the side its `vki_no_wall` keeps
+    clear -- so the lip (x to 1.50, top z 3.0) lay in the wall's coping, coplanar with its cap (0.105 m2, both facing up;
+    KitLit renders both sides, `_Cull 0`), and the balustrade stood inside the wall. A stair running +Y with its wall on
+    its right cannot be had by rotating (no 180), so the stone stairs got left-hand twins: `Stair_Up/Down_150x450_StoneL`
+    (`vki_dun_mirror_l` in vki_fam_dungeon: the mesh mirrored across local x 0.75, faces reversed, every local-x
+    metadata value with it; tests clean, same tris). The cellar record now names `StoneL`; the chain re-baked (pieces
+    identical but the stair: 0 coplanar overlaps, 0 vertices in walls; the stair link to the inn works). The rooms' post
+    rule follows the variant: a `StoneL` flight's wall-side nodes are at its local x 1.5 (`stairNodes` in KitRoomLayout,
+    the stair rule in vki_rooms), so no rhythm post is laid out beside it (the generator and the down stair's slot: item
+    75). Open: in `Hamlet_Inn_F1` the down stair (`RailR`) overlaps a `Post_Board_Mid_Cut` (0.013 m2, 68 vertices
+    inside the post). Also: the chain
+    bake silently dropped a piece whose prefab the interior rules did not know yet (the cellar came out without its
+    stair): `KitChainTools.Build` now fails on a room's "no prefab" notes as it does on portal notes -- run Build
+    Interior Rules after adding pieces. Seen while fixing the game's hold-to-walk jitter: besides rock tops, villages
+    carry unreachable navmesh islands on roofs and flat prop tops (the Hamlet: patches ~4 m up over many buildings, the
+    inn's included, each with a twin on the building's unreachable floor); the game now picks reachable floor only, but KitNavBake could
+    still drop surfaces not connected to the level's spawns (item 72).
+75. 2026-10-03: (a) KitDungeonGenerator picks the left-hand stair: an Up flight whose cells have the room's edge (wall
+    or rock) on their local +x side and floor on -x is emitted as `StoneL` (Down lines keep their wall on -x). The game's
+    HamletCellar chain re-baked: 'HamletCellar 04 warren' now has `Stair_Up_150x450_StoneL` (rail on the open side; 92
+    of 1,794 vertices meet the rock where the cave wall bulges against the flight's solid side, down from 632; 0 flat
+    faces coplanar with rock tops); the cellar and the warren are the chain's only stone up stairs. (b) The stone down
+    stair's slot: kerb `kw` runs on to `VKI_LNK_BACK_Y` like the timber trimmer; both masters rebuilt (tests clean,
+    same tris), exported, prefabs rebuilt; vertical rays through the old slot now hit the kerb top (Blender and the
+    Unity meshes). (c) Props without colliders were walked through (the navmesh is baked from colliders): no exterior
+    `SM_VK_` prefab carries a collider, and KitVillage boxed only layout props and the buildings' walls. New
+    `KitSolid` (Runtime/World): `Box` puts boxes over what one bumps into -- a mesh's faces below 1.2 m, gathered on a
+    0.25 m grid into the separate parts they stand as, one box each (a signpost's post, not its arms; each post of a
+    canopy or gallery, not its roof; a fence's whole run; a table) -- `Round` a capsule on a bush's or stump's pivot;
+    soft pieces (plants, `Deco_`, crops, flower boxes, chickens, ladders, overlays, piers, decks, steps) stay walkable.
+    KitVillage.Dress boxes a building's own dressing outside its walls' box (the inn's tables, stools, barrels, ale
+    cask, hitch rail, lamp posts and yard fence; the barn's cart, hay and trough; the chapel's bell tower; a gable
+    chimney), skipping the porch and gates; layout props use `KitSolid.Box` too (they had a 2.5 m box over their whole
+    footprint: invisible walls round signposts); Forest undergrowth and Scatter get KitSolid.Nature; KitRoom.Put boxes
+    reused `SM_VK_Prop_` pieces (the inn's and the cellar's barrel stack). Rebuilt: Hamlet, Woods, Warcamp (walk tests
+    ok), the HamletCellar chain; Hamlet_Inn patched (its barrel stack boxed, navmesh re-baked). A census (navmesh under
+    a renderer's pivot, reachable from a spawn) now lists only steppable sunken rocks, the goblin watchtower (its
+    authored colliders are its legs) and the warcamp's walkway deck. Open: porch posts are still walked through (the
+    porch is not boxed so its door stays reachable).
+76. 2026-10-03: wild garlic for the RPG (its gatherable herb): `SM_VK_Plant_WildGarlic` (`make_wild_garlic` in
+    vk_nature; 1,406 tris): crowns of broad leaves folded along the midrib (real geometry, the sheet's leaf on them) and
+    stalks of white star-flower umbels, chunky enough that the white reads from the colony camera (a first, sparser
+    patch did not). Its own 512 sheet `T_VK_WildGarlic` (`vk_leafgen.paint_wild_garlic`: leaf, flower, stalk; the full
+    leaf atlas has no free cell), material slot 55 `WILD_GARLIC` (`M_VK_WildGarlic` = `leaf_material` on the sheet, a
+    flat stand-in until it is painted). Exported alone (`vkx_export_pieces(names=[...])`), Unity Build Materials + Build
+    Prefabs (1,246, 0 off). Preview scene `WildGarlic_Preview`. Seen in MedievalSetting at the woods' gather spots.
+    Also from the game: a goblin tent in `Warcamp_layout.json` stood on the foot of the west walkway's ladder (an
+    `along` piece), and the tent's hollow inside is a navmesh pocket: the game's ladder dropped the player in it. The
+    tent moved; the walk test checks spawns, markers and encounter points, not ladder feet -- it could.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

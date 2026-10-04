@@ -321,7 +321,7 @@ namespace MedievalKit
             // -90 east, 90 west, 180 south). Tried in the given room first, then in any other room
             JArray Place(Room rm, string kind, string lid)
             {
-                var opts = new List<(List<(int, int)> cells, (int, int) front, float x, float y, float rot)>();
+                var opts = new List<(List<(int, int)> cells, (int, int) front, float x, float y, float rot, string variant)>();
                 void Line((int, int) top, (int, int) d)
                 {
                     var foot = (top.Item1 - 2 * d.Item1, top.Item2 - 2 * d.Item2);
@@ -331,7 +331,12 @@ namespace MedievalKit
                     var (fc, fr) = foot;
                     var (x, y, rot) = d == (0, 1) ? (IG * fc, IG * fr, 0f) : d == (1, 0) ? (IG * fc, IG * (fr + 1), -90f)
                                     : d == (-1, 0) ? (IG * (fc + 1), IG * fr, 90f) : (IG * (fc + 1), IG * (fr + 1), 180f);
-                    opts.Add((cells, front, x, y, rot));
+                    // the stone flight's wall side is its local -x and its rail side +x: an up flight with the room's edge
+                    // (a wall, the rock) on its +x side and floor on its -x side is the left-hand twin, else its rail and
+                    // lip stand in the wall or the rock. Down flights keep their wall on -x by the lines below.
+                    bool Edge((int, int) s) => cells.Any(q => !rm.Has((q.Item1 + s.Item1, q.Item2 + s.Item2)));
+                    bool left = kind == "Up" && Edge(side) && !Edge((-side.Item1, -side.Item2));
+                    opts.Add((cells, front, x, y, rot, left ? "StoneL" : "Stone"));
                 }
                 var N = (0, 1); var E = (1, 0); var W = (-1, 0); var S = (0, -1);
                 if (kind == "Up")
@@ -350,12 +355,12 @@ namespace MedievalKit
                     for (int r = rm.r0; r + 2 <= rm.r1; r++) Line((rm.c1, r), S);
                     for (int c = rm.c0; c + 2 <= rm.c1; c++) Line((c, rm.r0), W);
                 }
-                foreach (var (cells, front, x, y, rot) in opts)
+                foreach (var (cells, front, x, y, rot, variant) in opts)
                 {
                     if (!cells.All(rm.Has) || !rm.Has(front) || cells.Concat(new[] { front }).Any(reserved.Contains)) continue;
                     foreach (var q in cells) { reserved.Add(q); stairCells.Add(q); codes[q] = kind == "Up" ? "^^" : "vv"; }
                     reserved.Add(front); codes[front] = "Ss";
-                    return new JArray(kind, x, y, rot, lid, "Stone");
+                    return new JArray(kind, x, y, rot, lid, variant);
                 }
                 return null;
             }

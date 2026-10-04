@@ -19,7 +19,8 @@
 # Leaves: Leaf_Iron_Cut (exit leaf of Dungeon Door_150_Cut: dark oak, iron straps and studs), Leaf_BarsGate_Full.
 # Stairs (scene links, same footprint / metadata contract as vki_links' timber stairs): Stair_Up_150x450_Stone (solid
 #   stone flight of wedge steps on a masonry spandrel, iron balustrade, cut at the ceiling plane) and
-#   Stair_Down_150x450_Stone (stone steps into a lined shaft, iron railings on low stone upstands).
+#   Stair_Down_150x450_Stone (stone steps into a lined shaft, iron railings on low stone upstands); their left-hand
+#   twins ..._StoneL (mirrored: the wall on local x = 1.5, the rail side x = 0) for a flight with the wall on its right.
 # Build: g["vki_ws_build"]("dungeon", VKI_DUN_NAMES); test: g["vki_test_pieces"](VKI_DUN_NAMES) -> {}.
 import bpy, bmesh, math, json, random
 from mathutils import Vector, Matrix
@@ -582,11 +583,13 @@ def vki_dun_stair_down(k):
         # the block under tread j: its soffit parallel to the pitch line, d below it, clipped 5 mm over the VOID box
         poly = vki_dun_step_poly(y0, y1, zt, P(y0) - r_ - d, P(y1) - r_ - d, VKI_LNK_VOID_Z[1])
         vki_dun_step(k, poly, xa + 0.005, xb - 0.005, dk, "dn%d" % j)
-    # landing slab and kerbs (tops z 0): landing to the proud line, east kerb, south kerb, west kerbs
+    # landing slab and kerbs (tops z 0): landing to the proud line, east kerb, south kerb, west kerbs (the inner west
+    # kerb runs on beside the landing to the proud line, as the timber trimmer does: stopped at yt it left a 15 mm slot
+    # open to the void between the landing and kw2)
     vki_dun_step(k, [(yt, -0.30), (VKI_LNK_BACK_Y, -0.30), (VKI_LNK_BACK_Y, 0.0), (yt, 0.0)], xa, 1.50, 0.0, "land")
     zb = -0.30
     for (x0, x1, y0, y1, key) in ((xb, 1.50, 0.0, yt, "ke"), (VKI_LNK_POST_CLR, xb, 0.0, 0.10, "ks"),
-                                  (VKI_LNK_POST_CLR, xa, 0.10, yt, "kw"),
+                                  (VKI_LNK_POST_CLR, xa, 0.10, VKI_LNK_BACK_Y, "kw"),
                                   (VKI_LNK_WALL_CLR, VKI_LNK_POST_CLR, VKI_LNK_MID_CLR, 4.5 - VKI_LNK_POST_CLR, "kw2")):
         vs = vki_lnk_box(k, x0, x1, y0, y1, zb, 0.0, VKI_STONE_BLOCK_IN, bev=0.006)
         k.project(vki_faces_of(vs), VKI_STONE_BLOCK_IN, offset=vki_hash_off((x0, y0, 0.0)), tile=VKI_STO_TILE)
@@ -633,6 +636,50 @@ def vki_dun_stair_down(k):
                                 [xe, 1.5, 0.5, xe1 - xe0, 2.99, 1.0]],
                   vki_collider_note="blocked boxes: the hole and the two railings; kerbs and landing walk at z 0",
                   vki_hole=[xa, 0.10, xb, yt], vki_no_wall="local x = 1.5 side (the rail side)")
+
+
+def vki_dun_mirror_l(k, w=1.5):
+    """the left-hand twin of a stair: the built piece mirrored across local x = w / 2, so its wall runs along local
+    x = w and its open (rail) side is x = 0. A flight climbing with a wall on its right needs it: the right-hand
+    stairs may not turn 180 and their rail side must stay clear of walls (placed against one, their lip lay in the
+    wall's coping, coplanar with its cap, and the balustrade stood in the wall). Every local x of the metadata goes
+    with the mesh; origin, cells and rotations stay the stair's."""
+    for v in k.bm.verts:
+        v.co.x = w - v.co.x
+    bmesh.ops.reverse_faces(k.bm, faces=list(k.bm.faces))          # the mirror turned every face inside out
+    m = k.meta
+    fx = lambda x: round(w - x, 5)
+    if "vki_collider" in m:
+        m["vki_collider"] = [[fx(b[0])] + list(b[1:]) for b in m["vki_collider"]]
+    for key in ("vki_trigger", "vki_spawn_local", "vki_prompt_local"):
+        if key in m:
+            m[key] = [fx(m[key][0])] + list(m[key][1:])
+    if "vki_spawn_facing" in m:
+        m["vki_spawn_facing"] = (-m["vki_spawn_facing"]) % 360       # compass: 0 = local +Y, 90 = +X
+    for key, i, j in (("vki_lip", 0, 3), ("vki_hole", 0, 2)):         # boxes [x0, y0, (z0,) x1, ...]
+        if key in m:
+            a = list(m[key])
+            a[i], a[j] = fx(a[j]), fx(a[i])
+            m[key] = a
+    if "vki_pair" in m:
+        m["vki_pair"] += "L"
+    m.update(vki_needs_walls=[f"local x = {w:g} (y 0..4.5)", f"local y = 4.5 (x 0..{w:g})"],
+             vki_no_wall="local x = 0 side (the open / rail side)",
+             vki_post_rule={"allowed": f"Mid post at local ({w:g}, 0); Corner post at local ({w:g}, 4.5)",
+                            "forbidden": [[w, 1.5], [w, 3.0], [0.0, 4.5]],
+                            "note": "rhythm posts are skipped along the stair's walls (§2.3)"})
+
+
+def vki_dun_stair_up_l(k):
+    """Stair_Up_150x450_Stone with its wall on the right going up (vki_dun_mirror_l)"""
+    vki_dun_stair_up(k)
+    vki_dun_mirror_l(k)
+
+
+def vki_dun_stair_down_l(k):
+    """Stair_Down_150x450_Stone with its wall on the right going down the flight's length (vki_dun_mirror_l)"""
+    vki_dun_stair_down(k)
+    vki_dun_mirror_l(k)
 
 
 # ---------------------------------------------------------------- adventure kit: passage, dart trap, secret door, leaves
@@ -822,6 +869,8 @@ VKI_DUN_SPECS = [
     ("SM_VKI_Leaf_BarsGate_Full", vki_dun_leaf_gate, "prop"),
     ("SM_VKI_Stair_Up_150x450_Stone", vki_dun_stair_up, "prop"),
     ("SM_VKI_Stair_Down_150x450_Stone", vki_dun_stair_down, "prop"),
+    ("SM_VKI_Stair_Up_150x450_StoneL", vki_dun_stair_up_l, "prop"),
+    ("SM_VKI_Stair_Down_150x450_StoneL", vki_dun_stair_down_l, "prop"),
     # adventure kit
     ("SM_VKI_Wall_Dungeon_Passage_150_Full", vki_dun_passage, "wall"),
     ("SM_VKI_Wall_Dungeon_DartTrap_150_Full", vki_dun_darttrap, "wall"),

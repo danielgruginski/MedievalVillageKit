@@ -710,6 +710,77 @@ def mushroom(k,c,h,r,cap_mi,seed=0,spots=False,tilt=0.0,shape="dome"):
             vs=_ico(sub,(math.cos(a)*rr,math.sin(a)*rr,zz+0.005),r*0.1,MUSH_STEM,(1,1,0.4),sub=1)
     for f in sub.bm.faces: f.smooth=True
     merge_kit(k,sub,M)
+# ---- wild garlic (ramsons): broad leaves folded along the midrib, arching out of a few crowns, and white star flowers
+# in loose umbels on stalks above them. Its own sheet T_VK_WildGarlic (vk_leafgen.paint_wild_garlic), material
+# WILD_GARLIC (the leaves' shader). The game's gatherable herb (MedievalSetting: wild garlic by the forest path).
+WG_UV={"leaf":(0.004,0.496,0.004,0.996),"flower":(0.504,0.996,0.504,0.996),"stalk":(0.504,0.996,0.004,0.496)}
+def wg_grid(k,P,uvr,nfn=None,aofn=None,flip=False):
+    """faces over a grid of points P[j][i] (j along, i across), its uvs spread over uvr (flip: mirrored across)"""
+    u0,u1,v0,v1=uvr
+    if flip: u0,u1=u1,u0
+    rows=len(P)-1; cols=len(P[0])-1; vs=[]
+    for j in range(rows+1):
+        row=[]
+        for i in range(cols+1):
+            v=k.bm.verts.new(P[j][i]); row.append(v)
+            if nfn: k.nfn[v]=nfn
+            if aofn: k.vinfo[v]=aofn
+        vs.append(row)
+    for j in range(rows):
+        for i in range(cols):
+            ids=((j,i),(j,i+1),(j+1,i+1),(j+1,i))
+            f=k.bm.faces.new([vs[a][b] for a,b in ids]); f.material_index=WILD_GARLIC; f.smooth=True
+            for l,(a,b) in zip(f.loops,ids): l[k.uv].uv=(u0+(u1-u0)*b/cols,v0+(v1-v0)*a/rows)
+    return vs
+def wg_leaf(k,base,az,L,W,rng,nfn,aofn,rows=6):
+    """one leaf from base, out along azimuth az: it rises steeply and arches over toward the tip, twisting a little,
+    its halves folded up from the midrib (a shallow V)"""
+    e0=math.radians(rng.uniform(56,78)); e1=math.radians(rng.uniform(0,20)); roll=rng.uniform(-0.4,0.4)
+    fold=W*rng.uniform(0.10,0.16); side=Vector((-math.sin(az),math.cos(az),0.0)); p=Vector(base); P=[]
+    for j in range(rows+1):
+        t=j/rows; e=e0+(e1-e0)*t**1.2
+        d=Vector((math.cos(az)*math.cos(e),math.sin(az)*math.cos(e),math.sin(e)))
+        s=(Quaternion(d,roll*t)@side).normalized(); n=s.cross(d).normalized()
+        if n.z<0: n=-n
+        w=W*(0.45+0.55*min(1.0,t*2.5))                               # the narrow base (the sheet's leaf narrows there)
+        mid=p-n*fold*math.sin(math.pi*min(t,0.9))
+        P.append([p-s*w/2,mid,p+s*w/2]); p=p+d*(L/rows)
+    wg_grid(k,P,WG_UV["leaf"],nfn,aofn,flip=rng.random()<0.5)
+def wg_stalk(k,base,top,w=0.022,aofn=None):
+    """a flower stalk: two crossed strips from the ground to the umbel"""
+    B=Vector(base); T=Vector(top); d=(T-B)
+    for a in (0.0,math.pi/2):
+        s=Vector((math.cos(a),math.sin(a),0.0))*w/2
+        P=[[B+d*t-s,B+d*t+s] for t in (0.0,0.5,1.0)]
+        wg_grid(k,P,WG_UV["stalk"],lambda p: UP,aofn)
+def wg_umbel(k,top,rng,n=12,R=0.065,size=0.075,aofn=None):
+    """a loose head of star flowers round the stalk's top, each facing out from it"""
+    T=Vector(top)
+    for i in range(n):
+        th=math.radians(rng.uniform(0,68)) if i else 0.0; ph=i*GOLD+rng.uniform(-0.3,0.3)
+        d=Vector((math.cos(ph)*math.sin(th),math.sin(ph)*math.sin(th),math.cos(th)))
+        c=T+d*R*rng.uniform(0.7,1.0); r=d.cross(Vector((1,0,0)) if abs(d.x)<0.9 else Vector((0,1,0))).normalized(); u=d.cross(r)
+        sz=size*rng.uniform(0.8,1.1); P=[[c-r*sz/2-u*sz/2,c+r*sz/2-u*sz/2],[c-r*sz/2+u*sz/2,c+r*sz/2+u*sz/2]]
+        wg_grid(k,P,WG_UV["flower"],lambda p,dd=d.copy(): dd,aofn)
+def make_wild_garlic(k,seed,R=0.36,crowns=10,stalks=7):
+    """a dense patch of wild garlic about a metre across: crowns of 4-6 broad leaves (0.26-0.38 m), stalks of white star
+    flower heads over them (chunky, so the white reads from the colony camera)"""
+    rng=random.Random(seed); C0=Vector((0,0,0)); nfn,aofn=plant_fns(center=C0,H=0.45,ao_lo=0.7,radw=0.5)
+    cr=[]
+    for i in range(crowns):
+        a=i*GOLD+rng.uniform(-0.3,0.3); d=R*math.sqrt((i+0.5)/crowns)*rng.uniform(0.75,1.0) if i else 0.0
+        cr.append(Vector((math.cos(a)*d,math.sin(a)*d,-0.01)))
+    for c in cr:
+        out=math.atan2(c.y,c.x) if c.length>0.05 else rng.uniform(0,6.28)
+        for j in range(rng.randint(4,6)):
+            az=out+rng.uniform(-1.3,1.3) if c.length>0.05 else j*2*math.pi/5+rng.uniform(-0.3,0.3)
+            base=c+Vector((rng.uniform(-0.03,0.03),rng.uniform(-0.03,0.03),0.0))
+            wg_leaf(k,base,az,rng.uniform(0.26,0.38),rng.uniform(0.13,0.16),rng,nfn,aofn)
+    for i in range(stalks):
+        c=cr[rng.randrange(len(cr))]+Vector((rng.uniform(-0.05,0.05),rng.uniform(-0.05,0.05),0.0))
+        top=c+Vector((rng.uniform(-0.06,0.06),rng.uniform(-0.06,0.06),rng.uniform(0.32,0.44)))
+        wg_stalk(k,c,top,aofn=aofn); wg_umbel(k,top,rng,n=rng.randint(10,14),aofn=aofn)
+    k.wind_fn=lambda p: min(1.0,max(0.0,p.z/0.45))
 def make_mushrooms(k,seed,kind="red"):
     rng=random.Random(seed)
     n={"red":4,"brown":6,"glow":7}[kind]
@@ -1061,6 +1132,7 @@ NATURE_SPECS=[
  ("SM_VK_Plant_Reeds",lambda k: make_tufts(k,113,"reeds",n=10,R=0.7,Hs=(1.3,1.9),W=0.7),{"bark_ao":None}),
  ("SM_VK_Plant_TallGrass",lambda k: make_tufts(k,115,"tallgrass",n=10,R=0.7,Hs=(0.7,1.1),W=0.9),{"bark_ao":None}),
  ("SM_VK_Plant_Wildflowers",lambda k: make_tufts(k,117,"wildflowers",n=12,R=0.9,Hs=(0.5,0.75),W=0.9),{"bark_ao":None}),
+ ("SM_VK_Plant_WildGarlic",lambda k: make_wild_garlic(k,119),{"bark_ao":None}),
  ("SM_VK_Mushrooms_Red",lambda k: make_mushrooms(k,121,"red"),{"bark_ao":None}),
  ("SM_VK_Mushrooms_Brown",lambda k: make_mushrooms(k,123,"brown"),{"bark_ao":None}),
  ("SM_VK_Mushrooms_Glow",lambda k: make_mushrooms(k,125,"glow"),{"bark_ao":None}),

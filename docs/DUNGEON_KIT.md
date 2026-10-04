@@ -54,6 +54,7 @@ It has 46 masters and 25,962 triangles in all.
 | `Leaf_Iron_Cut` | Exit leaf of `Door_150_Cut`: dark oak, iron straps and studs. The assembler now places the leaf the door names in `vki_leaf`. |
 | `Leaf_BarsGate_Full` | Barred gate of `Bars_Door_150_Full`. Placed open, 90° by default: at 70° the leaf left less than the 0.6 m walker capsule in the doorway. |
 | `Stair_Up_150x450_Stone` / `Stair_Down_150x450_Stone` | The timber stairs' footprint, clearances and metadata, in stone. The up flight is solid wedge steps on a masonry spandrel with an iron balustrade. The down flight is stone steps into a lined shaft, with iron railings on low stone upstands. The railings are see-through: solid parapets hid the flight from the camera. |
+| `Stair_Up_150x450_StoneL` / `Stair_Down_150x450_StoneL` | The left-hand twins (`vki_dun_mirror_l`): the same stairs mirrored across local x = 0.75, so the wall runs along local x = 1.5 and the open, railed side is x = 0, with every local x of the metadata mirrored (collider, trigger, spawn, prompt, lip, hole, wall and post rules). Use them for a flight that has its wall on its right going up: the right-hand stairs may not turn 180, and their rail side must stay clear of walls. Placed against a wall there, the up flight's lip lay in the wall's coping, coplanar with its cap (z-fighting), and its balustrade stood inside the wall. Room records name them by the variant `StoneL`; KitDungeonGenerator picks it for an up flight with the room's edge (wall or rock) on its +x side. The down stair's inner west kerb runs to the landing's back (`VKI_LNK_BACK_Y`), closing a 15 mm slot beside the landing. |
 
 **Floors, walls and textures.** The floor styles are `DungeonFlag`, `DungeonFlagWarm` and `EarthDamp`. The wall styles are
 `DungeonIn`, `DungeonInDamp` and `DungeonInWarm`, and the cap styles are `DungeonCap` and `DungeonBlock`. All of them go
@@ -119,7 +120,7 @@ a dart wall, a secret door and three leaves (iron, secret stone, portcullis); th
 
 | Text (`src/interior/`) | Contents |
 |---|---|
-| `vki_fam_dungeon` | the Dungeon and Bars families, the damp band, pop-outs, grate, niches, skull and bone helpers, the leaves and the stone stairs (27 masters) |
+| `vki_fam_dungeon` | the Dungeon and Bars families, the damp band, pop-outs, grate, niches, skull and bone helpers, the leaves and the stone stairs with their left-hand twins (29 masters) |
 | `vki_props_dungeon` | props and overlays (19 masters) |
 | `vki_rooms_dungeon` | `VKI_PLANS` / `VKI_ROOMS` entries for the two levels, `VKI_DUNGEON_SCENES` and `vki_dungeon_catalog()` |
 | `vki_tex_dungeon` | the two texture jobs (run on demand, like `vki_tex`) |
@@ -177,6 +178,8 @@ Triangles, footprint in 1.5 m cells, mount and tier (T9 budget) for each master 
 | `SM_VKI_Leaf_BarsGate_Full` | 236 | 1,1 |
 | `SM_VKI_Stair_Up_150x450_Stone` | 836 | 1,3 |
 | `SM_VKI_Stair_Down_150x450_Stone` | 1060 | 1,3 |
+| `SM_VKI_Stair_Up_150x450_StoneL` | 836 | 1,3 |
+| `SM_VKI_Stair_Down_150x450_StoneL` | 1060 | 1,3 |
 
 ### Props and overlays (19)
 

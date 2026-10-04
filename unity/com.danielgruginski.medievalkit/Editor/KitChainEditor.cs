@@ -64,7 +64,8 @@ namespace MedievalKit.Editor
                     string tp = pc.attachPortal ?? pieces[t].outPortal;
                     if (!Align(built[t], tp, room, pc.inPortal)) notes.Add($"{pc.name}: portal {pc.inPortal} or {pieces[t].name}'s {tp} missing");
                 }
-                notes.AddRange(room.notes.Where(n => n.Contains("portal")).Select(n => $"{pc.name}: {n}"));
+                // a missing portal or piece breaks the level (a stair without its prefab is a way out that is gone)
+                notes.AddRange(room.notes.Where(n => n.Contains("portal") || n.StartsWith("no prefab")).Select(n => $"{pc.name}: {n}"));
                 built.Add(room);
             }
             for (int i = 0; i < built.Count; i++)

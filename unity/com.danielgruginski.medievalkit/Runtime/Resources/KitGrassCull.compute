@@ -1,0 +1,25 @@
+// KitGrass's culling: each frame, for each camera, the clumps inside its view (a sphere round each clump, wide
+// enough for its sway and its shadow) and within reach are appended to _Visible; the draw then reads that list (the
+// instance count copied from the append counter) and the vertex shader grows the blades.
+#pragma kernel Cull
+
+StructuredBuffer<uint> _Clumps;          // 4 words a clump: x, y, z (asfloat, the grass's object space), packed tint
+AppendStructuredBuffer<uint> _Visible;   // the clumps to draw, by index
+float4x4 _ObjectToWorld;
+float4 _Planes[6];                       // the camera's frustum: inside where dot(xyz, p) + w >= 0
+float4 _Cam;                             // xyz: the camera, w: the reach (m)
+uint _Count;
+
+[numthreads(64, 1, 1)]
+void Cull(uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if (i >= _Count) return;
+    float3 p = float3(asfloat(_Clumps[i * 4]), asfloat(_Clumps[i * 4 + 1]), asfloat(_Clumps[i * 4 + 2]));
+    p = mul(_ObjectToWorld, float4(p, 1)).xyz + float3(0, 0.35, 0);
+    const float r = 1.6;
+    [unroll] for (int k = 0; k < 6; k++)
+        if (dot(_Planes[k].xyz, p) + _Planes[k].w < -r) return;
+    if (distance(p, _Cam.xyz) > _Cam.w) return;
+    _Visible.Append(i);
+}

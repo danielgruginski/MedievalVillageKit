@@ -677,8 +677,11 @@ def vki_rooms_layout(name, R=None, P=None):
     stair_nodes = set()
     for st_ in R.get("stairs", []):
         kind, sx, sy, srot, lid = st_[:5]
-        # the nodes along the stair's walls: local x = 0 (y 0..4.5) and y = 4.5 (x 0..1.5), in any rotation
-        for lx, ly in [(0.0, VKI_IG * d) for d in range(4)] + [(VKI_IG, 3 * VKI_IG)]:
+        # the nodes along the stair's walls: local x = 0 (y 0..4.5) and y = 4.5 (x 0..1.5), in any rotation; the
+        # left-hand twins (variant ...L, vki_dun_mirror_l) have their wall on local x = 1.5
+        left = len(st_) > 5 and str(st_[5]).endswith("L")
+        wx, far = (VKI_IG, 0.0) if left else (0.0, VKI_IG)
+        for lx, ly in [(wx, VKI_IG * d) for d in range(4)] + [(far, 3 * VKI_IG)]:
             wx, wy = vki_rooms_stair_frame(sx, sy, srot, lx, ly)
             stair_nodes.add((int(round(wx / VKI_IG)), int(round(wy / VKI_IG))))
     posts = []

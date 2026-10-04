@@ -19,7 +19,7 @@ namespace MedievalKit
     /// broken only by the roads, the map's border) and the links. Same layout and seed, same map.
     /// Plan space -> this transform's local space: (x, y, h) -> (-x, h, -y); a turn of `deg` about plan z -> -deg about y.
     /// </summary>
-    public class KitVillage : MonoBehaviour
+    public partial class KitVillage : MonoBehaviour
     {
         [Tooltip("The layout as JSON (see Documentation~/LEVEL_BUILDING.md, outdoor maps).")]
         [TextArea(8, 40)] public string layout;
@@ -102,6 +102,7 @@ namespace MedievalKit
             Exits();
             Walls();
             foreach (var t in new[] { buildT, propT }) Swap(t.gameObject, null);        // the map's palette (props swap their own first)
+            Grass(GroundMaterialInstance);   // last: it keeps clear of everything placed
         }
 
         /// <summary>material swaps by name, {"M_VK_RoofRed": "M_VK_Thatch"}: the layout's "swap" (the whole map's palette,
@@ -453,7 +454,36 @@ namespace MedievalKit
                 pads.Add((Corners(box, at, deg, 1.2f), h));
                 builtById[id] = (inst.transform, at, deg);
                 AddBox(inst, walls, h: 4f, inset: 0.1f);
+                Dress(inst, walls);
                 if (b["door"] is JObject door) Door(inst, id, door, at, deg);
+            }
+        }
+
+        /// <summary>a building's own dressing outside its walls' box (barrels by the door, a trough, hay, a table and
+        /// stools, its yard's fence, a lean-to's posts, a bell tower beside the nave): boxes over what one bumps into
+        /// (<see cref="KitSolid.Box"/>: below 1.2 m, part by part), or the walkers go through it. Left as they are: what
+        /// is overhead (eaves, signs' arms, lanterns), the porch one walks onto, a yard's gate, soft dressing (weeds, ivy,
+        /// flower boxes), piers and decks.</summary>
+        void Dress(GameObject inst, Rect walls)
+        {
+            var inner = new Rect(walls.xMin - 0.05f, walls.yMin - 0.05f, walls.width + 0.1f, walls.height + 0.1f);
+            float floor = inst.transform.position.y;
+            foreach (var mf in inst.GetComponentsInChildren<MeshFilter>())
+            {
+                string n = mf.name;
+                if (mf.sharedMesh == null || KitSolid.IsSoft(n) || new[] { "Wall", "Corner", "Foundation", "Roof", "Porch", "Door", "Window", "Gate" }.Any(n.Contains))
+                    continue;
+                var r = mf.GetComponent<Renderer>();
+                if (r == null || r.bounds.min.y > floor + 1.8f) continue;
+                var b = mf.sharedMesh.bounds;
+                bool inside = true;
+                foreach (float x in new[] { b.min.x, b.max.x })
+                    foreach (float z in new[] { b.min.z, b.max.z })
+                    {
+                        var l = inst.transform.InverseTransformPoint(mf.transform.TransformPoint(new Vector3(x, b.min.y, z)));
+                        if (!inner.Contains(new Vector2(-l.x, -l.z))) inside = false;
+                    }
+                if (!inside) KitSolid.Box(mf.gameObject);
             }
         }
 
@@ -561,7 +591,7 @@ namespace MedievalKit
                 go.transform.localPosition = Local(at.x, at.y, Height(at));
                 go.transform.localRotation = Turn(deg);
                 if (p["swap"] != null) Swap(go, p);
-                if ((bool?)p["collide"] ?? true) AddBox(go, box, h: 2.5f, inset: 0.15f);
+                if ((bool?)p["collide"] ?? true) KitSolid.Box(go);          // what one bumps into: a signpost's post, not its arms
                 occupied.Add((Corners(box, at, deg), (string)p["piece"]));
             }
         }
@@ -646,6 +676,21 @@ namespace MedievalKit
                         Run(gs[i] + gw / 2, next - gw / 2);
                     }
                     if (!closed) Run(0f, gs[0] - gw / 2);
+                }
+                // pieces along the line, turned with it (a ladder up to a walkway: it leans on the deck only when it
+                // stands where and as a walkway piece does)
+                foreach (var e in f["along"] as JArray ?? new JArray())
+                {
+                    string pn = (string)e["piece"];
+                    if (pn == null) continue;
+                    foreach (var fr in e["at"] as JArray ?? new JArray())
+                    {
+                        float s = (float)fr * total;
+                        Vector2 a = At(s - 0.5f), b = At(s + 0.5f);
+                        var go = Place(propT, pn, At(s), Ang(b - a) + (flip ? 180f : 0f) + ((float?)e["rot"] ?? 0f), 1f,
+                                       collide: (bool?)e["collide"] ?? false);
+                        if (go == null) notes.Add($"no piece {pn} along a fence");
+                    }
                 }
             }
         }
@@ -736,7 +781,7 @@ namespace MedievalKit
                 float us = (float?)f["undergrowthSpacing"] ?? 2.6f;
                 var near = spots;
                 foreach (var q in Darts(q => Clearing(q) > EdgeAt(q, edge) - 0.08f && q.x > -4 && q.y > -4 && q.x < W + 4 && q.y < H + 4 && Free(q, 1.2f, 1.8f, margin: true) && near.All(t => (t - q).sqrMagnitude > 1.2f), us, 30000, 4f))
-                    Place(natureT, Pick(under), q, (float)rnd.NextDouble() * 360f, 0.8f + (float)rnd.NextDouble() * 0.4f);
+                    KitSolid.Nature(Place(natureT, Pick(under), q, (float)rnd.NextDouble() * 360f, 0.8f + (float)rnd.NextDouble() * 0.4f));
             }
             // stragglers: single trees and pairs out in the clearing near its edge, so the forest frays instead of
             // ending on a line
@@ -759,7 +804,7 @@ namespace MedievalKit
                 int count = (int?)s["count"] ?? 20;
                 float keep = (float?)s["keep"] ?? 1.5f, spacing = (float?)s["spacing"] ?? 2.5f;
                 var spots = Darts(q => Clearing(q) < 0.95f && Free(q, keep), spacing, 20000).OrderBy(_ => rnd.Next()).Take(count);
-                foreach (var q in spots) Place(natureT, Pick(ws), q, (float)rnd.NextDouble() * 360f, 0.8f + (float)rnd.NextDouble() * 0.4f);
+                foreach (var q in spots) KitSolid.Nature(Place(natureT, Pick(ws), q, (float)rnd.NextDouble() * 360f, 0.8f + (float)rnd.NextDouble() * 0.4f));
             }
         }
 

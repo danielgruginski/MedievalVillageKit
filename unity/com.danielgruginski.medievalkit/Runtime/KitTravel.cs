@@ -39,6 +39,8 @@ namespace MedievalKit
         /// <summary>the levels held switched off, ready for an instant cut</summary>
         public static IEnumerable<string> Held => held.Keys;
         public static bool Travelling => host != null && host.Fading;
+        /// <summary>a journey was asked for and waits on its level's preload (the cut happens when it is ready)</summary>
+        public static bool Pending => waiting.HasValue;
 
         static bool preload;
         static Transform walker;
@@ -62,9 +64,14 @@ namespace MedievalKit
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Reset()
         {
+            if (hooked) SceneManager.sceneLoaded -= OnLoaded;
             walker = null; pendingSpawn = null; pendingReturn = null; returns.Clear(); hooked = false;
             preload = false; held.Clear(); preloading.Clear(); noPreload.Clear(); waiting = null; host = null;
+            Arrived = null; Leaving = null;
         }
+
+        /// <summary>forget a journey still waiting on its level's preload (the walker died, a menu opened...)</summary>
+        public static void CancelPending() => waiting = null;
 
         static void Hook()
         {
@@ -123,6 +130,28 @@ namespace MedievalKit
             if (preload && !inChain && held.ContainsKey(target)) { Switch(target, arrive); return true; }
             if (preload && !inChain && preloading.Contains(target)) { waiting = (target, arrive); return true; }
             pendingSpawn = arrive;
+            if (preload) Host.FadeLoad(target);
+            else SceneManager.LoadScene(target);
+            return true;
+        }
+
+        /// <summary>to a level's spawn without a link (a respawn, a teleport): the way back is forgotten; an instant cut
+        /// when the level is held, else a load behind the fade; in the current level the walker is just placed</summary>
+        public static bool GoTo(string target, string spawn)
+        {
+            if (string.IsNullOrEmpty(target) || !Application.CanStreamedLevelBeLoaded(target))
+            {
+                Debug.LogError($"[KitTravel] level '{target}' is not in the build settings");
+                return false;
+            }
+            if (host != null && host.Fading) return false;
+            returns.Clear(); pendingReturn = null; waiting = null;
+            Hook();
+            if (target == CurrentLevel) { Arrive(SceneManager.GetActiveScene(), spawn); return true; }
+            bool inChain = UnityEngine.Object.FindAnyObjectByType<KitChainStreamer>() != null;
+            if (preload && !inChain && held.ContainsKey(target)) { Switch(target, spawn); return true; }
+            if (preload && !inChain && preloading.Contains(target)) { waiting = (target, spawn); return true; }   // not a second load of it
+            pendingSpawn = spawn;
             if (preload) Host.FadeLoad(target);
             else SceneManager.LoadScene(target);
             return true;
@@ -273,8 +302,11 @@ namespace MedievalKit
         void Awake()
         {
             black = new Texture2D(1, 1); black.SetPixel(0, 0, Color.black); black.Apply();
-            KitTravel.Arrived += (_, __) => arrived = true;
+            KitTravel.Arrived += OnArrived;
         }
+
+        void OnDestroy() => KitTravel.Arrived -= OnArrived;
+        void OnArrived(string level, KitSpawn spawn) => arrived = true;
 
         public void Refresh()
         {

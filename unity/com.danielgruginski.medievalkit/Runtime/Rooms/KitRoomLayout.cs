@@ -348,7 +348,11 @@ namespace MedievalKit
             if (R["stairs"] is JArray sts)
                 foreach (var st in sts)
                 {
-                    var pts = Enumerable.Range(0, 4).Select(d => new Vector2(0, IG * d)).Append(new Vector2(IG, 3 * IG));
+                    // the nodes along the stair's walls: local x = 0 (y 0..4.5) and the far end's other corner; the
+                    // left-hand twins (variant ...L) have their wall on local x = 1.5
+                    bool left = st.Count() > 5 && ((string)st[5] ?? "").EndsWith("L");
+                    float wx = left ? IG : 0f, far = left ? 0f : IG;
+                    var pts = Enumerable.Range(0, 4).Select(d => new Vector2(wx, IG * d)).Append(new Vector2(far, 3 * IG));
                     foreach (var lp in pts)
                     {
                         var w = Frame((float)st[1], (float)st[2], (float)st[3], lp.x, lp.y);

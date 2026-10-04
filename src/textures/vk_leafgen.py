@@ -568,3 +568,18 @@ def save_leaf_atlas(P,name="T_VK_Leaves"):
     im.filepath_raw=os.path.join(TEXDIR,name+"_BCA.png"); im.file_format="PNG"; im.save(); im.pack()
     nrm=normal_from_height(blur(P.h,0.8),0.012,3.0)*0.5+0.5
     write_map(name+"_N",nrm,True)
+# ---- wild garlic (SM_VK_Plant_WildGarlic): a small sheet of its own, not a cell of the full leaf atlas ----
+# T_VK_WildGarlic (512): the left half one broad leaf (base at the bottom, tip at the top, filling the half's width),
+# the top right a white six-pointed star flower, the bottom right a stalk. vk_nature.WG_UV maps the same regions.
+def paint_wild_garlic(seed=331,S=512,name="T_VK_WildGarlic"):
+    P=Painter(S); h=S//2
+    BL=(4,4,h-4,S-4)                                              # the leaf
+    P.seg(BL,h/2,S-8,h/2,S-84,16,(0.40,0.58,0.26),0.4,col2=(0.32,0.56,0.20))   # its narrow base
+    P.leaf(BL,h/2,S-62,-math.pi/2,S-76,h*0.42,(0.33,0.63,0.20),kind=0,fit=False)   # (starts half its width off the edge)
+    BF=(h+4,4,S-4,h-4)                                            # the flower: six pointed white petals, a green-gold eye
+    P.flower(BF,h+h/2,h/2,h*0.44,6,(0.97,0.97,0.93),(0.80,0.84,0.46),rot=math.pi/6,inner=0.2,sharp=1.6,h=0.7)
+    BS=(h+4,h+4,S-4,S-4)                                          # the stalk
+    P.seg(BS,h+h/2,S-8,h+h/2,h+8,h*0.6,(0.36,0.56,0.22),0.45,col2=(0.48,0.66,0.30))
+    save_leaf_atlas(P,name)                                       # _BCA (alpha, dilated) and _N
+    write_map(name+"_H",blur(P.h,0.8),True)
+    return name

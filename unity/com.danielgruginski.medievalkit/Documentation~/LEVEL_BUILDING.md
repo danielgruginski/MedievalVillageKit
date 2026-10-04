@@ -156,7 +156,7 @@ A JSON object. Unknown keys are ignored.
 | `family` | `{"perimeter": F, "partition": F}`, F one of Timber, Stone, Board, Wattle, Ashlar, Dungeon, Ancient, Cave, Dwarf, Mine, Sewer, Bars |
 | `zones` | `{name: {"cells": "rest" or [[c0, c1, r0, r1], ...], "floor": style, "wall": style}}`; the first zone listed wins where zones overlap |
 | `links` | `[[id, kind, target, arrive]]`: scene links (`kind`: exit, passage, stair_up, stair_down, lift; `target`: a scene, `@return`, `@deep`; `arrive`, optional: the spawn id one lands on there, 5.8) |
-| `stairs` | `[[kind, x, y, rot, link_id, variant]]`: `Up` / `Down`, the footprint's corner at its foot, plan metres |
+| `stairs` | `[[kind, x, y, rot, link_id, variant]]`: `Up` / `Down`, the footprint's corner at its foot, plan metres; `rot` 0 / 90 / -90 (never 180); `variant` `RailR` (timber, the default), `Stone`, or `StoneL`. The wall runs along the stair's local x = 0 side, and its rail side (x = 1.5) must stay clear of walls; for a flight with its wall on its right going up, use the mirrored `StoneL` (else the lip lies in the wall's coping and z-fights with it) |
 | `props` | `[[name, x, y, rot, style, mount, opts]]`: `mount` floor / wall_floor / wall_hung / table / edge; `opts` `{"on": true}` (stand on the table at x, y), `"hug"`, `"z"`, `"link"` |
 | `props_from_codes` | `true`: the plan's codes furnish too (codes first, then the record's props) |
 | `pits`, `sills`, `special`, `passages`, `door_leaves` | as in the kit's rooms (`rules.Room("VKI_...")` for examples) |
@@ -382,9 +382,14 @@ pad under each building; roads, paved and trodden areas and doorsteps are painte
 along curves (no tile grid anywhere). Buildings turned so their door faces the point you give; props, fences along
 curves, gardens, single trees; the forest round the clearing (with undergrowth, straggler trees fraying its edge and
 a margin of forest drawn beyond the map's edge so the view never ends in nothing); scatter (flowers, grass, rocks);
-spawns, markers and exits. Colliders: building walls, props, fences, tree trunks, and invisible walls: the outline of the
-walkable ground (the clearings up to `wallAt`, a little inside the forest, and a band along every road) found on a
-one-metre grid and walled a cell thick, so road junctions and glades of any shape close; and the map's border.
+spawns, markers and exits. Colliders: building walls, a building's own dressing outside them (barrels, tables and
+stools, troughs, hay, carts, its yard's fence, a lean-to, a bell tower; not its porch or gate) and props (`KitSolid.Box`:
+boxes over what one bumps into, the faces below 1.2 m part by part -- a signpost's post, not its arms), fences, tree
+trunks, the solid undergrowth and scatter (a round core for bushes and stumps, a box for rocks), and invisible walls:
+the outline of the walkable ground (the clearings up to `wallAt`, a little inside the forest, and a band along every
+road) found on a one-metre grid and walled a cell thick, so road junctions and glades of any shape close; and the map's
+border. Soft pieces stay walkable (plants, `Deco_` weeds and ivy, crops, flower boxes, chickens, ladders, overlays,
+piers, decks, steps: `KitSolid.IsSoft`). The navmesh is baked from colliders, so a piece without one is walked through.
 
 **Layout keys** (all optional but `size`):
 
@@ -397,15 +402,16 @@ one-metre grid and walled a cell thick, so road junctions and glades of any shap
 | `roads` | `[{id, width, surface: dirt / cobble, points: [[x, y], ...]}]`: smooth curves through the points; run them past the map's edge for exits |
 | `areas` | `[{id, centre, radius, lumps, surface}]`: a green, a farmyard (lumpy ovals painted cobble or dirt) |
 | `clearings` | instead of `clearing`: several lumpy ovals (glades along a path through woods); walls and forest follow their union |
-| `buildings` | `[{id, structure: "Inn" or house: {cells, stories, seed, shape}, at, face: [x, y] or rot, door: {target, arrive, prompt}}]`: structures are the package's `Generated/Structures` (Inn, Chapel, GuardTower, Stable, Barn, Pigsty, Woodcutter, Smithy, Hovel_*, ...) or any kit piece (a cave mouth, `Entrance_SpringCave`: the piece itself is the door); houses come from the house generator |
+| `buildings` | `[{id, structure: "Inn" or house: {cells, stories, seed, shape}, at, face: [x, y] or rot, door: {target, arrive, prompt}}]`: structures are the package's `Generated/Structures` (Inn, Chapel, GuardTower, Stable, Barn, Pigsty, Woodcutter, Smithy, Hovel_*, ...) or any kit piece (a cave mouth, `Entrance_CaveMouth` -- dry, for open ground -- or the valley's `Entrance_SpringCave` with its trickle: the piece itself is the door); houses come from the house generator |
 | `gardens` | `[{id, at, rot, beds: [cols, rows], crops: [...], fence, gate: N/E/S/W, gatePiece}]`: crop beds (Crop_Cabbage, Carrot, Pumpkin, Lavender, Wheat) fenced |
 | `props` | `[{piece, at, face or rot, collide}]`: any kit piece by name (`MarketStall_Tinker`, `Prop_Well`, `Grave_Cross`, `Animal_Horse`...) |
-| `fences` | `[{piece, points, gate, gateAt: [fractions], gateDoor, gateDoorFlip, closed, offset, flip, collide, smooth}]`: pieces laid along a curve (`Prop_Fence`, `Deco_Hedge`, `Palisade_Straight`, `Palisade_Walk`), each stretched to fit its run; a gate keeps its own width; `gateDoor` puts doors in each gate's frame at its transform (`Goblin_Gate` in a `Palisade_Gate`: closed and breakable, the way in until the game breaks it); `closed` makes a ring (a palisade); `offset` shifts the line sideways (left of the way it runs: a walkway behind a wall) |
+| `fences` | `[{piece, points, gate, gateAt: [fractions], gateDoor, gateDoorFlip, along: [{piece, at: [fractions], rot, collide}], closed, offset, flip, collide, smooth}]`: pieces laid along a curve (`Prop_Fence`, `Deco_Hedge`, `Palisade_Straight`, `Palisade_Walk`), each stretched to fit its run; a gate keeps its own width; `gateDoor` puts doors in each gate's frame at its transform (`Goblin_Gate` in a `Palisade_Gate`: closed and breakable, the way in until the game breaks it); `along` stands pieces on the line at fractions of it, turned as its pieces are (a `Palisade_Ladder` on a walkway's line leans on its deck); `closed` makes a ring (a palisade); `offset` shifts the line sideways (left of the way it runs: a walkway behind a wall) |
 | `trees` | `[{piece, at, scale, rot}]`: single trees inside the village |
 | `forest` | `{spacing, edge, wallAt, keepRoad, keepBuilt, stragglers, species: [[piece, weight]], undergrowth: [[piece, weight]], undergrowthSpacing}` |
 | `scatter` | `[{pieces: [[piece, weight]], count, keep, spacing}]`: dressing in the clearing, off roads and buildings |
 | `spawns` | `[{id, at, facing}]`: `KitSpawn`s (facing as a bearing: 0 north, 90 east) |
 | `markers` | `[{id, role, at, facing, note}]`: `KitMarker`s for the game (`role`: npc, respawn...; read their `vki_role`, `vki_marker_id`) |
+| `grass` | grass blades over the grass (on by default; `false` turns them off; `{spacing, height: [min, max], edge, shadows}`): a clump every 0.5 m, thinning on roads, paving and steep ground and at the forest's edge, clear of everything placed; drawn on the GPU (`KitGrass`: a compute shader culls the clumps per camera, the vertex shader builds the blades; they take the ground's grass colour, sway, part round the walker, cast small shadows) |
 | `encounters` | `[{id, creature, budget, boss, points: [[x, y, h]], note}]`: `KitEncounter`s; `h` lifts a point off the ground (archers on a walkway or a watchtower; the walk test leaves out points more than 0.5 m over the terrain) |
 | `exits` | `[{id, road, end: start / end, target, arrive, prompt}]`: a `KitLink` where the road leaves the map, a spawn of the same id inside it |
 
@@ -476,6 +482,15 @@ the project's default agent type (id 0) with the kit's walker (radius 0.3, heigh
 NavMeshAgent on its default type and give it radius 0.3. Breakables (`vki_breakable`) carve themselves out with a
 NavMeshObstacle each until the game swaps the broken piece in. Put a walker on a spot with `KitTravel.Place` (it warps an
 agent). The walk tests switch the carving off while they run.
+
+**See-through.** The kit's shader (KitLit, every kit material) can open a hole round the game's walker: what stands
+between the camera and the walker (in a cone to a disc round its chest, above its knees, and in front of it along the
+camera's level heading -- not along the line of sight: the camera looks down, so a wall the walker stands before
+reaches nearer the camera above the walker's head, yet stays whole) dithers away with a soft rim, shadows staying. Off until the game sets two globals each frame: `_KitSeeThrough` (xyz the walker's
+chest, w the hole's radius at the walker; 0 off) and `_KitSeeThroughArgs` (x the walker's feet height, y the height
+kept above the feet -- the ground, low and cut walls --, z how far in front of the walker, level, things are kept: an
+eave over it, a post beside it). The depth passes
+clip too (SSAO and depth priming see the same hole). MedievalSetting's `GameCamera` sets them (radius 2.4, keep 1.4).
 
 ## 6. Checking your work
 
@@ -554,5 +569,7 @@ stays clean, and destroy it after.
 | `Runtime/World/KitVillage.cs`, `Editor/KitVillageEditor.cs` | outdoor maps from layouts: build, walk test |
 | `Runtime/KitLink.cs`, `KitTravel.cs`, `KitSpawn.cs`, `KitEncounter.cs` | scene links (and the preloading for instant cuts), spawns, encounters |
 | `Runtime/KitNavMesh.cs`, `Editor/KitNavBake.cs` | a level's baked navmesh for agents; the baking |
+| `Shaders/KitLit.shader`, `KitSeeThrough.hlsl` | the kit's lit shader; the see-through round the walker |
+| `Runtime/World/KitGrass.cs`, `KitVillage.Grass.cs`, `Shaders/KitGrass.shader`, `KitGrassInput.hlsl`, `Runtime/Resources/KitGrassCull.compute` | GPU grass: the clump list, the cull, the blades |
 | `Editor/KitRoomEditor.cs` | `KitRoomTools`: a hand-made room as a scene (`BuildRoomScene`), showcases, walk tests, validation, golden test; the KitRoom inspector |
 | `Editor/KitChainEditor.cs` | `KitChainTools`: bake, sample chain, chain validation |

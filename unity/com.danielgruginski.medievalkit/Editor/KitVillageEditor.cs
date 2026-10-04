@@ -52,6 +52,7 @@ namespace MedievalKit.Editor
                 yield return (string)f["piece"] ?? "Prop_Fence";
                 if (f["gate"] != null) yield return (string)f["gate"];
                 if (f["gateDoor"] != null) yield return (string)f["gateDoor"];
+                foreach (var e in f["along"] as JArray ?? new JArray()) if (e["piece"] != null) yield return (string)e["piece"];
             }
             foreach (var key in new[] { "species", "undergrowth" })
                 foreach (var e in L["forest"]?[key] as JArray ?? new JArray()) yield return (string)e[0];
@@ -225,6 +226,9 @@ namespace MedievalKit.Editor
                 Save(v.GroundMesh, $"{mapName}_Ground.asset");
                 Save(v.ControlMap, $"{mapName}_GroundControl.asset");
                 Save(v.GroundMaterialInstance, $"{mapName}_Ground.mat");
+                Save(v.GrassMaterialInstance, $"{mapName}_Grass.mat");
+                string oldGrass = $"{folder}/{mapName}_Grass.asset";      // (baked blade meshes, before KitGrass grew them)
+                if (AssetDatabase.LoadAssetAtPath<Object>(oldGrass) != null) AssetDatabase.DeleteAsset(oldGrass);
                 // a camera at the arrival, at the game's angle
                 var arrival = go.GetComponentsInChildren<KitSpawn>().FirstOrDefault(s => s.spawnId == ((string)L["start"] ?? "arrival")) ?? go.GetComponentInChildren<KitSpawn>();
                 var cam = new GameObject("Main Camera").AddComponent<Camera>();
