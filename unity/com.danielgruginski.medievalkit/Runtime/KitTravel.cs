@@ -164,6 +164,24 @@ namespace MedievalKit
             return true;
         }
 
+        /// <summary>to a level's spawn on a fresh load, whatever is held or current: every level as built, not as the last
+        /// visit left it (a game's New Game or Load, which put back what they keep themselves); the way back is
+        /// forgotten. Always the fade and a plain load (which drops every held level).</summary>
+        public static bool Reload(string target, string spawn)
+        {
+            if (string.IsNullOrEmpty(target) || !Application.CanStreamedLevelBeLoaded(target))
+            {
+                Debug.LogError($"[KitTravel] level '{target}' is not in the build settings");
+                return false;
+            }
+            if (host != null && host.Fading) return false;
+            returns.Clear(); pendingReturn = null; waiting = null;
+            Hook();
+            pendingSpawn = spawn;
+            Host.FadeLoad(target);
+            return true;
+        }
+
         /// <summary>the instant cut: the level here switched off (its surface and colliders out of the way first), the
         /// held target switched on, made active, the walker placed</summary>
         static void Switch(string target, string arrive)

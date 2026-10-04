@@ -833,6 +833,10 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     town's placements) now finishes it wherever a layout places it, as children of the block; `"dress": false` on
     the prop leaves it bare. The roof material goes in by name (any `M_VK_Roof*` -> `M_VK_Roof_Slate`): the Blender
     slot index (3) is not the Unity one. The editor's `Names` / material list take the parts in.
+81. 2026-10-04 (MedievalSetting's menus: save slots, New Game): `KitTravel.Reload(target, spawn)` -- `GoTo` but always the
+    fade and a plain single load, so every held level is dropped and the target comes back as built (GoTo keeps held
+    copies and only places the walker when the target is current: a load would find the last visit's dead and broken
+    things still there). Forgets the way back like GoTo; the game pushes its saved doors after the call.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
