@@ -474,7 +474,8 @@ class VKIKit(Kit):
         (coll or vki_pieces_coll()).objects.link(o)
         o.location = loc
         km = kit_mats()
-        assert len(km) == 55 and km[54].name == "M_VK_Hewn", "kit_mats() changed: slot 54 must be M_VK_Hewn"
+        # the interior's own slots start at 55: exterior slots added after Hewn (wild garlic, 55) are not the interior's
+        assert len(km) >= 55 and km[54].name == "M_VK_Hewn", "kit_mats() changed: slot 54 must be M_VK_Hewn"
         mats = km[:55] + vki_mats()
         assert len(mats) == VKI_NSLOTS
         ov = vki_master_slot_mats(piece, s.fam, s.meta, s.slot_mats)

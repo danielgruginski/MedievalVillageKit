@@ -45,7 +45,11 @@ namespace MedievalKit.Editor
         public static IEnumerable<string> Names(JObject L)
         {
             foreach (var b in L["buildings"] as JArray ?? new JArray()) if (b["structure"] != null) yield return (string)b["structure"];
-            foreach (var p in L["props"] as JArray ?? new JArray()) yield return (string)p["piece"];
+            foreach (var p in L["props"] as JArray ?? new JArray())
+            {
+                yield return (string)p["piece"];
+                foreach (var d in Dressing(p)) yield return d.piece;          // what finishes it (the gatehouse's storey and roofs)
+            }
             foreach (var t in L["trees"] as JArray ?? new JArray()) yield return (string)t["piece"];
             foreach (var f in L["fences"] as JArray ?? new JArray())
             {
@@ -64,6 +68,19 @@ namespace MedievalKit.Editor
                 if (g["fence"] != null) yield return (string)g["fence"];
                 if (g["gatePiece"] != null) yield return (string)g["gatePiece"];
             }
+        }
+
+        /// <summary>a layout prop's dressing (KitVillage.Dressings, unless "dress": false)</summary>
+        static IEnumerable<(string piece, Vector3 at, float rot, string roof)> Dressing(JToken p)
+        {
+            string n = (string)p["piece"];
+            if (n == null || !((bool?)p["dress"] ?? true)) yield break;
+            foreach (var k in new[] { n, "SM_VK_" + n })
+                if (KitVillage.Dressings.TryGetValue(k, out var parts))
+                {
+                    foreach (var d in parts) yield return d;
+                    yield break;
+                }
         }
 
         /// <summary>a navmesh over the map (radius 0.3, 0.1 m voxels) from its own colliders: from the start spawn, every
@@ -208,7 +225,8 @@ namespace MedievalKit.Editor
                 v.prefabs = prefabs;
                 // the materials the swaps name (the layout's palette and the entries' own)
                 var swaps = new[] { L["swap"] }.Concat(new[] { "buildings", "props" }.SelectMany(k => (L[k] as JArray ?? new JArray()).Select(e => e["swap"])))
-                    .OfType<JObject>().SelectMany(o => o.Properties().Select(pr => (string)pr.Value)).Distinct();
+                    .OfType<JObject>().SelectMany(o => o.Properties().Select(pr => (string)pr.Value))
+                    .Concat((L["props"] as JArray ?? new JArray()).SelectMany(Dressing).Select(d => d.roof).Where(m => m != null)).Distinct();
                 foreach (var mn in swaps)
                 {
                     var m = AssetDatabase.LoadAssetAtPath<Material>($"{KitPaths.Materials}/{mn}.mat");

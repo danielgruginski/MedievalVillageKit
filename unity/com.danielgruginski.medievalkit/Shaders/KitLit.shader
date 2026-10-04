@@ -85,6 +85,7 @@ Shader "MedievalKit/KitLit"
             #include "KitLitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "KitSeeThrough.hlsl"
+            #include "KitShroud.hlsl"
 
             struct Attributes
             {
@@ -224,6 +225,7 @@ Shader "MedievalKit/KitLit"
                     back += ml.color * ml.distanceAttenuation * ml.shadowAttenuation * saturate(dot(-n, ml.direction));
                     c.rgb += albedo * tl * back;
                 }
+                c.rgb *= KitShroud(input.positionWS, n);   // underground: away from the walkable ground, into the dark
                 c.rgb = MixFog(c.rgb, d.fogCoord);
                 #ifndef _SURFACE_TYPE_TRANSPARENT
                 c.a = 1;

@@ -260,15 +260,15 @@ def vki_lair_cocoon(k):
 # ---------------------------------------------------------------- rats
 def vki_lair_burrow(k):
     """a giant rat's burrow: a mound of earth (the FLOOR slot, EarthDamp by default) with a dark hole in its south
-    face, clods scattered round it"""
-    vki_dpr_mound(k, (0.0, 0.05, 0.0), 0.60, 0.50, 0.40, VKI_FLOOR, z0=0.001, nr=3, ns=14, seed=31, wob=0.15, bump=0.15)
-    hv = vki_dpr_blob(k, (0.0, 0.0), (0.21, 0.16), -0.02, 0.02, VOID, ns=12, wob=0.1, seed=7)
-    bmesh.ops.transform(k.bm, verts=hv, matrix=Matrix.Translation((0.0, -0.36, 0.20)) @ Matrix.Rotation(math.radians(65), 4, "X"))
+    face, clods scattered round it; about 0.9 m across with the clods (it was 1.4 and blocked the caves' passages)"""
+    vki_dpr_mound(k, (0.0, 0.03, 0.0), 0.38, 0.32, 0.27, VKI_FLOOR, z0=0.001, nr=3, ns=14, seed=31, wob=0.15, bump=0.1)
+    hv = vki_dpr_blob(k, (0.0, 0.0), (0.14, 0.11), -0.015, 0.015, VOID, ns=12, wob=0.1, seed=7)
+    bmesh.ops.transform(k.bm, verts=hv, matrix=Matrix.Translation((0.0, -0.235, 0.135)) @ Matrix.Rotation(math.radians(65), 4, "X"))
     rnd = random.Random(8)
     for i in range(7):
-        a = rnd.uniform(0, 2 * math.pi); d = rnd.uniform(0.62, 0.72)
-        c = _ico(k, (math.cos(a) * d, math.sin(a) * d * 0.9, 0.025), rnd.uniform(0.03, 0.05), VKI_FLOOR,
-                 scale=(1, 0.8, 0.6), sub=0, jit=0.008, seed=60 + i)
+        a = rnd.uniform(0, 2 * math.pi); d = rnd.uniform(0.40, 0.45)
+        c = _ico(k, (math.cos(a) * d, math.sin(a) * d * 0.9, 0.02), rnd.uniform(0.022, 0.036), VKI_FLOOR,
+                 scale=(1, 0.8, 0.6), sub=0, jit=0.006, seed=60 + i)
         k.project(vki_faces_of(c), VKI_FLOOR)
     k.slot_mats[VKI_FLOOR] = "EarthDamp"
     vki_home_meta(k, "floor", "furniture", use=[], vki_nav="block")

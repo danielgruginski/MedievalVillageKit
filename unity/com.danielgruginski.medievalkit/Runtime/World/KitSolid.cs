@@ -31,8 +31,10 @@ namespace MedievalKit
         /// Boxes over what one bumps into: for each mesh under go with no collider of its own, its faces lower than
         /// `head` metres over go's foot, gathered on a grid into the separate parts they stand as -- a signpost's post,
         /// not its arms; each post of a canopy or a gallery, not its roof or deck; a barrel, a table -- one box over each
-        /// part, in the mesh's own space (it turns and scales with it), `inset` in from its sides. Parts lower than a step
-        /// are left to walk over. Returns how many boxes.
+        /// part, in the mesh's own space (it turns and scales with it), `inset` in from its sides. A hollow part (walls
+        /// round a floor: a lean-to's back and sides, an L of planks) gets boxes along its walls instead, so what they
+        /// stand round stays open to walk into. Faces lower than a step (a plank floor, a threshold) are walked on and part
+        /// nothing; the boxes still reach down to the ground. Returns how many boxes.
         /// </summary>
         public static int Box(GameObject go, float head = 1.2f, float inset = 0.05f)
         {
@@ -55,8 +57,11 @@ namespace MedievalKit
                 var v = m.vertices;
                 var tri = m.triangles;
                 var wy = v.Select(p => t.TransformPoint(p).y).ToArray();
-                // the faces below `top`, sampled every 0.1 m: per grid cell the samples' extent
+                // the faces below `top`, sampled every 0.1 m: per grid cell the extent of the samples above a step, and
+                // the lowest of all (where its box starts)
+                float step = go.transform.position.y + Low;
                 var cells = new Dictionary<(int, int), (Vector3 lo, Vector3 hi)>();
+                var foot = new Dictionary<(int, int), float>();
                 for (int i = 0; i < tri.Length; i += 3)
                 {
                     int a = tri[i], b = tri[i + 1], c = tri[i + 2];
@@ -71,6 +76,8 @@ namespace MedievalKit
                             float y = wy[a] + (wy[b] - wy[a]) * (s / (float)k) + (wy[c] - wy[a]) * (r / (float)k);
                             if (y >= top) continue;
                             var key = (Mathf.FloorToInt(p.x / Cell), Mathf.FloorToInt(p.z / Cell));
+                            foot[key] = foot.TryGetValue(key, out var f) ? Mathf.Min(f, p.y) : p.y;
+                            if (y < step) continue;                                 // walked on, not into
                             cells[key] = cells.TryGetValue(key, out var e) ? (Vector3.Min(e.lo, p), Vector3.Max(e.hi, p)) : (p, p);
                         }
                 }
@@ -81,6 +88,7 @@ namespace MedievalKit
                     if (!seen.Add(start)) continue;
                     var lo = cells[start].lo; var hi = cells[start].hi;
                     var todo = new Stack<(int, int)>();
+                    var part = new List<(int x, int z)> { start };
                     todo.Push(start);
                     while (todo.Count > 0)
                     {
@@ -91,17 +99,48 @@ namespace MedievalKit
                                 var q = (x + dx, z + dz);
                                 if (!cells.TryGetValue(q, out var e) || !seen.Add(q)) continue;
                                 lo = Vector3.Min(lo, e.lo); hi = Vector3.Max(hi, e.hi);
+                                part.Add(q);
                                 todo.Push(q);
                             }
                     }
-                    if ((hi.y - lo.y) * Mathf.Abs(t.lossyScale.y) < Low) continue;     // stepped over
-                    var box = mf.gameObject.AddComponent<BoxCollider>();
-                    box.center = (lo + hi) / 2f;
-                    box.size = new Vector3(Mathf.Max(0.1f, hi.x - lo.x - 2 * inset), hi.y - lo.y, Mathf.Max(0.1f, hi.z - lo.z - 2 * inset));
-                    n++;
+                    lo.y = Mathf.Min(lo.y, part.Min(c => foot[c]));                   // down to the ground
+                    int w = part.Max(c => c.x) - part.Min(c => c.x) + 1, d = part.Max(c => c.z) - part.Min(c => c.z) + 1;
+                    if (part.Count < 8 || part.Count >= 0.6f * w * d)                 // solid enough: one box
+                    {
+                        AddBox(mf.gameObject, lo, hi, inset);
+                        n++;
+                        continue;
+                    }
+                    // hollow: its cells in rectangles (along a row, then as deep as the row runs), a box over each
+                    var free = new HashSet<(int, int)>(part);
+                    foreach (var c0 in part.OrderBy(c => c.z).ThenBy(c => c.x))
+                    {
+                        if (!free.Contains(c0)) continue;
+                        int rw = 1, rd = 1;
+                        while (free.Contains((c0.x + rw, c0.z))) rw++;
+                        while (Enumerable.Range(0, rw).All(i => free.Contains((c0.x + i, c0.z + rd)))) rd++;
+                        Vector3 rlo = Vector3.positiveInfinity, rhi = Vector3.negativeInfinity;
+                        for (int i = 0; i < rw; i++)
+                            for (int j = 0; j < rd; j++)
+                            {
+                                var key = (c0.x + i, c0.z + j);
+                                free.Remove(key);
+                                rlo = Vector3.Min(rlo, cells[key].lo); rhi = Vector3.Max(rhi, cells[key].hi);
+                                rlo.y = Mathf.Min(rlo.y, foot[key]);
+                            }
+                        AddBox(mf.gameObject, rlo, rhi, inset);
+                        n++;
+                    }
                 }
             }
             return n;
+        }
+
+        static void AddBox(GameObject go, Vector3 lo, Vector3 hi, float inset)
+        {
+            var box = go.AddComponent<BoxCollider>();
+            box.center = (lo + hi) / 2f;
+            box.size = new Vector3(Mathf.Max(0.1f, hi.x - lo.x - 2 * inset), hi.y - lo.y, Mathf.Max(0.1f, hi.z - lo.z - 2 * inset));
         }
 
         /// <summary>an upright capsule round a round piece's pivot (a bush's middle, a stump's trunk), `radius` metres in its

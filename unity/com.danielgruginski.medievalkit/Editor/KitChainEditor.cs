@@ -302,7 +302,8 @@ namespace MedievalKit.Editor
             return sb.ToString();
         }
 
-        /// <summary>{chain}_Play.unity: the sun and volume of VKI_Dungeon_B4, a KitChainStreamer and a KitTestWalker</summary>
+        /// <summary>{chain}_Play.unity: the sun and volume of VKI_Dungeon_B4, a KitChainStreamer, a KitShroud and a
+        /// KitTestWalker</summary>
         static string WritePlayScene(KitChain chain, string folder)
         {
             var sc = UnityEditor.SceneManagement.EditorSceneManager.NewScene(UnityEditor.SceneManagement.NewSceneSetup.EmptyScene,
@@ -315,6 +316,7 @@ namespace MedievalKit.Editor
                 if (AssetDatabase.LoadAssetAtPath<SceneAsset>(lit) != null) KitHouseTools.CopyLighting(sc, lit, l => l.type == LightType.Directional);
                 var st = new GameObject("KitChainStreamer").AddComponent<KitChainStreamer>();
                 st.chain = chain;
+                new GameObject("KitShroud").AddComponent<KitShroud>();      // the rock away from the passages fades to black
                 var walkerType = Type.GetType("MedievalKit.KitTestWalker, MedievalKit.Walker");
                 if (walkerType != null)
                 {

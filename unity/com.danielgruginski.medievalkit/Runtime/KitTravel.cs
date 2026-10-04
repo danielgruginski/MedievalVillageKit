@@ -60,6 +60,13 @@ namespace MedievalKit
         public static bool HasWalker => walker != null;
         public static string CurrentLevel => SceneManager.GetActiveScene().name;
         public static int ReturnDepth => returns.Count;
+        /// <summary>the door the current building was entered by (level, link id; null: none): one interior shared by
+        /// many houses is told apart by it</summary>
+        public static (string level, string link)? Entered => returns.Count > 0 ? returns.Peek() : ((string, string)?)null;
+        /// <summary>the doors to return through, innermost first (a game's save keeps them)</summary>
+        public static (string level, string link)[] ReturnStack => returns.ToArray();
+        /// <summary>a door to return through, outermost first (a game's load puts the saved ones back after its GoTo)</summary>
+        public static void PushReturn(string level, string link) { if (!string.IsNullOrEmpty(level)) returns.Push((level, link)); }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Reset()

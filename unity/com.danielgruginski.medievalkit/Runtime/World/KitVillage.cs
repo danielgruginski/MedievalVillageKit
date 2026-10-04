@@ -382,9 +382,19 @@ namespace MedievalKit
             {
                 var dl = transform.InverseTransformPoint(doors[0].GetComponentInChildren<Renderer>() is Renderer dr ? dr.bounds.center : doors[0].position);
                 var d = new Vector2(-dl.x, -dl.z) - box.center;
-                // the door's side: the axis it sits nearest the edge of
-                float ex = Mathf.Abs(d.x) / Mathf.Max(0.1f, box.width / 2), ey = Mathf.Abs(d.y) / Mathf.Max(0.1f, box.height / 2);
-                front = ex > ey ? new Vector2(Mathf.Sign(d.x), 0f) : new Vector2(0f, Mathf.Sign(d.y));
+                // the door's side: the axis it opens along (its own forward), on the side of the walls it stands at; a
+                // building with a yard (the smithy's forge, the training yard, the woodcutter's) has a box whose nearest
+                // edge is not the door's. Without a turn to read: the axis it sits nearest the edge of
+                var fw = transform.InverseTransformDirection(doors[0].forward);
+                var fp = new Vector2(-fw.x, -fw.z);
+                var dw = new Vector2(-dl.x, -dl.z) - walls.center;
+                if (fp.sqrMagnitude > 0.01f && Mathf.Abs(Mathf.Abs(fp.x) - Mathf.Abs(fp.y)) > 0.2f)
+                    front = Mathf.Abs(fp.x) > Mathf.Abs(fp.y) ? new Vector2(Mathf.Sign(dw.x), 0f) : new Vector2(0f, Mathf.Sign(dw.y));
+                else
+                {
+                    float ex = Mathf.Abs(d.x) / Mathf.Max(0.1f, box.width / 2), ey = Mathf.Abs(d.y) / Mathf.Max(0.1f, box.height / 2);
+                    front = ex > ey ? new Vector2(Mathf.Sign(d.x), 0f) : new Vector2(0f, Mathf.Sign(d.y));
+                }
             }
             inst.transform.localPosition = saveP; inst.transform.localRotation = saveR;
             return (box, walls, front);
@@ -592,7 +602,67 @@ namespace MedievalKit
                 go.transform.localRotation = Turn(deg);
                 if (p["swap"] != null) Swap(go, p);
                 if ((bool?)p["collide"] ?? true) KitSolid.Box(go);          // what one bumps into: a signpost's post, not its arms
+                if ((bool?)p["dress"] ?? true) Dress(go, pf.name);
                 occupied.Add((Corners(box, at, deg), (string)p["piece"]));
+            }
+        }
+
+        /// <summary>the pieces a kit piece is only the base of, in its own frame (Unity metres and degrees), with a roof
+        /// material (in place of its M_VK_Roof*): the gatehouse's block is finished by def_dress_gatehouse (vk_mod_defence) -- a timber storey on the
+        /// walk (6.2), its slate hip roof and the towers' cones (9.0), the portcullis raised under the arch, the leaves open
+        /// against the vault, banners on the town side; without them its flat top and open towers show</summary>
+        public static readonly Dictionary<string, (string piece, Vector3 at, float rot, string roof)[]> Dressings =
+            new Dictionary<string, (string, Vector3, float, string)[]>
+            {
+                ["SM_VK_Gatehouse_Block"] = new (string, Vector3, float, string)[]
+                {
+                    ("SM_VK_Gatehouse_Portcullis", new Vector3(0f, 3.6f, 2.4f), 0f, null),
+                    ("SM_VK_Gatehouse_GateLeaf", new Vector3(1.75f, 0f, 1.2f), -90f, null),
+                    ("SM_VK_Gatehouse_GateLeaf", new Vector3(-1.75f, 0f, 1.2f), -90f, null),
+                    ("SM_VK_Wall_Timber_Window", new Vector3(1.5f, 6.2f, 3f), 0f, null),
+                    ("SM_VK_Wall_Timber_Window", new Vector3(-1.5f, 6.2f, 3f), 0f, null),
+                    ("SM_VK_Wall_Timber_X", new Vector3(4.5f, 6.2f, -3f), 180f, null),
+                    ("SM_VK_Wall_Timber_Window", new Vector3(1.5f, 6.2f, -3f), 180f, null),
+                    ("SM_VK_Wall_Timber_Window", new Vector3(-1.5f, 6.2f, -3f), 180f, null),
+                    ("SM_VK_Wall_Timber_X", new Vector3(-4.5f, 6.2f, -3f), 180f, null),
+                    ("SM_VK_Wall_Timber_Door", new Vector3(6f, 6.2f, -1.5f), 90f, null),
+                    ("SM_VK_Wall_Timber", new Vector3(6f, 6.2f, 1.5f), 90f, null),
+                    ("SM_VK_Wall_Timber_Door", new Vector3(-6f, 6.2f, -1.5f), -90f, null),
+                    ("SM_VK_Wall_Timber", new Vector3(-6f, 6.2f, 1.5f), -90f, null),
+                    ("SM_VK_Corner_Timber", new Vector3(6f, 6.2f, -3f), 90f, null),
+                    ("SM_VK_Corner_Timber", new Vector3(-6f, 6.2f, -3f), 180f, null),
+                    ("SM_VK_Roof_Hip", new Vector3(4.5f, 9f, 0f), 180f, "M_VK_Roof_Slate"),
+                    ("SM_VK_Roof_Mid", new Vector3(1.5f, 9f, 0f), 0f, "M_VK_Roof_Slate"),
+                    ("SM_VK_Roof_Mid", new Vector3(-1.5f, 9f, 0f), 0f, "M_VK_Roof_Slate"),
+                    ("SM_VK_Roof_Hip", new Vector3(-4.5f, 9f, 0f), 0f, "M_VK_Roof_Slate"),
+                    ("SM_VK_Roof_Cone_R2", new Vector3(4.4f, 9f, 3f), 0f, "M_VK_Roof_Slate"),
+                    ("SM_VK_Roof_Cone_R2", new Vector3(-4.4f, 9f, 3f), 0f, "M_VK_Roof_Slate"),
+                    ("SM_VK_Banner_Wall", new Vector3(3f, 9f, -3.18f), 180f, null),
+                    ("SM_VK_Banner_Wall", new Vector3(-3f, 9f, -3.18f), 180f, null),
+                },
+            };
+
+        /// <summary>a piece's dressing (Dressings) as its children ("dress": false in the layout leaves it bare)</summary>
+        void Dress(GameObject go, string piece)
+        {
+            if (!Dressings.TryGetValue(piece, out var parts)) return;
+            foreach (var (n, at, rot, roof) in parts)
+            {
+                var pf = Prefab(n);
+                if (pf == null) continue;
+                var c = Spawn(pf, go.transform);
+                c.transform.localPosition = at;
+                c.transform.localRotation = Quaternion.Euler(0f, rot, 0f);
+                if (roof == null) continue;
+                var m = materials.FirstOrDefault(x => x != null && x.name == roof);
+                if (m == null) { notes.Add($"no material {roof} for {n}"); continue; }
+                foreach (var r in c.GetComponentsInChildren<Renderer>())
+                {
+                    var ms = r.sharedMaterials;
+                    for (int i = 0; i < ms.Length; i++)
+                        if (ms[i] != null && ms[i].name.StartsWith("M_VK_Roof", StringComparison.Ordinal)) ms[i] = m;
+                    r.sharedMaterials = ms;
+                }
             }
         }
 

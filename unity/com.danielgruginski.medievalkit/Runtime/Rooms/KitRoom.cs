@@ -89,8 +89,9 @@ namespace MedievalKit
             Generate();
         }
 
-        /// <summary>a furniture code's footprint in cells: its largest piece (what PropsFromCodes picks for a block that fits it)</summary>
-        (int, int) CodeFootprint(string code)
+        /// <summary>a furniture code's footprint in cells: its largest piece (what PropsFromCodes picks for a block that fits it);
+        /// public for tools that write interiors with <see cref="KitInteriorGenerator"/> themselves (needs `rules`)</summary>
+        public (int, int) CodeFootprint(string code)
         {
             var best = (1, 1);
             foreach (var kv in (JObject)rules.Json["codes"])

@@ -752,6 +752,87 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     Also from the game: a goblin tent in `Warcamp_layout.json` stood on the foot of the west walkway's ladder (an
     `along` piece), and the tent's hollow inside is a navmesh pocket: the game's ladder dropped the player in it. The
     tent moved; the walk test checks spawns, markers and encounter points, not ladder feet -- it could.
+77. 2026-10-04 (from the game; the user: the caves' "persistence of those tiles and that black part", "it is ok to
+    have black areas, but we need better transition"; a burrow "blocking too much the passage"; a lean-to "we could
+    walk inside, but we cannot"):
+    (a) **`KitShroud`** (Runtime, `Shaders/KitShroud.hlsl`, KitLit's forward pass): the Diablo-like underground look.
+    On a level's scene (a chain's play scene gets one from `WritePlayScene`; MedievalSetting's `HamletCellar_Play` was
+    given one): while enabled it rasterises the navmesh near the level's floor into a distance field (0.5 m cells, R8,
+    globals `_KitShroudTex/_Rect/_Args/_Args2`); KitLit darkens with the distance from the walkable ground
+    (`darkFrom` 0.2 -> black at `blackAt` 3 m) and keeps `topLight` 0.3 of the light on the rock's tops (faces turned
+    up 1 m+ over the floor), so the pale `CaveCut` tops no longer read as tiles and the rock fades into the black
+    round the level instead of ending at a cliff edge. The floor is the height band (0.25 m, >= 5% of the area)
+    nearest the loaded levels' spawns: a cave's rock tops carry navmesh islands that outweigh its floor (65% of
+    HamletCellar's navmesh is at 2.25 m), and the first try (the biggest band) lit the tops and blackened the
+    floor. It builds once the walker stands on the navmesh and a spawn is in (pieces stream), again on each arrival;
+    held or left, it is off. Outdoor levels have none.
+    (b) `SM_VKI_Prop_Burrow` shrunk (1.35 x 1.24 x 0.43 -> 0.87 x 0.79 x 0.27 m with its clods), exported, prefab
+    rebuilt (its box follows), HamletCellar's navmesh re-baked (`KitNavBake.BakeChain`).
+    (c) `KitSolid.Box`: faces lower than a step (a plank floor, a threshold) no longer part anything (boxes still
+    reach the ground), and a hollow part (< 60% of its cell rectangle) gets boxes along its walls (greedy rectangles)
+    instead of one over all. `SM_VK_LeanTo` is a floor, two front posts and a roof: one box used to cover its floor;
+    now the posts only, and the floor is walked on (Woods rebuilt; its pieces gained 23 boxes -- the boulder, the
+    outcrops, the watchtower follow their shapes -- and lost none; the invisible walls are redrawn from the outline).
+    (d) `vki_core`'s master check asserted `len(kit_mats()) == 55`: the wild garlic slot (55, entry 76) broke every
+    interior rebuild. The interior takes slots 0-54 and numbers its own from 55, so it now asserts `>= 55`.
+78. 2026-10-04 (MedievalSetting's Greywall, the user: "no offense to valley town, but it is too square ... we will
+    need to create a new city plan. It can have walls like valley town"; plan approved, then built overnight; no kit
+    code changed): a walled town and a forest road built with KitVillage from layouts a script writes
+    (MedievalSetting `Assets/MedievalKitWorld/Tools~/greywall_layout.py`, `banditroad_layout.py`).
+    (a) **Town walls as props, not a fence line.** A fence lays a piece every `max(planBox)` = 3.45 m for
+    `TownWall_Straight` (its buttress counts), but the modules are 3 m pitch pieces: 0.45 m see-through gaps. And a
+    fence `gate` gets no colliders (the gatehouse's masonry is walked through) while a `building` gets one box over
+    the passage. So the script lays `TownWall_Straight` props on exactly 3 m along each straight run between corners
+    (`rot` = the run's heading on a counter-clockwise ring: local +Z, the outer face, turns outward), a
+    `TownWall_Tower_Round` on each corner turned to the corners' bisector (its ground door toward the town),
+    `Gatehouse_Block` on a run (`rot` = the heading; modules kept 5.5-6 m off its centre) and `TownWall_Postern` in
+    place of one module. The corners are nudged (up to 1.8 m) so every run is whole modules with 2.0-2.8 m left to each
+    tower's centre (the round tower hides the ends). Props get `KitSolid.Box` per part: the gatehouse passage stays
+    3.3 m clear, the postern's 1.9 m; the walk test goes through both. 125 modules, 18 towers. The bare
+    `Gatehouse_Block` comes without its timber storey and portcullis (props have no height key). A fence `length` key
+    (3.0 for the wall) and boxed gates would let a fence line do it.
+    (b) Measured plan boxes (about the origin, x east / y north before turning) and fronts, for laying out:
+    Inn (-5.95,-5.75)..(11.50,4.52) front (0,-1); TownHall (-9.63,-5.71)..(8.70,4.52) (0,1); Smithy
+    (-4.20,-6.45)..(5.91,7.52) (-1,0); Bakery (-5.55,-5.26)..(5.65,4.52) (0,-1); Chapel (-7.20,-4.52)..(10.60,4.52)
+    (0,1); TowerHouse_Fortified (-4.37,-5.25)..(5.20,4.37) (0,1); MerchantHouse (-6.74,-5.24)..(5.40,6.42) (0,-1);
+    TowerHouse_Domestic +-5.24 (0,1); TrainingYard (-7.20,-7.70)..(7.20,9.02) (-1,0); TownhouseGablefront
+    (-4.67,-6.55)..(4.52,5.70) (1,0); Brewery (-8.95,-5.45)..(7.60,5.52) (0,-1); Granary (-5.64,-5.29)..(4.70,4.54)
+    (0,-1); Stable (-6.81,-8.81)..(6.06,4.56) (0,-1); Tannery (-9.03,-5.27)..(6.77,7.06) (0,-1); DyersYard
+    (-5.75,-3.20)..(4.59,3.27); Pottery (-6.10,-4.65)..(4.88,5.60); Hovel_* (-7.10,-6.18)..(4.16,4.56) (1,0); Windmill
+    +-6.79 x (-5.51..5.28); GuardTower +-3.2. A generated house (`house`) is about (1.5 cells + 1.55) either side and
+    -5.3..4.6 front to back (porch and eaves), not cells x 3 by 6.
+    (c) `BuildVillage` creates its scene additively: run it with a saved scene open (it throws "Cannot create a new
+    scene additively with an untitled scene unsaved" after `NewScene`). An edit-mode `Camera.Render` right after
+    opening a big map can draw only the terrain: KitLit's variants are still compiling (async); render again.
+    (d) In play, travelling back into a held map logs "Failed to create agent because there is no valid NavMesh" once
+    per creature; they are all on the navmesh a moment later (seen with BanditRoad's 21).
+79. 2026-10-04 (MedievalSetting: every building with a door enterable, the user: "the buildings on the hamlet should be
+    visitable", "think this about the way baldurs gate 1 and 2 worked ... loot inside the houses, but it does not
+    respawn", "you could reuse some scenes ... but there should be some tool for adding random things at runtime"):
+    (a) `KitTravel.Entered` (the door the current building was entered by: level, link), `ReturnStack` and
+    `PushReturn` (a game's save keeps the doors to return through; its load puts them back after its GoTo, which
+    forgets them). One room scene shared by many doors tells its houses apart by `Entered` (the game's
+    InteriorDresser dresses each house from it).
+    (b) `KitRoom.CodeFootprint` is public: a tool that writes interiors with `KitInteriorGenerator.Generate` itself
+    passes it (the real footprints of the furniture codes; without it every code is one cell).
+    (c) `KitVillage.MeasureWalls`: a building's front is the side its door opens to -- the axis of the door piece's own
+    forward, on the side of the walls it stands at -- no longer the box edge the door sits nearest. A building with a
+    yard (the Smithy's forge, the TrainingYard, the Woodcutter's) has a box whose nearest edge is not the door's: its
+    door spawn landed inside the building and the walk test failed. Changes the front of Smithy, TrainingYard,
+    Woodcutter, Terrace, FisherHut and ConstructionSite_1 only (checked over every structure); maps that face those
+    turn them.
+    (d) The kit's own `Generated/Levels/VKI_*` interiors (Cottage, Hovel, Townhouse, Workshop, Chapel, Tavern...) carry
+    no navmesh: a walker cannot move in them (the hamlet's chapel door led into VKI_Chapel_F0). MedievalSetting builds
+    copies from `rules.Plan` / `rules.Room` with `KitRoomTools.BuildRoomScene` (which bakes) instead. Baking the
+    VKI_* levels themselves (KitNavBake) would fix it at the source.
+80. 2026-10-04 (MedievalSetting's Greywall, the user: "The gates aren't complete, and that part being shown causes Z
+    fighting"): `SM_VK_Gatehouse_Block` is only the gatehouse's stone base -- in Blender `def_dress_gatehouse`
+    (vk_mod_defence) finishes it with a timber storey on the walk (6.2), a slate hip roof and the flanking towers'
+    cones (9.0), the portcullis raised under the arch and the leaves open. A layout prop of the block showed its flat
+    top and open tower rims. `KitVillage.Dressings` (piece -> parts in its own frame, Unity metres, from the valley
+    town's placements) now finishes it wherever a layout places it, as children of the block; `"dress": false` on
+    the prop leaves it bare. The roof material goes in by name (any `M_VK_Roof*` -> `M_VK_Roof_Slate`): the Blender
+    slot index (3) is not the Unity one. The editor's `Names` / material list take the parts in.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
