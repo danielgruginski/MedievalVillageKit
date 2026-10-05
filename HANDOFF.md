@@ -837,6 +837,15 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     fade and a plain single load, so every held level is dropped and the target comes back as built (GoTo keeps held
     copies and only places the walker when the target is current: a load would find the last visit's dead and broken
     things still there). Forgets the way back like GoTo; the game pushes its saved doors after the call.
+82. 2026-10-05 (MedievalSetting's orc chapter, the user: "we may need some wasteland props and terrain for creating the
+    orc lands"; the wasteland is the old north wood the orcs burned): `vki_props_orc` (package adventure, loaded after
+    `vki_props_lair`): `Prop_Ruin_Farmhouse_Burnt` (hero tier), `Prop_BurntTree_A` / `_B`, `Prop_BurntStump`,
+    `Overlay_Ash`, `Overlay_Tracks_Orc`, `Prop_Orc_WarTable`, `Prop_Orc_Banner` (docs/ADVENTURE_KIT.md). Lessons:
+    FIELDSTONE is banned on VKI masters (VKI_STONE_BLOCK_IN); overlays are budgeted as dressing (400 tris) whatever
+    tier they are given; painted marks laid as overlapping strokes trip T5S -- one closed strip per line
+    (`vki_orc_band`), what crosses it a step higher; a ruin wall of one tall box per run read as tombstones -- lay it
+    in courses of stones (`vki_orc_wall`). Tests {} on all eight; exported with `vkx_export_pieces(names=...)`, Unity
+    Build Prefabs (1254, 0 failed). Preview scene `Orc_Preview`. MedievalSetting: the Northfields map uses them.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
