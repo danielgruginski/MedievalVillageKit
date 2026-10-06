@@ -846,6 +846,28 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     (`vki_orc_band`), what crosses it a step higher; a ruin wall of one tall box per run read as tombstones -- lay it
     in courses of stones (`vki_orc_wall`). Tests {} on all eight; exported with `vkx_export_pieces(names=...)`, Unity
     Build Prefabs (1254, 0 failed). Preview scene `Orc_Preview`. MedievalSetting: the Northfields map uses them.
+83. 2026-10-05 (the orc chapter's second part, the user: "continue the orc questline"): the siege yard in
+    `vki_props_orc` -- `Prop_Siege_Ram`, `Prop_Siege_Tower` (half built), `Prop_Siege_Catapult` and their `_Burnt`
+    twins, `Prop_Orc_Cage` / `_Open`, `Prop_Orc_WarDrum`, `Overlay_Orc_BearTrap` / `_Sprung`, `Prop_Orc_Totem`
+    (docs/ADVENTURE_KIT.md; 12 masters, 348-3672 tris, tests {}; 1266 prefabs, 0 failed). A burnt twin is the same
+    builder with `burnt=True` (members charred, some fallen or snapped, hides to rags, an ash bed with coals:
+    `vki_orc_ash_bed`, `vki_orc_rag`). Lessons: rafter pairs meeting at a ridge share their side planes (T5S): offset
+    one of each pair; girts ending flush with the crossing girts' faces (T5S): run one direction past the other; a hub
+    ending exactly on a sill face (T5S); the construction module's `con_ladder` and `con_lash` leave open tubes (T7) --
+    `vki_orc_ladder` and hoop bands instead; `def_rope` of several straight segments overlaps itself (T5S): one
+    segment, or sag. Preview scene `Siege_Preview`. Unity package: a layout's `ground` key (a terrain material of the
+    map's own: the RPG's burnt march, scorched grass and ash) and a layout-level `swap` now repaints the forest and
+    scatter too (LEVEL_BUILDING.md). MedievalSetting: the burnt march map uses them.
+84. 2026-10-05 (MedievalSetting's underground, the user: "something that the player could keep following from the
+    goblins all the way into bandit infested caves"): `KitDungeonGenerator`'s **Hideout** theme (guard posts, stores
+    and cells walled into the rock, rough tunnels between, every encounter "bandit" but the lair's boss) marks its
+    plunder as record markers (`Plunder`: the lair's treasure chest `strongbox`, store rooms' crates and barrels and a
+    guard post's chest `plunder<n>`, role `loot`), and puts a chained map's exit stair in the deepest room but the lair,
+    a room with no encounter (the lair's stair meant a boss appearing at the stair's foot for whoever came down: the
+    game's spawners never fill a spot by the player, so it popped in as they stepped away; other themes unchanged, the
+    warren's stair is still in its lair). `KitChainTools.Bake` keeps the play scene's `KitShroud` as it was tuned (a
+    re-bake had put MedievalSetting's top light back to 0.4 from 0.3). MedievalSetting: the HamletCellar chain's
+    oldway (Maze cave, goblin + bandit) and hideout pieces, the bandit road's cave mouth.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

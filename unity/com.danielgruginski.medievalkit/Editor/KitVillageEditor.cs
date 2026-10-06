@@ -220,7 +220,16 @@ namespace MedievalKit.Editor
                 var go = new GameObject(mapName);
                 var v = go.AddComponent<KitVillage>();
                 v.layout = text;
-                v.groundMaterial = AssetDatabase.LoadAssetAtPath<Material>(KitPaths.Materials + "/M_VK_Terrain.mat");
+                // the terrain material: the layout's "ground" (a material asset path, or a kit material's name -- a
+                // map of its own colours: a burnt land's scorched grass and ash), else the kit's
+                string groundName = (string)L["ground"];
+                Material groundMat = null;
+                if (!string.IsNullOrEmpty(groundName))
+                {
+                    groundMat = AssetDatabase.LoadAssetAtPath<Material>(groundName.EndsWith(".mat") ? groundName : $"{KitPaths.Materials}/{groundName}.mat");
+                    if (groundMat == null) report.Add($"no ground material {groundName}: the kit's terrain instead");
+                }
+                v.groundMaterial = groundMat != null ? groundMat : AssetDatabase.LoadAssetAtPath<Material>(KitPaths.Materials + "/M_VK_Terrain.mat");
                 v.houseRules = AssetDatabase.LoadAssetAtPath<KitHouseRules>(KitPaths.Generated + "/KitHouseRules.asset");
                 v.prefabs = prefabs;
                 // the materials the swaps name (the layout's palette and the entries' own)

@@ -101,7 +101,7 @@ namespace MedievalKit
             Encounters();
             Exits();
             Walls();
-            foreach (var t in new[] { buildT, propT }) Swap(t.gameObject, null);        // the map's palette (props swap their own first)
+            foreach (var t in new[] { buildT, propT, natureT }) Swap(t.gameObject, null);   // the map's palette, its nature too (props swap their own first)
             Grass(GroundMaterialInstance);   // last: it keeps clear of everything placed
         }
 

@@ -25,14 +25,16 @@ namespace MedievalKit
         public class Options
         {
             public int nc = 28, nr = 20, seed = 11, rooms = 8;
-            [Tooltip("Dungeon (mixed rooms), Crypt or Warren (goblins in natural caves).")]
+            [Tooltip("Dungeon (mixed rooms), Crypt, Warren (goblins in natural caves) or Hideout (bandits: guard posts, stores " +
+                     "of plunder and sleeping cells walled into rock, joined by rough tunnels).")]
             public string theme = "Dungeon";
             [Range(0, 1)] public float pockets = 0.2f;       // share of rooms left as natural cave
             [Range(0, 1)] public float loops = 0.25f;        // extra corridors beyond the spanning tree, per room
             [Range(0, 1)] public float debris = 0.25f;       // loose debris (the kit's scatter by zone theme): share of the open cells
             [Tooltip("Openings on the map's edges into the next map of a chain (KitPortal; the first is the way in). None: a stair up where one arrives, a stair down in the lair.")]
             public List<KitPortal> portals = new List<KitPortal>();
-            [Tooltip("With portals: a stair up out of the chain to this scene (e.g. a camp above), in a room far from the way in; empty: none.")]
+            [Tooltip("With portals: a stair up out of the chain to this scene (e.g. a camp above), in a room far from the way in " +
+                     "(the lair; a Hideout's in the deepest room but the lair, with no encounter: its front door); empty: none.")]
             public string exit = "";
             [Tooltip("The exit stair's link id (its spawn's id too: where one arrives coming down from the scene above).")]
             public string exitId = "exit";
@@ -192,6 +194,7 @@ namespace MedievalKit
             // ---- themes
             string[] pool = o.theme == "Crypt" ? new[] { "crypt", "crypt", "shrine", "store", "cells" }
                           : o.theme == "Warren" ? new[] { "warren", "warren", "store", "cells", "warren" }
+                          : o.theme == "Hideout" ? new[] { "guard", "store", "guard", "cells", "store" }
                           : new[] { "guard", "cells", "crypt", "store", "shrine", "warren" };
             foreach (var rm in rooms) rm.type = pool[rnd.Next(pool.Length)];
             start.type = o.theme == "Warren" ? "store" : "guard";
@@ -206,7 +209,7 @@ namespace MedievalKit
                 bool south = r <= 0;
                 return south || !IsRock(c, r + 1) || !IsRock(c, r + 2) ? 'C' : 'F';
             }
-            bool Natural((int, int) p) => approach.Contains(p) || (RoomOf(p)?.pocket ?? (o.theme == "Warren"));     // pockets, a warren's tunnels, portals: bare rock
+            bool Natural((int, int) p) => approach.Contains(p) || (RoomOf(p)?.pocket ?? (o.theme == "Warren" || o.theme == "Hideout"));   // pockets, a warren's or a hideout's tunnels, portals: bare rock
             var ew = new Dictionary<(int, int), string>();       // (i, j): segment (i, j)..(i + 1, j), between cells (i, j - 1) and (i, j)
             var ns = new Dictionary<(int, int), string>();       // (i, r): segment (i, r)..(i, r + 1), between cells (i - 1, r) and (i, r)
             var doorCells = new HashSet<(int, int)>();
@@ -390,10 +393,16 @@ namespace MedievalKit
                 if (exitRoom != oldExit) { exitRoom.type = "lair"; oldExit.type = pool[rnd.Next(pool.Length)]; }
             }
             JArray exitStair = null;
+            Room landing = null;                                         // the room at the foot of the exit stair
             if (portals.Count > 0 && !string.IsNullOrEmpty(o.exit))     // a chained map's way out: a stair up, far from the way in
             {
-                var at = exitRoom;
-                exitStair = Stair(ref at, "Up", o.exitId, rooms.Where(rm => rm != start && rm != exitRoom).OrderByDescending(rm => rm.depth));
+                // a hideout's is its front door: the deepest room but the lair, and quiet (whoever comes down it meets the
+                // guards in the rooms beyond, not the boss at the stair's foot)
+                var deep = rooms.Where(rm => rm != start && rm != exitRoom).OrderByDescending(rm => rm.depth).ToList();
+                bool front = o.theme == "Hideout" && deep.Count > 0;
+                var at = front ? deep[0] : exitRoom;
+                exitStair = Stair(ref at, "Up", o.exitId, front ? deep.Skip(1).Append(exitRoom) : deep);
+                if (front && exitStair != null && at != exitRoom) landing = at;
             }
             if (up != null) stairs.Add(up);
             if (down != null) stairs.Add(down);
@@ -404,6 +413,7 @@ namespace MedievalKit
             // ---- furniture codes, torches, debris, encounters
             var props = new JArray();
             var encounters = new JArray();
+            var markers = new JArray();                                 // a hideout's plunder to search (loot markers)
             var NH = new JObject { ["hug"] = false };
             // what stands on a cell's side: 2 a full wall, 1 a cut one, 0 a door, a gap or nothing (pockets: bare rock)
             int WallAt((int, int) q, char sd)
@@ -429,6 +439,7 @@ namespace MedievalKit
                 KitFurnisher.Place(rnd, rm.c0, rm.r0, rm.c1, rm.r1, table, codes, reserved, doorCells, stairCells, fp);
                 if (rm.type == "guard") KitSetPieces.TableTops(rnd, area, props, new[] { "TableDress_Guard" }, new[] { "TableDress_Guard" }, 1f);
                 if (rm.type == "cells" && !rm.pocket) KitSetPieces.WallHung(rnd, area, props, "Chains_Wall", 1 + rnd.Next(3), 2);
+                if (o.theme == "Hideout") Plunder(rm, cells, codes, props, markers, rnd);
                 // torches: on the north wall of walled rooms, every third cell (pockets glow with mushrooms instead)
                 if (!rm.pocket)
                     for (int c = rm.c0 + 1; c <= rm.c1 - 1; c += 3)
@@ -440,8 +451,9 @@ namespace MedievalKit
                 // pillars down the larger rooms (dressed stone; rock in a pocket), more often in the grander ones
                 if (rnd.NextDouble() < (rm.type == "crypt" || rm.type == "shrine" || rm.type == "lair" ? 0.8 : 0.4))
                     KitSetPieces.Pillars(area, props, rm.pocket ? "RockPillar_Cut" : "Pillar_Cut");
-                // the encounter: every room but the start, deeper is harder; spawn points spread over its free cells
-                if (rm != start)
+                // the encounter: every room but the start (and a hideout's front door), deeper is harder; spawn points spread
+                // over its free cells
+                if (rm != start && rm != landing)
                 {
                     int budget = 1 + Mathf.Max(0, rm.depth) + (rm == exitRoom ? 3 : 0);
                     var free = cells.Where(q => Free(q) && !doorCells.Contains(q)).ToList();
@@ -451,7 +463,9 @@ namespace MedievalKit
                         pts.Add(free.OrderByDescending(q => pts.Min(p => Mathf.Abs(p.Item1 - q.Item1) + Mathf.Abs(p.Item2 - q.Item2))).First());
                     encounters.Add(new JObject
                     {
-                        ["id"] = $"room{rm.id}", ["room"] = rm.type, ["creature"] = o.theme == "Warren" && rm.type != "lair" ? "goblin" : Creature[rm.type], ["budget"] = budget, ["boss"] = rm == exitRoom,
+                        ["id"] = $"room{rm.id}", ["room"] = rm.type,
+                        ["creature"] = rm.type == "lair" ? Creature[rm.type] : o.theme == "Warren" ? "goblin" : o.theme == "Hideout" ? "bandit" : Creature[rm.type],
+                        ["budget"] = budget, ["boss"] = rm == exitRoom,
                         ["depth"] = rm.depth,
                         ["box"] = new JArray(IG * rm.c0, IG * rm.r0, IG * (rm.c1 + 1), IG * (rm.r1 + 1)),
                         ["points"] = new JArray(pts.Select(q => new JArray(IG * (q.Item1 + 0.5f), IG * (q.Item2 + 0.5f)))),
@@ -479,7 +493,7 @@ namespace MedievalKit
             zones["corridor"] = new JObject
             {
                 ["cells"] = new JArray(corridor.Where(q => RoomOf(q) == null).Select(q => new JArray(q.Item1, q.Item1, q.Item2, q.Item2))),
-                ["floor"] = o.theme == "Warren" ? "CaveFloor" : "DungeonFlag", ["wall"] = "DungeonIn"
+                ["floor"] = o.theme == "Warren" || o.theme == "Hideout" ? "CaveFloor" : "DungeonFlag", ["wall"] = "DungeonIn"
             };
             zones["rock"] = new JObject { ["cells"] = "rest", ["floor"] = "CaveFloor" };
             var links = new JArray();
@@ -497,7 +511,31 @@ namespace MedievalKit
                 ["debris"] = new JObject { ["density"] = o.debris, ["seed"] = o.seed },   // the kit's scatter by zone theme
                 ["generated"] = new JObject { ["generator"] = "dungeon", ["seed"] = o.seed, ["nc"] = nc, ["nr"] = nr, ["theme"] = o.theme },
             };
+            if (markers.Count > 0) R["markers"] = markers;
             return (Plan(nc, nr, codes, ew, ns), R);
+        }
+
+        /// <summary>a hideout's plunder, marked for the game to make containers of (role "loot", the piece in the note):
+        /// the lair's strongbox (its treasure chest: id "strongbox"), a crate or barrel or two in each store room and a
+        /// guard post's chest (ids "plunder&lt;n&gt;")</summary>
+        static void Plunder(Room rm, List<(int, int)> cells, Dictionary<(int, int), string> codes, JArray props, JArray markers, System.Random rnd)
+        {
+            void Mark(string id, float x, float y, string piece) =>
+                markers.Add(new JObject { ["id"] = id, ["role"] = "loot", ["at"] = new JArray(x, y), ["facing"] = 0, ["note"] = piece });
+            int Count(string prefix) => markers.Count(m => ((string)m["id"]).StartsWith(prefix));
+            if (rm.type == "lair")
+            {
+                var chest = props.OfType<JArray>().FirstOrDefault(a => (string)a[0] == "Chest_Treasure" && rm.Has(((int)((float)a[1] / IG), (int)((float)a[2] / IG))));
+                if (chest != null) { Mark("strongbox", (float)chest[1], (float)chest[2], "Chest_Treasure"); return; }
+                var tr = cells.FirstOrDefault(q => codes.TryGetValue(q, out var c) && c == "TR");
+                if (codes.TryGetValue(tr, out var tc) && tc == "TR") Mark("strongbox", IG * (tr.Item1 + 0.5f), IG * (tr.Item2 + 0.5f), "Chest_Treasure");
+                return;
+            }
+            int want = rm.type == "store" ? 2 : rm.type == "guard" ? 1 : 0;
+            var names = new Dictionary<string, string> { ["bx"] = "Crate", ["ba"] = "Barrel", ["CH"] = "Chest" };
+            foreach (var q in cells.Where(q => codes.TryGetValue(q, out var c) && names.ContainsKey(c) && (rm.type != "guard" || c == "CH"))
+                                   .OrderBy(_ => rnd.Next()).Take(want))
+                Mark($"plunder{Count("plunder")}", IG * (q.Item1 + 0.5f), IG * (q.Item2 + 0.5f), names[codes[q]]);
         }
 
         static void Run(Dictionary<(int, string, int), List<(int, int)>> runs, (int, string, int) key, (int, int) seg)

@@ -302,10 +302,12 @@ namespace MedievalKit.Editor
             return sb.ToString();
         }
 
-        /// <summary>{chain}_Play.unity: the sun and volume of VKI_Dungeon_B4, a KitChainStreamer, a KitShroud and a
-        /// KitTestWalker</summary>
+        /// <summary>{chain}_Play.unity: the sun and volume of VKI_Dungeon_B4, a KitChainStreamer, a KitShroud (as the
+        /// play scene's was tuned, on a re-bake) and a KitTestWalker</summary>
         static string WritePlayScene(KitChain chain, string folder)
         {
+            string path = $"{folder}/{chain.name}_Play.unity";
+            string shroudWas = TunedShroud(path);
             var sc = UnityEditor.SceneManagement.EditorSceneManager.NewScene(UnityEditor.SceneManagement.NewSceneSetup.EmptyScene,
                                                                              UnityEditor.SceneManagement.NewSceneMode.Additive);
             try
@@ -316,7 +318,8 @@ namespace MedievalKit.Editor
                 if (AssetDatabase.LoadAssetAtPath<SceneAsset>(lit) != null) KitHouseTools.CopyLighting(sc, lit, l => l.type == LightType.Directional);
                 var st = new GameObject("KitChainStreamer").AddComponent<KitChainStreamer>();
                 st.chain = chain;
-                new GameObject("KitShroud").AddComponent<KitShroud>();      // the rock away from the passages fades to black
+                var shroud = new GameObject("KitShroud").AddComponent<KitShroud>();      // the rock away from the passages fades to black
+                if (shroudWas != null) EditorJsonUtility.FromJsonOverwrite(shroudWas, shroud);
                 var walkerType = Type.GetType("MedievalKit.KitTestWalker, MedievalKit.Walker");
                 if (walkerType != null)
                 {
@@ -328,12 +331,31 @@ namespace MedievalKit.Editor
                     w.AddComponent(walkerType);
                     st.walker = w.transform;
                 }
-                string path = $"{folder}/{chain.name}_Play.unity";
                 UnityEditor.SceneManagement.EditorSceneManager.SaveScene(sc, path);
                 UnityEngine.SceneManagement.SceneManager.SetActiveScene(prevActive);
                 return path;
             }
             finally { UnityEditor.SceneManagement.EditorSceneManager.CloseScene(sc, true); }
+        }
+
+        /// <summary>the KitShroud's settings in the play scene already at <paramref name="path"/> (null: none yet), so a
+        /// re-bake keeps the shroud as it was tuned</summary>
+        static string TunedShroud(string path)
+        {
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(path) == null) return null;
+            var open = UnityEngine.SceneManagement.SceneManager.GetSceneByPath(path);
+            bool wasOpen = open.IsValid() && open.isLoaded;
+            var sc = wasOpen ? open : UnityEditor.SceneManagement.EditorSceneManager.OpenScene(path, UnityEditor.SceneManagement.OpenSceneMode.Additive);
+            try
+            {
+                foreach (var root in sc.GetRootGameObjects())
+                {
+                    var s = root.GetComponentInChildren<KitShroud>(true);
+                    if (s != null) return EditorJsonUtility.ToJson(s);
+                }
+                return null;
+            }
+            finally { if (!wasOpen) UnityEditor.SceneManagement.EditorSceneManager.CloseScene(sc, true); }
         }
 
         [MenuItem("Tools/Medieval Kit/Chains/Create Sample Chain")]

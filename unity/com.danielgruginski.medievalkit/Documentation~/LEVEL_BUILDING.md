@@ -180,7 +180,7 @@ Set the component's options, then call its `Random...()` method. Same settings a
 | Call | Options (`kr.cave`, `kr.dungeon`, `kr.interior`, `kr.connector`) |
 |---|---|
 | `RandomCave()` | `layout` Maze (chambers, winding tunnels, loops, dead ends, alcove finds) / Open; `nc`, `nr` (28 x 20); `seed`; `chasm`, `chasmFork`, `chasmWidth`; `pools`; `props` (how many dressing pieces) and `dressing` (which: `"EggSacs:es,Cocoon:co"`, piece:code pairs placed in turn); `finds` (the alcoves' finds, same format; every find but an Overlay_ is marked as loot) and `extraFinds` (that many more along the walls); `debris`; `poi` (e.g. `POI_WyrmBones`); `creature` and `encounters` (5.4); `portals` |
-| `RandomDungeon()` | `theme` Dungeon / Crypt / Warren (all goblins); `rooms` (8); `pockets` (share of natural cave rooms); `loops`; `debris`; `seed`; `portals`; with portals, `exit` / `exitId` / `exitArrive`: a stair up out of the chain to a scene (a camp above), far from the way in |
+| `RandomDungeon()` | `theme` Dungeon / Crypt / Warren (all goblins) / Hideout (all bandits: guard posts, stores of plunder and cells walled into rock, rough tunnels between); `rooms` (8); `pockets` (share of natural cave rooms); `loops`; `debris`; `seed`; `portals`; with portals, `exit` / `exitId` / `exitArrive`: a stair up out of the chain to a scene (a camp above), far from the way in (in the lair; a Hideout's in the deepest room but the lair, a room with no encounter: its front door, so who comes down it is not met by a boss appearing at the stair's foot). A Hideout marks its plunder for the game: the lair's treasure chest `strongbox`, a crate or barrel or two in each store room and a guard post's chest `plunder<n>` (record markers, role `loot`, the piece in the note) |
 | `RandomInterior()` | `kind` Cottage / Townhouse / Tavern / Workshop; `seed`; `nc`, `nr` (0: by kind) |
 | `RandomConnector()` | `from`, `to` (edges), `length`, `width`, `fromAt`, `toAt`, `style` Cave / Dungeon, `seed` |
 
@@ -307,7 +307,8 @@ have several exits, each starting a branch; a branch never rejoins. **Bake** (al
 Medieval Kit > Chains > Bake Selected Chain) builds every piece lined up in world space, refuses if pieces overlap
 or a portal is missing, walk-tests the whole chain, saves each piece as a scene in a folder named after the asset,
 fills `chain.pieces` (scene, position, footprint, neighbours), adds the scenes to the build settings and writes
-`<chain>_Play.unity`: the sun of VKI_Dungeon_B4, a `KitChainStreamer` and a test walker (WASD) to try it.
+`<chain>_Play.unity`: the sun of VKI_Dungeon_B4, a `KitChainStreamer`, a `KitShroud` (on a re-bake, with the
+settings the old play scene's shroud was tuned to) and a test walker (WASD) to try it.
 
 **Streaming.** `KitChainStreamer` (in the scene holding the player, the camera and the sun) loads the piece the
 walker stands in and the pieces joined to it (`reach` 1; at a fork, every branch's connector), one scene at a time and additively, and unloads pieces two joins
@@ -375,7 +376,8 @@ glades: a woodcutter's camp, a wolf den up a side trail, a goblin lookout) and `
 with a gate between two `Goblin_Watchtower`s standing astride the wall, walkways behind the south wall ending at the
 towers, goblin tents round a `Goblin_Bonfire`, the `Goblin_ChiefTent`, cages, a cave mouth down into the tunnels).
 Props take `scale` and a `swap` of materials by name (`{"M_VK_RoofRed": "M_VK_Thatch"}`); a layout-level `swap` is the
-whole map's palette.
+whole map's palette, its forest, undergrowth, scatter and single trees too (a burnt land: `{"M_VK_RockMossy": "M_VK_Rock",
+"M_VK_BarkMossy": "M_VK_BarkOak"}`).
 
 **What it makes.** The ground: a mesh with the kit's terrain material, a gentle relief rising into the forest, a level
 pad under each building; roads, paved and trodden areas and doorsteps are painted into the material's control map
@@ -412,6 +414,7 @@ piers, decks, steps: `KitSolid.IsSoft`). The navmesh is baked from colliders, so
 | `spawns` | `[{id, at, facing}]`: `KitSpawn`s (facing as a bearing: 0 north, 90 east) |
 | `markers` | `[{id, role, at, facing, note}]`: `KitMarker`s for the game (`role`: npc, respawn...; read their `vki_role`, `vki_marker_id`) |
 | `grass` | grass blades over the grass (on by default; `false` turns them off; `{spacing, height: [min, max], edge, shadows}`): a clump every 0.5 m, thinning on roads, paving and steep ground and at the forest's edge, clear of everything placed; drawn on the GPU (`KitGrass`: a compute shader culls the clumps per camera, the vertex shader builds the blades; they take the ground's grass colour, sway, part round the walker, cast small shadows) |
+| `ground` | the terrain material: a material asset path (`Assets/.../M_BurntMarch_Terrain.mat`) or a kit material's name; default `M_VK_Terrain`. A copy of `M_VK_Terrain` with its own grass and dirt maps gives a map its own ground (a burnt land: scorched grass, ash); the grass blades take its grass map too |
 | `encounters` | `[{id, creature, budget, boss, points: [[x, y, h]], note}]`: `KitEncounter`s; `h` lifts a point off the ground (archers on a walkway or a watchtower; the walk test leaves out points more than 0.5 m over the terrain) |
 | `exits` | `[{id, road, end: start / end, target, arrive, prompt}]`: a `KitLink` where the road leaves the map, a spawn of the same id inside it |
 
