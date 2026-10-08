@@ -106,7 +106,8 @@ namespace MedievalKit
         }
 
         /// <summary>material swaps by name, {"M_VK_RoofRed": "M_VK_Thatch"}: the layout's "swap" (the whole map's palette,
-        /// e.g. a goblin camp's hide and thatch), overridden by an entry's own "swap"</summary>
+        /// e.g. a goblin camp's hide and thatch), overridden by an entry's own "swap"; the one swapped in is a kit material's
+        /// name or a map's own material's asset path (a burnt map's charred leaves, cut out like the kit's)</summary>
         void Swap(GameObject go, JToken spec)
         {
             var map = new Dictionary<string, string>();
@@ -120,7 +121,8 @@ namespace MedievalKit
                 for (int i = 0; i < mats.Length; i++)
                 {
                     if (mats[i] == null || !map.TryGetValue(mats[i].name, out var to)) continue;
-                    var m = materials.FirstOrDefault(x => x != null && x.name == to);
+                    string want = to.EndsWith(".mat") ? System.IO.Path.GetFileNameWithoutExtension(to) : to;
+                    var m = materials.FirstOrDefault(x => x != null && x.name == want);
                     if (m == null) { notes.Add($"no material {to} to swap in"); continue; }
                     mats[i] = m; changed = true;
                 }

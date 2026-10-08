@@ -868,6 +868,16 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     warren's stair is still in its lair). `KitChainTools.Bake` keeps the play scene's `KitShroud` as it was tuned (a
     re-bake had put MedievalSetting's top light back to 0.4 from 0.3). MedievalSetting: the HamletCellar chain's
     oldway (Maze cave, goblin + bandit) and hideout pieces, the bandit road's cave mouth.
+85. 2026-10-07 (MedievalSetting, the user's reports): **a swap target may be a map's own material** by its asset path
+    (`"M_VK_Leaves": "Assets/.../M_BurntMarch_Leaves.mat"`, like the layout's `ground`; `KitVillageEditor` loads it,
+    `KitVillage.Swap` matches its file name) -- the burnt march swapped the leaves to the opaque coal material and the
+    dead trees' leaf cards showed as grey squares ("something wrong with the shader of the trees on the wasteland"); an
+    opaque material must never replace a cut-out one. And **`KitDungeonGenerator` cuts a room's east and west walls**
+    like its south one (only the north wall stands full): a full side wall's inner face, seen from the camera's side,
+    hid the cut doorway beside it and its panelling read as a grille ("turn the grilles into open doorways, they are
+    hard to see"); a corridor run of one or two segments on an east or west side is always left open (its doorway sat
+    at the run's end, pinched shut by the rock bulging in from the corner; the random draw is still made, so layouts
+    stay as they were). MedievalSetting: BurntMarch and the HamletCellar chain rebuilt.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

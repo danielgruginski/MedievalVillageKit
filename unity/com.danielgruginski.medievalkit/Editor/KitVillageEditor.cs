@@ -238,7 +238,8 @@ namespace MedievalKit.Editor
                     .Concat((L["props"] as JArray ?? new JArray()).SelectMany(Dressing).Select(d => d.roof).Where(m => m != null)).Distinct();
                 foreach (var mn in swaps)
                 {
-                    var m = AssetDatabase.LoadAssetAtPath<Material>($"{KitPaths.Materials}/{mn}.mat");
+                    // a kit material by name, or a map's own by its asset path ("Assets/.../M_X.mat", like the ground)
+                    var m = AssetDatabase.LoadAssetAtPath<Material>(mn.EndsWith(".mat") ? mn : $"{KitPaths.Materials}/{mn}.mat");
                     if (m != null) v.materials.Add(m); else report.Add($"no material {mn} (for a swap)");
                 }
                 v.Build();

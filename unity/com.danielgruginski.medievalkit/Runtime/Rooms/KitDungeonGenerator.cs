@@ -248,7 +248,9 @@ namespace MedievalKit
                     }
                     var fl = wo ? w : e; var rk = wo ? e : w;
                     if (Natural(fl)) continue;
-                    ns[(i, r)] = Height(rk.Item1, rk.Item2) == 'F' ? "#" : ":";
+                    // a room's east and west walls are cut like its south one (only its north wall stands full): a full
+                    // side wall's inner face, seen from the camera's side, hid the doorway beside it and read as a grille
+                    ns[(i, r)] = RoomOf(fl) == null && Height(rk.Item1, rk.Item2) == 'F' ? "#" : ":";
                 }
             // a room's segments facing a corridor: each run gets one door, or stays open (a gap) when short
             foreach (var kv in runs)
@@ -265,7 +267,10 @@ namespace MedievalKit
                 }
                 foreach (var g in groups)
                 {
-                    bool gap = g.Count <= 2 && rnd.NextDouble() < 0.35;
+                    // a short run stays open (a gap) now and then -- an east or west one always: its doorway would sit at the
+                    // end of a short side passage, pinched shut by the rock bulging in from the corner (the draw is kept so
+                    // the rest of the layout stays as it was)
+                    bool gap = g.Count <= 2 && (rnd.NextDouble() < 0.35 || side == "E" || side == "W");
                     int di = g.Count / 2;
                     for (int k = 0; k < g.Count; k++)
                     {
@@ -273,7 +278,7 @@ namespace MedievalKit
                         if (gap) continue;                                       // no wall: the room opens on the corridor
                         bool door = k == di;
                         if (side == "N" || side == "S") ew[q] = door ? "dd" : "==";
-                        else ns[q] = door ? "d" : "#";
+                        else ns[q] = door ? "d" : ":";                         // a side wall cut, its doorway in plain sight
                         if (door)
                         {
                             var rm = rooms[rid];
