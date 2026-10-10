@@ -603,7 +603,11 @@ namespace MedievalKit
                 go.transform.localPosition = Local(at.x, at.y, Height(at));
                 go.transform.localRotation = Turn(deg);
                 if (p["swap"] != null) Swap(go, p);
-                if ((bool?)p["collide"] ?? true) KitSolid.Box(go);          // what one bumps into: a signpost's post, not its arms
+                if ((bool?)p["collide"] ?? true)
+                {
+                    if (KitSolid.IsTrunk(pf.name)) KitSolid.Trunk(go);       // a tree or a stump as the forest's: its trunk
+                    else KitSolid.Box(go);                                  // what one bumps into: a signpost's post, not its arms
+                }
                 if ((bool?)p["dress"] ?? true) Dress(go, pf.name);
                 occupied.Add((Corners(box, at, deg), (string)p["piece"]));
             }
@@ -778,11 +782,7 @@ namespace MedievalKit
             }
         }
 
-        static void Trunk(GameObject tree)
-        {
-            var c = tree.AddComponent<CapsuleCollider>();
-            c.radius = 0.45f; c.height = 4f; c.center = new Vector3(0, 2f, 0);
-        }
+        static void Trunk(GameObject tree) => KitSolid.Trunk(tree);          // 0.45 m round its pivot (a burnt tree 0.4, its box gone)
 
         /// <summary>may a piece stand here: `keep` metres off roads and areas, `keepBuilt` off buildings, gardens and
         /// props (a tree's crown is wider than its trunk), off the map's very edge</summary>
@@ -1007,7 +1007,6 @@ namespace MedievalKit
         /// of roads and glades of any shape close; plus the map's border (a road's end is an exit one uses, not a way off)</summary>
         void Walls()
         {
-            float ring = (float?)L["forest"]?["wallAt"] ?? 1.08f;
             void Wall(Vector2 a, Vector2 b, string n, float thick = 0.6f)
             {
                 var go = new GameObject(n);
@@ -1019,14 +1018,8 @@ namespace MedievalKit
                 c.center = new Vector3(0, 2f, 0); c.size = new Vector3((b - a).magnitude + 0.3f, 4f, thick);
             }
             const float cell = 1f;
-            int nx = Mathf.CeilToInt(W / cell), ny = Mathf.CeilToInt(H / cell);
-            var walk = new bool[nx, ny];
-            for (int i = 0; i < nx; i++)
-                for (int j = 0; j < ny; j++)
-                {
-                    var q = new Vector2((i + 0.5f) * cell, (j + 0.5f) * cell);
-                    walk[i, j] = Clearing(q) < ring || roads.Any(r => DistToPolyline(q, r.pts) < r.width / 2 + 1.0f);
-                }
+            var walk = WalkGrid(L, W, H);
+            int nx = walk.GetLength(0), ny = walk.GetLength(1);
             bool Edge(int i, int j)        // forest beside walkable ground (eight neighbours: no corner slips through)
             {
                 if (walk[i, j]) return false;
@@ -1061,6 +1054,63 @@ namespace MedievalKit
                     Wall(p0, p1, "Border");
                 }
             }
+        }
+
+        /// <summary>the walkable ground on a one-metre grid (cell (i, j) centred on (i + 0.5, j + 0.5) in plan metres): inside
+        /// the clearings up to the forest's `wallAt`, and a band along every road. Walls() walls its outline; the bake leaves
+        /// out the rest (<see cref="Outside"/>)</summary>
+        static bool[,] WalkGrid(JObject lay, float w, float h)
+        {
+            float ring = (float?)lay["forest"]?["wallAt"] ?? 1.08f;
+            var cs = Clearings(lay, w, h);
+            var rds = (lay["roads"] as JArray ?? new JArray()).Select(r => (pts: Spline(((JArray)r["points"]).Select(V).ToList()), width: (float?)r["width"] ?? 3f)).ToList();
+            int nx = Mathf.CeilToInt(w), ny = Mathf.CeilToInt(h);
+            var walk = new bool[nx, ny];
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                {
+                    var q = new Vector2(i + 0.5f, j + 0.5f);
+                    walk[i, j] = Union(q, cs) < ring || rds.Any(r => DistToPolyline(q, r.pts) < r.width / 2 + 1.0f);
+                }
+            return walk;
+        }
+
+        /// <summary>the ground beyond the walls, in plan rectangles (x, y, w, h), for the bake to leave out (KitNavBake marks
+        /// them Not Walkable): the one-metre cells off the walkable grid -- the walls' own cells too, so nothing is left on
+        /// their tops -- in runs along each row, joined north while a row repeats them; and the forest drawn round the map.
+        /// Without it the forest carried a navmesh of its own, bigger than the map's, for a spawn point by the wall to snap
+        /// to (cut off from the clearing) and a wander or a click to land on. Reads the layout, so it works on a map loaded
+        /// from its scene.</summary>
+        public List<Rect> Outside()
+        {
+            var lay = JObject.Parse(string.IsNullOrWhiteSpace(layout) ? "{}" : layout);
+            var size = lay["size"] as JArray;
+            float w = size != null ? (float)size[0] : 100f, h = size != null ? (float)size[1] : 100f;
+            float m = ((float?)lay["margin"] ?? 24f) + 8f;
+            var walk = WalkGrid(lay, w, h);
+            int nx = walk.GetLength(0), ny = walk.GetLength(1);
+            var o = new List<Rect>();
+            var open = new Dictionary<(int, int), Rect>();        // the runs still growing north, by their first and last cell
+            for (int j = 0; j <= ny; j++)
+            {
+                var next = new Dictionary<(int, int), Rect>();
+                for (int i = 0; j < ny && i < nx;)
+                {
+                    if (walk[i, j]) { i++; continue; }
+                    int i1 = i;
+                    while (i1 + 1 < nx && !walk[i1 + 1, j]) i1++;
+                    next[(i, i1)] = open.TryGetValue((i, i1), out var r) ? new Rect(r.x, r.y, r.width, r.height + 1) : new Rect(i, j, i1 - i + 1, 1);
+                    open.Remove((i, i1));
+                    i = i1 + 1;
+                }
+                o.AddRange(open.Values);
+                open = next;
+            }
+            o.Add(new Rect(-m, -m, w + 2 * m, m));                  // the forest round the map: south, north, west, east
+            o.Add(new Rect(-m, h, w + 2 * m, m));
+            o.Add(new Rect(-m, 0, m, h));
+            o.Add(new Rect(w, 0, m, h));
+            return o;
         }
     }
 }

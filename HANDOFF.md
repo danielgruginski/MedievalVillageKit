@@ -878,6 +878,23 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     hard to see"); a corridor run of one or two segments on an east or west side is always left open (its doorway sat
     at the run's end, pinched shut by the rock bulging in from the corner; the random draw is still made, so layouts
     stay as they were). MedievalSetting: BurntMarch and the HamletCellar chain rebuilt.
+86. 2026-10-09 (MedievalSetting's burnt march, the user: an orc swordsman a few metres from his archer "is trapped,
+    needs to rework the pathfinding over that region"). Cause: `ambush_rocks` point 0 sat in the invisible wall and
+    snapped to the forest's own navmesh beyond it (2/3 of the map's navmesh lay outside the walls); the melee orc only
+    notices along a complete path, so it never came. Kit changes: **the bake leaves out the ground beyond the walls**
+    (`KitVillage.Outside()`: the one-metre cells off the walls' grid, walls' own cells and the margin, as ~400 merged
+    rectangles -> Not Walkable ModifierBox sources in `KitNavBake.Build`; rooms, caves, chains untouched); **trees and
+    stumps get trunk colliders only** (`KitSolid.Trunk`: the burnt trees' / stump's export boxes -- their whole crown
+    or root spread, hollow to the bake -- dropped at build; capsules 0.45 / burnt tree 0.4, stump 0.5 / burnt stump
+    0.32; forest, scatter, undergrowth and layout props alike); **the walk test is loud** (problems logged as an error;
+    a marker in a cage is a prisoner, not a problem; `BuildVillage` runs it before the bake with `repair`: a cut-off
+    encounter point moves to the nearest reached spot within 3 m, half a metre clear, with a warning naming it);
+    **the bake reports islands** (`KitVillageTools.Islands`, warning for a spawn, marker or ground encounter point on
+    one; the breakables' carving switched off while it reads -- NavMeshObstacles carve in the editor too). Burnt march:
+    navmesh 39,025 -> 14,598 m2 (beyond the walls 25,496 -> 0), pieces 1,993 -> 32, the walked area +10%, burnt-tree
+    and stump top islands gone, the strip's necks under 0.5 m 7 -> 0; the point moved in `burntmarch_layout.py` to
+    (94, 72). BurntMarch and Northfields rebuilt, the other outdoor maps rebaked (their tree colliders change at their
+    next build); LEVEL_BUILDING 5.7 and 5.9.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

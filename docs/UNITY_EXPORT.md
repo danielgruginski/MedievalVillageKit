@@ -377,7 +377,9 @@ materials by name).
 - `KitVillageTools.BuildVillage(layout, scene)` (Tools > Medieval Kit > World > Build Village From Selected Layout)
   builds additively in a scene of its own, saves the ground's mesh, control map and material beside it, lights it
   like VK_ValleyTown, adds a camera at the start spawn and walk-tests it (`WalkVillage`: navmesh from the start
-  spawn; every spawn and marker reached, probes in the forest beyond the wall not).
+  spawn; every spawn and marker reached, probes in the forest beyond the wall not; problems logged as an error, an
+  encounter point cut off moved onto the ground nearby with a warning). Its bake leaves the ground beyond the walls
+  out (Not Walkable volumes) and reports the navmesh's islands (LEVEL_BUILDING 5.7, 5.9).
 - Verified 2026-10-02: MedievalSetting `Assets/MedievalKitWorld/Hamlet.unity` (140 x 160 m, 14 buildings, 3 exits):
   walk test ok, 7 spawns, 4 markers, 24 forest probes. Layout schema and rules: the package's
   `Documentation~/LEVEL_BUILDING.md` 5.7; example `Documentation~/examples/Hamlet_layout.json`.

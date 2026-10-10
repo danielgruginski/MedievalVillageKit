@@ -387,7 +387,11 @@ a margin of forest drawn beyond the map's edge so the view never ends in nothing
 spawns, markers and exits. Colliders: building walls, a building's own dressing outside them (barrels, tables and
 stools, troughs, hay, carts, its yard's fence, a lean-to, a bell tower; not its porch or gate) and props (`KitSolid.Box`:
 boxes over what one bumps into, the faces below 1.2 m part by part -- a signpost's post, not its arms), fences, tree
-trunks, the solid undergrowth and scatter (a round core for bushes and stumps, a box for rocks), and invisible walls:
+trunks, the solid undergrowth and scatter (a round core for bushes, a box for rocks), and invisible walls. Trees and
+stumps, in the forest, as scatter or as props, stand on their trunks only (`KitSolid.Trunk`: a capsule of 0.45 m, a
+burnt tree 0.4; a stump 0.5, a burnt stump 0.32); the box an interior prop's export brings (the burnt trees' and
+stump's, over the whole crown or root spread) is dropped at build, so the roots are walked over and the strips of
+burnt wood stay open. The walls are
 the outline of the walkable ground (the clearings up to `wallAt`, a little inside the forest, and a band along every
 road) found on a one-metre grid and walled a cell thick, so road junctions and glades of any shape close; and the map's
 border. Soft pieces stay walkable (plants, `Deco_` weeds and ivy, crops, flower boxes, chickens, ladders, overlays,
@@ -429,9 +433,14 @@ piers, decks, steps: `KitSolid.IsSoft`). The navmesh is baked from colliders, so
 - Organic comes from curves and turns: roads through 4-7 points, buildings at many angles, lumpy areas, stragglers;
   avoid placing things on a grid.
 
-**Checking.** `KitVillageTools.WalkVillage(village)` (run by `BuildVillage`): from the start spawn, every spawn and
-marker reachable, and points in the forest beyond the wall not; "ok" first when all is well. Then render it (6.4)
-from above and at the game's angle.
+**Checking.** `KitVillageTools.WalkVillage(village)` (run by `BuildVillage`): from the start spawn, every spawn,
+marker and encounter point on the ground reachable, and points in the forest beyond the wall not; "ok" first when all
+is well, and any problem logged as an error. A marker shut in a cage (a piece named `*Cage*`) is a prisoner and not a
+problem. `BuildVillage` repairs as it goes: an encounter point that is not reached (beside the wall, on an island: a
+creature put there never comes) moves to the nearest spot within 3 m on the reached ground, half a metre clear of
+everything, with a warning naming it ("ambush_rocks/Spawn_0 at (97, 73) not reached: moved 2.5 m to (95.1, 71.4)") -- move
+the layout's point too, so the next build needs no repair. The bake then lists the navmesh's islands (below, 5.9).
+Then render it (6.4) from above and at the game's angle.
 
 **Breakables.** A piece whose metadata has `vki_breakable` (`KitPiece.Get("vki_breakable")`, e.g. `Goblin_Gate`) blocks
 until the game breaks it; `vki_broken` names the piece to swap in at the same transform (`Goblin_Gate_Broken`). The
@@ -485,6 +494,16 @@ the project's default agent type (id 0) with the kit's walker (radius 0.3, heigh
 NavMeshAgent on its default type and give it radius 0.3. Breakables (`vki_breakable`) carve themselves out with a
 NavMeshObstacle each until the game swaps the broken piece in. Put a walker on a spot with `KitTravel.Place` (it warps an
 agent). The walk tests switch the carving off while they run.
+
+An outdoor map's bake leaves out everything beyond its invisible walls: `KitVillage.Outside()` (the one-metre cells off
+the walls' grid, the walls' own cells and the forest drawn round the map, as rectangles) goes in as Not Walkable volumes,
+so the forest carries no navmesh for a spawn by the wall to snap to, or a wander or a click to land on (before, it was
+bigger than the map's own: two thirds of the burnt march's). Interiors, caves and chains are baked as before. The bake
+of an outdoor map also reports its islands (`KitVillageTools.Islands`): the pieces of navmesh apart from the one walked
+from the start spawn, on the ground (inside buildings, a cage, the siege tower, a pocket among trunks) and on top of
+things (rocks, roofs, walkways), with the largest; a spawn, marker or encounter point whose nearest navmesh within
+1.5 m (where a creature is put down) is an island is a warning, unless it is meant to be there (an encounter point
+lifted off the ground: archers on a walkway or a tower, a lookout; a marker in a cage).
 
 **See-through.** The kit's shader (KitLit, every kit material) can open a hole round the game's walker: what stands
 between the camera and the walker (in a cone to a disc round its chest, above its knees, and in front of it along the

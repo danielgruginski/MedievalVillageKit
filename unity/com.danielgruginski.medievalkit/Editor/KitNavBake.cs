@@ -14,7 +14,8 @@ namespace MedievalKit.Editor
     /// tests see them (doors that open and breakables passable; triggers ignored), saved beside the scene as
     /// &lt;scene&gt;_NavMesh.asset, and a KitNavMesh root that adds it at runtime. Breakables (vki_breakable) carve themselves
     /// out with NavMeshObstacles until the game breaks them. A chain gets one surface over all its pieces, in its play
-    /// scene. Outdoor maps, rooms and chains bake when they are built; the menu bakes scenes made before.
+    /// scene. An outdoor map's ground beyond its walls is left out, and its bake reports the islands (KitVillageTools.Islands).
+    /// Outdoor maps, rooms and chains bake when they are built; the menu bakes scenes made before.
     /// </summary>
     public static class KitNavBake
     {
@@ -40,6 +41,19 @@ namespace MedievalKit.Editor
             NavMeshBuilder.CollectSources(bounds, ~0, NavMeshCollectGeometry.PhysicsColliders, 0, new List<NavMeshBuildMarkup>(), src);
             src.RemoveAll(s => s.component == null || !roots.Any(r => s.component.transform.IsChildOf(r.transform)) ||
                                (s.component is Collider c && c.isTrigger) || Passable(s.component));
+            // an outdoor map: the ground beyond its walls Not Walkable (KitVillage.Outside, rows of one-metre cells), so the
+            // forest carries no navmesh for a spawn to snap to or a wander or a click to land on; floor to sky
+            foreach (var v in roots.SelectMany(r => r.GetComponentsInChildren<KitVillage>()))
+            {
+                float mid = bounds.center.y - v.transform.position.y, tall = bounds.size.y + 4f;
+                foreach (var rc in v.Outside())
+                    src.Add(new NavMeshBuildSource
+                    {
+                        shape = NavMeshBuildSourceShape.ModifierBox, area = 1,
+                        transform = v.transform.localToWorldMatrix * Matrix4x4.Translate(KitVillage.Local(rc.center.x, rc.center.y, mid)),
+                        size = new Vector3(rc.width, tall, rc.height),
+                    });
+            }
             var data = NavMeshBuilder.BuildNavMeshData(KitNavMesh.Settings(voxel), src, bounds, Vector3.zero, Quaternion.identity);
             if (data == null) note = "the build failed";
             return data;
@@ -94,7 +108,10 @@ namespace MedievalKit.Editor
             Holder(scene).data = saved;
             int carved = CarveBreakables(roots);
             EditorSceneManager.MarkSceneDirty(scene);
-            return $"{scene.name}: navmesh baked ({voxel} m voxels{(carved > 0 ? $", {carved} breakable box carved" : "")})";
+            string line = $"{scene.name}: navmesh baked ({voxel} m voxels{(carved > 0 ? $", {carved} breakable box carved" : "")})";
+            foreach (var v in roots.SelectMany(r => r.GetComponentsInChildren<KitVillage>()))
+                line += "\n  " + KitVillageTools.Islands(v, saved);
+            return line;
         }
 
         static bool OpenByUser(string path, out Scene s)
