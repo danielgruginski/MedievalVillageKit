@@ -404,6 +404,8 @@ piers, decks, steps: `KitSolid.IsSoft`). The navmesh is baked from colliders, so
 | `name`, `seed`, `start` | the root's name, the random seed, the spawn the walk test starts from |
 | `size`, `margin` | the map in metres (walkable, walled); forest drawn this far beyond it (24) |
 | `relief`, `rim` | the ground's gentle relief (m), how much it rises into the forest (m) |
+| `mounds` | `[{centre, radius: r or [rx, ry], rot, height, top}]`: the ground raised into mounds (barrows, knolls): an ellipse turned `rot` degrees, rising smoothly from its rim to a crown flat over `top` of its radius (0.3); part of the ground mesh, so they take its grass and paint and the walk test and navmesh follow them. A building at a mound's foot levels its pad as usual: it cuts a forecourt into the mound (a barrow's way in: an `Entrance_CaveMouth` set into its flank) |
+| `terrain` | `{origin, areas, ramps, dress}`: ground raised in 1.5 m tiers with cliff sides, from the kit's terrain tiles (`SM_VKT_*`, as the Blender valley's): see **Terrain** below |
 | `clearing` | `{centre, radius: [rx, ry], lumps}`: the lumpy oval the forest surrounds |
 | `roads` | `[{id, width, surface: dirt / cobble, points: [[x, y], ...]}]`: smooth curves through the points; run them past the map's edge for exits |
 | `areas` | `[{id, centre, radius, lumps, surface}]`: a green, a farmyard (lumpy ovals painted cobble or dirt) |
@@ -448,6 +450,44 @@ walk test counts breakables as broken (what lies behind them must be reachable),
 whole and lists what they shut off: "behind the breakables (...): 16 of 17 -- ...". A breakable that shuts nothing
 off ("there is a way round") does not keep anyone out: close the gaps (a palisade ring, the forest's wall). The
 warcamp's gate shuts off the whole camp from the road (its cave way in arrives inside, from the tunnels).
+
+**Terrain** (`KitVillage.Terrain.cs`): terraces, plateaus and knolls with rock cliffs, built from the kit's dual-grid
+terrain tiles as `vk_terrain` lays them in Blender. The map gets a grid of 3 m cells (from `origin`, default the map's
+south-west corner); each cell has a level (0: the ground; 1 = 1.5 m up, 2 = 3 m, ...).
+```json
+"terrain": {
+  "areas": [
+    {"rect": [12, 18, 48, 39], "level": 1},
+    {"ellipse": {"centre": [30, 30], "radius": [9, 6], "lumps": 0.1}, "level": 2},
+    {"poly": [[42, 30], [48, 30], [48, 36], [42, 36]], "level": 3, "stiff": true}
+  ],
+  "ramps": [
+    {"at": [19.5, 16.5], "dir": "N"},
+    {"at": [37.5, 16.5], "dir": "N", "width": 2, "stair": true},
+    {"at": [31.5, 22.5]}
+  ],
+  "dress": 1.0
+}
+```
+- `areas`: a cell takes the level of the last area whose shape holds its middle (so a later area can raise a knoll on a
+  terrace, or cut a hollow back down to 0). `stiff`: square-cornered cliffs (the tiles' `Sq` variants: built-up ground).
+- `ramps`: `at` is a point in the low cell; it climbs one level towards `dir` (N/E/S/W; left out: towards the neighbour
+  one level up). `width` cells across (centred), `stair` dressed stone steps with flanking walls instead of an earth
+  ramp, `walled` a ramp with built walls instead of earth banks (a paved road). A ramp climbs one step only; for two
+  levels put a ramp on the first tier's edge too.
+- `dress` (1): boulders sunk in the cliffs, plants and stones on the lips, lip grass on the ledges of stacked cliffs,
+  rubble and plants at the foot, stones and plants beside the ramps (0: none).
+- The tiles are merged into one mesh (`<Map>_Terrain.asset` beside the ground) in the ground's own space with its
+  material: the grass, the roads and the paving painted into the control map carry on over the tops. The ground mesh
+  stays the level-0 ground, flattened within 3.5 m of a cliff's foot and sunk under the raised cells; `Height`
+  (everything placed, markers, encounter points) stands on the tiers; grass grows on the tops (not on the faces or the
+  stairs); the navmesh walks the tops and the ramps, and the ground under raised cells is Not Walkable.
+- Keep the camera in mind: a cliff facing south (towards the camera) shows its whole rock face; one facing east or
+  west shows as an edge, one facing north hides behind its top. Raise ground on the north side of what you want seen
+  climbing up, and put ramps where the player is meant to go up.
+- Keep terrain inside the clearing, off mounds and away from the forest's rising rim (the ground there would show
+  through the tops), and give every raised area a ramp unless it is meant to be out of reach (the bake lists it as an
+  island "on top of things").
 
 A building's `door` is `{target, arrive, prompt}`: the link takes the building's id, a spawn of that id stands 1.8 m
 out from the door (where one comes back out), and `arrive` names the spawn inside the target (an interior's front

@@ -53,6 +53,7 @@ namespace MedievalKit
         readonly List<(Vector2 c, Vector2 r, float lumps, string surface, int seed)> areas = new List<(Vector2, Vector2, float, string, int)>();
         readonly Dictionary<string, (Transform t, Vector2 at, float rot)> builtById = new Dictionary<string, (Transform, Vector2, float)>();
         readonly List<(Vector2 c, Vector2 r, float lumps, int seed)> clears = new List<(Vector2, Vector2, float, int)>();
+        readonly List<(Vector2 c, Vector2 r, float rot, float h, float top)> mounds = new List<(Vector2, Vector2, float, float, float)>();
 
         // ------------------------------------------------------------------ plan space
         public static Vector3 Local(float x, float y, float h) => new Vector3(-x, h, -y);
@@ -88,9 +89,18 @@ namespace MedievalKit
             int ai = 0;
             foreach (var a in L["areas"] as JArray ?? new JArray())
                 areas.Add((V(a["centre"]), V(a["radius"]), (float?)a["lumps"] ?? 0.15f, (string)a["surface"] ?? "dirt", 31 + ai++));
+            mounds.Clear();
+            foreach (var m in L["mounds"] as JArray ?? new JArray())
+            {
+                var r = m["radius"];
+                var rv = r is JArray ? V(r) : new Vector2((float?)r ?? 6f, (float?)r ?? 6f);
+                mounds.Add((V(m["centre"]), rv, (float?)m["rot"] ?? 0f, (float?)m["height"] ?? 2f, Mathf.Clamp((float?)m["top"] ?? 0.3f, 0f, 0.9f)));
+            }
+            ParseTerrain();                  // the tiers, before anything stands on them
 
             Buildings();                     // first: their pads shape the ground
             Ground();
+            Terrain();                       // the terrain tiles over the ground (KitVillage.Terrain.cs)
             Gardens();
             Props();
             Fences();
@@ -251,13 +261,37 @@ namespace MedievalKit
             float relief = (float?)L["relief"] ?? 0.3f, rim = (float?)L["rim"] ?? 2.5f;
             float h = relief * ((Noise(q.x, q.y, 23f) - 0.5f) * 2f + (Noise(q.x, q.y, 7f) - 0.5f) * 0.5f);
             h += rim * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.95f, 1.35f, Clearing(q)));
+            foreach (var m in mounds) h += Mound(q, m);
             return h;
         }
 
-        /// <summary>the ground's height: natural, levelled to each building's pad near it</summary>
+        /// <summary>a mound's rise at q (a barrow, a knoll): an ellipse turned by rot degrees, rising smoothly from its rim
+        /// to a rounded crown that is flat over `top` of its radius</summary>
+        static float Mound(Vector2 q, (Vector2 c, Vector2 r, float rot, float h, float top) m)
+        {
+            var d = Rot(q - m.c, -m.rot);
+            float e = Mathf.Sqrt((d.x / m.r.x) * (d.x / m.r.x) + (d.y / m.r.y) * (d.y / m.r.y));
+            if (e >= 1f) return 0f;
+            float t = Mathf.Clamp01((1f - e) / (1f - m.top));
+            return m.h * t * t * (3f - 2f * t);
+        }
+
+        /// <summary>the natural height on the terrain: a raised cell's tier, else the natural ground, flattened towards
+        /// a cliff's foot</summary>
+        float Base(Vector2 q)
+        {
+            if (!HasTerrain) return Natural(q);
+            int l = LevelAt(q);
+            if (l > 0) return l * Tier;
+            float h = Natural(q), w = TerrainNear(q);
+            return w > 0f ? Mathf.Lerp(h, 0f, w) : h;
+        }
+
+        /// <summary>the ground's height: natural (on the terrain's tiers), levelled to each building's pad near it</summary>
         public float Height(Vector2 q)
         {
-            float h = Natural(q);
+            float h = Base(q);
+            if (HasTerrain && LevelAt(q) > 0) return h;                       // a tier is flat
             foreach (var (poly, ph) in pads)
             {
                 float d = DistToPoly(q, poly);
@@ -279,7 +313,7 @@ namespace MedievalKit
                 {
                     var o = new Vector2(Mathf.Min(GW, i * Res), Mathf.Min(GH, j * Res));
                     var q = o - new Vector2(M, M);
-                    verts[j * nx + i] = Local(o.x, o.y, Height(q));
+                    verts[j * nx + i] = Local(o.x, o.y, HasTerrain && LevelAt(q) > 0 ? 0f : Height(q));   // (under a tier: hidden)
                     float shade = Mathf.Lerp(1f, 0.82f, Mathf.InverseLerp(1.0f, 1.25f, Clearing(q)));     // the forest floor in shade
                     cols[j * nx + i] = new Color(shade, 0f, 0f, 0f);
                 }
@@ -452,7 +486,7 @@ namespace MedievalKit
                 }
                 var (box, walls, front) = MeasureWalls(inst);
                 float deg = Facing(b, at, front);
-                float h = Natural(at);
+                float h = Base(at);
                 inst.transform.localPosition = Local(at.x, at.y, h);
                 inst.transform.localRotation = Turn(deg);
                 var poly = Corners(box, at, deg);

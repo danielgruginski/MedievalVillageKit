@@ -462,8 +462,20 @@ namespace MedievalKit
                 {
                     int budget = 1 + Mathf.Max(0, rm.depth) + (rm == exitRoom ? 3 : 0);
                     var free = cells.Where(q => Free(q) && !doorCells.Contains(q)).ToList();
+                    // a small room its set pieces filled (the floor round them is kept clear, so none is free): that open
+                    // floor instead, off the doorways if it can be, its first spot the one nearest the middle (no draw:
+                    // the rest of the level comes out as before)
+                    bool tight = free.Count == 0;
+                    if (tight)
+                    {
+                        bool Floor((int, int) q) => !doorCells.Contains(q) && !stairCells.Contains(q) && (!codes.TryGetValue(q, out var cc) || cc == "..");
+                        bool ByDoor((int, int) q) => doorCells.Any(d => Mathf.Abs(d.Item1 - q.Item1) + Mathf.Abs(d.Item2 - q.Item2) <= 1);
+                        free = cells.Where(q => Floor(q) && !ByDoor(q)).ToList();
+                        if (free.Count == 0) free = cells.Where(Floor).ToList();
+                    }
                     var pts = new List<(int, int)>();
-                    if (free.Count > 0) pts.Add(free[rnd.Next(free.Count)]);
+                    float mc = 0.5f * (rm.c0 + rm.c1), mr = 0.5f * (rm.r0 + rm.r1);
+                    if (free.Count > 0) pts.Add(tight ? free.OrderBy(q => Mathf.Abs(q.Item1 - mc) + Mathf.Abs(q.Item2 - mr)).First() : free[rnd.Next(free.Count)]);
                     while (pts.Count < Mathf.Min(free.Count, Mathf.Min(6, 1 + budget)))
                         pts.Add(free.OrderByDescending(q => pts.Min(p => Mathf.Abs(p.Item1 - q.Item1) + Mathf.Abs(p.Item2 - q.Item2))).First());
                     encounters.Add(new JObject

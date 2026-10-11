@@ -68,6 +68,7 @@ namespace MedievalKit.Editor
                 if (g["fence"] != null) yield return (string)g["fence"];
                 if (g["gatePiece"] != null) yield return (string)g["gatePiece"];
             }
+            if (L["terrain"] != null) foreach (var n in KitVillage.TerrainPieces()) yield return n;   // its tiles and dressing
         }
 
         /// <summary>a layout prop's dressing (KitVillage.Dressings, unless "dress": false)</summary>
@@ -432,6 +433,7 @@ namespace MedievalKit.Editor
                     AssetDatabase.CreateAsset(o, p);
                 }
                 Save(v.GroundMesh, $"{mapName}_Ground.asset");
+                Save(v.TerrainMesh, $"{mapName}_Terrain.asset");
                 Save(v.ControlMap, $"{mapName}_GroundControl.asset");
                 Save(v.GroundMaterialInstance, $"{mapName}_Ground.mat");
                 Save(v.GrassMaterialInstance, $"{mapName}_Grass.mat");

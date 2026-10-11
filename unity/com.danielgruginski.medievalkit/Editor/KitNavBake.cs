@@ -53,6 +53,15 @@ namespace MedievalKit.Editor
                         transform = v.transform.localToWorldMatrix * Matrix4x4.Translate(KitVillage.Local(rc.center.x, rc.center.y, mid)),
                         size = new Vector3(rc.width, tall, rc.height),
                     });
+                // the ground under the terrain's raised cells, up to a metre above it (a tall hill's hollow inside)
+                float bot = bounds.min.y - v.transform.position.y - 1f, top = 1f;
+                foreach (var rc in v.UnderTerrain())
+                    src.Add(new NavMeshBuildSource
+                    {
+                        shape = NavMeshBuildSourceShape.ModifierBox, area = 1,
+                        transform = v.transform.localToWorldMatrix * Matrix4x4.Translate(KitVillage.Local(rc.center.x, rc.center.y, (bot + top) / 2f)),
+                        size = new Vector3(rc.width, top - bot, rc.height),
+                    });
             }
             var data = NavMeshBuilder.BuildNavMeshData(KitNavMesh.Settings(voxel), src, bounds, Vector3.zero, Quaternion.identity);
             if (data == null) note = "the build failed";

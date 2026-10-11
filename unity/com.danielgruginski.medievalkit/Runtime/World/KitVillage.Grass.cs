@@ -14,7 +14,7 @@ namespace MedievalKit
         /// Grass blades over the grass (layout "grass": false turns it off; {spacing, height: [min, max], edge, shadows}):
         /// a clump every `spacing` (0.5 m) on a jittered grid, thinning where the control map turns to dirt or paving, out
         /// at the clearing's edge (edge 1.12: a little into the forest) and on steep ground, never inside a building, prop,
-        /// fence or tree; standing on the ground mesh itself, taller in patches, darker in the forest's shade. Written as
+        /// fence or tree; standing on the ground mesh itself (or the terrain's tiers), taller in patches, darker in the forest's shade. Written as
         /// a clump list on a <see cref="KitGrass"/> beside the ground, which culls and draws the blades on the GPU.
         /// </summary>
         void Grass(Material groundMat)
@@ -60,9 +60,13 @@ namespace MedievalKit
                     w *= 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.12f, 0.5f, Mathf.Max(Ctl(q, 0), Ctl(q, 1) * 1.5f)));
                     if (w <= 0.02f || Rn() > w) continue;
                     if (blocked.Any(b => q.x >= b.min.x && q.y >= b.min.y && q.x <= b.max.x && q.y <= b.max.y && InPoly(q, b.poly))) continue;
+                    if (OnStair(q)) continue;                                             // a terrain's flight of stairs
                     var top = transform.TransformPoint(Local(q.x, q.y, 50f));
-                    if (!ground.Raycast(new Ray(top, -transform.up), out var hit, 200f)) continue;
-                    if (Vector3.Dot(hit.normal, transform.up) < 0.82f) continue;          // too steep
+                    var ray = new Ray(top, -transform.up);                                 // the terrain's tiers first, then the ground
+                    RaycastHit hit = default;
+                    bool onTier = terrainCollider != null && terrainCollider.Raycast(ray, out hit, 200f);
+                    if (!onTier && !ground.Raycast(ray, out hit, 200f)) continue;
+                    if (Vector3.Dot(hit.normal, transform.up) < (onTier ? 0.7f : 0.82f)) continue;   // too steep (a ramp's earth bank is turf; a cliff's face is rock)
                     var root = transform.InverseTransformPoint(hit.point) - origin;
                     float shade = Mathf.Lerp(1f, 0.82f, Mathf.InverseLerp(1.0f, 1.25f, c));
                     float tall = Mathf.InverseLerp(0.6f, 1.25f, Mathf.Lerp(0.75f, 1.2f, Noise(q.x, q.y, 6f)) * Mathf.Lerp(0.8f, 1f, w));

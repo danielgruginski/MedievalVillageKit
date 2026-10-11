@@ -895,6 +895,36 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     and stump top islands gone, the strip's necks under 0.5 m 7 -> 0; the point moved in `burntmarch_layout.py` to
     (94, 72). BurntMarch and Northfields rebuilt, the other outdoor maps rebaked (their tree colliders change at their
     next build); LEVEL_BUILDING 5.7 and 5.9.
+87. 2026-10-11 (MedievalSetting's barrows, the user: "add zombies as creatures in the barrows"). **`mounds`**, a new
+    `KitVillage` layout key: `{centre, radius (one number or [rx, ry]), rot, height, top}` raised into the ground as
+    smooth domes (an ellipse, flat over the inner `top` share, smoothstepped out to the rim; added to `Natural()`, so
+    clearings, roads and pads still flatten over them); LEVEL_BUILDING's layout key table. And **`KitDungeonGenerator`'s
+    spawn points in a room its set pieces filled**: the set pieces reserve the floor round them, so a small dressed room
+    (the Crypt lair with its chest shrine, a 3 x 3 crypt, a shrine) had no free cell and its encounter came out with no
+    points (the game's spawner then spawns nothing: the barrow's boss was missing). Such a room now takes its open floor
+    (not door or stair cells, off the doorways if it can), its first spot the one nearest the middle, without a random
+    draw (the rest of a level comes out as before; no other built record had an empty encounter). MedievalSetting:
+    ShepherdDowns (mounds) and the Hollow Barrow (Crypt, seed 117) built.
+88. 2026-10-11 (the user: the terrain tiles "as an extra tool for building things ... to add some terrain variation on
+    the maps"): **`terrain` on outdoor maps** (`KitVillage.Terrain.cs`, LEVEL_BUILDING 5.7 "Terrain"). The exported
+    `SM_VKT_*` tiles had no Unity user before. The layout's `terrain` gives a 3 m cell grid levels (1.5 m tiers) from
+    `areas` (rect / ellipse / poly, the last area over a cell's middle wins, `stiff` for the `Sq` corners), `ramps`
+    (a low cell climbing towards its higher neighbour; `width`, `stair`, `walled`) and `dress`. Laid as `tk_tiles` does:
+    the dual grid's corner takes its four cells' levels, a Full tile at their lowest (above 0), a cliff layer per level
+    above (MS table, quarter turns -> -90 deg about y), `pick_var` weights by a port of `hash32`, `ramp_override` for
+    Ramp/Stair Half E/W and Mid, a stacked identical layer without its skirt (faces below -2.5 m dropped). The FBX tiles'
+    axes already match plan space ((x, y, z) Blender -> (-x, z, -y), as `KitVillage.Local`). The tiles are merged into
+    one mesh in the ground object's space (the terrain shader projects grass and the control map in object space, so
+    separate tile objects would each shift the pattern), sharing the ground's material instance (the stairs keep
+    `M_VKT_Stair`), with a MeshCollider; saved as `<Map>_Terrain.asset`. `tk_cliff_dress` and `tk_ramp_dress` ported
+    (boulders, lip pieces, lip grass on middle ledges, rubble and plants at the foot; stones and plants at ramp joins).
+    Heights: `Base()` = a raised cell's tier, else `Natural` flattened within 3.5 m of raised cells (`TerrainNear`);
+    `Height` and the buildings' pads use it; the ground mesh sinks to 0 under raised cells. Grass raycasts the terrain
+    first (blades on the tops and on ramp banks up to Nz 0.7, none on faces or stairs: `OnStair`). `KitNavBake` adds Not
+    Walkable boxes under raised cells up to 1 m (`UnderTerrain`). Checked on a test map (every case, stacked tiers,
+    stiff corners, ramp, two-wide stair, ramp to a knoll) and MedievalSetting's ShepherdDowns (knoll, two terraces, a
+    shelf). Known: the half-ramp tiles show a small dark sliver at one cliff join (in the piece itself); faces facing
+    east or west read as edges and north faces hide behind their tops from the game camera.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
