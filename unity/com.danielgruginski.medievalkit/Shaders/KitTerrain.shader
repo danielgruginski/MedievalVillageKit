@@ -32,6 +32,7 @@ Shader "MedievalKit/KitTerrain"
         _Rough("Roughness (paving / curb)", Range(0, 1)) = 0.8
         _BumpStrength("Bump Strength (paving / curb)", Range(0, 1)) = 0.5
         _Alpha("Alpha (water)", Range(0, 1)) = 0.9
+        _RimTint("Lip Tint (terrain: rgb, a = strength)", Vector) = (0.66, 0.76, 0.38, 0.1)
         [HideInInspector] _BaseMap("", 2D) = "white" {}
         [HideInInspector] _BaseColor("", Color) = (1, 1, 1, 1)
         [HideInInspector] _Cutoff("", Float) = 0.5
@@ -155,7 +156,7 @@ Shader "MedievalKit/KitTerrain"
                 Layer(col, hgt, S(_SandMap, p4.xy).rgb, S(_SandH, p4.xy).r, ctl.b, 0.50, mac.b, smoothstep(0.2, 0.45, A), false);
                 Layer(col, hgt, S(_DirtMap, p4.xy).rgb, S(_DirtH, p4.xy).r, ctl.r, 0.45, mac.b, 0, true);
                 Layer(col, hgt, S(_CobbleMap, p4.xy).rgb, S(_CobbleH, p4.xy).r, ctl.g, 0.45, mac.b, 0, true);
-                col = lerp(col, float3(0.66, 0.76, 0.38), RIM * 0.1);
+                col = lerp(col, _RimTint.rgb, RIM * _RimTint.a);       // the tiers' lips (a map of its own: a burnt land's ash)
                 // cliffs: two biplanar samples blended by slow noise, rock from above on up-facing faces, tone drift
                 float3 clC = SideSample(TEXTURE2D_ARGS(_CliffMap, sampler_trilinear_repeat), p, 1.0 / 6.0, ax, ay).rgb;
                 float clH = SideSample(TEXTURE2D_ARGS(_CliffH, sampler_trilinear_repeat), p, 1.0 / 6.0, ax, ay).r;

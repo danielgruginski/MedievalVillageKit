@@ -474,9 +474,19 @@ south-west corner); each cell has a level (0: the ground; 1 = 1.5 m up, 2 = 3 m,
 - `ramps`: `at` is a point in the low cell; it climbs one level towards `dir` (N/E/S/W; left out: towards the neighbour
   one level up). `width` cells across (centred), `stair` dressed stone steps with flanking walls instead of an earth
   ramp, `walled` a ramp with built walls instead of earth banks (a paved road). A ramp climbs one step only; for two
-  levels put a ramp on the first tier's edge too.
+  levels put a ramp on the first tier's edge too. Put a ramp in the middle of a straight step at least 3 cells long:
+  ramp pieces are laid only on the straight (Edge) tiles at the two grid points of its step, so each side neighbour of
+  the low cell must continue the step (at or below its level, with a cell one level up ahead of it) or be a ramp the
+  same way; at a corner only half a ramp is laid and an open wedge shows.
 - `dress` (1): boulders sunk in the cliffs, plants and stones on the lips, lip grass on the ledges of stacked cliffs,
-  rubble and plants at the foot, stones and plants beside the ramps (0: none).
+  rubble and plants at the foot, stones, plants and a boulder on each earth bank beside the ramps (0: none). Boulders
+  sink only into south faces; the dressing keeps off ramps and out of what stands on the map. Forest trees keep 14 m
+  clear in front of a south face (a crown at the game camera's angle covers the ground 0.84 x its height north of the
+  trunk), 3 m past its ends, 4 m back from a top's own south lip and off the ground hidden behind a north edge;
+  bushes and scatter keep off that hidden ground too. Explicit `trees` and props stand where the layout puts them, so
+  keep those off lips and out of the view of the faces yourself. Grass grows on the tops and ramps, not on the faces.
+  A map's terrain material can tint the tiers' lip band (`_RimTint`: rgb and strength; the kit's lime at 0.1, Burnt
+  March a dark ash at 0.5).
 - The tiles are merged into one mesh (`<Map>_Terrain.asset` beside the ground) in the ground's own space with its
   material: the grass, the roads and the paving painted into the control map carry on over the tops. The ground mesh
   stays the level-0 ground, flattened within 3.5 m of a cliff's foot and sunk under the raised cells; `Height`
@@ -484,7 +494,9 @@ south-west corner); each cell has a level (0: the ground; 1 = 1.5 m up, 2 = 3 m,
   stairs); the navmesh walks the tops and the ramps, and the ground under raised cells is Not Walkable.
 - Keep the camera in mind: a cliff facing south (towards the camera) shows its whole rock face; one facing east or
   west shows as an edge, one facing north hides behind its top. Raise ground on the north side of what you want seen
-  climbing up, and put ramps where the player is meant to go up.
+  climbing up, and put ramps where the player is meant to go up (a ramp on a south face shows its climb; one on an
+  east or west face reads as a gap in the edge). A single 1.5 m band reads like a kerb from the game camera: give
+  the faces you want noticed a second level set back behind the first.
 - Keep terrain inside the clearing, off mounds and away from the forest's rising rim (the ground there would show
   through the tops), and give every raised area a ramp unless it is meant to be out of reach (the bake lists it as an
   island "on top of things").

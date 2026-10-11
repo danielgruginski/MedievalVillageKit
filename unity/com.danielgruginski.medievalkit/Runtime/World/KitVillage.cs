@@ -105,6 +105,7 @@ namespace MedievalKit
             Props();
             Fences();
             Trees();
+            DressTerrain();                  // the cliffs' and ramps' dressing, clear of what stands there now
             Forest();
             Scatter();
             Markers();
@@ -497,7 +498,9 @@ namespace MedievalKit
                 float wallAt = (float?)L["forest"]?["wallAt"] ?? 1.08f;
                 if (poly.Any(c => Clearing(c) > wallAt)) notes.Add($"{id} reaches past the forest's wall (move it in or widen the clearing)");
                 occupied.Add((poly, id));
-                pads.Add((Corners(box, at, deg, 1.2f), h));
+                // its pad levels the ground round it -- not one on a terrain tier (the tier is flat; easing the ground
+                // below up to it would bury the cliff's foot and bank a second way up)
+                if (!HasTerrain || LevelAt(at) == 0) pads.Add((Corners(box, at, deg, 1.2f), h));
                 builtById[id] = (inst.transform, at, deg);
                 AddBox(inst, walls, h: 4f, inset: 0.1f);
                 Dress(inst, walls);
@@ -825,6 +828,7 @@ namespace MedievalKit
             if (keepBuilt < 0) keepBuilt = keep;
             if (!margin && (q.x < 0.5f || q.y < 0.5f || q.x > W - 0.5f || q.y > H - 0.5f)) return false;
             if (margin && (q.x < -M || q.y < -M || q.x > W + M || q.y > H + M)) return false;
+            if (NearCliff(q, 1.6f)) return false;                              // off the terrain's cliff lines and ramps
             foreach (var rd in roads) if (DistToPolyline(q, rd.pts) < rd.width / 2 + keep) return false;
             foreach (var a in areas) if (Blob(q, a.c, a.r, a.lumps, a.seed) < 1.05f + keep / Mathf.Max(1f, Mathf.Min(a.r.x, a.r.y))) return false;
             foreach (var (poly, _) in occupied) if (DistToPoly(q, poly) < keepBuilt) return false;
@@ -874,7 +878,7 @@ namespace MedievalKit
             var trees = Weights(f["species"]);
             if (trees.Count == 0) return;
             float keepRoad = (float?)f["keepRoad"] ?? 2.5f, keepBuilt = (float?)f["keepBuilt"] ?? 4.5f;
-            var spots = Darts(q => Clearing(q) > EdgeAt(q, edge) && Free(q, keepRoad, keepBuilt, margin: true), spacing, 90000, M);
+            var spots = Darts(q => Clearing(q) > EdgeAt(q, edge) && Free(q, keepRoad, keepBuilt, margin: true) && !Shades(q), spacing, 90000, M);
             foreach (var q in spots)
             {
                 float s = 0.85f + (float)rnd.NextDouble() * 0.35f;
@@ -886,13 +890,13 @@ namespace MedievalKit
             {
                 float us = (float?)f["undergrowthSpacing"] ?? 2.6f;
                 var near = spots;
-                foreach (var q in Darts(q => Clearing(q) > EdgeAt(q, edge) - 0.08f && q.x > -4 && q.y > -4 && q.x < W + 4 && q.y < H + 4 && Free(q, 1.2f, 1.8f, margin: true) && near.All(t => (t - q).sqrMagnitude > 1.2f), us, 30000, 4f))
+                foreach (var q in Darts(q => Clearing(q) > EdgeAt(q, edge) - 0.08f && q.x > -4 && q.y > -4 && q.x < W + 4 && q.y < H + 4 && Free(q, 1.2f, 1.8f, margin: true) && !HidesFoot(q, 0.5f) && near.All(t => (t - q).sqrMagnitude > 1.2f), us, 30000, 4f))
                     KitSolid.Nature(Place(natureT, Pick(under), q, (float)rnd.NextDouble() * 360f, 0.8f + (float)rnd.NextDouble() * 0.4f));
             }
             // stragglers: single trees and pairs out in the clearing near its edge, so the forest frays instead of
             // ending on a line
             int strag = (int?)f["stragglers"] ?? 12;
-            var lone = Darts(q => { float c = Clearing(q); return c > 0.72f && c < EdgeAt(q, edge) - 0.04f && Free(q, keepRoad + 1f, keepBuilt + 2f); }, 7f, 20000)
+            var lone = Darts(q => { float c = Clearing(q); return c > 0.72f && c < EdgeAt(q, edge) - 0.04f && Free(q, keepRoad + 1f, keepBuilt + 2f) && !Shades(q); }, 7f, 20000)
                 .OrderBy(_ => rnd.Next()).Take(strag).ToList();
             foreach (var q in lone)
             {
@@ -909,7 +913,7 @@ namespace MedievalKit
                 var ws = Weights(s["pieces"]);
                 int count = (int?)s["count"] ?? 20;
                 float keep = (float?)s["keep"] ?? 1.5f, spacing = (float?)s["spacing"] ?? 2.5f;
-                var spots = Darts(q => Clearing(q) < 0.95f && Free(q, keep), spacing, 20000).OrderBy(_ => rnd.Next()).Take(count);
+                var spots = Darts(q => Clearing(q) < 0.95f && Free(q, keep) && !HidesFoot(q, 0.5f), spacing, 20000).OrderBy(_ => rnd.Next()).Take(count);
                 foreach (var q in spots) KitSolid.Nature(Place(natureT, Pick(ws), q, (float)rnd.NextDouble() * 360f, 0.8f + (float)rnd.NextDouble() * 0.4f));
             }
         }

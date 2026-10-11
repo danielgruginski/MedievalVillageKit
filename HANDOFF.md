@@ -925,6 +925,40 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     stiff corners, ramp, two-wide stair, ramp to a knoll) and MedievalSetting's ShepherdDowns (knoll, two terraces, a
     shelf). Known: the half-ramp tiles show a small dark sliver at one cliff join (in the piece itself); faces facing
     east or west read as edges and north faces hide behind their tops from the game camera.
+89. 2026-10-11 (MedievalSetting's cliffs + resource zones pass: all 8 outdoor maps got terrain; found by its reviewers):
+    **dressing keeps off the cliffs** -- `Free()` (forest, undergrowth, stragglers, scatter) now refuses a spot within
+    1.6 m of a cliff line or a ramp (`NearCliff`), so no tree stands on a lip or a bush in a face (maps without terrain
+    are unchanged; with terrain the darts' draws shift, so the forest and scatter of those maps reshuffle); **a building
+    on a tier levels no pad** -- its pad (1.5 m up) used to ease the level-0 ground round it up towards it, burying the
+    cliff's foot and banking a second way onto the tier (Greywall's motte, the windmill knoll). And a rule found there:
+    a ramp is laid only on Edge tiles (`RampOver`), so each side neighbour of a ramp's low cell must continue the
+    straight step (at or below its level, one level up ahead) or be a ramp the same way; otherwise one grid point is a
+    corner tile and half a ramp leaves an open wedge. MedievalSetting's `Tools~/layout_check.py` tests it (with
+    reachability, tiers off roads/buildings/mounds/rim); LEVEL_BUILDING's terrain notes say it too.
+    Round 2, from renders of every map with the game camera: **trees keep out of the cliffs' view** -- forest darts and
+    stragglers refuse a spot up to 8 m south of a higher level (it hides the south face, the only one the camera sees)
+    or up to 3 m north of one (the trunk's foot hides behind the top, so it seems to grow out of the lip): `Shades`;
+    **the dressing runs last** -- `DressTerrain()` (cliffs, ramps) after `Trees()` and before `Forest()`, and each piece
+    asks `DressFree` (its level, off every ramp's tiles via a cached `OnRampTile`, out of the occupied footprints), so
+    nothing lands in a ramp's mouth, in a tent or on a fence; sunk face boulders only on faces that look south (seen
+    edge-on they read as logs or posts on the lip); lip pieces 0.3-0.75 m back from the edge; **no grass out of the
+    faces** -- on the terrain collider blades need Nz >= 0.85 except on a ramp's tiles (>= 0.7, its banks are turf);
+    **a boulder on each ramp bank** -- the tongue's earth banks are turf slopes that the top-down grass projection
+    stretches into a pale wedge, and the cliff beside them ends open; a sunk Rock_Boulder_A/B on each bank, long side
+    along the face, hides both (checked on a test map: a 3-cell and a 7-cell face look the same, so it is the tile, not
+    the layout). Not fixed: a 3 m step (two stacked 1.5 m layers) reads as two bands with a grass lip between; E/W
+    ramps still read as gaps from the camera (put the ramp meant to be found on a south face).
+    Round 3 (the round-2 renders): `Shades` was still too short -- at 50 degrees down a crown h m up covers the ground
+    0.84 h north of its trunk, so the pines buried faces 8 m away: now no tree up to 14 m south of a higher level and 3 m
+    to either side of that strip, none on a raised top within 4 m of its own south lip, and none where its foot hides
+    behind a higher top (`HidesFoot`: within pad + 0.84 x the drop of a north edge; trees pad 2 m, undergrowth and
+    scatter 0.5 m); lip pieces 0.9-1.4 m back from the edge; the ramp dressing out beyond the bank boulder (a tuft sat on
+    it and a pebble in every mouth: they looked stamped), the boulder's long side along the bank; **grass on a tier only
+    at a top's height** (+-0.12 m, ramps excepted): the face tiles carry small flat ledges halfway up that passed the
+    slope test, so blades stood out of the rock; **`_RimTint`** (KitTerrain, Vector: rgb + strength, default the old
+    constant lime at 0.1) tints the tiers' lip band (vertex colour B) per map -- Burnt March's lips read as a sage
+    icing border, now a dark ash at 0.5. The ramp tile's open face end (a flat tongue with a slit above it, beside each
+    bank boulder) is in the piece: it needs an end cap in vk_terrain.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

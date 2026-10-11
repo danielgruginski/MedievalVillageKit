@@ -66,7 +66,11 @@ namespace MedievalKit
                     RaycastHit hit = default;
                     bool onTier = terrainCollider != null && terrainCollider.Raycast(ray, out hit, 200f);
                     if (!onTier && !ground.Raycast(ray, out hit, 200f)) continue;
-                    if (Vector3.Dot(hit.normal, transform.up) < (onTier ? 0.7f : 0.82f)) continue;   // too steep (a ramp's earth bank is turf; a cliff's face is rock)
+                    float up = Vector3.Dot(hit.normal, transform.up);                  // too steep: on the tiers only the tops and the
+                    if (onTier ? up < 0.85f && !(up >= 0.7f && OnRampTile(q)) : up < 0.82f) continue;   // ramps (their earth banks are turf)
+                    // and on a tier only at a top's own height: the face tiles carry small flat ledges halfway up, where
+                    // blades stood out of the rock (round 2 of the cliffs pass)
+                    if (onTier && !OnRampTile(q) && Mathf.Abs(transform.InverseTransformPoint(hit.point).y - LevelAt(q) * Tier) > 0.12f) continue;
                     var root = transform.InverseTransformPoint(hit.point) - origin;
                     float shade = Mathf.Lerp(1f, 0.82f, Mathf.InverseLerp(1.0f, 1.25f, c));
                     float tall = Mathf.InverseLerp(0.6f, 1.25f, Mathf.Lerp(0.75f, 1.2f, Noise(q.x, q.y, 6f)) * Mathf.Lerp(0.8f, 1f, w));

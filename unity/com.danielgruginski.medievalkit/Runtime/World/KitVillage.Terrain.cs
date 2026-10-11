@@ -43,6 +43,7 @@ namespace MedievalKit
         /// <summary>the terrain tiles merged (null: the layout has no terrain); the editor saves it beside the ground</summary>
         public Mesh TerrainMesh { get; private set; }
         MeshCollider terrainCollider;
+        List<(Vector2 step, Vector2 dv)> rampSteps;        // each ramp's step (its middle) and the way it climbs, read once
         bool HasTerrain => tLevel != null;
 
         static readonly string[] DressFace = { "SM_VK_Rock_Boulder_A", "SM_VK_Rock_Boulder_B", "SM_VK_Rock_Boulder_Flat" };
@@ -72,7 +73,7 @@ namespace MedievalKit
         /// <summary>the layout's terrain as a grid of cell levels, ramps and stairs (before anything stands on the ground)</summary>
         void ParseTerrain()
         {
-            tLevel = null; TerrainMesh = null; terrainCollider = null;
+            tLevel = null; TerrainMesh = null; terrainCollider = null; rampSteps = null;
             if (!(L["terrain"] is JObject T)) return;
             tO = T["origin"] != null ? V(T["origin"]) : Vector2.zero;
             tW = Mathf.Max(1, Mathf.CeilToInt((W - tO.x) / TT));
@@ -170,6 +171,20 @@ namespace MedievalKit
                     best = Mathf.Min(best, Mathf.Sqrt(dx * dx + dy * dy));
                 }
             return best >= 3.5f ? 0f : Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(3.5f, 0.5f, best));
+        }
+
+        /// <summary>within r of a cliff line or a ramp (the forest, the undergrowth, stragglers and scatter keep off: a
+        /// tree on a lip or a bush in a face reads wrong)</summary>
+        bool NearCliff(Vector2 q, float r)
+        {
+            if (!HasTerrain) return false;
+            int l = LevelAt(q);
+            for (int k = 0; k < 8; k++)
+            {
+                float a = k * Mathf.PI / 4f;
+                if (LevelAt(q + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * r) != l) return true;
+            }
+            return false;
         }
 
         /// <summary>on a flight of stairs (its half of the low cell and of the cell above): no grass there</summary>
@@ -355,8 +370,80 @@ namespace MedievalKit
             int raised = 0;
             for (int j = 0; j < tH; j++) for (int i = 0; i < tW; i++) if (tLevel[i, j] > 0) raised++;
             notes.Add($"terrain: {raised} raised cells, {recs.Count} tiles, {verts.Count} verts");
+        }
+
+        /// <summary>the cliffs' and ramps' dressing (Build calls it once the buildings, props and trees stand: it keeps out
+        /// of their footprints)</summary>
+        void DressTerrain()
+        {
+            if (!HasTerrain || TerrainMesh == null) return;
             DressCliffs();
             DressRamps();
+        }
+
+        /// <summary>may a dressing piece go here: on the level it is meant for (any: -1), off every ramp's tiles, out of
+        /// what stands on the map (buildings, props, gardens, trees)</summary>
+        bool DressFree(float x, float y, int level)
+        {
+            var q = new Vector2(x, y);
+            if (level >= 0 && LevelAt(q) != level) return false;
+            if (OnRampTile(q)) return false;
+            foreach (var (poly, _) in occupied) if (DistToPoly(q, poly) < 0.3f) return false;
+            return true;
+        }
+
+        /// <summary>within a ramp's tiles (its slope, its earth banks and the cliff bending down to it): 1.5 m either side of
+        /// its step, from 1.5 m past one side of the low cell to 1.5 m past the other</summary>
+        bool OnRampTile(Vector2 q)
+        {
+            if (!HasTerrain) return false;
+            if (rampSteps == null)
+            {
+                rampSteps = new List<(Vector2 step, Vector2 dv)>();
+                for (int j = 0; j < tH; j++)
+                    for (int i = 0; i < tW; i++)
+                        if (tRamp[i, j] != 0)
+                        {
+                            var dv = new Vector2(DirV[tRamp[i, j]].dx, DirV[tRamp[i, j]].dy);
+                            rampSteps.Add((CellMid(i, j) + dv * (TT / 2f), dv));
+                        }
+            }
+            foreach (var (step, dv) in rampSteps)
+            {
+                var r = q - step;
+                if (Mathf.Abs(Vector2.Dot(r, dv)) <= TT / 2f && Mathf.Abs(Vector2.Dot(r, new Vector2(-dv.y, dv.x))) <= TT) return true;
+            }
+            return false;
+        }
+
+        /// <summary>a tall tree here would hide a cliff from the camera or seem to grow out of a lip. The camera looks north
+        /// 50 degrees down, so a crown h m up covers the ground about 0.84 h north of its trunk: no tree up to 14 m south of
+        /// a higher level, nor 3 m to either side of that strip (past a face's end); none on a raised top within 4 m of its
+        /// own south lip (its crown over the face); none where its foot hides behind a higher top (<see cref="HidesFoot"/>)
+        /// (round 2 of the cliffs pass: an 8 m strip still let the pines' crowns bury the faces)</summary>
+        bool Shades(Vector2 q)
+        {
+            if (!HasTerrain) return false;
+            int l = LevelAt(q);
+            for (float k = 1.5f; k <= 14f; k += 1.5f)
+                for (float s = -3f; s <= 3f; s += 3f)
+                    if (LevelAt(q + new Vector2(s, k)) > l) return true;
+            if (l > 0) for (float k = 1f; k <= 4f; k += 1f) if (LevelAt(q - new Vector2(0f, k)) < l) return true;
+            return HidesFoot(q, 2f);
+        }
+
+        /// <summary>something standing here would have its foot hidden behind a higher top to its south (the camera sees
+        /// over a drop d m about 0.84 d of the ground behind it): within `pad` + 0.84 x the drop of a north edge</summary>
+        bool HidesFoot(Vector2 q, float pad)
+        {
+            if (!HasTerrain) return false;
+            int l = LevelAt(q);
+            for (float k = 0.75f; k <= pad + 0.84f * 3f * Tier; k += 0.75f)
+            {
+                int d = LevelAt(q - new Vector2(0f, k)) - l;
+                if (d > 0 && k <= pad + 0.84f * d * Tier) return true;
+            }
+            return false;
         }
 
         /// <summary>vk_terrain's tk_ramp_dress: a few stones and plants where each ramp or flight meets the cliffs on its
@@ -366,10 +453,11 @@ namespace MedievalKit
         {
             if (tDress <= 0f) return;
             var rng = new System.Random(((int?)L["seed"] ?? 1) * 37 + 7);
-            var picks = new (string piece, float lx, float ly, float s)[]
+            // (round 2: out beyond the bank boulder -- a tuft on it and a pebble in every mouth made the ramps look stamped)
+            var picks = new (string piece, float lx, float ly, float s, float skip)[]
             {
-                ("SM_VK_Rock_Small_A", -0.95f, -1.05f, 0.9f), ("SM_VK_Plant_Fern", -0.55f, -0.55f, 0.8f),
-                ("SM_VK_Plant_TallGrass", -1.25f, -0.25f, 1f), ("SM_VK_Rock_Small_B", 0.05f, -1.35f, 0.6f),
+                ("SM_VK_Rock_Small_A", -1.8f, -1.35f, 0.9f, 0.35f), ("SM_VK_Plant_Fern", -2.4f, -1.2f, 0.8f, 0.3f),
+                ("SM_VK_Plant_TallGrass", -2.0f, -0.7f, 1f, 0.3f), ("SM_VK_Rock_Small_B", -0.45f, -1.9f, 0.6f, 0.6f),
             };
             for (int j = 0; j < tH; j++)
                 for (int i = 0; i < tW; i++)
@@ -385,17 +473,39 @@ namespace MedievalKit
                         float z = tLevel[i, j] * Tier;
                         foreach (var pk in picks)
                         {
-                            if (rng.NextDouble() < 0.2) continue;
+                            if (rng.NextDouble() < pk.skip) continue;
                             float lx = pk.lx - wall;
                             if (wall > 0f && lx > -wall - 0.15f) continue;
                             // local x points to the ramp (against the side), local y uphill
                             float wx = cx - sx * lx + fx * pk.ly, wy = cy - sy * lx + fy * pk.ly;
+                            bool clear = true;
+                            foreach (var (poly, _) in occupied) if (DistToPoly(new Vector2(wx, wy), poly) < 0.3f) { clear = false; break; }
+                            if (!clear) continue;
                             var pf = Prefab(pk.piece);
                             if (pf == null) continue;
                             var go = Spawn(pf, natureT);
                             go.transform.localPosition = Local(wx, wy, z - 0.03f);
                             go.transform.localRotation = Turn((float)rng.NextDouble() * 360f);
                             go.transform.localScale = Vector3.one * pk.s * (0.85f + 0.3f * (float)rng.NextDouble());
+                        }
+                        // a boulder on the earth bank beside the ramp's tongue: it hides the bank's pale wedge and the
+                        // foot of the face's open end (round 2 of the cliffs pass: every ramp read as a gap with two
+                        // flaps); long side along the bank, from the ramp's foot up to the face, sunk a little, its inner
+                        // edge at the tongue's edge
+                        {
+                            bool big = rng.NextDouble() < 0.5;
+                            float lx = -0.62f - wall, ly = -0.55f;
+                            float wx = cx - sx * lx + fx * ly, wy = cy - sy * lx + fy * ly;
+                            bool clear = true;
+                            foreach (var (poly, _) in occupied) if (DistToPoly(new Vector2(wx, wy), poly) < 0.3f) { clear = false; break; }
+                            var pf = clear ? Prefab(big ? "SM_VK_Rock_Boulder_B" : "SM_VK_Rock_Boulder_A") : null;
+                            if (pf != null)
+                            {
+                                var go = Spawn(pf, natureT);
+                                go.transform.localPosition = Local(wx, wy, z - 0.12f);
+                                go.transform.localRotation = Turn((fx != 0 ? 0f : 90f) + (float)rng.NextDouble() * 40f - 20f);
+                                go.transform.localScale = Vector3.one * (big ? 0.56f : 0.88f) * (0.9f + 0.2f * (float)rng.NextDouble());
+                            }
                         }
                     }
                 }
@@ -441,19 +551,21 @@ namespace MedievalKit
                         float Along(float lim = 1.1f) => U(sl ? -lim : -0.2f, sr ? lim : 0.2f);
                         int lHi = tLevel[hiI, hiJ], lLo = tLevel[loI, loJ];
                         float zl = lLo * Tier, h = (lHi - lLo) * Tier;
-                        if (rng.NextDouble() < 0.35 * tDress)                    // a boulder sunk into the face
-                        {
+                        if (oy < 0 && rng.NextDouble() < 0.35 * tDress)          // a boulder sunk into a face the camera sees (on
+                        {                                                         // the others it reads as a stone on the lip)
                             float t = Along(), off = U(-0.05f, 0.2f), zb = zl + h * U(0.12f, 0.4f);
-                            Put(Pick(DressFace), cx + tx * t + ox * off, cy + ty * t + oy * off, zb, U(0f, 360f), U(0.42f, 0.72f) * (h <= Tier ? 1f : 1.35f));
+                            float bx = cx + tx * t + ox * off, by = cy + ty * t + oy * off;
+                            if (DressFree(bx, by, -1)) Put(Pick(DressFace), bx, by, zb, U(0f, 360f), U(0.42f, 0.72f) * (h <= Tier ? 1f : 1.35f));
                         }
                         if (rng.NextDouble() < 0.3 * tDress)                     // plants and stones on the lip
                         {
                             int n = rng.Next(1, 3);
                             for (int k = 0; k < n; k++)
                             {
-                                float t = Along(), off = U(-0.25f, 0.05f);
+                                float t = Along(), off = U(-1.4f, -0.9f);        // on the top, a metre back from the lip
                                 var d = DressLip[rng.Next(DressLip.Length)];
-                                Put(d.piece, cx + tx * t + ox * off, cy + ty * t + oy * off, lHi * Tier - 0.03f, U(0f, 360f), U(d.s0, d.s1));
+                                float lx = cx + tx * t + ox * off, ly = cy + ty * t + oy * off;
+                                if (DressFree(lx, ly, lHi)) Put(d.piece, lx, ly, lHi * Tier - 0.03f, U(0f, 360f), U(d.s0, d.s1));
                             }
                         }
                         if (lHi - lLo >= 2)                                       // grass on the middle ledges of a stacked cliff
@@ -474,14 +586,16 @@ namespace MedievalKit
                             {
                                 float t = Along(), off = U(0.35f, 0.95f);
                                 string nm = Pick(DressRubble);
-                                Put(nm, cx + tx * t + ox * off, cy + ty * t + oy * off, zl - 0.05f, U(0f, 360f), nm.EndsWith("Cluster") ? U(0.35f, 0.55f) : U(0.6f, 1.2f));
+                                float rx = cx + tx * t + ox * off, ry = cy + ty * t + oy * off;
+                                if (DressFree(rx, ry, lLo)) Put(nm, rx, ry, zl - 0.05f, U(0f, 360f), nm.EndsWith("Cluster") ? U(0.35f, 0.55f) : U(0.6f, 1.2f));
                             }
                         }
                         if (rng.NextDouble() < 0.45 * tDress)                    // plants at the foot
                         {
                             float t = Along(), off = U(0.5f, 1f);
                             string nm = Pick(DressPlants);
-                            Put(nm, cx + tx * t + ox * off, cy + ty * t + oy * off, zl, U(0f, 360f), nm.EndsWith("Round") ? U(0.45f, 0.65f) : U(0.7f, 1.05f));
+                            float px = cx + tx * t + ox * off, py = cy + ty * t + oy * off;
+                            if (DressFree(px, py, lLo)) Put(nm, px, py, zl, U(0f, 360f), nm.EndsWith("Round") ? U(0.45f, 0.65f) : U(0.7f, 1.05f));
                         }
                     }
         }

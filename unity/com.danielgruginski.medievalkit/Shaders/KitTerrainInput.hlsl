@@ -14,6 +14,7 @@ CBUFFER_START(UnityPerMaterial)
     half _Rough;
     half _BumpStrength;
     half _Alpha;
+    half4 _RimTint;         // terrain: the tiers' lip band tint (rgb) and strength (a)
 CBUFFER_END
 
 #define KIT_TEX(n) TEXTURE2D(n);
