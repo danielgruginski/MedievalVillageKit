@@ -308,8 +308,8 @@ string report = KitChainTools.Bake(chain);
 
 The first map lies at the chain's `origin` (default the world origin; its plan's south-west corner, Blender (x, y)
 -> local (-x, -y)). Growing a hand-made first map south or west moves everything after it unless `origin` moves the
-other way (z + 1.5 a row added south, x + 1.5 a column added west): MedievalSetting's HamletCellar grew 7 rows south
-with `origin` z 10.5, so the pieces baked before, their camps and saves kept their world positions.
+other way (z + 1.5 a row added south, x + 1.5 a column added west): MedievalSetting's HamletCellar grew 4 rows south
+with `origin` z 6.0, so the pieces baked before, their camps and saves kept their world positions.
 
 Each map after the first joins an earlier map: the one named in `attachTo` (empty: the map before it in the list)
 through that map's `attachPortal` (empty: its `outPortal`). A connector runs from that portal to this map's `inPortal`

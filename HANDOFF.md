@@ -1010,7 +1010,7 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     layout (the piece is the door). **`KitChain.origin`**: where the first map lies (Bake used the world origin), so a
     hand-made first map can grow south / west without moving the pieces after it (LEVEL_BUILDING 5.5). Checked in
     MedievalSetting: the hamlet's trapdoor by the inn (BuildVillage walk test ok, area map "Cellar hatch", game-camera
-    renders); HamletCellar's cellar grown 7 rows south with `origin` z 10.5 and only that piece rebuilt (Build with the
+    renders); HamletCellar's cellar grown 4 rows south with `origin` z 6.0 and only that piece rebuilt (Build with the
     one piece, its scene saved, `chain.pieces[0]` updated, then `KitNavBake.BakeChain`): its old spawns moved 0.000 m,
     3 / 3 spawns walked, no overlap with the other 12 pieces. Prefabs 1,273 / 0 failed.
 
