@@ -250,7 +250,7 @@ namespace MedievalKit.Editor
             var sb = new StringBuilder();
             try
             {
-                var rooms = Build(rules, pieces, null, Vector3.zero, notes);
+                var rooms = Build(rules, pieces, null, chain.origin, notes);
                 if (notes.Count > 0) return $"chain {chain.name} not baked:\n{string.Join("\n", notes)}";
                 var (ok, total, missed) = WalkChain(rooms);
                 if (ok < total) sb.AppendLine($"walk test: {ok}/{total} spawns reached (not {string.Join(", ", missed)})");

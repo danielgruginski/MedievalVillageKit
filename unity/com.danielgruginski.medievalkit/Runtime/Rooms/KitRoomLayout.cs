@@ -154,6 +154,17 @@ namespace MedievalKit
             return tk.Length > 1 && rules["families"][tk[1]] != null ? tk[1] : null;
         }
 
+        /// <summary>cells a stair record covers along its local y: 1 for the trapdoor pair (variant "Hatch",
+        /// Stair_Down / Stair_Up_150x150_Hatch), 3 for the flights (150x450)</summary>
+        public static int StairDepth(JToken st) => st.Count() > 5 && (string)st[5] == "Hatch" ? 1 : 3;
+
+        /// <summary>a stair record's piece: SM_VKI_Stair_{kind}_150x450_{var}, or _150x150_Hatch for the trapdoor pair</summary>
+        public static string StairPiece(string kind, string var) => $"SM_VKI_Stair_{kind}_{(var == "Hatch" ? "150x150" : "150x450")}_{var}";
+
+        /// <summary>a down hatch's cell: its floor is Floor_150_Hatch_Q* (the zone's floor with a hole to the curb)</summary>
+        public bool HatchDown((int, int) c) =>
+            stairCells != null && stairCells.TryGetValue(c, out var sc) && sc.kind == "Down" && StairDepth(R["stairs"][sc.index]) == 1;
+
         public Dictionary<(int, int), (string, int)> StairCells()
         {
             var o = new Dictionary<(int, int), (string, int)>();
@@ -162,7 +173,7 @@ namespace MedievalKit
             for (int si = 0; si < st.Count; si++)
             {
                 var s = st[si];
-                for (int d = 0; d < 3; d++)
+                for (int d = 0; d < StairDepth(s); d++)
                 {
                     var c = Frame((float)s[1], (float)s[2], (float)s[3], 0.75f, 0.75f + IG * d);
                     o[(Mathf.FloorToInt(c.x / IG), Mathf.FloorToInt(c.y / IG))] = ((string)s[0], si);
@@ -348,6 +359,7 @@ namespace MedievalKit
             if (R["stairs"] is JArray sts)
                 foreach (var st in sts)
                 {
+                    if (StairDepth(st) == 1) continue;                 // a hatch needs no wall: its rhythm posts stay
                     // the nodes along the stair's walls: local x = 0 (y 0..4.5) and the far end's other corner; the
                     // left-hand twins (variant ...L) have their wall on local x = 1.5
                     bool left = st.Count() > 5 && ((string)st[5] ?? "").EndsWith("L");
@@ -424,6 +436,9 @@ namespace MedievalKit
                     }
                 foreach (var (i, j) in cells.OrderBy(c => c.Item1).ThenBy(c => c.Item2))
                     floors.Add(new Floor { piece = $"SM_VKI_Floor_150_Q{i % 2}{j % 2}", x = IG * i, y = IG * j, zone = zn, floorStyle = floorStyle });
+                // a down hatch's cell takes the zone's floor with the hole to its curb (Floor_150_Hatch_Q*)
+                foreach (var (i, j) in zmap.Where(c => c.Value == zn && HatchDown(c.Key)).Select(c => c.Key).OrderBy(c => c.Item1).ThenBy(c => c.Item2))
+                    floors.Add(new Floor { piece = $"SM_VKI_Floor_150_Hatch_Q{i % 2}{j % 2}", x = IG * i, y = IG * j, zone = zn, floorStyle = floorStyle });
             }
         }
     }

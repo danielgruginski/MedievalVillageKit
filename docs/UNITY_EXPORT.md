@@ -234,7 +234,10 @@ style value's material, and all 19 Blender rooms with their plans as presets. To
 Rules (also in Build All) makes `Generated/KitInteriorRules.asset` (the JSON, the VKI and VK prefabs by name, the style
 materials by name).
 - `KitRoomLayout` (runtime): `vki_parse_plan` + `vki_rooms_layout` (wall pieces with the 300 pairing and the B
-  variant, rakes, posts required and rhythm, floors 600 / 300 / Q150 by parity, dais, stair and pit cells).
+  variant, rakes, posts required and rhythm, floors 600 / 300 / Q150 by parity, dais, stair and pit cells). A stair
+  record covers three cells (`StairDepth`), one for the trapdoor pair (variant `Hatch`, `StairPiece` names it
+  `..._150x150_Hatch`), which needs no wall (no rhythm posts skipped) and whose down cell takes
+  `Floor_150_Hatch_Q<i mod 2><j mod 2>` in the zone's floor style (`HatchDown`; cave maps too).
 - `KitRoom` (runtime component; GameObject > Medieval Kit > Room From Plan): pick a preset or type a plan and record,
   Generate. Builds the shell like `vki_build_scene`: walls restyled by zone (wall_a / wall_b, caps, special and window
   styles, Night window styles), required posts, floors, sills, exits (door, closed leaf or wide pair, apron, rush mat,

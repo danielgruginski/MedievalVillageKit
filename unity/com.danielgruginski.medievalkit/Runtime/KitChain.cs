@@ -70,6 +70,9 @@ namespace MedievalKit
         }
 
         public List<Map> maps = new List<Map>();
+        [Tooltip("Where the first map's origin (its plan's south-west corner) lies in the world. When the first map grows " +
+                 "south or west, move it the other way (z + 1.5 a row, x + 1.5 a column) so what was baked stays put.")]
+        public Vector3 origin = Vector3.zero;
         [Tooltip("Filled by Bake: every piece in order (map, connector, map, ...).")]
         public List<Piece> pieces = new List<Piece>();
 

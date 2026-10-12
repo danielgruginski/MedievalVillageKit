@@ -91,6 +91,15 @@ grass) + a `RushMat` inside. Wide exits: `DoorWide_300_Cut` + two leaves (`Leaf_
 (rotation 0/±90, never 180). The up flight rises "through the ceiling"; the down stair is a hole with rails. They are
 scene links, like exits.
 
+**Trapdoors** (2026-10-12): the smaller way between floors, one cell each, same link contract. `Stair_Down_150x150_Hatch`
+is an oak curb round a centred 0.74 m hole, the lid propped open on its north side (its ledged underside faces the
+camera) and a ladder down the hole's north side into the dark; its cell takes `Floor_150_Hatch_Q<i mod 2><j mod 2>`, the
+zone's floor with a hole to the curb, so the room's floor runs up to it. `Stair_Up_150x150_Hatch` is the same ladder
+in the room below, rising to the curb's frame at the ceiling. Neither needs a wall (W / N / E walls may touch the cell;
+keep the south side open: the trigger and the arrival cell are there). Records use the variant `Hatch`:
+`["Down", x, y, 0, "cellar", "Hatch"]` upstairs, `["Up", x, y, 0, "cellar", "Hatch"]` below, prompts "Climb down" /
+"Climb up". `vki_lnk_hatch_pair_check()` proves the two ladders line up (0 over 128 rung vertices).
+
 **Props.** Origin at the footprint centre, back toward +Y. Mounts:
 
 | Mount | Rule |
@@ -298,7 +307,7 @@ Generated from the masters in `VKI_Pieces` (triangles, footprint in 1.5 m cells,
 | `SM_VKI_Wall_Ashlar_Plain_300_Cut` | 348 | 2,1 | – |
 | `SM_VKI_Wall_Ashlar_Plain_300_Full` | 1140 | 2,1 | – |
 
-### Floors, door leaves, aprons, overlays, FX (21)
+### Floors, door leaves, aprons, overlays, FX (25)
 
 | Piece | Tris | Cells | Mount |
 |---|---|---|---|
@@ -309,6 +318,7 @@ Generated from the masters in `VKI_Pieces` (triangles, footprint in 1.5 m cells,
 | `SM_VKI_Floor_150_Q01` | 12 | 1,1 | – |
 | `SM_VKI_Floor_150_Q10` | 12 | 1,1 | – |
 | `SM_VKI_Floor_150_Q11` | 12 | 1,1 | – |
+| `SM_VKI_Floor_150_Hatch_Q00` .. `_Q11` (4) | 32 | 1,1 | – |
 | `SM_VKI_Floor_300` | 12 | 2,2 | – |
 | `SM_VKI_Floor_600` | 12 | 4,4 | – |
 | `SM_VKI_Floor_Dais_300` | 40 | 2,2 | – |
@@ -324,12 +334,14 @@ Generated from the masters in `VKI_Pieces` (triangles, footprint in 1.5 m cells,
 | `SM_VKI_Runner_300` | 32 | 2,1 | floor |
 | `SM_VKI_RushMat` | 124 | 1,1 | floor |
 
-### Stairs (scene transitions) (2)
+### Stairs (scene transitions) (4)
 
 | Piece | Tris | Cells | Mount |
 |---|---|---|---|
 | `SM_VKI_Stair_Down_150x450_RailR` | 2220 | 1,3 | – |
 | `SM_VKI_Stair_Up_150x450_RailR` | 2464 | 1,3 | – |
+| `SM_VKI_Stair_Down_150x150_Hatch` | 1292 | 1,1 | – |
+| `SM_VKI_Stair_Up_150x150_Hatch` | 992 | 1,1 | – |
 
 ### Home furniture (23)
 

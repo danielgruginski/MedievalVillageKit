@@ -731,6 +731,8 @@ def vki_budget(o):
             return (1500, 2000)
         if kind == "Sill":
             return (400, 400)
+        if kind == "Q150Hatch":                   # the slab round a hatch: a ring, 32 triangles
+            return (32, 32)
         return (12, 12) if "_Q" in o.name else (24, 24)
     if cls == "leaf":
         return (800, 800)

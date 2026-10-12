@@ -17,6 +17,18 @@
 #   line of the wall along y = 4.5) and of the post squares that can exist there (Mid post at (0, 0): y <= 0.12;
 #   Corner post at (0, 4.5): x, 4.5 - y <= 0.31). No posts at (0, 1.5), (0, 3.0) (rhythm posts skipped, §2.3) or at
 #   (1.5, 4.5) (the lip / landing reach y 4.215 up to x 1.50).
+#   Stair_Down_150x150_Hatch  (2026-10-12) a trapdoor in one cell: min corner, rot 0 / +-90 (never 180), needs no wall
+#                             (keep the cell's local y = 0 side open: the trigger and the arrival are there). Oak
+#                             curb 0.29-1.21 square round the centred hole 0.38-1.12 (top z 0.012), the lid hinged on
+#                             the north curb's inner edge and opened 95 deg (its ledged underside faces the camera,
+#                             top back y 1.186 < the proud line 1.215 of a wall along y 1.5), a ladder down the hole's
+#                             north side to its lip, linings darkening into a closed VOID box z -2.40..-2.30. No
+#                             FLOOR faces: its cell takes Floor_150_Hatch_Q<i mod 2><j mod 2>.
+#   Floor_150_Hatch_Q00..Q11  the Q150 slab with the curb's square hole less 3 mm (FLOOR, parity offsets, rot 0): the
+#                             room's floor style runs up to the curb whatever the hatch's rotation.
+#   Stair_Up_150x150_Hatch    its pair in the room below (same origin and rotation): the same ladder from the floor to
+#                             the ceiling plane (cut at z 2.995, the top rungs darkened), the curb's frame hanging at
+#                             z 2.72..2.995 round the opening; room floor laid under the cell (no FLOOR faces).
 #   Floor_Dais_300            [0,3]^2, even nodes, slab z -0.10..0.20, FLOOR top (world-locked t 3.0), DRESS nosing
 #                             on the -Y edge only (0.03 overhang) with a pale StoneBlockIn chamfer
 #   FX_WindowPool             floor light pool in its window's frame (place with the window's origin + rotation):
@@ -331,6 +343,181 @@ def vki_lnk_stair_down(k):
                   vki_hole=[xa, 0.10, xb, yt])
 
 
+# ---------------------------------------------------------------- Stair_Down / Stair_Up_150x150_Hatch (2026-10-12)
+# The user: "how about modelling a smaller ladder entrance?" -- a trapdoor and its ladder, one cell each, for cellars
+# and lofts where a 3-cell flight is too much. Same link contract as the flights (vki_link / vki_pair / vki_trigger /
+# vki_spawn_local); the pair shares origin and rotation, the down piece's ladder below z 0 lifted one storey lies on
+# the up piece's ladder (vki_lnk_hatch_pair_check).
+VKI_LNK_HATCH = dict(
+    hole=(0.38, 0.38, 1.12, 1.12),          # the opening x0, y0, x1, y1: centred, so the floor's hole fits any rotation
+    curb=(0.29, 0.29, 1.21, 1.21),          # the oak curb's outer edge (it may stand by a wall on W / N / E)
+    curb_z=(-0.30, 0.012),
+    floor_hole=0.003,                       # Floor_150_Hatch_Q*: its hole 3 mm inside the curb's outer faces
+    hinge=(1.12, 0.03),                     # the lid's hinge axis (y, z) on the north curb's inner edge, along x
+    lid=(0.35, 1.15, 0.76, 0.045),          # lid x0, x1, length, thickness
+    open=95.0,                              # opened past upright, leaning back (north) on its hinges: top y 1.186
+    stiles=((0.465, 0.525), (0.975, 1.035)),
+    stile_y=(1.055, 1.11),                  # 1 cm in front of the north lining
+    rung_y=(1.065, 1.10),
+    rung0=0.25, pitch=0.30, rung_h=0.035,   # rungs at 0.25 + 0.30 j above the lower floor
+    top=-0.004,                             # the down piece's stiles end at the hole's lip (the lid's foot is above)
+    void=(-2.40, -2.30),
+)
+VKI_LNK_HATCH_DN = "SM_VKI_Stair_Down_150x150_Hatch"
+VKI_LNK_HATCH_UP = "SM_VKI_Stair_Up_150x150_Hatch"
+VKI_LNK_HATCH_DN_TRIGGER = [0.75, 0.10, 1.0, 1.0, 0.50, 2.0]     # the hole's south rim: y -0.15..0.35
+VKI_LNK_HATCH_UP_TRIGGER = [0.75, 0.625, 1.0, 1.0, 0.65, 2.0]    # in front of the ladder's foot: y 0.30..0.95
+VKI_LNK_HATCH_SPAWN = ([0.75, -0.75], 180)                         # both: the next cell south, facing the camera
+
+
+def vki_lnk_hatch_ladder(k, z0, z1, dark_fn):
+    """the hatch's ladder between z0 and z1: two oak stiles (sliced every 0.3 m so the darkening follows dark_fn)
+    with HEWN end-grain tops, and the rungs of the shared ladder (0.25 + 0.30 j) that fit between z0 and z1"""
+    Hh = VKI_LNK_HATCH
+    ya, yb = Hh["stile_y"]
+    cuts = [z for z in (z0 + 0.3 * i for i in range(1, 40)) if z < z1 - 0.05]
+    for (xa, xb) in Hh["stiles"]:
+        vs = vki_lnk_box(k, xa, xb, ya, yb, z0, z1, WOOD, bev=0.008)
+        vki_lnk_tops(k, vs, HEWN, along=(0, 1, 0))
+        for v in vki_cut(k, vs, zs=cuts):
+            k.set_dark([v], dark_fn(v.co.z))
+    (ra, rb), h = Hh["rung_y"], Hh["rung_h"] / 2
+    xa, xb = Hh["stiles"][0][1] - 0.005, Hh["stiles"][1][0] + 0.005      # 5 mm into the stiles
+    for j in range(40):
+        z = Hh["rung0"] + Hh["pitch"] * j - (3.0 if z0 < 0 else 0.0)
+        if z - h > z0 + 0.05 and z + h < z1 - 0.02:
+            vki_lnk_box(k, xa, xb, ra, rb, z - h, z + h, WOOD, bev=0.006, dark=dark_fn(z))
+
+
+def vki_lnk_hatch_curb(k, z0, z1, dark=0.0):
+    """the oak curb round the opening: north and south members across the full width, west and east between them"""
+    (hx0, hy0, hx1, hy1), (cx0, cy0, cx1, cy1) = VKI_LNK_HATCH["hole"], VKI_LNK_HATCH["curb"]
+    for (x0, x1, y0, y1, al) in ((cx0, cx1, cy0, hy0, (1, 0, 0)), (cx0, cx1, hy1, cy1, (1, 0, 0)),
+                                 (cx0, hx0, hy0, hy1, (0, 1, 0)), (hx1, cx1, hy0, hy1, (0, 1, 0))):
+        vs = vki_lnk_box(k, x0, x1, y0, y1, z0, z1, WOOD, bev=0.012, dark=dark)
+        vki_lnk_tops(k, vs, HEWN, along=al)
+
+
+def vki_lnk_hatch_floor(qa, qb):
+    """Floor_150_Hatch_Q<qa><qb>: the Q150 floor slab of a Stair_Down_150x150_Hatch cell, a square hole in its middle
+    (the curb's outer square less 3 mm, so the floor runs under the curb): one closed ring (8 top / bottom triangles,
+    4 + 4 sides), FLOOR with the Q150 parity offsets, so the room's floor style runs up to the curb in any rotation"""
+    def fn(k):
+        a = VKI_LNK_HATCH["curb"][0] + VKI_LNK_HATCH["floor_hole"]
+        b = VKI_LNK_HATCH["curb"][2] - VKI_LNK_HATCH["floor_hole"]
+        bm = k.bm
+        sq = lambda lo, hi, z: [bm.verts.new((x, y, z)) for (x, y) in ((lo, lo), (hi, lo), (hi, hi), (lo, hi))]
+        ot, it_ = sq(0.0, 1.5, 0.0), sq(a, b, 0.0)
+        ob, ib = sq(0.0, 1.5, VKI_FLOOR_Z0), sq(a, b, VKI_FLOOR_Z0)
+        fs = []
+        for i in range(4):
+            j = (i + 1) % 4
+            fs += [bm.faces.new((ot[i], ot[j], it_[j], it_[i])), bm.faces.new((ob[j], ob[i], ib[i], ib[j])),
+                   bm.faces.new((ob[i], ob[j], ot[j], ot[i])), bm.faces.new((it_[i], it_[j], ib[j], ib[i]))]
+        bmesh.ops.recalc_face_normals(bm, faces=fs)
+        bm.normal_update()
+        for f in fs:                                            # as vki_floor_slab: world-locked with the parity
+            n = f.normal
+            off = (0.5 * qa, 0.5 * qb) if abs(n.z) > 0.7 else ((0.5 * qa, 0.0) if abs(n.y) > 0.7 else (0.5 * qb, 0.0))
+            k.project([f], VKI_FLOOR, offset=off)
+        k.meta.update(vki_class="floor", vki_kind="Q150Hatch", vki_len=1.5, vki_q_parity=[qa, qb],
+                      vki_place_rule="under a Stair_Down_150x150_Hatch: node (i, j) with (i mod 2, j mod 2) = "
+                                     "(%d, %d), rotation 0" % (qa, qb),
+                      vki_hole=[a, a, b, b])
+    fn.__name__ = "vki_lnk_hatch_floor_q%d%d" % (qa, qb)
+    return fn
+
+
+def vki_lnk_hatch_down(k):
+    """the trapdoor: oak curb, the lid propped open on the north curb, a ladder down the north side of the hole into
+    the dark (linings and a closed VOID box below, as under Stair_Down); the room's floor round it is a
+    Floor_150_Hatch_Q* slab (its own piece, in the zone's floor style)"""
+    Hh = VKI_LNK_HATCH
+    (hx0, hy0, hx1, hy1), (cx0, cy0, cx1, cy1) = Hh["hole"], Hh["curb"]
+    vki_lnk_hatch_curb(k, *Hh["curb_z"])
+    # linings (upright boards darkening with depth) 1 mm behind the curb's inner faces, from inside the curb down to
+    # the VOID box's bottom; the closed VOID box itself
+    zl0, zl1 = Hh["void"][0], Hh["curb_z"][0] + 0.005
+    ldark = lambda z: vki_clamp(0.30 + 0.55 * (-0.3 - z) / 1.6, 0.30, 0.85)
+    for (x0, x1, y0, y1) in ((hx0 - 0.02, hx0 - 0.001, hy0 - 0.02, hy1 + 0.02),
+                             (hx1 + 0.001, hx1 + 0.02, hy0 - 0.02, hy1 + 0.02),
+                             (hx0, hx1, hy0 - 0.02, hy0 - 0.001), (hx0, hx1, hy1 + 0.001, hy1 + 0.02)):
+        vs = vki_lnk_box(k, x0, x1, y0, y1, zl0, zl1, PLANKS, bev=0.0)
+        vki_lnk_planks(k, vs, along=(0, 0, 1))
+        for v in vs:
+            k.set_dark([v], ldark(v.co.z))
+    vki_lnk_box(k, hx0 + 0.001, hx1 - 0.001, hy0 + 0.001, hy1 - 0.001, Hh["void"][0], Hh["void"][1], VOID, bev=0.0)
+    # the ladder: from inside the VOID box to the hole's lip, darkening into the hole
+    vki_lnk_hatch_ladder(k, Hh["void"][1] - 0.05, Hh["top"],
+                         lambda z: 0.80 * vki_smoothstep(-0.10, -1.40, z))
+    # the lid, built shut in hinge space (hinge axis on x through the origin, the lid on -y, its top face at z 0)
+    # and swung open about the hinge: its top faces north, its underside (ledges, brace) the camera
+    lx0, lx1, L, T = Hh["lid"]
+    yh, zh = Hh["hinge"]
+    M = Matrix.Translation((0.0, yh, zh)) @ Matrix.Rotation(-math.radians(Hh["open"]), 4, "X")
+    along = (M.to_3x3() @ Vector((0, -1, 0))).normalized()
+    vs = k.box(((lx0 + lx1) / 2, -L / 2, -T / 2), (lx1 - lx0, L, T), PLANKS, bevel=0.006, xform=M)
+    vki_lnk_planks(k, list(set(vs)), along=tuple(along))
+    for yc in (-0.15, -0.60):                                       # ledges across the underside
+        vs = k.box(((lx0 + lx1) / 2, yc, -T - 0.0125 + 0.001), (lx1 - lx0 - 0.08, 0.09, 0.025), WOOD, bevel=0.008,
+                   xform=M)
+    ya, yb = -0.195, -0.555                                         # the brace between them, 4 mm shallower
+    ln = math.hypot(0.56, yb - ya)
+    k.box((0.75, (ya + yb) / 2, -T - 0.0105 + 0.002), (ln, 0.075, 0.021), WOOD,
+          rot=(0.0, 0.0, math.atan2(yb - ya, 0.56)), bevel=0.006, xform=M)
+    for x in (0.52, 0.98):                                          # iron hinge knuckles on the axis
+        k.box((x, 0.0, 0.0), (0.10, 0.04, 0.04), IRON, bevel=0.015, segs=2, xform=Matrix.Translation((0.0, yh, zh)))
+    (sx, sy), sf = VKI_LNK_HATCH_SPAWN
+    k.meta.update(vki_class="link", vki_len=1.5, vki_depth=1.5, vki_rot_lock="no180", vki_rot_allowed=[0, 90, -90],
+                  vki_nominal="0,0,1.5,1.5", vki_cells=[[0, 0]], vki_facing_min=60, vki_uv_lock="local",
+                  vki_needs_walls=[], vki_no_wall="local y = 0 side (the trigger and the arrival cell)",
+                  vki_link="stair_down", vki_pair=VKI_LNK_HATCH_UP, vki_trigger=VKI_LNK_HATCH_DN_TRIGGER,
+                  vki_spawn_local=[sx, sy], vki_spawn_facing=sf, vki_prompt_local=[0.75, 0.20, 1.20],
+                  vki_prompt_text="Climb down",
+                  vki_floor_under="Floor_150_Hatch_Q<i mod 2><j mod 2> at its cell (the room's floor with a hole to "
+                                  "the curb); no FLOOR faces", vki_nav="walk",
+                  vki_collider=[[0.75, (hy0 - 0.04 + cy1) / 2, 0.5, hx1 - hx0 + 0.08, cy1 - hy0 + 0.04, 1.0]],
+                  vki_collider_note="blocked: the hole and the lid; the floor round the curb walks at z 0",
+                  vki_hole=[hx0, hy0, hx1, hy1])
+
+
+def vki_lnk_hatch_up(k):
+    """the ladder up to the trapdoor in the room below: stiles and rungs to the ceiling plane, the top darkened, the
+    curb's frame round the opening hanging at the ceiling (the cutaway removes the floor above)"""
+    Hh = VKI_LNK_HATCH
+    vki_lnk_hatch_ladder(k, -0.006, 2.995, lambda z: 0.6 * vki_smoothstep(2.2, 2.9, z))
+    vki_lnk_hatch_curb(k, 2.84, 2.995, dark=0.55)
+    (sx, sy), sf = VKI_LNK_HATCH_SPAWN
+    (xa, _), (_, xb) = Hh["stiles"]
+    ya, yb = Hh["stile_y"]
+    k.meta.update(vki_class="link", vki_len=1.5, vki_depth=1.5, vki_rot_lock="no180", vki_rot_allowed=[0, 90, -90],
+                  vki_nominal="0,0,1.5,1.5", vki_cells=[[0, 0]], vki_facing_min=60, vki_uv_lock="local",
+                  vki_needs_walls=[], vki_no_wall="local y = 0 side (the trigger and the arrival cell)",
+                  vki_link="stair_up", vki_pair=VKI_LNK_HATCH_DN, vki_trigger=VKI_LNK_HATCH_UP_TRIGGER,
+                  vki_spawn_local=[sx, sy], vki_spawn_facing=sf, vki_prompt_local=[0.75, 0.60, 1.40],
+                  vki_prompt_text="Climb up",
+                  vki_floor_under="room floor laid under the cell (no FLOOR faces)", vki_nav="block",
+                  vki_collider=[[(xa + xb) / 2, (ya + yb) / 2, 1.5, xb - xa, yb - ya + 0.02, 3.0]])
+
+
+def vki_lnk_hatch_pair_check(up=VKI_LNK_HATCH_UP, dn=VKI_LNK_HATCH_DN):
+    """the down hatch's ladder below its floor, lifted one storey, must lie on the up hatch's ladder: max distance of
+    the down piece's rung vertices (z < -0.02) + 3.0 to the up master's vertices, and how many were checked"""
+    from mathutils.kdtree import KDTree
+    U, Dn = bpy.data.objects[up], bpy.data.objects[dn]
+    kd = KDTree(len(U.data.vertices))
+    for i, v in enumerate(U.data.vertices):
+        kd.insert(v.co, i)
+    kd.balance()
+    (ra, rb) = VKI_LNK_HATCH["rung_y"]
+    xa, xb = VKI_LNK_HATCH["stiles"][0][1] + 1e-4, VKI_LNK_HATCH["stiles"][1][0] - 1e-4     # rungs between the stiles
+    worst, n = 0.0, 0
+    for v in Dn.data.vertices:
+        if v.co.z < -0.02 and ra - 1e-6 <= v.co.y <= rb + 1e-6 and xa < v.co.x < xb:
+            worst = max(worst, kd.find(v.co + Vector((0, 0, 3.0)))[2]); n += 1
+    return round(worst, 6), n
+
+
 # ---------------------------------------------------------------- Floor_Dais_300 (§3.3)
 VKI_LNK_DAIS = dict(nose=0.25, thick=0.08, chamfer=0.05, over=0.03)
 
@@ -599,6 +786,12 @@ def vki_lnk_rig_cam(i):
 VKI_LNK_SPECS = [
     (VKI_LNK_UP, vki_lnk_stair_up, "prop"),
     (VKI_LNK_DN, vki_lnk_stair_down, "prop"),
+    (VKI_LNK_HATCH_DN, vki_lnk_hatch_down, "prop"),
+    (VKI_LNK_HATCH_UP, vki_lnk_hatch_up, "prop"),
+    ("SM_VKI_Floor_150_Hatch_Q00", vki_lnk_hatch_floor(0, 0), "floor"),
+    ("SM_VKI_Floor_150_Hatch_Q10", vki_lnk_hatch_floor(1, 0), "floor"),
+    ("SM_VKI_Floor_150_Hatch_Q01", vki_lnk_hatch_floor(0, 1), "floor"),
+    ("SM_VKI_Floor_150_Hatch_Q11", vki_lnk_hatch_floor(1, 1), "floor"),
     ("SM_VKI_Floor_Dais_300", vki_lnk_dais, "floor"),
     ("SM_VKI_FX_WindowPool", vki_lnk_window_pool, "none"),
     ("SM_VKI_Runner_300", vki_lnk_runner_300, "floor"),

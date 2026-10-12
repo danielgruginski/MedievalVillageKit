@@ -34,6 +34,8 @@ ENT_META={
                                   prompt="Climb down",facing_min=180),
  "SM_VK_Entrance_LockUp":dict(trigger=[0.0,-1.95,1.0,0.9,0.7,2.0],spawn=[0.0,-2.75,0.0],facing=180,
                               prompt="Go down to the gaol",facing_min=60),
+ "SM_VK_Entrance_Trapdoor":dict(trigger=[0.0,-1.0,1.0,1.2,0.6,2.0],spawn=[0.0,-1.75,0.0],facing=180,
+                                prompt="Climb down into the cellar",facing_min=60),
 }
 
 # ---------------------------------------------------------------- helpers
@@ -323,6 +325,50 @@ def ent_lockup(k):
     for x in (-0.06,0.06): sub.box((x,-0.025,0),(0.024,0.024,0.24),IRON,bevel=0.0)
     merge_kit(k,sub,Matrix.Translation((-ap,-ap,2.05))@Matrix.Rotation(-math.pi/4,4,"Z"))
 
+# ---------------------------------------------------------------- the cellar trapdoor
+ENT_TRAP=dict(kerb=0.72,coam=0.52,hole=0.40,coam_z=(-0.06,0.18),lid=0.92,lid_t=0.05,open=100.0)
+
+def ent_trapdoor(k):
+    """a cellar trapdoor in open ground (2026-10-12, MedievalSetting: the hamlet inn's cellar from outside; the outdoor
+    twin of the interior kit's Stair_Down_150x150_Hatch): a kerb of four dressed stones, a raised oak coaming 0.18 high
+    round a 0.80 m opening (darkness card at the ground, darkness on the inner faces' lower half: the ground covers all
+    below z 0), the top of a ladder standing up out of it on the north side, and the plank lid hinged on the north
+    coaming, opened 100 deg so its ledged underside faces the camera. Origin: the ground at the opening's centre; the
+    way in from -Y. 1.44 m square, the lid up to 1.14 m."""
+    T=ENT_TRAP; K,C,H=T["kerb"],T["coam"],T["hole"]; z0,z1=T["coam_z"]
+    for s in (-1,1):                                                                     # kerb: N / S stones, E / W between
+        k.box((0,s*(C+K)/2,-0.04),(2*K,K-C,0.16),STONE_BLOCK,bevel=0.025,jitter=0.004,seed=31+s)
+        k.box((s*(C+K)/2,0,-0.04),(K-C,2*C,0.16),STONE_BLOCK,bevel=0.025,jitter=0.004,seed=35+s)
+    def oak(c,sz,along):
+        """an oak member, its top faces pale HEWN with the grain along `along` (Kit.project only turns WOOD's grain)"""
+        vs=k.box(c,sz,WOOD,bevel=0.014)
+        k.bm.normal_update()
+        U=Vector(along); V=Vector((0,0,1)).cross(U); tt=TILE.get(HEWN,1.0)
+        for f in {f for v in vs for f in v.link_faces}:
+            if f.normal.z>0.7:
+                f.material_index=HEWN
+                for l in f.loops: p=l.vert.co; l[k.uv].uv=(p.dot(U)/tt,p.dot(V)/tt)
+    for s in (-1,1):                                                                     # coaming
+        oak((0,s*(H+C)/2,(z0+z1)/2),(2*C,C-H,z1-z0),(1,0,0))
+        oak((s*(H+C)/2,0,(z0+z1)/2),(C-H,2*H,z1-z0),(0,1,0))
+    ent_void(k,[(-H,-H,0.01),(H,-H,0.01),(H,H,0.01),(-H,H,0.01)])                      # the opening
+    d=H-0.002; zt=0.11                                                                   # the inner faces' lower half
+    ent_void(k,[(-H,d,0.01),(H,d,0.01),(H,d,zt),(-H,d,zt)])
+    ent_void(k,[(d,H,0.01),(d,-H,0.01),(d,-H,zt),(d,H,zt)])
+    ent_void(k,[(-d,-H,0.01),(-d,H,0.01),(-d,H,zt),(-d,-H,zt)])
+    for x in (-0.24,0.24):                                                               # the ladder's top, out of the dark
+        oak((x,0.3375,0.365),(0.055,0.055,0.83),(1,0,0))
+    for z in (0.12,0.42): k.box((0,0.3375,z),(0.43,0.035,0.035),WOOD,bevel=0.006)
+    # the lid, built shut in hinge space (hinge on x through the origin, the lid on -y, top face at z 0) and swung
+    # open about its hinge on the north coaming: the top faces north, the ledges and the brace the camera
+    L,t=T["lid"],T["lid_t"]
+    M=Matrix.Translation((0.0,C-0.06,z1+t))@Matrix.Rotation(-math.radians(T["open"]),4,"X")
+    k.box((0,-L/2,-t/2),(L,L,t),PLANKS,bevel=0.006,xform=M)
+    for yc in (-0.25,-0.72): k.box((0,yc,-t-0.0115),(L-0.10,0.10,0.025),WOOD,bevel=0.008,xform=M)
+    ya,yb=-0.30,-0.67; ln=math.hypot(0.62,yb-ya)
+    k.box((0,(ya+yb)/2,-t-0.0085),(ln,0.08,0.021),WOOD,rot=(0,0,math.atan2(yb-ya,0.62)),bevel=0.006,xform=M)
+    for x in (-0.25,0.25): k.box((x,0,0),(0.11,0.045,0.045),IRON,bevel=0.016,segs=2,xform=Matrix.Translation((0.0,C-0.06,z1+t)))
+
 # ---------------------------------------------------------------- link data
 def ent_stamp_meta():
     """write ENT_META on the masters: vki_trigger, vki_spawn_local, vki_spawn_facing, vki_prompt_text, vki_facing_min
@@ -358,6 +404,7 @@ WS_SPECS=[
  ("SM_VK_Entrance_CaveMouth",ent_cave_mouth,ENT_NG),
  ("SM_VK_Entrance_SewerGrate",ent_sewer_grate,ENT_NG),
  ("SM_VK_Entrance_LockUp",ent_lockup,ENT_NG),
+ ("SM_VK_Entrance_Trapdoor",ent_trapdoor,ENT_NG),
 ]
 ENT_NAMES=[n for n,_,_ in WS_SPECS]
 EXTRA_SPECS+=WS_SPECS

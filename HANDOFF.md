@@ -986,6 +986,34 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     player. Trade-off: on a wall of separate modules crossing the line of sight only the modules in the way open, so the
     round hole can end straight at a joint. Diagnosed by a subagent (numeric check of the cases: scratchpad wedge_check).
 
+92. 2026-10-12 (MedievalSetting, the user: "how about modelling a smaller ladder entrance?" ... "Make those part of the
+    medieval kit"): **the trapdoor pair**, one cell each, in `vki_links` beside the flights (same link contract):
+    `Stair_Down_150x150_Hatch` (oak curb round a centred 0.74 m hole, the lid opened 95 deg on the north curb so its
+    ledged underside faces the camera and its top stays inside a north wall's proud line, a ladder down the hole's north
+    side, linings into a VOID box; 1,292 tris) and `Stair_Up_150x150_Hatch` (the same ladder from the floor to the
+    ceiling plane, the curb's frame hanging there; 992 tris), plus `Floor_150_Hatch_Q00..Q11` (the Q150 slab with the
+    curb's hole, FLOOR with the parity offsets: the room's floor style runs up to the curb in any rotation; 32 tris, T9
+    budget `Q150Hatch`). A first try gave the hatch its own plank deck, which read as a patch in the room's floor.
+    Records: variant `Hatch` (`["Down", x, y, 0, id, "Hatch"]`); Blender `vki_rooms_stair_depth` / `_piece`, Unity
+    `KitRoomLayout.StairDepth` / `StairPiece` / `HatchDown` (one cell, no wall nodes, the holed floor; cave layouts too),
+    KitRoom honours `vki_prompt_text` on stairs ("Climb down" / "Climb up"), vki_check takes a hatch's `vki_hole`.
+    Checked: vki_test_pieces {} on all six, `vki_lnk_hatch_pair_check()` 0 over 128 rung vertices, two rig rooms
+    (`VKI_HatchRig_F0` Stone cellar / `_F1` Timber loft, built from records registered in memory, not in VKI_ROOMS)
+    pass vki_check and were looked at in game shots and close-ups; exported, Unity Build Prefabs 1,272 / 0 failed.
+
+93. 2026-10-12 (MedievalSetting, the user: "a hatch in the front of the initial hamlet inn, leading to the cellar ...
+    we add another region south of the cellar"): **`SM_VK_Entrance_Trapdoor`** (`ent_trapdoor` in vk_mod_entrances,
+    ENT_META "Climb down into the cellar"; 928 tris): the outdoor twin of the interior hatch -- a kerb of four dressed
+    stones, a raised oak coaming 0.18 high round a 0.80 m opening, darkness cards at the ground and on the inner faces'
+    lower half (the ground covers everything below z 0, so the depth is painted), a ladder's top standing up out of the
+    dark, the lid opened 100 deg on the north coaming with its ledges to the camera. A `buildings` entry in an outdoor
+    layout (the piece is the door). **`KitChain.origin`**: where the first map lies (Bake used the world origin), so a
+    hand-made first map can grow south / west without moving the pieces after it (LEVEL_BUILDING 5.5). Checked in
+    MedievalSetting: the hamlet's trapdoor by the inn (BuildVillage walk test ok, area map "Cellar hatch", game-camera
+    renders); HamletCellar's cellar grown 7 rows south with `origin` z 10.5 and only that piece rebuilt (Build with the
+    one piece, its scene saved, `chain.pieces[0]` updated, then `KitNavBake.BakeChain`): its old spawns moved 0.000 m,
+    3 / 3 spawns walked, no overlap with the other 12 pieces. Prefabs 1,273 / 0 failed.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

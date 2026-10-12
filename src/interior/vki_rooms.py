@@ -516,14 +516,25 @@ def vki_rooms_stair_frame(x, y, rot, lx, ly):
     return (x + math.cos(r) * lx - math.sin(r) * ly, y + math.sin(r) * lx + math.cos(r) * ly)
 
 
+def vki_rooms_stair_depth(st_):
+    """cells a stair record covers along its local y: 1 for the trapdoor pair (variant "Hatch",
+    Stair_Down / Stair_Up_150x150_Hatch), 3 for the flights (150x450)"""
+    return 1 if len(st_) > 5 and st_[5] == "Hatch" else 3
+
+
+def vki_rooms_stair_piece(kind, var):
+    """the stair record's piece: SM_VKI_Stair_<kind>_150x450_<var>, or _150x150_Hatch for the trapdoor pair"""
+    return f"SM_VKI_Stair_{kind}_{'150x150' if var == 'Hatch' else '150x450'}_{var}"
+
+
 def vki_rooms_stair_cells(R):
     """{(c, r): ('Up'|'Down', index)} footprint cells of the stairs (the 1 x 3 cells of local [0, 1.5] x [0, 4.5],
     through the stair's frame: rot 0 runs +Y, 90 runs -X along an E-W wall on its south side, -90 runs +X along an
-    E-W wall on its north side)"""
+    E-W wall on its north side; a hatch covers its one cell)"""
     out = {}
     for si, st_ in enumerate(R.get("stairs", [])):
         kind, x, y, rot, lid = st_[:5]
-        for d in range(3):
+        for d in range(vki_rooms_stair_depth(st_)):
             cx, cy = vki_rooms_stair_frame(x, y, rot, 0.75, 0.75 + VKI_IG * d)       # the cell centre
             out[(int(math.floor(cx / VKI_IG)), int(math.floor(cy / VKI_IG)))] = (kind, si)
     return out
@@ -677,6 +688,8 @@ def vki_rooms_layout(name, R=None, P=None):
     stair_nodes = set()
     for st_ in R.get("stairs", []):
         kind, sx, sy, srot, lid = st_[:5]
+        if vki_rooms_stair_depth(st_) == 1:
+            continue                                     # a hatch needs no wall: its rhythm posts stay
         # the nodes along the stair's walls: local x = 0 (y 0..4.5) and y = 4.5 (x 0..1.5), in any rotation; the
         # left-hand twins (variant ...L, vki_dun_mirror_l) have their wall on local x = 1.5
         left = len(st_) > 5 and str(st_[5]).endswith("L")
@@ -740,6 +753,11 @@ def vki_rooms_layout(name, R=None, P=None):
         for (i, j) in sorted(cells):
             floors.append(dict(piece=f"SM_VKI_Floor_150_Q{i % 2}{j % 2}", x=VKI_IG * i, y=VKI_IG * j, zone=zn,
                                style={"floor": z["floor"]}))
+        # a down hatch's cell takes the zone's floor with the hole to its curb (Floor_150_Hatch_Q*)
+        for (i, j), (kind, si) in sorted(scells.items()):
+            if kind == "Down" and zmap.get((i, j)) == zn and vki_rooms_stair_depth(R["stairs"][si]) == 1:
+                floors.append(dict(piece=f"SM_VKI_Floor_150_Hatch_Q{i % 2}{j % 2}", x=VKI_IG * i, y=VKI_IG * j,
+                                   zone=zn, style={"floor": z["floor"]}))
     # ---- doors: cells on both sides (exits: the inside cells)
     doors = []
     for pi, pc in enumerate(pieces):
@@ -1407,13 +1425,13 @@ def vki_rooms_exit(ctx, pc, door):
 
 
 def vki_rooms_stair(ctx, kind, x, y, rot, lid, var="RailR"):
-    piece = f"SM_VKI_Stair_{kind}_150x450_{var}"                  # var "Stone": the dungeon kit's stone stairs
+    piece = vki_rooms_stair_piece(kind, var)             # var "Stone": the dungeon kit's stone stairs; "Hatch": a trapdoor
     o = vki_rooms_put(ctx, ctx["colls"]["Shell"], piece, x, y, rot, walls=[])
     lk = next((l for l in ctx["R"]["links"] if l[0] == lid), None)
     o["vki_link"] = "stair_up" if kind == "Up" else "stair_down"
     o["vki_link_id"] = lid
     o["vki_target"] = lk[2] if lk else ""
-    o["vki_prompt"] = "Go upstairs" if kind == "Up" else "Go downstairs"
+    o["vki_prompt"] = o.get("vki_prompt_text") or ("Go upstairs" if kind == "Up" else "Go downstairs")
     o["vki_facing_min"] = 60
     sl = vki_get(o, "vki_spawn_local", None) or ([0.75, -0.75] if kind == "Up" else [2.25, 3.75])
     fac = float(o.get("vki_spawn_facing", 180 if kind == "Up" else 90))
@@ -2188,7 +2206,7 @@ def vki_check(scene, full=False, t19=True, bfs=True, palette=True):
         fp = [float(t) for t in str(f.get("vki_footprint", "0,0,1.5,1.5")).split(",")]
         mark(f.name, f.location.x + fp[0], f.location.y + fp[1], f.location.x + fp[2], f.location.y + fp[3])
     for o in objs:
-        if o.get("vki_link") == "stair_down" or o.get("vki_covers_floor"):
+        if (o.get("vki_link") == "stair_down" and o.get("vki_var") != "Hatch") or o.get("vki_covers_floor"):
             cf = vki_get(o, "vki_covers_floor", None) or [0.0, 0.0, 1.5, 4.5]
             for cf_ in (cf if isinstance(cf[0], (list, tuple)) else [cf]):      # a rect, or a list of them
                 bb = vki_rooms_boxes_of(o, [[(cf_[0] + cf_[2]) / 2, (cf_[1] + cf_[3]) / 2, 0.0, cf_[2] - cf_[0],
@@ -2318,7 +2336,8 @@ def vki_check(scene, full=False, t19=True, bfs=True, palette=True):
     cut_walls = [w for w in walls if w.get("vki_height") == "Cut"]
     for o in links:
         if o.get("vki_link") == "stair_down":
-            hole = vki_rooms_boxes_of(o, [[0.80, 1.86, 0.0, 0.94, 3.52, 0.1]])[0]
+            h = vki_get(o, "vki_hole", None) or [0.33, 0.10, 1.27, 3.62]          # the flight's, or a hatch's
+            hole = vki_rooms_boxes_of(o, [[(h[0] + h[2]) / 2, (h[1] + h[3]) / 2, 0.0, h[2] - h[0], h[3] - h[1], 0.1]])[0]
             for w in cut_walls:
                 if vki_rooms_rect_dist(hole, vki_rooms_wall_env(w)) < 1.5:
                     warns.append(f"R-occ1 stair hole of {o.name} within 1.5 m of the Cut wall {w.name}")

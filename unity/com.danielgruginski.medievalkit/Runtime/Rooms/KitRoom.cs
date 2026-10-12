@@ -481,10 +481,11 @@ namespace MedievalKit
         /// <summary>vki_rooms_stair: the stair piece carries the link; spawn at its vki_spawn_local</summary>
         void Stair(string kind, float x, float y, float rot, string lid, string var)
         {
-            var o = Put(shell, $"SM_VKI_Stair_{kind}_150x450_{var}", x, y, rot, 0f, null, "stair");
+            var o = Put(shell, KitRoomLayout.StairPiece(kind, var), x, y, rot, 0f, null, "stair");
             if (o == null) return;
             var lk = LinkEntry(lid);
-            Link(o, kind == "Up" ? "stair_up" : "stair_down", lid, lk != null ? (string)lk[2] : "", kind == "Up" ? "Go upstairs" : "Go downstairs");
+            Link(o, kind == "Up" ? "stair_up" : "stair_down", lid, lk != null ? (string)lk[2] : "",
+                 o.kp?.Get("vki_prompt_text") ?? (kind == "Up" ? "Go upstairs" : "Go downstairs"));      // a hatch: "Climb up" / "Climb down"
             var sl = PropJ(o.kp, "vki_spawn_local") as JArray;
             float lx = sl != null ? (float)sl[0] : (kind == "Up" ? 0.75f : 2.25f), ly = sl != null ? (float)sl[1] : (kind == "Up" ? -0.75f : 3.75f);
             float fac = o.kp != null && o.kp.Has("vki_spawn_facing") ? o.kp.GetFloat("vki_spawn_facing") : (kind == "Up" ? 180f : 90f);

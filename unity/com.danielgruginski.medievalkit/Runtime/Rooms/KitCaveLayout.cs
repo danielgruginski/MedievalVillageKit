@@ -108,9 +108,14 @@ namespace MedievalKit
                 for (int r = 0; r < nr; r++)
                 {
                     if (pitCells.ContainsKey((c, r)) || ccells.Contains((c, r))) continue;
-                    if (stairCells.TryGetValue((c, r), out var sc) && sc.kind == "Down") continue;
                     string zn = zmap[(c, r)];
                     string fs = zn != null ? (string)zones[zn]?["floor"] : null;
+                    if (stairCells.TryGetValue((c, r), out var sc) && sc.kind == "Down")
+                    {
+                        if (HatchDown((c, r)))         // the floor with the hole to the hatch's curb
+                            floors.Add(new Floor { piece = $"SM_VKI_Floor_150_Hatch_Q{c % 2}{r % 2}", x = IG * c, y = IG * r, zone = zn, floorStyle = fs });
+                        continue;
+                    }
                     if (!cov.TryGetValue((c, r), out var q))
                     {
                         floors.Add(new Floor { piece = $"SM_VKI_Floor_150_Q{c % 2}{r % 2}", x = IG * c, y = IG * r, zone = zn, floorStyle = fs });

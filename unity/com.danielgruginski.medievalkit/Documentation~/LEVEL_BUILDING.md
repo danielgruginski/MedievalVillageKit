@@ -156,7 +156,7 @@ A JSON object. Unknown keys are ignored.
 | `family` | `{"perimeter": F, "partition": F}`, F one of Timber, Stone, Board, Wattle, Ashlar, Dungeon, Ancient, Cave, Dwarf, Mine, Sewer, Bars |
 | `zones` | `{name: {"cells": "rest" or [[c0, c1, r0, r1], ...], "floor": style, "wall": style}}`; the first zone listed wins where zones overlap |
 | `links` | `[[id, kind, target, arrive]]`: scene links (`kind`: exit, passage, stair_up, stair_down, lift; `target`: a scene, `@return`, `@deep`; `arrive`, optional: the spawn id one lands on there, 5.8) |
-| `stairs` | `[[kind, x, y, rot, link_id, variant]]`: `Up` / `Down`, the footprint's corner at its foot, plan metres; `rot` 0 / 90 / -90 (never 180); `variant` `RailR` (timber, the default), `Stone`, or `StoneL`. The wall runs along the stair's local x = 0 side, and its rail side (x = 1.5) must stay clear of walls; for a flight with its wall on its right going up, use the mirrored `StoneL` (else the lip lies in the wall's coping and z-fights with it) |
+| `stairs` | `[[kind, x, y, rot, link_id, variant]]`: `Up` / `Down`, the footprint's corner at its foot, plan metres; `rot` 0 / 90 / -90 (never 180); `variant` `RailR` (timber, the default), `Stone`, `StoneL`, or `Hatch`. The wall runs along the stair's local x = 0 side, and its rail side (x = 1.5) must stay clear of walls; for a flight with its wall on its right going up, use the mirrored `StoneL` (else the lip lies in the wall's coping and z-fights with it). `Hatch` is the one-cell trapdoor pair (`Stair_Down` / `Stair_Up_150x150_Hatch`: a lid and a ladder down, the ladder up below; prompts "Climb down" / "Climb up"): `x, y` is its cell's corner, it needs no wall, keep its south cell free (trigger and arrival); a down hatch's cell gets `Floor_150_Hatch_Q*`, the zone's floor with a hole to the curb |
 | `props` | `[[name, x, y, rot, style, mount, opts]]`: `mount` floor / wall_floor / wall_hung / table / edge; `opts` `{"on": true}` (stand on the table at x, y), `"hug"`, `"z"`, `"link"` |
 | `props_from_codes` | `true`: the plan's codes furnish too (codes first, then the record's props) |
 | `pits`, `sills`, `special`, `passages`, `door_leaves` | as in the kit's rooms (`rules.Room("VKI_...")` for examples) |
@@ -306,6 +306,11 @@ chain.maps[0].cave.portals.Add(new KitPortal { id = "east", side = "E" });      
 string report = KitChainTools.Bake(chain);
 ```
 
+The first map lies at the chain's `origin` (default the world origin; its plan's south-west corner, Blender (x, y)
+-> local (-x, -y)). Growing a hand-made first map south or west moves everything after it unless `origin` moves the
+other way (z + 1.5 a row added south, x + 1.5 a column added west): MedievalSetting's HamletCellar grew 7 rows south
+with `origin` z 10.5, so the pieces baked before, their camps and saves kept their world positions.
+
 Each map after the first joins an earlier map: the one named in `attachTo` (empty: the map before it in the list)
 through that map's `attachPortal` (empty: its `outPortal`). A connector runs from that portal to this map's `inPortal`
 (its edges follow the two portals; `connector` sets its length, seed and style). So the maps form a tree: a map may
@@ -416,7 +421,7 @@ piers, decks, steps: `KitSolid.IsSoft`). The navmesh is baked from colliders, so
 | `roads` | `[{id, width, surface: dirt / cobble, points: [[x, y], ...]}]`: smooth curves through the points; run them past the map's edge for exits |
 | `areas` | `[{id, centre, radius, lumps, surface}]`: a green, a farmyard (lumpy ovals painted cobble or dirt) |
 | `clearings` | instead of `clearing`: several lumpy ovals (glades along a path through woods); walls and forest follow their union |
-| `buildings` | `[{id, structure: "Inn" or house: {cells, stories, seed, shape}, at, face: [x, y] or rot, door: {target, arrive, prompt}}]`: structures are the package's `Generated/Structures` (Inn, Chapel, GuardTower, Stable, Barn, Pigsty, Woodcutter, Smithy, Hovel_*, ...) or any kit piece (a cave mouth, `Entrance_CaveMouth` -- dry, for open ground -- or the valley's `Entrance_SpringCave` with its trickle: the piece itself is the door); houses come from the house generator |
+| `buildings` | `[{id, structure: "Inn" or house: {cells, stories, seed, shape}, at, face: [x, y] or rot, door: {target, arrive, prompt}}]`: structures are the package's `Generated/Structures` (Inn, Chapel, GuardTower, Stable, Barn, Pigsty, Woodcutter, Smithy, Hovel_*, ...) or any kit piece (a cave mouth, `Entrance_CaveMouth` -- dry, for open ground -- or the valley's `Entrance_SpringCave` with its trickle; a cellar trapdoor in open ground, `Entrance_Trapdoor`, its lid on its +Y side, the way in from -Y: face it at a point south of it to put the lid toward a wall north of it: the piece itself is the door); houses come from the house generator |
 | `gardens` | `[{id, at, rot, beds: [cols, rows], crops: [...], fence, gate: N/E/S/W, gatePiece}]`: crop beds (Crop_Cabbage, Carrot, Pumpkin, Lavender, Wheat) fenced |
 | `props` | `[{piece, at, face or rot, collide}]`: any kit piece by name (`MarketStall_Tinker`, `Prop_Well`, `Grave_Cross`, `Animal_Horse`...) |
 | `fences` | `[{piece, points, gate, gateAt: [fractions], gateDoor, gateDoorFlip, along: [{piece, at: [fractions], rot, collide}], closed, offset, flip, collide, smooth}]`: pieces laid along a curve (`Prop_Fence`, `Deco_Hedge`, `Palisade_Straight`, `Palisade_Walk`), each stretched to fit its run; a gate keeps its own width; `gateDoor` puts doors in each gate's frame at its transform (`Goblin_Gate` in a `Palisade_Gate`: closed and breakable, the way in until the game breaks it); `along` stands pieces on the line at fractions of it, turned as its pieces are (a `Palisade_Ladder` on a walkway's line leans on its deck); `closed` makes a ring (a palisade); `offset` shifts the line sideways (left of the way it runs: a walkway behind a wall) |
