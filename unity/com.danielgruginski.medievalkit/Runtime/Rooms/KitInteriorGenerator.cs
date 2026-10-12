@@ -25,6 +25,9 @@ namespace MedievalKit
             public string kind = "Cottage";
             public int seed = 3;
             [Tooltip("0: by kind.")] public int nc, nr;
+            [Tooltip("One room: the hall over the whole floor, no side rooms (a great hall).")] public bool open;
+            [Tooltip("A stair up the hall's west wall at its north end: \"up\" (arrival in front of its foot) or \"down\" (an upper " +
+                     "floor: arrival beside its top, bedrooms aside, no front door); empty: none.")] public string stair = "";
         }
 
         const float IG = 1.5f;
@@ -75,15 +78,20 @@ namespace MedievalKit
 
             // ---- parts: the hall (with the front door) and a side strip, split once more when deep enough
             string hallType = kind == "Tavern" ? "taproom" : kind == "Workshop" ? "workroom" : "hall";
-            var sideTypes = kind == "Tavern" ? new[] { "kitchen", "store", "pantry" } : kind == "Workshop" ? new[] { "store", "pantry" }
+            bool up = o.stair == "up", down = o.stair == "down";
+            var sideTypes = down ? new[] { "bedroom", "bedroom", "store" }                     // upstairs: bedrooms
+                          : kind == "Tavern" ? new[] { "kitchen", "store", "pantry" } : kind == "Workshop" ? new[] { "store", "pantry" }
                           : kind == "Townhouse" ? new[] { "kitchen", "bedroom", "pantry" } : new[] { "bedroom", "pantry" };
             int sideW = Mathf.Clamp(nc / 3, 2, 3);
             bool east = rnd.Next(2) == 0;
+            if (up || down) east = true;                             // the side rooms east, the stair up the hall's west wall
             var parts = new List<Part>();
-            var hall = east ? new Part { type = hallType, c0 = 0, c1 = nc - sideW - 1, r0 = 0, r1 = nr - 1 } : new Part { type = hallType, c0 = sideW, c1 = nc - 1, r0 = 0, r1 = nr - 1 };
+            var hall = o.open ? new Part { type = hallType, c0 = 0, c1 = nc - 1, r0 = 0, r1 = nr - 1 }
+                     : east ? new Part { type = hallType, c0 = 0, c1 = nc - sideW - 1, r0 = 0, r1 = nr - 1 } : new Part { type = hallType, c0 = sideW, c1 = nc - 1, r0 = 0, r1 = nr - 1 };
             int sc0 = east ? nc - sideW : 0, sc1 = east ? nc - 1 : sideW - 1;
             parts.Add(hall);
-            if (nr >= 6 && sideTypes.Length > 1)                        // two side rooms, each at least three deep (a bed and its door)
+            if (o.open) { }                                         // a great hall: no side rooms
+            else if (nr >= 6 && sideTypes.Length > 1)                        // two side rooms, each at least three deep (a bed and its door)
             {
                 int split = rnd.Next(3, nr - 2);
                 parts.Add(new Part { type = sideTypes[0], c0 = sc0, c1 = sc1, r0 = split, r1 = nr - 1 });
@@ -96,22 +104,31 @@ namespace MedievalKit
             var ew = new Dictionary<(int, int), string>();
             var ns = new Dictionary<(int, int), string>();
             var doorCells = new HashSet<(int, int)>();
-            int line = east ? nc - sideW : sideW;                   // the N-S partition line
+            int line = o.open ? -9 : east ? nc - sideW : sideW;     // the N-S partition line (none in a great hall)
             int exitC = Mathf.Clamp((hall.c0 + hall.c1 + 1) / 2, hall.c0 + 1, hall.c1 - 1);       // the front door, mid-hall
             for (int i = 0; i < nc; i++)
             {
                 ew[(i, nr)] = rnd.NextDouble() < 0.3 && i != line && i != line - 1 && i > 0 && i < nc - 1 ? "WW" : "##";
-                ew[(i, 0)] = i == exitC ? "ee" : (rnd.NextDouble() < 0.35 && Math.Abs(i - exitC) > 1 ? "ww" : "==");
+                ew[(i, 0)] = i == exitC && !down ? "ee" : (rnd.NextDouble() < 0.35 && Math.Abs(i - exitC) > 1 ? "ww" : "==");
             }
-            doorCells.Add((exitC, 0));
+            if (!down) doorCells.Add((exitC, 0));                   // an upper floor has no front door
             // the hearth: two cells of the hall's north wall, clear of the corners and the partition
-            var hearthAt = Enumerable.Range(hall.c0 + 1, Math.Max(0, hall.c1 - hall.c0 - 2)).ToList();      // i, i + 1 inside the hall's ends
+            int h0s = hall.c0 + (up || down ? 2 : 1);                // clear of the stair's top
+            var hearthAt = Enumerable.Range(h0s, Math.Max(0, hall.c1 - h0s - 1)).ToList();      // i, i + 1 inside the hall's ends
             int? hearth = hearthAt.Count > 0 ? hearthAt[rnd.Next(hearthAt.Count)] : (int?)null;
             if (hearth is int h0) { ew[(h0, nr)] = "FF"; ew[(h0 + 1, nr)] = "FF"; }
             for (int r = 0; r < nr; r++)
             {
                 ns[(0, r)] = r == 0 ? "t" : (rnd.NextDouble() < 0.3 && r < nr - 1 ? "W" : "#");
                 ns[(nc, r)] = r == 0 ? "t" : (rnd.NextDouble() < 0.3 && r < nr - 1 ? "W" : "#");
+            }
+            // the stair (Options.stair): three cells up the hall's west wall to its north end, no window behind it
+            var stairCells = new List<(int, int)>();
+            (int, int) arrive = default;
+            if (up || down)
+            {
+                for (int r = nr - 3; r < nr; r++) { stairCells.Add((hall.c0, r)); ns[(hall.c0, r)] = "#"; }
+                arrive = up ? (hall.c0, nr - 4) : (hall.c0 + 1, nr - 1);
             }
             // partitions: the N-S line between the hall and the side rooms, each side room a door ("d") from the hall
             foreach (var side in parts.Skip(1))
@@ -130,6 +147,8 @@ namespace MedievalKit
             var reserved = new HashSet<(int, int)>(doorCells);
             foreach (var d in doorCells) foreach (var q in new[] { (d.Item1 + 1, d.Item2), (d.Item1 - 1, d.Item2), (d.Item1, d.Item2 + 1), (d.Item1, d.Item2 - 1) }) reserved.Add(q);
             if (hearth is int hh) { reserved.Add((hh, nr - 1)); reserved.Add((hh + 1, nr - 1)); }
+            foreach (var q in stairCells) { reserved.Add(q); codes[q] = up ? "^^" : "vv"; }
+            if (up || down) { reserved.Add(arrive); codes[arrive] = "Ss"; }
             // what stands on a cell's side: 2 the back wall (and the side walls' back half: they rake toward the camera),
             // 1 the front wall and the partitions (cut down), 0 a window, a door, the hearth, a rake or nothing
             int WallAt((int, int) q, char s)
@@ -182,7 +201,7 @@ namespace MedievalKit
                 var box = new JArray(); box.Add(new JArray(p.c0, p.c1, p.r0, p.r1));      // new JArray(JArray) would copy, not nest
                 zones[$"{p.type}{k}"] = new JObject
                 {
-                    ["cells"] = box, ["floor"] = FloorOf[p.type],
+                    ["cells"] = box, ["floor"] = down && p == hall ? "Boards_NS" : FloorOf[p.type],     // upstairs: boards, not flags
                     ["wall"] = p.type == "store" || p.type == "pantry" ? (stone ? "StoneIn" : "PlasterDaub") : plaster,
                 };
             }
@@ -195,6 +214,12 @@ namespace MedievalKit
                 ["generated"] = new JObject { ["generator"] = "interior", ["kind"] = kind, ["seed"] = o.seed, ["nc"] = nc, ["nr"] = nr },
             };
             if (hearth != null) R["special"] = special;
+            if (up || down)
+            {
+                var sa = new JArray(); sa.Add(new JArray(up ? "Up" : "Down", IG * hall.c0, IG * (nr - 3), 0f, "stairA"));   // new JArray(JArray) would copy
+                R["stairs"] = sa;
+                if (down) { R["floor"] = 1; R["links"] = new JArray(); }
+            }
             return (Plan(nc, nr, codes, ew, ns), R);
         }
 

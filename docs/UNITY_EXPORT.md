@@ -299,7 +299,12 @@ materials by name).
   taproom's bar (counters a cell out from a wall, cask racks behind them, an end piece and the barkeep's way in behind
   it), the kitchen's oven beside its worktable, the workroom's bench under a tool wall; then the codes' furniture; then
   the dressing: a log basket by the hearth, a chest beside the bed with a candle on it, table dressing by room (tavern
-  mugs, meals), lanterns on full-height walls. Taverns are 9-11 x 6-7 cells (a bar and tables).
+  mugs, meals), lanterns on full-height walls. Taverns are 9-11 x 6-7 cells (a bar and tables). Options (2026-10-12, for
+  a game's great hall): `open` (one room, the hall over the whole floor, no side rooms) and `stair` -- "up" (three
+  cells up the hall's west wall to its north end, arrival "Ss" in front of its foot, no window behind it, the hearth
+  kept two cells off) or "down" (an upper floor: the same cells as a stair hole, arrival beside its top, bedrooms
+  aside, no front door, boards in the hall); both write record "stairs" with link id "stairA" and put the side rooms
+  east.
 - `KitSetPieces` (runtime, shared by the generators): groups the furniture codes cannot say, as record props. A
   set-piece holds its cells with the code "@@" (furniture the record places: the codes' furniture skips it, the walk
   test counts it as a prop), keeps the cells it needs clear (the way up to an altar, behind a bar), and goes in only
