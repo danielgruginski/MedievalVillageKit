@@ -161,7 +161,7 @@ A JSON object. Unknown keys are ignored.
 | `props_from_codes` | `true`: the plan's codes furnish too (codes first, then the record's props) |
 | `pits`, `sills`, `special`, `passages`, `door_leaves` | as in the kit's rooms (`rules.Room("VKI_...")` for examples) |
 | `cave` | `true`: the plan is a cell map in rock (rock tiles, chasms, streams, channels) |
-| `tunnels`, `tunnel_kinds` | cave maps: a tunnel tile and its link on a node, `{"i|j": link_id}` |
+| `tunnels`, `tunnel_kinds` | cave maps: a tunnel tile and its link on a node, `{"i|j": link_id}` (the node's two cells to the south open, the two north of it Full rock); `tunnel_kinds` `{link_id: kind}` picks `Rock_Cave_OOFF_<kind>`: `Tunnel` (default, darkness: a way deeper), `Mouth` (a way out into daylight, light falling in), `Adit` (a mine's timbered adit) |
 | `debris` | `{"density": 0..1, "seed": n}`: loose debris by zone theme |
 | `encounters` | `[{id, room, creature, budget, boss, depth, box: [x0, y0, x1, y1], points: [[x, y]]}]` -> `KitEncounter` |
 | `portals` | `[{id, side, at, width, target, seam}]`: openings into the next map of a chain (5.5) |

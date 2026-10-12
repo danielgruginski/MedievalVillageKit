@@ -80,6 +80,11 @@ map: each 1.5 m cell is open floor or rock (`##`), and everything outside the ma
   crosses a rock–open edge exactly at its midpoint, so any two neighbours meet without a seam.
 - **The tunnel tile** `SM_VKI_Rock_Cave_OOFF_Tunnel` is a straight Full face with a cleft into the rock under a fallen
   lintel, and darkness at its back. It is the cave's scene link, like a passage.
+- **The mouth tile** `SM_VKI_Rock_Cave_OOFF_Mouth` (2026-10-12) is the way out into daylight: a wider, taller cleft
+  (1.2 x 2.2 m) closed at the top by a ragged rock lintel, stones jutting from its sides, a daylight card at its back
+  (WINDOW -> M_VKI_Daylight) with two bushes and grass before it on an earth slope, roots hanging under the lintel, and a
+  cold SPOT (`vki_lights`, role daylight) falling onto the cave floor. A record uses it with
+  `"tunnel_kinds": {"<link id>": "Mouth"}`; its prompt is "Leave the cave".
 - **Colliders** are the tile's floor-level footprint, a 0.25 m raster merged into boxes. Keep openings between rock
   two cells wide: the rock's lobes and foot take up to ~0.6 m off each side of a gap, so a one-cell gap can close to
   under the 0.6 m walker.
@@ -427,6 +432,7 @@ Triangles and footprint in 1.5 m cells for each master in `VKI_Pieces`.
 |---|---|---|
 | `SM_VKI_Rock_Cave_<code>_<A\|B\|C>`: 23 codes × 2 variants, 3 for `FFOO` / `CCOO` (48) | 153–364 (13,078 in all) | 1,1 |
 | `SM_VKI_Rock_Cave_OOFF_Tunnel` | 288 | 1,1 |
+| `SM_VKI_Rock_Cave_OOFF_Mouth` | 974 | 1,1 |
 | `SM_VKI_Rock_Cave_<code>_Wall<arms>`: wall-backed, every code with every set of wall arms S E N W that has open floor beside each arm (115) | 87–346 (23,764 in all) | 1,1 |
 | `SM_VKI_Ground_Cave_<code>_Q<p>`: 14 codes × 4 node parities (56) | 141–376 (13,750 in all) | 1,1 |
 | `SM_VKI_Ground_Cave_XXXX` | 12 | 1,1 |

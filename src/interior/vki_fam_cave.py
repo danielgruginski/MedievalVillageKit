@@ -14,7 +14,8 @@
 # a seam: the outline crosses an edge between rock and open exactly at its midpoint, with the same cliff section.
 # Masters: one per rotation class of the 80 corner codes (23 codes), two variants each (three for the straight Full
 # and Cut faces), placed at 0/90/180/270; plus SM_VKI_Rock_Cave_OOFF_Tunnel (a straight Full face with a cleft into
-# the rock under a fallen lintel, darkness at its back: a scene link). Class "rock".
+# the rock under a fallen lintel, darkness at its back: a scene link) and SM_VKI_Rock_Cave_OOFF_Mouth (2026-10-12: a
+# wider, taller cleft opening on daylight -- card, earth slope, grass, a cold spot falling in: a way out). Class "rock".
 # Transitions (walls in a cave map): a masonry wall on a grid line runs through the middle of the tiles on its nodes,
 # and rock left to itself would bulge through it. Wall-backed tiles (SM_VKI_Rock_Cave_<code>_Wall<arms>, 115 masters:
 # every corner code with every set of wall arms S / E / N / W that has open floor on at least one side) keep the rock
@@ -576,6 +577,78 @@ def vki_cav_bridge(k):
                   vki_place_rule="origin on the node between the two chasm cells it spans, rotation 0 (N-S) or 90")
 
 
+# ---------------------------------------------------------------- the mouth: a cave's way out into daylight
+# 2026-10-12 (MedievalSetting's bears' caves, the user: the way out "should be like in skyrim, a natural opening to the
+# outer world", not a stair): the tunnel's cleft, wider and taller and with no fallen lintel, closed at its back by a
+# daylight card (WINDOW -> M_VKI_Daylight, in front of the tunnel's VOID card), an earth slope rising into the light with
+# grass at its top, and a cold spot falling in from the opening onto the cave floor (vki_lights, as the dungeon's light
+# grate). A scene link like the tunnel (R["tunnels"] + R["tunnel_kinds"] "Mouth"), prompt "Leave the cave".
+VKI_CAV_MOUTH_SPOT = dict(type="SPOT", role="daylight", pos=[0.0, 0.50, 1.75], aim=[0.0, -2.6, 0.0], cone=70.0,
+                          blend=0.45, radius=0.06, w_day=1500.0, w_night=150.0, color_day=[.80, .87, 1.0],
+                          color_night=[.55, .62, .90], shadows=1)
+
+
+def vki_cav_mouth_portal(k, T):
+    """the daylight at the back of a cave mouth (built after the rock: vki_cav_tile with tunnel=VKI_CAV_MOUTH)"""
+    hw, back, zl = T["hw"], T["back"], T["lintel"]
+    # the daylight card, 2.5 cm in front of the tunnel's VOID card (back - 0.035 .. - 0.02), over the whole cleft
+    vki_adv_box(k, -hw + 0.01, hw - 0.01, back - 0.065, back - 0.045, -0.02, zl + 0.30, WINDOW)
+    k.slot_mats[WINDOW] = "Daylight"
+    # the earth slope up into the light: out of the cave floor at the cleft's front, 0.42 high at the card
+    yb, ztop = back - 0.07, 0.42
+    vs, fs = vki_prism(k, [(-0.30, -0.02), (yb, -0.02), (yb, ztop), (-0.30, 0.004)], -hw + 0.015, hw - 0.015,
+                       VKI_FLOOR, axis="x", project=False)
+    k.project(fs, VKI_FLOOR, tile=1.5)
+    for v in vs:
+        k.set_dark([v], 0.25 * vki_smoothstep(0.3, -0.3, v.co.y))       # darker where it leaves the cave floor
+    k.slot_mats[VKI_FLOOR] = "EarthDamp"
+    # the cleft is cut through the rock's whole height: a rock mass closes its top in a ragged arch (the tunnel's
+    # fallen lintel, bigger), rocks under its ends round the top corners, and stones set into the cleft's sides jut
+    # into the gap, so the light shows through a natural opening, not a doorway (each inside the tile, |x| + r < 0.75)
+    for i, (c, sc_) in enumerate((((0.0, 0.20, zl + 0.30), (hw + 0.13, 0.44, 0.50)),           # the lintel mass
+                                  ((-hw + 0.02, 0.16, zl - 0.18), (0.20, 0.32, 0.42)),         # under its ends
+                                  ((hw - 0.01, 0.22, zl - 0.30), (0.18, 0.30, 0.50)),
+                                  ((-hw - 0.03, 0.04, 1.25), (0.15, 0.26, 0.32)),              # set into the sides
+                                  ((hw + 0.03, 0.14, 0.72), (0.14, 0.24, 0.30)),
+                                  ((hw + 0.01, -0.10, 0.16), (0.17, 0.20, 0.20)))):
+        rv = vki_home_ico(k, c, 1.0, VKI_STONE_BLOCK_IN, scale=sc_, sub=1 if i else 2, jit=0.03, seed=31 + i,
+                          smooth=False)
+        k.project(vki_faces_of(rv), VKI_STONE_BLOCK_IN)
+        for v in rv:
+            k.set_dark([v], 0.10 + 0.30 * vki_smoothstep(0.0, back, v.co.y))
+    # outside: two bushes against the light at the slope's top corners (dark, backlit; the sky open above them)
+    for i, (c, r, sc_) in enumerate((((-hw + 0.17, back - 0.14, 0.58), 0.26, (1.15, 0.55, 0.95)),
+                                     ((hw - 0.15, back - 0.12, 0.66), 0.24, (1.10, 0.55, 1.05)))):
+        bv = _ico(k, c, r, LEAF, scale=sc_, sub=1, jit=0.05, seed=53 + i)
+        k.set_dark(bv, 0.35)
+    # roots hanging from under the lintel
+    rnd = random.Random(89)
+    for i in range(5):
+        x = rnd.uniform(-hw + 0.15, hw - 0.15)
+        L = rnd.uniform(0.20, 0.50)
+        rv = k.box((x, rnd.uniform(0.05, 0.25), zl - 0.10 - L / 2), (0.016, 0.012, L), WOOD,
+                   rot=(rnd.uniform(-0.12, 0.12), rnd.uniform(-0.10, 0.10), 0.0), bevel=0.0)
+        k.set_dark(list(set(rv)), 0.55)
+    # grass at the top of the slope, leaning out of the light
+    rnd = random.Random(97)
+    for i in range(34):
+        y = rnd.uniform(yb - 0.32, yb - 0.04)
+        x = rnd.uniform(-hw + 0.08, hw - 0.08)
+        z0 = -0.02 + (ztop + 0.02) * (y + 0.30) / (yb + 0.30) - 0.03      # the slope's top there, 3 cm into it
+        h = rnd.uniform(0.16, 0.34)
+        k.box((x, y, z0 + h / 2), (0.024, 0.008, h), LEAF, rot=(rnd.uniform(-0.45, -0.1), rnd.uniform(-0.25, 0.25),
+                                                               rnd.uniform(0.0, math.pi)), bevel=0.0)
+
+
+VKI_CAV_MOUTH = dict(hw=0.60, back=0.64, lintel=2.20, head="natural", portal=vki_cav_mouth_portal)
+
+
+def vki_cav_mouth(k):
+    """SM_VKI_Rock_Cave_OOFF_Mouth: a straight Full face opening on daylight (see VKI_CAV_MOUTH_SPOT's note)"""
+    vki_cav_tile(k, "OOFF", "M", tunnel=VKI_CAV_MOUTH)
+    k.meta.update(vki_prompt_text="Leave the cave", vki_lights=[dict(VKI_CAV_MOUTH_SPOT)], vki_daylight=1)
+
+
 def vki_cav_rock_specs():
     """[(name, builder, grime)] for every rock tile, ground tile, quarter floor and the rope bridge"""
     out = []
@@ -583,6 +656,7 @@ def vki_cav_rock_specs():
         for var in VKI_CAV_VARIANTS.get(m, "AB"):
             out.append(("SM_VKI_Rock_Cave_%s_%s" % (m, var), (lambda k, m=m, var=var: vki_cav_tile(k, m, var)), "none"))
     out.append(("SM_VKI_Rock_Cave_OOFF_Tunnel", (lambda k: vki_cav_tile(k, "OOFF", "T", tunnel=True)), "none"))
+    out.append(("SM_VKI_Rock_Cave_OOFF_Mouth", vki_cav_mouth, "none"))
     for m, ma in vki_cav_backed_keys():
         out.append(("SM_VKI_Rock_Cave_%s_Wall%s" % (m, ma), (lambda k, m=m, ma=ma: vki_cav_tile(k, m, "W" + ma, arms=ma)),
                     "none"))

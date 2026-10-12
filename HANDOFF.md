@@ -1014,6 +1014,16 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     one piece, its scene saved, `chain.pieces[0]` updated, then `KitNavBake.BakeChain`): its old spawns moved 0.000 m,
     3 / 3 spawns walked, no overlap with the other 12 pieces. Prefabs 1,273 / 0 failed.
 
+94. 2026-10-12 (MedievalSetting's bears' caves, the user: the cave's stair "should be like in skyrim, a natural opening
+    to the outer world"): **`SM_VKI_Rock_Cave_OOFF_Mouth`** (`vki_cav_mouth` in vki_fam_cave; 974 tris): the tunnel tile's
+    cleft wider and taller (`VKI_CAV_MOUTH`, a dict with a `portal` builder as the mine's adit), a ragged rock lintel
+    closing its top (the cleft is cut through the rock's whole height), stones jutting from its sides, a daylight card
+    (WINDOW -> Daylight, in front of the tunnel's VOID card), an earth slope (FLOOR -> EarthDamp), two backlit bushes
+    and grass, roots, and a cold SPOT under the lintel (`vki_lights`, as the dungeon's light grate). `tunnel_kinds`
+    "Mouth"; prompt "Leave the cave". Tests {}; seen in a workshop scene (WS_cavemouth) and in both MedievalSetting
+    dens (DensMenu puts it on a north face of the cleared cave). Two dead ends on the way: rocks floating in the
+    opening (no lintel: the cut runs the full height) and the FOLIAGE slot (a white flower-bush texture).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
