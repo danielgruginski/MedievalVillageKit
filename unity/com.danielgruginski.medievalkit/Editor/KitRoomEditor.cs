@@ -365,7 +365,7 @@ namespace MedievalKit.Editor
             if (rules == null) return "no interior rules: run Build Interior Rules";
             string plan = File.ReadAllText(planPath), record = File.Exists(recordPath) ? File.ReadAllText(recordPath) : "{}";
             string preset = (string)JObject.Parse(record)["preset"] ?? "Day";
-            litFrom ??= $"{KitPaths.Levels}/{(preset == "Dungeon" || preset == "Cavern" ? "VKI_Dungeon_B1" : "VKI_Tavern_F0")}.unity";
+            litFrom ??= $"{KitPaths.Levels}/{(preset == "Sewer" ? "VKI_Sewer_S1" : preset == "Dungeon" || preset == "Cavern" ? "VKI_Dungeon_B1" : "VKI_Tavern_F0")}.unity";
             var active = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             var scene = UnityEditor.SceneManagement.EditorSceneManager.NewScene(UnityEditor.SceneManagement.NewSceneSetup.EmptyScene,
                                                                                 UnityEditor.SceneManagement.NewSceneMode.Additive);
@@ -601,6 +601,11 @@ namespace MedievalKit.Editor
                 if (which == "all" || which == "dungeon")
                     foreach (var th in new[] { "Dungeon", "Crypt", "Warren" })
                         runs.Add(($"dungeon {th}", (r, sd) => { r.dungeon.seed = sd; r.dungeon.theme = th; r.RandomDungeon(); }));
+                if (which == "all" || which == "sewer")
+                {
+                    runs.Add(("sewer", (r, sd) => { r.sewer.seed = sd; r.RandomSewer(); }));
+                    runs.Add(("sewer large", (r, sd) => { r.sewer.seed = sd; r.sewer.nc = 40; r.sewer.nr = 28; r.sewer.deep = "@deep"; r.RandomSewer(); }));
+                }
                 if (which == "all" || which == "connector")
                     foreach (var (f, t) in new[] { ("S", "N"), ("W", "E"), ("S", "E"), ("N", "W") })
                         runs.Add(($"connector {f}-{t}", (r, sd) => { r.connector.seed = sd; r.connector.from = f; r.connector.to = t; r.RandomConnector(); }));
@@ -867,6 +872,11 @@ namespace MedievalKit.Editor
                 {
                     Undo.RegisterFullObjectHierarchyUndo(room.gameObject, "Random dungeon");
                     room.RandomDungeon();
+                }
+                if (GUILayout.Button(new GUIContent("Random Sewer", "A town sewer (brick tunnels over channels, bridges, chambers, grottoes, a ladder up, encounters) with the Sewer settings")))
+                {
+                    Undo.RegisterFullObjectHierarchyUndo(room.gameObject, "Random sewer");
+                    room.RandomSewer();
                 }
                 if (GUILayout.Button(new GUIContent("Random Connector", "A short passage between two maps of a chain with the Connector settings")))
                 {

@@ -31,6 +31,8 @@ namespace MedievalKit
         public KitCaveGenerator.Options cave = new KitCaveGenerator.Options();
         [Tooltip("Random Dungeon: map size, seed, number of rooms, theme (Dungeon / Crypt / Warren), cave pockets, loops, debris.")]
         public KitDungeonGenerator.Options dungeon = new KitDungeonGenerator.Options();
+        [Tooltip("Random Sewer: map size, seed, how far the tunnels reach, loops, chambers, grottoes, cross walls, the ladder up and the way down, encounters.")]
+        public KitSewerGenerator.Options sewer = new KitSewerGenerator.Options();
         [Tooltip("Random Interior: kind (Cottage / Townhouse / Tavern / Workshop), seed, size (0: by kind).")]
         public KitInteriorGenerator.Options interior = new KitInteriorGenerator.Options();
         [Tooltip("Random Connector: a short passage between two maps of a chain (from / to edges, length, openings, seed).")]
@@ -133,6 +135,16 @@ namespace MedievalKit
                 return best;
             }
             var (p, r) = KitDungeonGenerator.Generate(dungeon, Fp);
+            preset = "";
+            plan = p;
+            record = r.ToString(Newtonsoft.Json.Formatting.Indented);
+            Generate();
+        }
+
+        /// <summary>a random town sewer (KitSewerGenerator) from the `sewer` settings: fills the plan and record, builds</summary>
+        public void RandomSewer()
+        {
+            var (p, r) = KitSewerGenerator.Generate(sewer);
             preset = "";
             plan = p;
             record = r.ToString(Newtonsoft.Json.Formatting.Indented);

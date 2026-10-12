@@ -292,6 +292,21 @@ materials by name).
   (record "encounters" -> `KitEncounter`: creature tag, budget 1 + depth from the entrance, the lair +3 and boss, spawn
   points spread over free cells). Themes: Dungeon (mixed), Crypt, Warren. Record flag "props_from_codes": the plan's
   codes and then the record's props both furnish (codes first, so the record's table dressing finds its tables).
+- Random town sewers (2026-10-12, `KitSewerGenerator`, inspector "Random Sewer"; docs/SEWER_KIT.md section 7): a cave map
+  whose tunnels follow a street grid (a trunk across the map, branches to the grid's crossings as a random tree, dry
+  passages two cells wide closing loops), each three cells wide (walkway, "ww" channel, walkway) and walled in Sewer
+  brick (full north walls where the rock behind is full, cut elsewhere); every channel head ends under a culvert (or
+  pours from an outfall in a full north wall) and the trunk's downstream end is the one outlet (`channel_sinks`);
+  cisterns (7 x 7 round a 3 x 3 basin) and halls (7 x 5) on crossings; cross walls (a culvert under, doors on the
+  walkways); slab bridges where a walkway would be cut off (union-find over the walkway regions), then one every few
+  strides; sluice gates in the branches; grottoes grown from a two-cell breach into rock two cells clear of other
+  tunnels (no one-cell necks, no corner pinches; the first one biased far from the ladder); the lair (the grotto
+  farthest from the ladder) holds the point of interest and, in a straight full rock face north of a grotto, the
+  tunnel on down (else a passage in a north wall); the ladder up on the westmost north walkway wall with full rock
+  behind; furniture only where the walk from the ladder stays whole; encounters in every grotto (the lair's the boss)
+  and chamber and along the tunnels (budget 1 + walk / 12). Preset Sewer (BuildRoomScene lights it like VKI_Sewer_S1).
+  Validate Generators' "sewer" and "sewer large" (40 x 28 with a way down): 10 / 10 each; 200 generator-only seeds
+  (30 x 22, 36 x 26) without an exception or a stranded cell. First user: MedievalSetting's Greywall_Sewer.
 - Random house ground floors (`KitInteriorGenerator`, inspector "Random Interior"): Cottage / Townhouse / Tavern /
   Workshop; a hall (taproom, workroom) with the front door and the hearth (Timber Fireplace_300 / Stone Hearth_300),
   side rooms (bedroom, kitchen, pantry, store) behind partitions with doors (two side rooms only when each is three
@@ -325,7 +340,7 @@ materials by name).
   the cave, dungeon and interior builders also build additively (`Build...Showcase(true)`: a new scene beside the open
   ones, which the caller closes) and use their own scene's camera.
 - Tools > Medieval Kit > Rooms > Validate Generators (20 seeds): builds seeds of every generator (cave Maze / Open,
-  dungeon Dungeon / Crypt / Warren, interior Cottage / Townhouse / Tavern / Workshop) one at a time in a temporary scene,
+  dungeon Dungeon / Crypt / Warren, sewer default / large, interior Cottage / Townhouse / Tavern / Workshop) one at a time in a temporary scene,
   walk-tests each (every spawn, encounter point and floor cell reachable from the first spawn) and lists the failing
   seeds (`Logs/MedievalKit/generator_validation.txt`; `KitRoomTools.ValidateGenerators(count, which, firstSeed)`).
   `KitRoomTools.WalkMap(room)` prints a room's plan marked by the navmesh ('o' reachable, 'x' cut off) for one seed.

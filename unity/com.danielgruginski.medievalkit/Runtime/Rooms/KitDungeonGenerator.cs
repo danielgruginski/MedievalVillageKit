@@ -562,7 +562,7 @@ namespace MedievalKit
         }
 
         /// <summary>vki_rooms_mkplan with wall tokens: ew (i, j) 2 chars, ns (i, r) 1 char; the frame "##" / "==" / "#" / "t"</summary>
-        static string Plan(int nc, int nr, Dictionary<(int, int), string> codes, Dictionary<(int, int), string> ew, Dictionary<(int, int), string> ns)
+        internal static string Plan(int nc, int nr, Dictionary<(int, int), string> codes, Dictionary<(int, int), string> ew, Dictionary<(int, int), string> ns)
         {
             var sb = new StringBuilder("\n      " + string.Join(" ", Enumerable.Range(0, nc).Select(i => i.ToString().PadLeft(2))) + "\n");
             for (int j = nr; j >= 0; j--)

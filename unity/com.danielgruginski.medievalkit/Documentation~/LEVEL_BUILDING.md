@@ -177,17 +177,23 @@ component; edit them, then `kr.Generate()`.
 
 Set the component's options, then call its `Random...()` method. Same settings and seed, same level.
 
-| Call | Options (`kr.cave`, `kr.dungeon`, `kr.interior`, `kr.connector`) |
+| Call | Options (`kr.cave`, `kr.dungeon`, `kr.sewer`, `kr.interior`, `kr.connector`) |
 |---|---|
 | `RandomCave()` | `layout` Maze (chambers, winding tunnels, loops, dead ends, alcove finds) / Open; `nc`, `nr` (28 x 20); `seed`; `chasm`, `chasmFork`, `chasmWidth`; `pools`; `props` (how many dressing pieces) and `dressing` (which: `"EggSacs:es,Cocoon:co"`, piece:code pairs placed in turn); `finds` (the alcoves' finds, same format; every find but an Overlay_ is marked as loot) and `extraFinds` (that many more along the walls); `debris`; `poi` (e.g. `POI_WyrmBones`); `creature` and `encounters` (5.4); `portals` |
 | `RandomDungeon()` | `theme` Dungeon / Crypt / Warren (all goblins) / Hideout (all bandits: guard posts, stores of plunder and cells walled into rock, rough tunnels between); `rooms` (8); `pockets` (share of natural cave rooms); `loops`; `debris`; `seed`; `portals`; with portals, `exit` / `exitId` / `exitArrive`: a stair up out of the chain to a scene (a camp above), far from the way in (in the lair; a Hideout's in the deepest room but the lair, a room with no encounter: its front door, so who comes down it is not met by a boss appearing at the stair's foot). A Hideout marks its plunder for the game: the lair's treasure chest `strongbox`, a crate or barrel or two in each store room and a guard post's chest `plunder<n>` (record markers, role `loot`, the piece in the note) |
+| `RandomSewer()` | `nc`, `nr` (30 x 22; at least 20 x 16), `seed`; `reach` (share of the street grid's crossings the tunnels reach, 0.85; the rest stays rock, room for the grottoes); `loops` (dry passages two cells wide closing loops); `chambers` (cisterns round a 3 x 3 basin, or halls); `grottoes` (natural caves broken into from the tunnels; the farthest from the ladder is the lair); `crossWalls` (a culvert under, doors on the walkways); `debris`; `upId` / `upTarget` / `upArrive` (the ladder up: the way in, a passage link); `deep` / `deepId` / `deepArrive` (a tunnel on down in a grotto's rock, else a passage in a north wall; empty: none); `creature` / `boss` (the encounters' tags); `poi` (the lair's 2 x 2 point of interest, `POI_RatKing`); `encounters` (0: by size). No portals yet |
 | `RandomInterior()` | `kind` Cottage / Townhouse / Tavern / Workshop; `seed`; `nc`, `nr` (0: by kind) |
 | `RandomConnector()` | `from`, `to` (edges), `length`, `width`, `fromAt`, `toAt`, `style` Cave / Dungeon, `seed` |
 
 What they make: caves with a chasm crossed by rope bridges, ledges, pools, crystals and finds; dungeons with a great
 hall and themed rooms (guards, cells, crypt, store, shrine, warren, lair) with set-pieces, torches, pillars, an
 encounter per room harder with depth (the lair holds the boss), a stair up and a stair down when the level stands
-alone; house floors with a hall and hearth, side rooms, a tavern bar, kitchen, bedroom, lanterns.
+alone; town sewers with brick tunnels over channels along a street grid (a walkway either side of the water, outfalls
+and culverts at the channels' heads, one outlet, slab bridges wherever a walkway would be cut off, sluice gates, cross
+walls), cisterns and halls on the crossings, grottoes breached from the tunnels (the lair with its point of interest
+and the way down), a ladder up to the street, torches, sludge, puddles and drain grates, an encounter in every grotto
+and chamber and along the tunnels; house floors with a hall and hearth, side rooms, a tavern bar, kitchen, bedroom,
+lanterns.
 
 ### 5.2 A room from a plan
 
@@ -560,17 +566,20 @@ lifted off the ground: archers on a walkway or a tower, a lookout; a marker in a
 **See-through.** The kit's shader (KitLit, every kit material) can open a hole round the game's walker: what stands
 between the camera and the walker (in a cone to a disc round its chest, above its knees, and in front of it along the
 camera's level heading -- not along the line of sight: the camera looks down, so a wall the walker stands before
-reaches nearer the camera above the walker's head, yet stays whole) dithers away with a soft rim, shadows staying. Off until the game sets two globals each frame: `_KitSeeThrough` (xyz the walker's
+reaches nearer the camera above the walker's head, yet stays whole) dithers away with a soft rim, shadows staying. Only
+a piece in the walker's way opens: one whose bounds (`Renderer.bounds`) stay out of the wedge from the camera to the
+walker's body stays whole -- a wall beside the walker running towards the camera, the rock past it. Off until the game sets two globals each frame: `_KitSeeThrough` (xyz the walker's
 chest, w the hole's radius at the walker; 0 off) and `_KitSeeThroughArgs` (x the walker's feet height, y the height
 kept above the feet -- the ground, low and cut walls --, z how far in front of the walker, level, things are kept: an
-eave over it, a post beside it). The depth passes
-clip too (SSAO and depth priming see the same hole). MedievalSetting's `GameCamera` sets them (radius 2.4, keep 1.4).
+eave over it, a post beside it; w the walker's half-width for "in its way", 0: every piece in the cone opens). The depth passes
+clip too (SSAO and depth priming see the same hole). MedievalSetting's `GameCamera` sets them (radius 2.4, keep 1.4,
+half-width 0.2: under the navmesh's agent radius, so a wall the walker walks along stays whole).
 
 ## 6. Checking your work
 
 ### 6.1 Generators
 
-`KitRoomTools.ValidateGenerators(count, which, firstSeed)` (`which`: cave, dungeon, connector, interior, all; menu
+`KitRoomTools.ValidateGenerators(count, which, firstSeed)` (`which`: cave, dungeon, sewer, connector, interior, all; menu
 Rooms > Validate Generators) builds each seed in a temporary scene and walk-tests it. Report its lines, e.g.
 `dungeon Crypt: 60/60 seeds walkable`. Any failing seed is listed with `(reached/spawns, floor reached/cells)`.
 
@@ -637,7 +646,7 @@ stays clean, and destroy it after.
 |---|---|
 | `Runtime/Rooms/KitRoom.cs` (+ `.Props`, `.Debris`) | the component: build, furniture, debris, links, spawns, portals, lights |
 | `Runtime/Rooms/KitRoomLayout.cs`, `KitCaveLayout.cs` | plan parsing, wall layout, cave tiles, seams |
-| `Runtime/Rooms/KitCaveGenerator.cs` / `KitDungeonGenerator.cs` / `KitInteriorGenerator.cs` / `KitConnectorGenerator.cs` | the generators |
+| `Runtime/Rooms/KitCaveGenerator.cs` / `KitDungeonGenerator.cs` / `KitSewerGenerator.cs` / `KitInteriorGenerator.cs` / `KitConnectorGenerator.cs` | the generators |
 | `Runtime/Rooms/KitPortal.cs`, `KitSetPieces.cs`, `KitFurnisher.cs` | portals, set-pieces, furniture placement |
 | `Runtime/KitChain.cs`, `KitChainStreamer.cs`, `KitPortalMarker.cs` | chains and streaming |
 | `Runtime/World/KitVillage.cs`, `Editor/KitVillageEditor.cs` | outdoor maps from layouts: build, walk test |

@@ -196,3 +196,39 @@ g["vki_rooms_shots"]("VKI_Sewer_S1"); g["vki_check"]("VKI_Sewer_S1", full=True, 
   network would leave less of it.
 - **The channel in the cave keeps its masonry rims:** it reads as the drain running on out of the sewer. There is no
   organic stream tile set yet.
+
+## 7. Generated sewers (Unity)
+
+`KitSewerGenerator` (the Unity package, `Runtime/Rooms/KitSewerGenerator.cs`; a KitRoom's **Random Sewer** with its
+`sewer` settings) writes sewer levels like `VKI_Sewer_S1` from a seed: the same cave map, Sewer partition walls, `ww`
+channel tiles and pieces, laid out by rule instead of by hand. The package's agent guide (LEVEL_BUILDING 5.1) lists
+the settings; docs/UNITY_EXPORT.md has the rules in full.
+
+- **Tunnels along a street grid.** Tunnel lines every 9-11 cells across and 6-8 up; a trunk along the middle line and
+  branches to the grid's crossings (a random tree, `reach` of the crossings); every tunnel three cells wide, a walkway
+  either side of the channel. Dry passages two cells wide close loops between tunnels.
+- **Water from heads to one outlet.** A branch ending at a crossing runs its channel on to the end wall: a culvert
+  under it (`Wall_Sewer_Culvert_150_Full` in an east or west end wall, `_Cut` in a south one), or an outfall
+  (`Wall_Sewer_Outfall_150_Full`) when the end wall is a full north wall. The trunk's downstream end is the outlet
+  (`channel_sinks`), so every channel tile's flow runs toward it.
+- **Chambers** on crossings: a cistern 7 x 7 round a 3 x 3 basin (the channels meet in it), or a hall 7 x 5 the
+  channels pass through; barrels and crates against their walls.
+- **Cross walls** over the channels away from the crossings: a culvert under the wall, a door on each walkway (or a
+  door and a plain wall).
+- **Bridges** (`Prop_Bridge_Sewer`) only on straight stretches of channel with walkway either side: first as few as
+  join every walkway region, then one every few strides. **Sluices** in the branches.
+- **Grottoes**: natural caves grown from a two-cell breach in a walkway's wall (cut brick and `Breach` pieces) into rock
+  that stays two cells clear of every other tunnel; glowing mushrooms, boulders, crystals on their edges. The grotto
+  farthest from the ladder is the **lair**: its point of interest (`POI_RatKing`), refuse and bones, the boss's
+  encounter, and the **tunnel on down** in a straight full rock face north of a grotto (the lair's first; else a
+  `Wall_Sewer_Passage_150_Full` in a north wall with two cells of walkway in front).
+- **The ladder up** (`Wall_Sewer_Ladder_150_Full`, a passage link): on the westmost north wall of a walkway with full
+  rock behind it (that rock is kept whole when the grottoes grow).
+- **Dressing**: torches on the full north walls, sludge, puddles and drain grates on the walkways; the kit's debris
+  scatter by zone theme (sewer, cave).
+- **Encounters** in every grotto and chamber and along the tunnels at least eight strides from the ladder, the budget
+  growing with the walk from it.
+
+Limits: one outlet per level; no portals into chains yet; the rock between the tunnels is still most of a level's
+triangles (a denser `reach` leaves less of it, and less room for grottoes: at 30 x 22 two grottoes fit most seeds,
+three need about 36 x 26).

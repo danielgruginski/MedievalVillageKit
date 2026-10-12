@@ -960,6 +960,32 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     icing border, now a dark ash at 0.5. The ramp tile's open face end (a flat tongue with a slit above it, beside each
     bank boulder) is in the piece: it needs an end cap in vk_terrain.
 
+90. 2026-10-12 (MedievalSetting's rat contract, the user: "we probably should have a proper sewer dungeon for the rats
+    quest ... Maybe we should have a proper generator of sewers like we have for other dungeon types?"): **the sewer
+    generator**, `KitSewerGenerator` (Unity package, `Runtime/Rooms/KitSewerGenerator.cs`; KitRoom `sewer` settings and
+    `RandomSewer()`, inspector "Random Sewer"; Validate Generators "sewer" / "sewer large"; BuildRoomScene lights a
+    `Sewer` preset like VKI_Sewer_S1). A cave map of brick tunnels along a street grid (a walkway either side of a `ww`
+    channel), channel heads under culverts or pouring from outfalls, one outlet, cisterns and halls, cross walls, bridges
+    by union-find over the walkway regions, sluices, grottoes breached from the tunnels (the farthest the lair: the rat
+    king's throne and the tunnel on down), a ladder up, torches, sludge, encounters. Rules in docs/SEWER_KIT.md section
+    7 and UNITY_EXPORT; settings in LEVEL_BUILDING 5.1. `KitDungeonGenerator.Plan` is internal now (the sewer generator
+    writes its plan with it). Checked: 20 / 20 validation seeds walkable, 200 generator-only seeds without an exception or
+    a stranded cell, MedievalSetting's Greywall_Sewer (36 x 26, seed 35) played: ladder, tunnel down and back, 21
+    creatures on the navmesh. Seen in renders; not yet seen by the user. Also not in this list before: 29fa628 (the
+    interior generator's `open` great halls and `stair` up/down, docs/UNITY_EXPORT.md).
+
+91. 2026-10-12 (MedievalSetting, the user: the see-through dithered a full wall beside the player in the generated
+    sewer, "this wall covers nothing of interest"): every see-through test was per fragment, and a north-south wall
+    beside the walker has fragments exactly where a wall across its way would (its stretch south of the walker is "in
+    front", above the knees, within the cone). Now **only a piece in the walker's way opens** (`KitSeeThrough.hlsl`,
+    `KitSeeThroughInTheWay`): its `Renderer.bounds` (URP's `unity_RendererBounds_Min/Max`) must meet the wedge from the
+    camera to a box `_KitSeeThroughArgs.w` each side of the walker, feet to head (an interval test in s per axis); `w <= 0`,
+    instanced draws or empty bounds keep the old behaviour. MedievalSetting's `GameCamera.seeThroughBody` = 0.2 (under the
+    navmesh agent's 0.3, so a wall the walker walks along stays whole). Checked in play: the sewer's side wall whole at the
+    walkway's middle and at the navmesh edge (it dithered before), a house roof south of the player still opens round the
+    player. Trade-off: on a wall of separate modules crossing the line of sight only the modules in the way open, so the
+    round hole can end straight at a joint. Diagnosed by a subagent (numeric check of the cases: scratchpad wedge_check).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
