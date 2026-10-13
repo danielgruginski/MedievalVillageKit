@@ -12,13 +12,19 @@ lengthways, the grass inside a house)?
 
 | | main line | spike |
 |---|---|---|
-| Kit (git) | `main` (263b0da: grass saturation, FreeAssets, one-sided materials) | `spike/seethrough` |
-| MedievalSetting (Plastic) | `/main` (cs:26) | `/main/spike-seethrough` |
+| Kit (git) | `main` (263b0da: grass saturation, FreeAssets, one-sided materials) | branch `spike/seethrough` |
+| MedievalSetting (Plastic) | `/main` (cs:26) | pending changes in the workspace + shelveset (latest: sh:3) |
 
-The two go together: the game's spike code (GameCamera's hidden check, ClickToMove's cut test) needs the kit's spike
-API (KitSeeThroughProbe, KitSeeThrough.CutY). Back to the main game: `git checkout main` in the kit and
-`cm switch br:/main` in MedievalSetting (not while Unity plays). While MedievalSetting's workspace is on the spike
-branch, check-ins from it land on the spike branch.
+MedievalSetting's side of the spike is six files left pending on `/main` -- `GameCamera.cs` (hidden check, cut
+fields), `ClickToMove.cs` (cut test), `README.md`, `POLISH.md` (notes), the capture tool
+`Assets/Game/Scripts/Editor/SeeThroughSpike.cs` (+ .meta, added) -- and kept safe in a shelveset, re-shelved after each
+round (`cm shelveset create <files> --all -c=...`). Not a branch: switching the shared workspace would shelve and
+re-apply every session's pending files (and rewrite them under a running Unity), and other sessions' check-ins would
+then land on the spike branch. So: never check those six files in to `/main` until the spike ends.
+
+The two go together: the game's spike code needs the kit's spike API (KitSeeThroughProbe, KitSeeThrough.CutY). Back to
+the main game (not while Unity plays): `git checkout main` in the kit and `cm undo` the six files in MedievalSetting
+(they are in the shelveset); back to the spike: `git checkout spike/seethrough` and `cm shelveset apply sh:<n>`.
 
 ## What the spike holds (HANDOFF 99-103)
 
@@ -61,7 +67,9 @@ Status after the last round. Shots: `reviews/seethrough_2026-10-13/` (summaries)
 - MedievalSetting **Tools > See-through Spike > Capture Cases** (`Assets/Game/Scripts/Editor/SeeThroughSpike.cs`, on the
   spike branch): in play, walks the gallery's cases for the level being played, shoots each one with the hole shut, as
   the game shows it, and without the real caps, plus the hidden check's view, into
-  `Logs/SeeThroughSpike/<time>/` with a contact sheet. Add a case to its list when a new one turns up.
+  `Logs/SeeThroughSpike/<time>_<level>/` (not versioned) with `sheet.png` and `cases.txt` (the hidden check's cover
+  and opening per case). Play Hamlet / Play Greywall (no saving) in the same menu. First run: 14 Hamlet cases in about a
+  minute, 2026-10-13 20:27. Add a case to its list when a new one turns up.
 - `tools/zfight_scan_*.py`, `tools/cull_render_*.py` (main): the kit's overlap scans.
 
 ## When the spike ends (integration)
@@ -70,4 +78,5 @@ Status after the last round. Shots: `reviews/seethrough_2026-10-13/` (summaries)
 2. Bake the caps at level build (a player build has no editor hook).
 3. Fold HANDOFF 99-103 and this file into one HANDOFF entry; LEVEL_BUILDING; MedievalSetting README / POLISH; the itch
    waiting list.
-4. Merge `spike/seethrough` into `main`, `/main/spike-seethrough` into `/main`; switch both workspaces back.
+4. Merge `spike/seethrough` into `main`; check the MedievalSetting files in to `/main` (the capture tool too, or drop
+   it).
