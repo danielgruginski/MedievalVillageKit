@@ -136,6 +136,30 @@ def _upstream(nt, node, seen=None):
             yield from _upstream(nt, l.from_node, seen)
 
 
+# One-sided or two-sided (2026-10-13, MedievalSetting's z-fighting). Every kit material was drawn on both sides, so
+# faces that touch inside a piece or between pieces (a shrine's plinth under its shaft, a stone on a ledge, a wall's
+# foot on the ground) fought as soon as the game's see-through opened the piece. Two touching faces face opposite ways:
+# drawn one-sided, only one of them is ever in front. Exterior kit materials are one-sided; sheets (cards, panes, cloth,
+# thatch, the void fill of openings, water, moss) stay two-sided, as do the interior kits' materials (M_VKI_*: room
+# walls are sheets facing the room) and anything not of the kit. Found by tools/cull_render_check.py (every piece from
+# four sides at the game's pitch, off vs on) and cull_render_ids.py (which material lost surface).
+VKX_TWO_SIDED = {"M_VK_Leaves", "M_VK_Foliage", "M_VK_Crops", "M_VK_WildGarlic", "M_VK_Leaf", "M_VK_Window",
+                 "M_VK_Stained", "M_VK_Clock", "M_VK_Net", "M_VK_Void", "M_VK_Water", "M_VK_Moss", "M_VK_Thatch",
+                 "M_VK_Paper", "M_VK_Burlap", "M_VK_Hay", "M_VK_Goods"}
+VKX_TWO_SIDED_PREFIXES = ("M_VK_Cloth", "M_VK_Flower", "M_VK_Mush")
+
+
+def vkx_double_sided(name):
+    if not name.startswith("M_VK_"): return True                 # the interior kits (M_VKI_) and anything else
+    return name in VKX_TWO_SIDED or name.startswith(VKX_TWO_SIDED_PREFIXES)
+
+
+def vkx_apply_cull_policy(m):
+    """the material's own Backface Culling set by the rule (the export and Blender's viewport then agree)"""
+    want = not vkx_double_sided(m.name)
+    if m.use_backface_culling != want: m.use_backface_culling = want
+
+
 def analyze_material(m):
     """reduce a kit material's node tree to the parameters of the Unity KitLit shader.
     Unknown node patterns are listed in 'notes' (the export report shows them)."""
@@ -639,6 +663,7 @@ def process_materials(mats, tex_done, report):
     for mn in list(mats):
         if mn is None or mn not in bpy.data.materials: continue
         m = bpy.data.materials[mn]
+        vkx_apply_cull_policy(m)
         sig = material_signature(m)
         prev = mats.get(mn)
         if isinstance(prev, dict) and prev.get("sig") == sig and _files_exist(prev):

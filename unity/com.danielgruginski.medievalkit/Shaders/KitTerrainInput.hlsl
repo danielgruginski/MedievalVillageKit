@@ -14,6 +14,7 @@ CBUFFER_START(UnityPerMaterial)
     half _Rough;
     half _BumpStrength;
     half _Alpha;
+    half _GrassSat;         // the grass layer's saturation (KitGrass copies it: the blades take the ground's colour)
     half4 _RimTint;         // terrain: the tiers' lip band tint (rgb) and strength (a)
 CBUFFER_END
 

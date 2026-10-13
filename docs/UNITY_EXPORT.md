@@ -217,6 +217,17 @@ nested, restyles applied, lights included; root component `KitStructure`). They 
 "Structures". Verified 2026-10-01: all 45 cameras Blender vs Unity, median mean difference 0.028, the largest local
 differences being Unity's cast shadows.
 
+## 10b. One-sided materials (2026-10-13)
+
+`vkx_export` decides each material's sidedness (`vkx_double_sided`): exterior `M_VK_*` materials are one-sided, sheet
+materials (`VKX_TWO_SIDED`: foliage, crops, flowers, panes, cloth, thatch, the void fill, water, moss ...) and all
+interior-kit `M_VKI_*` materials two-sided. `process_materials` applies it to the material (Blender's Backface Culling)
+before the signature, so changing the rule re-exports exactly the materials it changes; Unity's Build Materials turns
+`double_sided` into `_Cull` (Off / Back). Why: touching faces inside pieces (and between them) z-fought when drawn
+two-sided, which the game's see-through laid bare (HANDOFF 98). A new piece with a single-sheet part in a one-sided
+material (a door leaf, a board) needs that part to face out, or a back face of its own; check with
+`tools/cull_render_check.py <dir> <name>` (culling off vs on, from four sides).
+
 ## 11. Export speed
 
 `process_materials` keeps a signature per material (nodes, settings, links, images and their packed size) in

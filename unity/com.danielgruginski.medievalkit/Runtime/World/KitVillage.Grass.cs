@@ -30,8 +30,11 @@ namespace MedievalKit
 
             GrassMaterialInstance = new Material(shader) { name = $"{name}_Grass" };
             if (groundMat != null)
+            {
                 foreach (var t in new[] { "_GrassMap", "_MacroMap" })
                     if (groundMat.HasProperty(t)) GrassMaterialInstance.SetTexture(t, groundMat.GetTexture(t));
+                if (groundMat.HasProperty("_GrassSat")) GrassMaterialInstance.SetFloat("_GrassSat", groundMat.GetFloat("_GrassSat"));
+            }
 
             // what stands on the ground (buildings, props, fences, trees), with bounds for a quick test
             var blocked = occupied.Select(o => (poly: o.poly, min: new Vector2(o.poly.Min(p => p.x), o.poly.Min(p => p.y)),

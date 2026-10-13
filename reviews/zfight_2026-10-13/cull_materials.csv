@@ -1,0 +1,119 @@
+material,closed_m2,open_m2,inward_m2,open_share,top_open_pieces
+M_VK_Leaves,0.00,9023.01,0.00,1.000,SM_VK_Tree_Pine_B 3038.63 | SM_VK_Tree_Pine_A 2041.87 | SM_VK_Tree_Pine_Young 801.46 | SM_VK_Tree_Willow 783.58
+M_VK_Wood,4218.14,1457.88,159.80,0.277,SM_VK_Roof_LCorner 83.53 | (inward) SM_VK_Roof_Single 77.11 | SM_VK_Roof_Gable_Logs 63.03 | SM_VK_Roof_Gable 59.81
+M_VK_StoneBlock,3325.17,127.82,0.00,0.037,SM_VK_Prop_BottleKiln 18.93 | SM_VK_Turret_Corbel 15.94 | SM_VK_Kiln_Oast 12.49 | SM_VK_Entrance_LockUp 11.65
+M_VKI_CaveRock,298.95,3121.35,0.00,0.913,SM_VKI_Ground_Cave_XOXO_Q11 27.51 | SM_VKI_Ground_Cave_OXOX_Q00 27.17 | SM_VKI_Ground_Cave_XOXO_Q10 26.21 | SM_VKI_Ground_Cave_XOXO_Q00 26.00
+M_VK_Stone,2425.72,818.79,0.00,0.252,SM_VK_Gatehouse_Block 239.38 | SM_VK_TownWall_Tower_Round 237.27 | SM_VK_Kiln_Oast 78.06 | SM_VK_Prop_Dovecote 70.83
+M_VK_RoofRed,1258.26,974.13,119.52,0.465,SM_VK_Roof_LCorner 78.17 | (inward) SM_VK_Roof_Single 62.22 | SM_VK_Roof_Hip_Plain 51.21 | SM_VK_Roof_Hip 50.84
+M_VK_Planks,1690.43,120.81,21.95,0.078,(inward) SM_VK_Gatehouse_GateLeaf 21.95 | SM_VK_Roof_Gable_Planks 20.79 | SM_VK_RoofThatch_Gable_Planks 20.79 | SM_VK_Prop_SawPit 9.84
+M_VK_Thatch,85.31,1036.43,213.74,0.936,(inward) SM_VK_RoofThatch_Single 143.32 | SM_VK_RoofThatch_Gable 141.18 | SM_VK_RoofThatch_Gable_Planks 141.18 | SM_VK_RoofThatch_Gable_Cruck 141.18
+M_VK_Ashlar,973.42,177.90,0.00,0.155,SM_VK_Bridge_Stone_Span 40.98 | SM_VK_Gatehouse_Block 32.93 | SM_VK_TownWall_Tower_Round 27.40 | SM_VK_Roof_Gable_Stone 20.79
+M_VK_Rock,826.79,62.31,0.00,0.070,SM_VK_Entrance_DwarfGate 56.38 | SM_VK_Prop_StaddleStone 2.11 | SM_VK_Entrance_SpringCave 1.91 | SM_VK_Entrance_CaveMouth 1.91
+M_VK_BarkOak,456.89,412.81,0.00,0.475,SM_VK_Palisade_Diag 40.73 | SM_VK_Tree_Oak_A 39.42 | SM_VK_Tree_Pine_B 37.73 | SM_VK_Tree_Oak_B 36.07
+M_VK_RockMossy,508.26,253.18,0.00,0.333,SM_VK_Entrance_DwarfGate 216.00 | SM_VK_Entrance_SpringCave 12.36 | SM_VK_Entrance_CaveMouth 12.36 | SM_VK_Bridge_Stone_Pier 9.34
+M_VK_Plaster,456.87,252.38,0.00,0.356,SM_VK_Roof_Single 41.58 | SM_VK_RoofThatch_Single 41.58 | SM_VK_RoofThatch_Gable_Cruck 21.03 | SM_VK_Roof_Gable_Hoist 20.85
+M_VK_Void,453.56,197.45,0.00,0.303,SM_VK_Entrance_SpringCave 29.06 | SM_VK_Entrance_CaveMouth 29.06 | SM_VK_Entrance_DwarfGate 28.51 | SM_VK_Mine_Portal 17.75
+M_VK_StoneDressed,466.15,59.94,0.00,0.114,SM_VK_BellTower 44.51 | SM_VK_Entrance_LockUp 10.89 | SM_VK_Entrance_DwarfGate 4.54
+M_VKI_StoneBlockIn,357.33,67.72,0.00,0.159,SM_VKI_Wall_Stone_Plain_300_Full 5.09 | SM_VKI_Wall_Stone_Forge_300_Full 5.09 | SM_VKI_Wall_Stone_Plain_300_Cut 5.01 | SM_VKI_Wall_Stone_Forge_300_Cut 5.01
+M_VK_Moss,75.39,347.64,0.00,0.822,SM_VK_Mine_Portal 135.78 | SM_VK_Entrance_SpringCave 100.90 | SM_VK_Entrance_CaveMouth 100.90 | SM_VK_Def_Standin_Ramp 10.06
+M_VKI_DungeonBlock,382.41,29.95,0.00,0.073,SM_VKI_Wall_Dungeon_Plain_300_Full 3.00 | SM_VKI_Wall_Dungeon_Plain_300_Cut 3.00 | SM_VKI_Wall_Bars_Plain_300_Full 2.98 | SM_VKI_Wall_Bars_Plain_150A_Full 2.98
+M_VK_Hewn,298.93,98.40,0.00,0.248,SM_VKI_Wall_Mine_Plain_300_Full 30.05 | SM_VKI_Wall_Mine_Plain_150A_Full 18.49 | SM_VKI_Wall_Mine_Plain_300_Cut 11.42 | SM_VKI_Wall_Mine_Plain_150A_Cut 6.40
+M_VKI_Dress,239.79,128.94,0.00,0.350,SM_VKI_Wall_Ashlar_Plain_300_Full 11.60 | SM_VKI_Wall_Ashlar_DoorWide_300_Full 6.37 | SM_VKI_Wall_Ashlar_Plain_150A_Full 5.80 | SM_VKI_Wall_Ashlar_Lancet_150_Full 4.36
+M_VK_Iron,355.20,6.82,0.00,0.019,SM_VK_Prop_Cauldron 2.25 | SM_VKI_Wall_Bars_Plain_300_Full 1.27 | SM_VK_Prop_Bunting_9 0.68 | SM_VKI_Wall_Bars_Plain_150A_Full 0.64
+M_VK_Soil,312.27,47.72,0.00,0.133,SM_VK_BuildSite_Cell 16.39 | SM_VK_Mine_Portal 9.18 | SM_VK_Deco_MudWallow 6.51 | SM_VK_Pond 6.35
+M_VKI_DwarfBlock,271.98,79.41,0.00,0.226,SM_VKI_Wall_Dwarf_Plain_300_Full 8.57 | SM_VKI_Wall_Dwarf_Plain_150A_Full 7.07 | SM_VKI_Wall_Dwarf_Plain_150B_Full 7.07 | SM_VKI_Ground_Lava_XXXX 6.60
+M_VK_Cloth_Cream,116.91,192.67,0.00,0.622,SM_VK_Tent_A 40.65 | SM_VK_Prop_Stage 22.92 | SM_VK_Tent_Bell 13.58 | SM_VK_MarketStall 11.15
+M_VKI_AncientIn,160.52,128.10,0.00,0.444,SM_VKI_Wall_Ancient_Plain_300_Full 17.28 | SM_VKI_Wall_Ancient_DoorWide_300_Full 10.09 | SM_VKI_Wall_Ancient_Plain_150B_Full 8.64 | SM_VKI_Wall_Ancient_Plain_150A_Full 8.64
+M_VKI_StreamBed,272.89,0.00,0.00,0.000,
+M_VKI_StreamWater,269.05,0.00,0.00,0.000,
+M_VKI_WoodDark,263.15,0.00,0.00,0.000,
+M_VK_Cloth_Red,76.30,163.38,0.00,0.682,SM_VK_Prop_Stage 24.28 | SM_VK_MarketStall 11.15 | SM_VK_MarketStall_Greengrocer 11.15 | SM_VK_MarketStall_Baker 11.15
+M_VKI_DungeonIn,105.03,129.23,0.00,0.552,SM_VKI_Wall_Dungeon_Plain_300_Full 17.28 | SM_VKI_Wall_Dungeon_DoorWide_300_Full 10.10 | SM_VKI_Wall_Dungeon_Plain_150A_Full 8.64 | SM_VKI_Wall_Dungeon_DartTrap_150_Full 8.64
+M_VK_Clay,129.15,104.77,0.00,0.448,SM_VK_Prop_BottleKiln 85.97 | SM_VK_Prop_Bloomery 15.83 | SM_VK_Prop_ShopGoods_Pots 2.18 | SM_VK_Prop_PottersWheel 0.72
+M_VKI_CaveCut,3.27,217.44,0.00,0.985,SM_VKI_Rock_Cave_CCFF_B 3.78 | SM_VKI_Rock_Cave_CCFF_A 3.77 | SM_VKI_Rock_Cave_CFFF_A 3.37 | SM_VKI_Rock_Cave_CFFF_B 3.34
+M_VKI_Hide,205.11,0.00,0.00,0.000,
+M_VKI_StoneIn,82.57,118.79,0.00,0.590,SM_VKI_Wall_Stone_Plain_300_Full 17.28 | SM_VKI_Wall_Stone_Forge_300_Full 17.28 | SM_VKI_Wall_Stone_DoorWide_300_Full 10.10 | SM_VKI_Wall_Stone_Hearth_300_Full 8.94
+M_VKI_SewerBrick,90.45,108.56,0.00,0.546,SM_VKI_Wall_Sewer_Plain_300_Full 17.28 | SM_VKI_Wall_Sewer_Plain_150A_Full 8.64 | SM_VKI_Wall_Sewer_Plain_150B_Full 8.64 | SM_VKI_Wall_Sewer_Outfall_150_Full 8.64
+M_VK_Crops,0.00,189.14,0.00,1.000,SM_VK_Crop_Wheat 97.92 | SM_VK_Crop_Lavender 43.88 | SM_VK_Crop_Carrot 37.21 | SM_VK_Prop_HerbBundles 7.84
+M_VKI_AncientBlock,150.58,29.97,0.00,0.166,SM_VKI_Wall_Ancient_Plain_300_Full 4.02 | SM_VKI_Wall_Ancient_Plain_300_Cut 3.00 | SM_VKI_Wall_Ancient_Plain_150A_Full 2.52 | SM_VKI_Wall_Ancient_Plain_150B_Full 2.52
+M_VK_Foliage,0.00,170.06,0.00,1.000,SM_VK_Mine_Portal 18.69 | SM_VK_Crop_Cabbage 17.64 | SM_VK_Deco_Ivy_B 14.94 | SM_VK_Deco_Hedge 14.30
+M_VKI_PlasterCream,59.36,104.03,0.00,0.637,SM_VKI_Wall_Timber_Plain_300_Full 18.76 | SM_VKI_Wall_Timber_Fireplace_300_Full 13.46 | SM_VKI_Test_Smoke 10.65 | SM_VKI_Wall_Timber_Plain_150A_Full 9.38
+M_VKI_DwarfIn,66.82,95.36,0.00,0.588,SM_VKI_Wall_Dwarf_Plain_300_Full 17.28 | SM_VKI_Wall_Dwarf_DoorWide_300_Full 10.09 | SM_VKI_Wall_Dwarf_Plain_150B_Full 8.64 | SM_VKI_Wall_Dwarf_Plain_150A_Full 8.64
+M_VKI_Ash,161.45,0.00,0.00,0.000,
+M_VKI_Boards_NS,160.23,0.00,0.00,0.000,
+M_VKI_AshlarIn,52.55,93.18,0.00,0.639,SM_VKI_Wall_Ashlar_Plain_300_Full 28.08 | SM_VKI_Wall_Ashlar_Plain_150A_Full 14.04 | SM_VKI_Wall_Ashlar_DoorWide_300_Full 12.54 | SM_VKI_Wall_Ashlar_Lancet_150_Full 10.86
+M_VKI_CaveFloor,15.30,127.53,0.00,0.893,SM_VKI_Ground_Cave_OOXO_Q11 1.96 | SM_VKI_Ground_Cave_OXOO_Q00 1.96 | SM_VKI_Ground_Cave_OOOX_Q01 1.95 | SM_VKI_Ground_Stream_OOOX_Q11 1.95
+M_VKI_SewerBlock,122.45,19.38,0.00,0.137,SM_VKI_Wall_Sewer_Plain_300_Full 3.00 | SM_VKI_Wall_Sewer_Plain_300_Cut 3.00 | SM_VKI_Wall_Sewer_Plain_150A_Full 1.50 | SM_VKI_Wall_Sewer_Plain_150A_Cut 1.50
+M_VKI_AncientCap,93.19,30.32,0.00,0.245,SM_VKI_Wall_Ancient_Plain_150A_Full 2.09 | SM_VKI_Wall_Ancient_Plain_150B_Full 2.09 | SM_VKI_Wall_Ancient_Plain_300_Full 2.09 | SM_VKI_Wall_Ancient_Door_150_Full 2.09
+M_VK_Hay,107.92,9.93,0.00,0.084,SM_VK_Prop_BeeBench 2.32 | SM_VK_Wall_Wattle_Byre 1.40 | SM_VK_Prop_Scarecrow 1.06 | SM_VK_Pier_Rail 0.90
+M_VK_Burlap,110.50,3.77,0.00,0.033,SM_VK_Scaffold_Corner 0.93 | SM_VK_Scaffold_Corner_Top 0.93 | SM_VK_Prop_Laundry 0.75 | SM_VK_Scaffold_Wall 0.41
+M_VK_Goods,86.53,24.77,0.00,0.223,SM_VK_Crop_Pumpkin 6.62 | SM_VK_Pile_Hides_3 5.67 | SM_VK_Pile_Hides_2 3.77 | SM_VK_Prop_DryingRack_Meat 2.43
+M_VK_Coal,81.93,2.71,0.00,0.032,SM_VK_Animal_Horse 1.75 | SM_VK_Prop_Campfire 0.78 | SM_VK_Animal_Goat 0.12 | SM_VK_Animal_Chickens 0.06
+M_VK_BarkMossy,25.70,52.22,0.00,0.670,SM_VK_Tree_Dead 18.37 | SM_VK_Palisade_Straight 13.30 | SM_VK_Palisade_Diag 10.00 | SM_VK_Log_Fallen 7.26
+M_VK_FieldStone,68.10,9.45,0.00,0.122,SM_VK_Def_Standin_Ramp 9.45
+M_VKI_PlasterDaub,18.17,56.80,0.00,0.758,SM_VKI_Wall_Wattle_Plain_300_Full 14.55 | SM_VKI_Wall_Wattle_Plain_150A_Full 7.28 | SM_VKI_Wall_Wattle_Plain_150B_Full 7.02 | SM_VKI_Wall_Wattle_Plain_300_Cut 6.27
+M_VKI_WoodScrubbed,74.75,0.00,0.00,0.000,
+M_VKI_DwarfCap,49.39,23.07,0.00,0.318,SM_VKI_Wall_Dwarf_Plain_150A_Full 2.09 | SM_VKI_Wall_Dwarf_Plain_150B_Full 2.09 | SM_VKI_Wall_Dwarf_Plain_300_Full 2.09 | SM_VKI_Wall_Dwarf_Door_150_Full 2.09
+M_VKI_DungeonCap,36.04,36.04,0.00,0.500,SM_VKI_Wall_Dungeon_Plain_150A_Full 2.09 | SM_VKI_Wall_Dungeon_Plain_150B_Full 2.09 | SM_VKI_Wall_Dungeon_Plain_300_Full 2.09 | SM_VKI_Wall_Dungeon_Door_150_Full 2.09
+M_VKI_EarthDamp,62.84,0.00,0.00,0.000,
+M_VK_Water,9.68,50.16,0.00,0.838,SM_VK_Pond 24.65 | SM_VK_Prop_Fountain 14.62 | SM_VK_Prop_LavoirBasin 6.72 | SM_VK_Prop_ClayPit 1.30
+M_VKI_BoardsV,3.33,42.45,0.00,0.927,SM_VKI_Wall_Board_Plain_300_Full 18.18 | SM_VKI_Wall_Board_Plain_150A_Full 9.09 | SM_VKI_Wall_Board_Plain_300_Cut 6.30 | SM_VKI_Wall_Board_Door_150_Full 4.21
+M_VKI_SewerCap,15.79,27.63,0.00,0.636,SM_VKI_Wall_Sewer_Plain_150A_Full 2.09 | SM_VKI_Wall_Sewer_Plain_150B_Full 2.09 | SM_VKI_Wall_Sewer_Plain_300_Full 2.09 | SM_VKI_Wall_Sewer_Door_150_Full 2.09
+M_VK_Shutter_Teal,39.74,0.00,0.00,0.000,
+M_VK_Hide,34.38,2.41,0.00,0.066,SM_VK_Animal_Horse 1.74 | SM_VK_Prop_Bellows 0.68
+M_VK_Bronze,30.84,5.35,0.00,0.148,SM_VK_Entrance_DwarfGate 1.81 | SM_VK_Prop_TanningPit 1.44 | SM_VK_Roof_Cupola 1.29 | SM_VK_Roof_Bellcote 0.48
+M_VK_BarkPine,0.41,34.11,0.00,0.988,SM_VK_Tree_Pine_B 19.25 | SM_VK_Tree_Pine_A 11.66 | SM_VK_Tree_Pine_Young 3.20
+M_VKI_Gold,23.58,10.56,0.00,0.309,SM_VKI_Wall_Dwarf_Plain_300_Full 3.65 | SM_VKI_Wall_Dwarf_Plain_150A_Full 1.82 | SM_VKI_Wall_Dwarf_Plain_150B_Full 1.82 | SM_VKI_Wall_Dwarf_DoorWide_300_Full 1.02
+M_VKI_Brick,31.48,1.90,0.00,0.057,SM_VKI_Wall_Timber_Fireplace_300_Full 1.00 | SM_VKI_Wall_Timber_Fireplace_300_Cut 0.90
+M_VK_EndGrain,25.72,6.20,0.00,0.194,SM_VK_Corner_Log_B 0.92 | SM_VK_Corner_Log 0.92 | SM_VK_Wall_Log_Door 0.86 | SM_VK_Wall_Log_B_Door 0.85
+M_VKI_Textiles,31.51,0.00,0.00,0.000,
+M_VKI_Bone,30.27,0.00,0.00,0.000,
+M_VK_Steel,26.38,1.68,0.00,0.060,SM_VK_Prop_ArmorStand 1.64 | SM_VK_Sign_Anvil 0.03
+M_VK_BarkBirch,11.17,15.34,0.00,0.579,SM_VK_Tree_Birch 10.80 | SM_VK_Tree_Birch_Single 4.54
+M_VKI_MineWood,26.45,0.00,0.00,0.000,
+M_VK_Window,0.00,25.72,0.00,1.000,SM_VK_Wall_Timber_Oriel 2.37 | SM_VK_Windmill 1.92 | SM_VK_Roof_Dormer 1.52 | SM_VK_Wall_StoneUp_Twin 1.42
+M_VK_Paper,20.07,5.23,0.00,0.207,SM_VK_Prop_ClothRack 3.38 | SM_VK_Prop_Laundry 1.19 | SM_VK_Banner_Wall 0.28 | SM_VK_Prop_WaysideShrine 0.21
+M_VK_FlowerYellow,11.63,10.81,0.00,0.482,SM_VK_Prop_ClothRack 3.58 | SM_VK_Prop_Maypole 2.30 | SM_VK_Prop_Stage 1.36 | SM_VK_Prop_Beacon 1.29
+M_VKI_GlowIn,22.11,0.00,0.00,0.000,
+M_VKI_Straw,21.93,0.00,0.00,0.000,
+M_VKI_ApronCobble,20.95,0.00,0.00,0.000,
+M_VK_Glow,16.34,4.32,0.00,0.209,SM_VK_Prop_Bloomery 1.12 | SM_VK_Prop_BottleKiln 1.08 | SM_VK_Prop_Campfire 0.74 | SM_VK_Prop_Beacon 0.67
+M_VK_Wattle,12.54,7.94,0.00,0.388,SM_VK_Prop_ChickenCoop_Wattle 5.69 | SM_VK_Prop_LavoirBasin 0.76 | SM_VK_Prop_Creels 0.73 | SM_VK_Wall_Wattle 0.30
+M_VK_Bread,16.46,0.38,0.00,0.023,SM_VK_Prop_MashTun 0.38
+M_VK_Net,0.00,15.07,0.00,1.000,SM_VK_Prop_NetRack 10.32 | SM_VK_Prop_Creels 4.75
+M_VKI_WaterFall,14.38,0.00,0.00,0.000,
+M_VK_Leaf,11.97,2.29,0.00,0.161,SM_VK_Pond 1.21 | SM_VK_Prop_Bunting_9 0.63 | SM_VK_Prop_Bunting_6 0.42 | SM_VK_Animal_Chickens 0.03
+M_VKI_Web,12.73,0.00,0.00,0.000,
+M_VKI_Puddle,9.94,0.00,0.00,0.000,
+M_VKI_Lava,2.59,5.67,0.00,0.686,SM_VKI_Ground_Lava_XXXX 2.25 | SM_VKI_Ground_Lava_OXXX 1.44 | SM_VKI_Ground_Lava_OOXX 0.90 | SM_VKI_Ground_Lava_OXOX 0.72
+M_VKI_Daylight,7.74,0.00,0.00,0.000,
+M_VKI_RuneGlow,6.93,0.00,0.00,0.000,
+M_VKI_Stained_In,6.45,0.00,0.00,0.000,
+M_VK_FlowerPink,3.48,2.44,0.00,0.412,SM_VK_Prop_Maypole 2.30 | SM_VK_Pond 0.14
+M_VKI_SewerWater,5.67,0.00,0.00,0.000,
+M_VK_Pumpkin,1.67,3.98,0.00,0.705,SM_VK_Prop_Beacon 2.95 | SM_VK_Gatehouse_Block 0.42 | SM_VK_Palisade_Gate 0.41 | SM_VK_Palisade_Tower 0.20
+M_VK_MushGlow,4.87,0.54,0.00,0.100,SM_VK_Mushrooms_Glow 0.54
+M_VKI_Wax,5.31,0.00,0.00,0.000,
+M_VK_Pigskin,4.58,0.07,0.00,0.015,SM_VK_Animal_Pig 0.07
+M_VKI_Foam,4.48,0.00,0.00,0.000,
+M_VK_Stained,0.00,4.24,0.00,1.000,SM_VK_Chapel_Wall 2.07 | SM_VK_Roof_Gable_Stone 1.69 | SM_VK_Sign_Potion 0.49
+M_VKI_Window_Day,3.21,0.00,0.00,0.000,
+M_VK_Clock,0.00,3.12,0.00,1.000,SM_VK_Roof_Cupola 3.12
+M_VKI_BannerRed,3.05,0.00,0.00,0.000,
+M_VKI_WaterMurky,2.87,0.00,0.00,0.000,
+M_VKI_AncientFlag,2.82,0.00,0.00,0.000,
+M_VKI_FX_Light,2.60,0.00,0.00,0.000,
+M_VK_WildGarlic,0.00,2.56,0.00,1.000,SM_VK_Plant_WildGarlic 2.56
+M_VKI_IronOre,2.16,0.00,0.00,0.000,
+M_VKI_LavaCrust,1.39,0.00,0.00,0.000,
+M_VKI_Quartz,1.22,0.00,0.00,0.000,
+M_VKI_Sludge,1.20,0.00,0.00,0.000,
+M_VKI_Rust,0.94,0.00,0.00,0.000,
+M_VK_MushStem,0.27,0.54,0.00,0.672,SM_VK_Mushrooms_Glow 0.24 | SM_VK_Mushrooms_Red 0.16 | SM_VK_Mushrooms_Brown 0.07 | SM_VK_Log_Fallen 0.05
+M_VK_MushBrown,0.00,0.66,0.00,1.000,SM_VK_Log_Fallen 0.27 | SM_VK_Stump 0.25 | SM_VK_Mushrooms_Brown 0.15
+M_VK_MushRed,0.00,0.55,0.00,1.000,SM_VK_Mushrooms_Red 0.55
+M_VKI_Slag,0.39,0.00,0.00,0.000,
+M_VKI_WattleIn,0.00,0.29,0.00,1.000,SM_VKI_Wall_Wattle_Plain_150B_Full 0.29
+M_VK_Apple,0.26,0.00,0.00,0.000,
+M_VK_Cloth_Blue,0.22,0.00,0.00,0.000,
+M_VKI_Ale,0.12,0.00,0.00,0.000,

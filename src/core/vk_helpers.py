@@ -1667,7 +1667,7 @@ def chapel_wall(k,kind="W"):
     elif kind=="D":
         x0,x1,z0,zs=-0.8,0.8,0.0,2.2
         pts,za=lancet_pts(x0,x1,z0,zs,8)
-        vs=[k.bm.verts.new((x,-0.33,z)) for x,z in pts]; f=k.bm.faces.new(vs[::-1]); f.material_index=PLANKS
+        vs=[k.bm.verts.new((x,-0.33,z)) for x,z in pts]; f=k.bm.faces.new(vs); f.material_index=PLANKS   # faces -Y (one-sided since 2026-10-13)
         for l in f.loops: l[k.uv].uv=(l.vert.co.x/2,l.vert.co.z/2)
         k.box((0,-0.36,(za)/2),(0.06,0.05,za),WOOD,bevel=0)
         for zz in(0.5,1.6):

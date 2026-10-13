@@ -1033,6 +1033,45 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     journey that reaches a level still loading waits (as before) and raises it to High; `PendingLevel` names that
     level so a game can say "Loading..." (MedievalSetting does). The Blender side of (a) is in src only: push it
     before the next Blender interior build.
+96. 2026-10-12 (MedievalSetting, an audit for more costs like its skirt simulation): **KitTravel frees what a let-go
+    level used** (`FreeAssets`, on): Refresh, after unloading held levels that are no longer neighbours, runs
+    `Resources.UnloadUnusedAssets` before the next preloads. A plain load does that by itself; an additive unload
+    does not, so a journey of instant cuts kept every passed level's meshes, textures and materials in memory until
+    the next plain load (10-25 MB of level-only files each in MedievalSetting). A short stall a frame or two after a
+    cut, only when something was unloaded (back and forth through one door unloads nothing).
+97. 2026-10-13 (MedievalSetting, the user: the look "pale and washed away, the units blend too much with the
+    background" -- vivid grass, greyed wolves; "get the grass less saturated (while we keep the classic look)"):
+    **the grass recipe's saturation is a property**, `_GrassSat` on KitTerrain and KitGrass (it was the constant 0.8 in
+    both `KitHSV(col, 0.505, 0.8, 0.97)` calls), default **0.6** (he picked it from 0.8 / 0.6 / 0.45 / 0.3 shown in
+    play). No map material stores its own value, so every map follows the default; KitVillage copies the ground's
+    value to the grass material when it builds a map (the blades take the ground's colour, so they must match). The
+    Blender terrain material still has 0.8: change it there before comparing Blender renders with Unity.
+98. 2026-10-13 (MedievalSetting, the user: "the amount of z fighting that happens. Especially at regions where we
+    can see inside the geometry due to the xray shader"; his examples a wayside shrine and the Greywall apothecary;
+    "we should do the proper fix"). **The scan** (`tools/zfight_scan_pieces.py`, `zfight_scan_structures.py`, background
+    Blender, read-only; results in `reviews/zfight_2026-10-13/`): triangles in one plane that overlap, split into
+    *touching* (opposite facings: a plinth's top under a shaft's bottom, a stone on a ledge, a wall's foot on the
+    ground; hidden until the game's see-through opens the piece) and *flush* (same facing: visible flicker). 631 of
+    1171 masters overlap: about 1,300 m2 touching in 513 pieces, 200 m2 flush in 265 (bell tower, windmill, guard
+    tower, gatehouse, roof trims); in the 45 premade structures 1,000 m2 touching, 45 m2 flush (parapets, turret
+    corbels, scaffolds). **Fix A, done: solid materials are drawn one-sided** -- every material was two-sided
+    (176 of 176), which is what turned the touching faces into flicker. The rule is in `vkx_export`
+    (`VKX_TWO_SIDED`, `vkx_double_sided`, `vkx_apply_cull_policy`, run by `process_materials` before a material's
+    signature, so it sets Blender's Backface Culling too): exterior `M_VK_*` materials one-sided (54), sheets two-sided
+    (foliage, crops, flowers, leaf, window, stained, clock, net, void, water, moss, thatch, cloth, paper, burlap, hay,
+    goods, mushrooms) and every interior-kit `M_VKI_*` material unchanged (their walls are sheets facing the room).
+    Chosen by eye: `tools/cull_render_check.py` renders every master from four sides at the game's 50 degrees with
+    culling off and on, `cull_render_diff.py` ranks the change, `cull_render_ids.py` (flat material ID colours) says
+    which material lost surface. Real holes it found, fixed in the builders: the chapel door leaf faced into its wall
+    (`chapel_wall` "D": `faces.new(vs)`), and a plank door in an arched opening (`def_arch_opening(planks=True)`:
+    Def_StoneUp_Door, the round town-wall tower) got its back face 4 mm in, since the opening runs through. Looked at
+    and left: the turret segments and the passage vault lose only their insides seen from above (capped / built over
+    in use), the stone bridge pier's cap tip changes a little (under the span). Rebuilt + exported the three pieces,
+    materials re-processed, .blend saved; Unity: Build Materials (the variants follow their base). Verified in
+    MedievalSetting play: the shrine opened by the see-through shows no layers any more. **B, open:** the flush
+    overlaps -- lift trims and corbels a few millimetres or drop the face hidden under them, down
+    `reviews/zfight_2026-10-13/pieces.csv` (same_facing_m2) and `structures.csv`; then rescan.
+
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

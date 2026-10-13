@@ -15,6 +15,7 @@ CBUFFER_START(UnityPerMaterial)
     half4 _TipColor;        // the tips' tint (sun-bleached)
     half _Translucency;     // share lit through the blade from behind
     half _Specular;
+    half _GrassSat;         // the ground's grass saturation (KitTerrain's; KitVillage copies it over)
 CBUFFER_END
 
 TEXTURE2D(_GrassMap);

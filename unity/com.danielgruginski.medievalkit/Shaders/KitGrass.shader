@@ -16,6 +16,7 @@ Shader "MedievalKit/KitGrass"
         _PushStrength("Walker Push (m)", Range(0, 1)) = 0.32
         _RootDark("Root Darkening", Range(0, 1)) = 0.45
         _TipColor("Tip Tint", Color) = (1.5, 1.42, 0.9, 1)
+        _GrassSat("Grass Saturation (the ground's)", Range(0, 1.5)) = 0.6
         _Translucency("Translucency", Range(0, 1)) = 0.3
         _Specular("Specular Level", Range(0, 1)) = 0.25
     }
@@ -89,7 +90,7 @@ Shader "MedievalKit/KitGrass"
                 float cs37 = cos(radians(37.0)), sn37 = sin(radians(37.0));
                 float2 q2 = float2(q.x * cs37 - q.y * sn37, q.x * sn37 + q.y * cs37);
                 float3 col = lerp(S(_GrassMap, p.xy * 0.25).rgb, S(_GrassMap, q2).rgb, smoothstep(0.3, 0.7, mac.b));
-                col = KitHSV(col, 0.505, 0.8, 0.97);
+                col = KitHSV(col, 0.505, _GrassSat, 0.97);
                 half h = i.h;
                 half3 albedo = col * i.color.rgb * lerp(1.0 - _RootDark, 1.0, sqrt(h)) * lerp(half3(1, 1, 1), _TipColor.rgb, h);
 

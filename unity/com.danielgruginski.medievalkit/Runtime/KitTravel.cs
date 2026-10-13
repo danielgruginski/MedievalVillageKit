@@ -48,6 +48,11 @@ namespace MedievalKit
         /// <summary>the background preloads' share of each frame (Application.backgroundLoadingPriority; Low: about 2 ms
         /// of loading work a frame, Normal 10, High 50); back to what it was once they are done</summary>
         public static ThreadPriority PreloadPriority = ThreadPriority.Low;
+
+        /// <summary>after a held level is let go, give back the meshes, textures and materials only it used
+        /// (Resources.UnloadUnusedAssets: a plain load does that by itself, an additive unload does not, so a long journey
+        /// of instant cuts kept every level it passed in memory); a short stall a frame or two after the cut</summary>
+        public static bool FreeAssets = true;
         static ThreadPriority? restPriority;
 
         /// <summary>the loading pace: preloading (High while a journey waits on one) or done (as it was)</summary>
@@ -314,13 +319,15 @@ namespace MedievalKit
             var cur = SceneManager.GetActiveScene();
             if (UnityEngine.Object.FindAnyObjectByType<KitChainStreamer>() != null) { Pace(false); yield break; }   // a chain streams itself
             var want = Neighbours(cur);
+            bool unloaded = false;
             foreach (var name in held.Keys.ToList())
                 if (!want.Contains(name))
                 {
                     var s = held[name].scene;
                     held.Remove(name);
-                    if (s.isLoaded) yield return SceneManager.UnloadSceneAsync(s);
+                    if (s.isLoaded) { yield return SceneManager.UnloadSceneAsync(s); unloaded = true; }
                 }
+            if (unloaded && FreeAssets) yield return Resources.UnloadUnusedAssets();   // before the next preloads: a lower peak
             foreach (var name in want)
             {
                 if (held.ContainsKey(name) || preloading.Contains(name) || noPreload.Contains(name)) continue;

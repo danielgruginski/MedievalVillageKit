@@ -16,6 +16,7 @@ Shader "MedievalKit/KitTerrain"
         _CtlScale("Control Map Scale (1/(3W), 1/(3H))", Vector) = (0.01, 0.01, 0, 0)
         [NoScaleOffset] _GrassMap("Grass", 2D) = "white" {}
         [NoScaleOffset] _GrassH("Grass Height", 2D) = "gray" {}
+        _GrassSat("Grass Saturation", Range(0, 1.5)) = 0.6
         [NoScaleOffset] _SandMap("Sand", 2D) = "white" {}
         [NoScaleOffset] _SandH("Sand Height", 2D) = "gray" {}
         [NoScaleOffset] _DirtMap("Dirt", 2D) = "white" {}
@@ -146,12 +147,14 @@ Shader "MedievalKit/KitTerrain"
                 float3 mac = SAMPLE_TEXTURE2D(_MacroMap, sampler_trilinear_repeat, p.xy / 48.0).rgb;
                 float3 pw = p + (KitNoise3(p, 0.35, 2.0) - 0.5) * 1.6;
                 float4 ctl = SAMPLE_TEXTURE2D(_CtlMap, sampler_linear_clamp, pw.xy * _CtlScale.xy);
-                // grass at two scales (the second turned 37 degrees), then Hue/Saturation/Value (0.505, 0.8, 0.97)
+                // grass at two scales (the second turned 37 degrees), then Hue/Saturation/Value (0.505, _GrassSat, 0.97;
+                // the saturation a property since 2026-10-12, 0.6 where it was 0.8: MedievalSetting, the user: "get the
+                // grass less saturated", picked from 0.8 / 0.6 / 0.45 / 0.3 in play)
                 float2 q = p.xy / 13.1;
                 float cs37 = cos(radians(37.0)), sn37 = sin(radians(37.0));
                 float2 q2 = float2(q.x * cs37 - q.y * sn37, q.x * sn37 + q.y * cs37);
                 col = lerp(S(_GrassMap, p4.xy).rgb, S(_GrassMap, q2).rgb, smoothstep(0.3, 0.7, mac.b));
-                col = KitHSV(col, 0.505, 0.8, 0.97);
+                col = KitHSV(col, 0.505, _GrassSat, 0.97);
                 hgt = S(_GrassH, p4.xy).r;
                 Layer(col, hgt, S(_SandMap, p4.xy).rgb, S(_SandH, p4.xy).r, ctl.b, 0.50, mac.b, smoothstep(0.2, 0.45, A), false);
                 Layer(col, hgt, S(_DirtMap, p4.xy).rgb, S(_DirtH, p4.xy).r, ctl.r, 0.45, mac.b, 0, true);

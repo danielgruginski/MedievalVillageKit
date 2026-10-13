@@ -678,6 +678,11 @@ def def_arch_opening(k,hw,zs,z0,y,mi_fill=VOID,ring_mi=STONE_BLOCK,n=7,planks=Fa
     k.bm.normal_update()
     if f.normal.y>0: f.normal_flip()
     for l in f.loops: l[k.uv].uv=(l.vert.co.x/2.0,l.vert.co.z/2.0)
+    if planks:                      # its back, 4 mm in: the materials are one-sided since 2026-10-13 (z-fighting)
+        fb=k.bm.faces.new([k.bm.verts.new((x,y+0.004,z)) for x,z in pts]); fb.material_index=PLANKS
+        k.bm.normal_update()
+        if fb.normal.y<0: fb.normal_flip()
+        for l in fb.loops: l[k.uv].uv=(l.vert.co.x/2.0,l.vert.co.z/2.0)
     for i in range(n):
         a=math.pi*(i+0.5)/n; rr=hw+0.14
         k.box((math.cos(a)*rr,y+0.02,zs+math.sin(a)*rr),(0.22,0.24,0.3 if i!=n//2 else 0.38),ring_mi,rot=(0,-(a-math.pi/2),0),bevel=0.03)
