@@ -1671,7 +1671,9 @@ def vki_rooms_mats(ctx):
 
 def vki_rooms_pools(ctx):
     """FX_WindowPool (PKG-L) under every Full window / lancet, with the window's origin and rotation, in Day scenes
-    only (vki_fx_presets); z 0.20 where the pool lands on a dais. Only when the real master exists."""
+    only (vki_fx_presets); z 0.20 where the pool lands on a dais. Only when the real master exists. None whose patch
+    (about 1.1 x 1.4 m round its centre) reaches a stair's or a hatch's cells: it lies at floor height and glowed over
+    the shaft (2026-10-12, the hamlet chapel's stair down under its east lancet)."""
     if ctx["night"] or not ctx["R"].get("pools", True) or vki_rooms_master("SM_VKI_FX_WindowPool") is None:
         return 0                                         # R["pools"] False: the dungeon's grates (their own shafts)
     L, props = ctx["L"], ctx["colls"]["Props"]
@@ -1681,6 +1683,11 @@ def vki_rooms_pools(ctx):
         if pc["kind"] not in ("Window", "Lancet", "LancetTall") or pc["height"] != "Full":
             continue
         cx, cy = vki_rooms_local(pc, 0.75, -1.15)
+        holes = set(L.get("stair_cells", {})) | set(L.get("pit_cells", {}))
+        if any((int(math.floor((cx + ox * 0.6) / VKI_IG)), int(math.floor((cy + oy * 0.6) / VKI_IG))) in holes
+               for ox in (-1, 0, 1) for oy in (-1, 0, 1)):
+            ctx["notes"].append(f"window pool at x {cx:.2f}, y {cy:.2f} left out: it would lie over a stair or a hatch")
+            continue
         z = 0.20 if any(dx <= cx <= dx + 3.0 and dy <= cy <= dy + 3.0 for dx, dy in dais) else 0.0
         vki_rooms_put(ctx, props, "SM_VKI_FX_WindowPool", pc["x"], pc["y"], pc["rot"], z=z, walls=[])
         n += 1

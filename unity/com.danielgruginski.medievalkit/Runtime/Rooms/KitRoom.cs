@@ -697,7 +697,9 @@ namespace MedievalKit
             }
         }
 
-        /// <summary>vki_rooms_pools: FX_WindowPool under every Full window / lancet in Day rooms</summary>
+        /// <summary>vki_rooms_pools: FX_WindowPool under every Full window / lancet in Day rooms, but none whose patch
+        /// (about 1.1 x 1.4 m round its centre) reaches a stair's or a hatch's cells: it lies at floor height and glowed
+        /// over the shaft (2026-10-12, the hamlet chapel's stair down under its east lancet)</summary>
         void Pools()
         {
             if (night || (R["pools"] != null && R["pools"].Type == JTokenType.Boolean && !(bool)R["pools"]) ||
@@ -707,9 +709,27 @@ namespace MedievalKit
             {
                 if ((pc.kind != "Window" && pc.kind != "Lancet" && pc.kind != "LancetTall") || pc.height != "Full") continue;
                 var c = Frame(pc.x, pc.y, pc.rot, 0.75f, -1.15f);
+                if (OverOpening(c, 0.6f))
+                {
+                    notes.Add($"window pool at {c.x:0.##}, {c.y:0.##} left out: it would lie over a stair or a hatch");
+                    continue;
+                }
                 float z = dais.Any(d => d.Item1 <= c.x && c.x <= d.Item1 + 3f && d.Item2 <= c.y && c.y <= d.Item2 + 3f) ? 0.20f : 0f;
                 Put(props, "SM_VKI_FX_WindowPool", pc.x, pc.y, pc.rot, z, null, "pool");
             }
+        }
+
+        /// <summary>a spot (room metres) within `r` of a stair's or a hatch's cell: no floor of its own there</summary>
+        bool OverOpening(Vector2 c, float r)
+        {
+            float ig = Layout.IG;
+            for (int i = 0; i < 9; i++)
+            {
+                var cell = (Mathf.FloorToInt((c.x + (i % 3 - 1) * r) / ig), Mathf.FloorToInt((c.y + (i / 3 - 1) * r) / ig));
+                if ((Layout.stairCells != null && Layout.stairCells.ContainsKey(cell)) || (Layout.pitCells != null && Layout.pitCells.ContainsKey(cell)))
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>vki_rooms_lights: a Unity light per vki_lights socket of the placed pieces (Day / Night power)</summary>

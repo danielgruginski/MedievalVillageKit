@@ -21,7 +21,9 @@ namespace MedievalKit
     /// navmesh), so taking a link is an instant cut: the level left is switched off, the target switched on and made the
     /// active scene (its lighting), the walker placed; the level left stays held while it is one link away, else it is
     /// unloaded. A level not held yet, a chain's play scene (it streams its own pieces) and the way out of a chain load
-    /// the plain way behind a short fade.</para>
+    /// the plain way behind a short fade. Preloads take a small share of each frame (<see cref="PreloadPriority"/>), so a
+    /// big level loading beside the one played costs it little; a journey that waits on one (<see cref="Pending"/>,
+    /// <see cref="PendingLevel"/>: a game can say "Loading...") raises it to High until that level is in.</para>
     /// </summary>
     public static class KitTravel
     {
@@ -41,6 +43,27 @@ namespace MedievalKit
         public static bool Travelling => host != null && host.Fading;
         /// <summary>a journey was asked for and waits on its level's preload (the cut happens when it is ready)</summary>
         public static bool Pending => waiting.HasValue;
+        /// <summary>the level a waiting journey waits on (null: none)</summary>
+        public static string PendingLevel => waiting?.target;
+        /// <summary>the background preloads' share of each frame (Application.backgroundLoadingPriority; Low: about 2 ms
+        /// of loading work a frame, Normal 10, High 50); back to what it was once they are done</summary>
+        public static ThreadPriority PreloadPriority = ThreadPriority.Low;
+        static ThreadPriority? restPriority;
+
+        /// <summary>the loading pace: preloading (High while a journey waits on one) or done (as it was)</summary>
+        static void Pace(bool loading)
+        {
+            if (loading)
+            {
+                if (!restPriority.HasValue) restPriority = Application.backgroundLoadingPriority;
+                Application.backgroundLoadingPriority = waiting.HasValue ? ThreadPriority.High : PreloadPriority;
+            }
+            else if (restPriority.HasValue)
+            {
+                Application.backgroundLoadingPriority = restPriority.Value;
+                restPriority = null;
+            }
+        }
 
         static bool preload;
         static Transform walker;
@@ -135,7 +158,7 @@ namespace MedievalKit
             Hook();
             bool inChain = UnityEngine.Object.FindAnyObjectByType<KitChainStreamer>() != null;
             if (preload && !inChain && held.ContainsKey(target)) { Switch(target, arrive); return true; }
-            if (preload && !inChain && preloading.Contains(target)) { waiting = (target, arrive); return true; }
+            if (preload && !inChain && preloading.Contains(target)) { waiting = (target, arrive); Pace(true); return true; }
             pendingSpawn = arrive;
             if (preload) Host.FadeLoad(target);
             else SceneManager.LoadScene(target);
@@ -157,7 +180,7 @@ namespace MedievalKit
             if (target == CurrentLevel) { Arrive(SceneManager.GetActiveScene(), spawn); return true; }
             bool inChain = UnityEngine.Object.FindAnyObjectByType<KitChainStreamer>() != null;
             if (preload && !inChain && held.ContainsKey(target)) { Switch(target, spawn); return true; }
-            if (preload && !inChain && preloading.Contains(target)) { waiting = (target, spawn); return true; }   // not a second load of it
+            if (preload && !inChain && preloading.Contains(target)) { waiting = (target, spawn); Pace(true); return true; }   // not a second load of it
             pendingSpawn = spawn;
             if (preload) Host.FadeLoad(target);
             else SceneManager.LoadScene(target);
@@ -289,7 +312,7 @@ namespace MedievalKit
         {
             yield return null;                                     // let a cut settle first
             var cur = SceneManager.GetActiveScene();
-            if (UnityEngine.Object.FindAnyObjectByType<KitChainStreamer>() != null) yield break;   // a chain streams itself
+            if (UnityEngine.Object.FindAnyObjectByType<KitChainStreamer>() != null) { Pace(false); yield break; }   // a chain streams itself
             var want = Neighbours(cur);
             foreach (var name in held.Keys.ToList())
                 if (!want.Contains(name))
@@ -303,11 +326,13 @@ namespace MedievalKit
                 if (held.ContainsKey(name) || preloading.Contains(name) || noPreload.Contains(name)) continue;
                 if (SceneManager.GetSceneByName(name).isLoaded) continue;
                 preloading.Add(name);
+                Pace(true);
                 var op = SceneManager.LoadSceneAsync(name, LoadSceneMode.Additive);
                 if (op == null) { preloading.Remove(name); continue; }
                 yield return op;
-                if (SceneManager.GetActiveScene() != cur) yield break;   // moved on meanwhile: the next refresh takes over
+                if (SceneManager.GetActiveScene() != cur) { Pace(false); yield break; }   // moved on meanwhile: the next refresh takes over
             }
+            Pace(false);
         }
 
         /// <summary>a walker placed by someone else (a chain's streamer): tells the listeners</summary>

@@ -1023,6 +1023,16 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     "Mouth"; prompt "Leave the cave". Tests {}; seen in a workshop scene (WS_cavemouth) and in both MedievalSetting
     dens (DensMenu puts it on a north face of the cleared cave). Two dead ends on the way: rocks floating in the
     opening (no lintel: the cut runs the full height) and the FOLIAGE slot (a white flower-bush texture).
+95. 2026-10-12 (MedievalSetting, the user: the chapel's windows "casting lights on the stair black part" and the bandit
+    road's frame rate while Greywall loads): (a) **window pools keep off openings**: `vki_rooms_pools` / KitRoom.Pools
+    leave out an FX_WindowPool whose patch (centre within 0.6 m) reaches a stair's or a hatch's cells (`stair_cells`,
+    `pit_cells`), with a note: it lies at floor height and glowed over the shaft (the hamlet chapel's east lancet over
+    its stair down; that one pool also taken out of the built scene, the only such pool in MedievalSetting's 16
+    interiors with pools). (b) **paced preloads**: KitTravel's background preloads run at `PreloadPriority` (Low:
+    about 2 ms of loading work a frame) instead of the default share, back to what it was when they are done; a
+    journey that reaches a level still loading waits (as before) and raises it to High; `PendingLevel` names that
+    level so a game can say "Loading..." (MedievalSetting does). The Blender side of (a) is in src only: push it
+    before the next Blender interior build.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
