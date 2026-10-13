@@ -569,16 +569,32 @@ things (rocks, roofs, walkways), with the largest; a spawn, marker or encounter 
 lifted off the ground: archers on a walkway or a tower, a lookout; a marker in a cage).
 
 **See-through.** The kit's shader (KitLit, every kit material) can open a hole round the game's walker: what stands
-between the camera and the walker (in a cone to a disc round its chest, above its knees, and in front of it along the
-camera's level heading -- not along the line of sight: the camera looks down, so a wall the walker stands before
-reaches nearer the camera above the walker's head, yet stays whole) dithers away with a soft rim, shadows staying. Only
-a piece in the walker's way opens: one whose bounds (`Renderer.bounds`) stay out of the wedge from the camera to the
-walker's body stays whole -- a wall beside the walker running towards the camera, the rock past it. Off until the game sets two globals each frame: `_KitSeeThrough` (xyz the walker's
-chest, w the hole's radius at the walker; 0 off) and `_KitSeeThroughArgs` (x the walker's feet height, y the height
+between the camera and the walker (in a cone to a disc round its chest, in front of it along the camera's level
+heading -- not along the line of sight: the camera looks down, so a wall the walker stands before reaches nearer the
+camera above the walker's head, yet stays whole) opens with a thin dithered rim, shadows staying. A building's pieces
+keep their foot (up to the height kept, below: the walls' footprint); trees, bushes, rocks and props open down to the
+walker's feet (no stumps). Only a piece in the walker's upper body's way opens: one whose bounds (`Renderer.bounds`)
+stay out of the wedge from the camera to the walker's waist..head stays whole -- a wall beside the walker running
+towards the camera, the rock past it, a fence before its legs. On an outdoor map `KitVillage` refines this in play
+(`Runtime/World/KitSeeThrough.cs`, rendering layers 16-19, nothing saved): the nature is tested by the ellipsoid inside
+its bounds, and a building opens as one -- all its pieces or none, decided each frame on the CPU from each piece's own
+turned box -- so a roof's hole stays round across walls, roof and chimney; walls laid as props along a line (a town
+wall, a palisade, a gatehouse: `KitSeeThrough.IsStanding`) keep their foot and open in runs the same way. The game
+can open the hole only while something hides the walker: `KitSeeThroughProbe` (a 32 x 40 px render of the walker's
+upper body in which the kit's shader draws only what the hole would open, in magenta; `Cover` is the hidden share,
+read back a frame or two late, 15 times a second) -- MedievalSetting's `GameCamera` grows and shrinks the hole by it.
+Every piece of a KitVillage map is cut 1.4 m over its base (a house's floor, a tree's or prop's foot; kept in its
+rendering layer, `KitSeeThrough.WithCut`) and, where it spans the cut, closed by a real cap -- its own cross-section,
+sliced from the mesh and filled (`KitSeeThroughCaps`) -- drawn only where the hole opened it; an open building is cut
+as a whole inside the hole, and a tree beside the walker keeps its trunk whole (a loose piece's solid parts are in
+front or behind by its origin). Prototype: the caps are made in play by an editor hook (the meshes are not Read/Write),
+so a player build has the cut but no caps yet; KitLit's back-face `SeeThroughCap` pass fills in where a piece has none.
+Off until the game sets two globals each frame: `_KitSeeThrough` (xyz the walker's
+chest, all 0: no walker; w the hole's radius at the walker, 0: shut) and `_KitSeeThroughArgs` (x the walker's feet height, y the height
 kept above the feet -- the ground, low and cut walls --, z how far in front of the walker, level, things are kept: an
 eave over it, a post beside it; w the walker's half-width for "in its way", 0: every piece in the cone opens). The depth passes
 clip too (SSAO and depth priming see the same hole). MedievalSetting's `GameCamera` sets them (radius 2.4, keep 1.4,
-half-width 0.2: under the navmesh's agent radius, so a wall the walker walks along stays whole).
+kept in front 0.25, half-width 0.2: under the navmesh's agent radius, so a wall the walker walks along stays whole).
 
 ## 6. Checking your work
 

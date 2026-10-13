@@ -1072,6 +1072,134 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     overlaps -- lift trims and corbels a few millimetres or drop the face hidden under them, down
     `reviews/zfight_2026-10-13/pieces.csv` (same_facing_m2) and `structures.csv`; then rescan.
 
+99. 2026-10-13 (MedievalSetting, the user's screenshots of the see-through: "that first one is a tree, getting cut in
+    the base, I don't understand why"; bush tops and a chapel's eave speckled though nothing hid the player; roof holes
+    with a wall end standing whole in them and straight edges at joints). Four causes: the hole is open whether or not
+    anything hides the walker; everything is sliced at feet + 1.4 (a tree left a stump); each piece decides alone
+    whether it is in the way (HANDOFF 91); the dithered rim was 45% of the radius. The user picked five fixes and asked
+    for the three small ones first, done here (`Shaders/KitSeeThrough.hlsl`, new `Runtime/World/KitSeeThrough.cs`,
+    `KitVillage.Start/LateUpdate`): **the rim** 15% of the radius (`kKitSeeThroughRim`); **"in the way" from the waist
+    up** (the wedge was to the feet: a bush or a fence before the legs opened); **rendering layers** set in play (nothing
+    saved): KitVillage's Nature and Props are *loose* (bit 16: open down to the walker's feet, no foot kept -- only
+    a building keeps the walls' footprint), the Nature is also *round* (bit 17: in the way when the ellipsoid inside
+    its bounds meets the sight lines to the chest or head -- a big bush's box reaches the feet of a walker beside it,
+    and the whole bush went), a building's pieces are a *group* (bit 18) decided on the CPU each frame
+    (`KitSeeThrough.Building.Decide`): a cheap test of the building's whole box, then per piece the world box (the
+    shader's wedge) and the piece's own turned box against nine sight lines (waist, middle, head; centre and a
+    half-width to each side); one piece in the way and every piece carries *open* (bit 19). The turned box matters:
+    world boxes of turned pieces are loose (the hamlet chapel stands at 37 degrees; its wall piece's world box held the
+    walker in front of it). Walls placed as props along a line (`KitSeeThrough.IsStanding`: TownWall, Palisade,
+    Gatehouse, Gate, Tower in the name -- Greywall's town wall is 125 modules under Props) are not loose: they keep
+    their foot, and each run of them (modules whose boxes, grown 0.3 m, touch: `KitSeeThrough.Runs`) opens as one --
+    Greywall's whole ring is one run, so near a corner the side wall in the hole opens too. A first try that gave every piece its building's bounds (`Renderer.localBounds`) was dropped:
+    the chapel's box with its bell tower is 33 m across, and culling and shadows took the big boxes too. MedievalSetting
+    side: `GameCamera.seeThroughNear` 0.25 (was 0.6 in code: the back wall of a house the walker stood against, 0.3-0.5
+    m in front, stayed whole over it), `ClickToMove.SeenThrough` takes the marks (a building not open stays solid for
+    the cursor, a loose piece is seen through down to the feet). Checked in play, off/on pairs in
+    `reviews/seethrough_2026-10-13/` (hamlet: an oak, bushes, cottage_2, the inn, the stable, the chapel; Greywall:
+    four houses, the town wall): a round hole through a canopy with no stump, bushes beside the walker whole, roof and chimney cut as
+    one, no bite beside a house the walker is not behind -- except where the walker stands right against a building
+    (the stable's roof corner, the chapel's buttress recess, a Greywall house's corner): its own box holds the sight
+    lines though its surface does not. **Open (the user's list, next):** open the hole only when something really
+    hides the walker (a small render of what stands between the camera and the walker, without the cut; grow/shrink
+    the hole) -- this ends those bites and the speckle round a walker nobody hides; cap the cut: back faces in the hole
+    drawn flat and darker, so a sliced wall or rock reads solid (a roof's ridge behind the walker floats above the
+    hole today).
+
+100. 2026-10-13 (MedievalSetting, the user: "yes, go ahead with the hidden check"): **the hole opens only while
+    something hides the walker.** `Runtime/World/KitSeeThroughProbe.cs`: a disabled camera of its own (child of the game
+    camera, at its position, 32 x 40 px, framing the walker's upper body 0.8 m wide) renders with the global
+    `_KitSeeThroughProbe` = 1, under which `KitSeeThroughClip` keeps only what the hole would open (the new
+    `KitSeeThroughOpens`: in front, above the foot kept, in the way -- the cone left out) and KitLit's forward pass
+    returns flat magenta; everything else draws as usual and what stands behind the walker is discarded. An
+    `AsyncGPUReadback` counts magenta in an ellipse over the body: `Cover` (0..1). At most 15 renders a second, none
+    while a read is pending, no shadows or post (`UniversalAdditionalCameraData`), and the kit's per-camera work skips
+    it (`KitSeeThroughProbe.IsProbe`: KitGrass, KitAgXFeature -- the AgX grade would tint the magenta). `Forget()` drops
+    the answer and a read in flight (a teleport). Since the hole can now be shut while the walker is set, `w <= 0`
+    means shut, not off: the CPU building decision and the grass parting look at `_KitSeeThrough.xyz` instead (all 0:
+    no walker); `KitSeeThroughClipCS` runs in probe mode with w 0. MedievalSetting `GameCamera.SeeThrough`: opens when
+    `Cover` > 0.12, shuts under 0.04 after a 0.3 s hold, grows in 0.2 s and shrinks in 0.35 s from/to the middle
+    (`seeThroughWhenHidden` off: always open, as before); `Snap` forgets. Checked in play, `reviews/seethrough_2026-10-13/
+    hidden_check/` (hamlet + Greywall): open behind the oak, cottage_2, the inn, the stable, two Greywall houses, the town
+    wall (cover 0.99-1.0); shut in the open, beside both bushes, beside cottage_2 and the stable's roof corner, in the
+    chapel's buttress recess, at the Greywall house corner (cover 0.0) -- the bites of entry 99 are gone. Cost: 0.7 ms of
+    CPU a probe render in the editor (the game camera's own render to a texture: 1.6 ms), so ~0.2 ms a frame at 15 a
+    second. A first capture of a fresh spot can drop a tree from a render made from a script (seen twice); the game's
+    frames are not affected (off/on renders alternated at the same spot all agree). Still open: the caps (entry 99).
+
+101. 2026-10-13 (MedievalSetting, the user: "yes, go ahead with the caps", with nine screenshots of the current
+    behaviour: wall stubs cut at the hole's foot showing hollow insides, an oak's and a blossom tree's trunk sliced
+    lengthways with a black inside, a thatch-and-plank wall's foot). **Caps:** KitLit's new pass `SeeThroughCap`
+    (LightMode `SRPDefaultUnlit`, drawn with the opaques; `Cull Front`, `Offset 1, 2`, ZWrite on): a one-sided
+    material's back faces, drawn only inside the open hole on screen and only below the foot kept
+    (`KitSeeThroughCapClip`) -- the inside of a wall cut to its footprint -- in one flat colour per material (the base
+    map's average, `SAMPLE_TEXTURE2D_LOD(..., 12)`, times the base colour and jitter, no vertex AO, lit by the sky's SH
+    x 0.7), behind real faces by the depth offset. The vertex stage drops everything else (two-sided materials via the
+    new per-material `_Cull` in KitLitInput's CBUFFER, a shut hole, the hidden check's view, a piece out of the way);
+    KitBuilder disables the pass on two-sided and transparent materials (Build Materials run: 52 of 173 KitLit
+    materials carry it, exactly the one-sided ones). Two tries dropped on the way: caps also behind the walker (the
+    far slope of a roof is a ceiling from below: grey slabs over the street) and caps over the walker's own margin (the
+    far side of a wall it stands against was painted flat over it); textured caps with vertex AO read as walls within
+    walls. **Trunks:** the level test "in front of the walker" for a loose piece's solid (one-sided) materials now uses
+    the piece's origin (`KitSeeThroughLevelPoint`: a tree's foot; its bounds' middle if the origin lies off them), so a
+    trunk is in front or behind as a whole -- point by point it was sliced along the level line beside the walker and
+    showed its inside; the bounds' middle was tried first, but a lopsided canopy moved it off the trunk. Leaves (two-
+    sided) are still judged point by point, so the canopy over the walker opens. A loose piece's floor is now 0.25 m
+    under the feet (a root flare at the walker's own level stayed as a thin dark curve); ClickToMove follows. Checked in
+    play (`reviews/seethrough_2026-10-13/caps/`): beside the oak and the blossom tree the trunks stay whole and the
+    canopy opens round the walker; behind them the whole tree opens; Greywall's stone houses and the town wall show
+    flat grey cut tops; thatch and plank buildings unchanged; no cap over the walker or the street behind it. Not done:
+    the caps are not in the depth passes (SSAO may shade over a cap's edge); a building whose walls are thinner than
+    the cut shows only a thin cap.
+
+102. 2026-10-13 (MedievalSetting, the user's four shots of entry 101 in play: the hamlet chapel's walls cut with flat
+    cool-grey caps, and the bell tower sliced in half beside the walker). **Caps drawn as a level cut:** each cap pixel
+    takes the material's texture where its line of sight meets the cut plane (`KitSeeThroughCapPoint`: the plane at the
+    foot kept; `kKitCapTile` 0.5 tiles a metre, projected from above) and the light of a level face (sky SH + the main
+    light by its height, x 0.8): the chapel's cut walls read as stone wall stubs, a cut door shows its planks.
+    **An open building is cut as a whole inside the hole:** `KitSeeThroughOpens` no longer asks "in front of the walker"
+    of a group piece (the CPU opened the building because it is in the way). Judged point by point, the bell tower
+    beside the walker was sliced along the walker's level line (its hollow half showing) and a roof's far slope floated
+    over the hole; now the hole is round through roof, chimney and walls, and what the hole shows of the tower is its
+    floor inside cut stone walls. Tried and dropped: writing the cap's depth at the cut plane (`SV_Depth`, a real lid,
+    to hide the pieces that interpenetrate inside a wall -- a wall's end inside a corner buttress shows as small fins in
+    the cut, a window pane as a coloured line): the walls' buried back faces below the ground were lifted to the plane
+    too and filled the chapel's nave and the tower with one stone slab, over the walker's legs (a lid needs a stencil
+    pass; not worth it for the fins). Checked in play (`reviews/seethrough_2026-10-13/caps2/`). The probe draws the
+    whole open building in magenta now (behind the walker too); the walker's body still hides what is behind it.
+
+103. 2026-10-13 (MedievalSetting; the user: "I still think we need to recreate all assets in their cut off version ...
+    I don't see how we can fix this without altering the geometry", then "Can't we have both the hole and the
+    cutting? the hole is for pieces that cover the player, while the cutting is for pieces that stay on the ground",
+    and "All the problems we are having happen because the hole shows part of the geometry it was not supposed to
+    show"). **Real caps, prototype** (`Runtime/World/KitSeeThroughCaps.cs`, `Editor/KitSeeThroughCapsHook.cs`): the
+    hole stays for what covers the walker; every piece is cut at 1.4 m over its base (a house's floor = its root's
+    height, a tree's / prop's / town-wall module's own foot) and the cut is closed by a real cap -- the piece's own
+    cross-section there, sliced from its mesh and filled (loops welded at 1 mm, nested loops as holes bridged to their
+    outer loop, ear clipping), a child renderer with the piece's materials (the texture laid flat, `uv = local xz *
+    0.5`, normal up, white vertex colour with alpha 0: no AO, no moss), no shadow casting, the piece's bounds
+    (`localBounds`) so the shader's in-the-way tests agree, 1-4 mm under the cut by place so the caps of overlapping
+    pieces do not fight. A check on 14 pieces (walls, corners, bell tower, town wall + round tower, palisade, trees,
+    bush, well, cart) first: every solid material's section at 1.4 m is closed loops; only sheets (leaf cards, a door
+    leaf, a window pane) are open and get no cap. The cut is kept per renderer in its rendering layer (bit 21 + a signed
+    10-bit offset over its own origin in 5 cm steps, bits 22-31: `KitSeeThrough.WithCut` / `CutY`), and the shader
+    (`KitSeeThroughFoot`) cuts at origin.y + m11 x offset -- exactly where the cap lies, whatever the walker's own height.
+    A cap renderer (bit 20, `kKitSeeThroughCapMesh`) is drawn only where the hole opened its piece (in the way, in front
+    / its building open, inside the cone, with the complement of its dithered rim), never in the hidden check's view.
+    A building's caps open with it (`Building.caps`). Loose pieces are no longer opened to the feet: they are cut at
+    their own 1.4 m like the rest (a tree in front keeps a capped trunk, the user's point: the obstacle stays visible).
+    ClickToMove uses `CutY`. The back-face cap pass (entries 101-102) stays as the fallback where a piece has no real
+    cap. Reading the meshes: they are not Read/Write, and in play mode only editor code may read them (`Mesh.vertices`
+    and even `AcquireReadOnlyMeshData` refuse from a MonoBehaviour's Start; from an editor update both work), so
+    `KitVillage.Start` sets the cuts and queues the caps, and the editor hook makes them between frames (8 ms a frame).
+    Hamlet: 2,351 queued, 2,053 caps placed from 123 cap meshes, 8 polygons not filled, 1.4 s spread; the game camera's
+    render costs the same with or without them (1.3-1.6 ms either way, editor). Checked in play
+    (`reviews/seethrough_2026-10-13/realcaps/`): the chapel's cut walls are solid stone tops (the fins inside the corner
+    are gone, under the caps), the bell tower a solid cut stub, cottage_2 / inn / stable round holes as before, the oak
+    behind the walker a capped trunk, the blossom tree beside it whole. **Open for the full version:** bake the caps at
+    level build (a player build gets none now; the cut itself works there), the other outdoor maps (Greywall's 47
+    buildings and town wall untested), interiors / dungeons / sewers (no KitVillage), a stained-glass pane still shows
+    as a thin coloured line at a cut wall's end, bark caps show bark rather than end grain.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

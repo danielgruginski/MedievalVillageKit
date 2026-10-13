@@ -84,6 +84,7 @@ Shader "MedievalKit/KitLit"
             #define _SPECULAR_SETUP 1
             #include "KitLitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #define KIT_SEE_THROUGH_SOLID (_Cull > 1.5)
             #include "KitSeeThrough.hlsl"
             #include "KitShroud.hlsl"
 
@@ -147,6 +148,7 @@ Shader "MedievalKit/KitLit"
                 clip(alpha - _Cutoff);
                 #endif
                 KitSeeThroughClip(input.positionWS, input.positionCS.xy);
+                if (_KitSeeThroughProbe > 0.5) return half4(1, 0, 1, 1);   // the hidden check's view (KitSeeThroughProbe)
                 half3 n = normalize(input.normalWS);
                 n = frontFace ? n : -n;     // the kit's cards and open-backed pieces render both sides
 
@@ -235,6 +237,102 @@ Shader "MedievalKit/KitLit"
             ENDHLSL
         }
 
+        // The see-through's caps (2026-10-13, MedievalSetting: a solid the hole opens showed hollow, since the kit's solid
+        // materials are one-sided): the back faces the hole lays bare -- only inside the open hole, only where the hole
+        // keeps them, only of a piece in the walker's way -- drawn as a level cut at the foot kept: each pixel takes the
+        // material's texture where its line of sight meets that plane (projected from above, no vertex shading, so the
+        // inside reads as one cut face, not as walls within walls) and the light of a level face (the sky's and the
+        // sun's, a little dimmed), pushed back a little in depth so a real face always wins (two pieces' touching faces
+        // do not flicker). A flat colour lit by the sky alone was tried first: cool grey slabs (the user's chapel shots). One-sided materials only: KitBuilder disables this pass on two-sided ones, and the vertex stage drops
+        // the rest (and everything while the hole is shut, or in the hidden check's view). URP draws "SRPDefaultUnlit"
+        // with the opaque objects.
+        Pass
+        {
+            Name "SeeThroughCap"
+            Tags { "LightMode" = "SRPDefaultUnlit" }
+            Cull Front
+            ZWrite On
+            ZTest LEqual
+            Offset 1, 2
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex CapVert
+            #pragma fragment CapFrag
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
+            #pragma multi_compile_instancing
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #include "KitLitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #define KIT_SEE_THROUGH_SOLID (_Cull > 1.5)
+            #include "KitSeeThrough.hlsl"
+            #include "KitShroud.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float2 uv : TEXCOORD0;
+                half4 color : COLOR;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float2 uv : TEXCOORD0;
+                float3 positionWS : TEXCOORD1;
+                half4 color : TEXCOORD2;
+                half fogFactor : TEXCOORD3;
+                half jitter : TEXCOORD4;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            Varyings CapVert(Attributes input)
+            {
+                Varyings o = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, o);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+                // nothing to cap: a two-sided material, the hole shut, the hidden check's view, a piece out of the way
+                if (_Cull < 1.5 || _KitSeeThrough.w <= 0 || _KitSeeThroughProbe > 0.5 || (KitSeeThroughLayers() & kKitSeeThroughCapMesh)
+                    || !KitSeeThroughInTheWay(_WorldSpaceCameraPos))
+                {
+                    o.positionCS = float4(2, 2, 2, 1);                 // outside the view: clipped away
+                    return o;
+                }
+                VertexPositionInputs vp = GetVertexPositionInputs(input.positionOS.xyz);
+                o.positionCS = vp.positionCS;
+                o.positionWS = vp.positionWS;
+                o.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                o.color = input.color;
+                o.fogFactor = ComputeFogFactor(vp.positionCS.z);
+                o.jitter = lerp(_Jitter.x, _Jitter.y, KitObjectRandom());
+                return o;
+            }
+
+            half4 CapFrag(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                half4 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
+                #ifdef _ALPHATEST_ON
+                clip(tex.a * _BaseColor.a - _Cutoff);
+                #endif
+                KitSeeThroughCapClip(input.positionWS);
+                float3 top = KitSeeThroughCapPoint(input.positionWS);
+                half3 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, top.xz * kKitCapTile).rgb * _BaseColor.rgb * input.jitter;
+                Light sun = GetMainLight();
+                half3 light = max(SampleSH(half3(0, 1, 0)), 0.02) + sun.color * sun.distanceAttenuation * saturate(sun.direction.y);
+                half3 c = albedo * light * kKitCapShade;
+                c *= KitShroud(top, half3(0, 1, 0));
+                c = MixFog(c, InitializeInputDataFog(float4(top, 1), input.fogFactor));
+                return half4(c, 1);
+            }
+            ENDHLSL
+        }
+
         Pass
         {
             Name "ShadowCaster"
@@ -274,6 +372,7 @@ Shader "MedievalKit/KitLit"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
             #include "KitLitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
+            #define KIT_SEE_THROUGH_SOLID (_Cull > 1.5)
             #include "KitSeeThrough.hlsl"
 
             half KitDepthOnlyFragment(Varyings input) : SV_TARGET
@@ -301,6 +400,7 @@ Shader "MedievalKit/KitLit"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
             #include "KitLitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthNormalsPass.hlsl"
+            #define KIT_SEE_THROUGH_SOLID (_Cull > 1.5)
             #include "KitSeeThrough.hlsl"
 
             void KitDepthNormalsFragment(Varyings input, out half4 outNormalWS : SV_Target0

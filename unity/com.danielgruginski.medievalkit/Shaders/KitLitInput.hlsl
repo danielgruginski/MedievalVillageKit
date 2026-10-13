@@ -28,6 +28,7 @@ CBUFFER_START(UnityPerMaterial)
     half4 _MossNoise;       // height h -> h * x + y
     half4 _MossRange;       // smoothstep(x, y, normal.up + noise)
     half _Translucency;     // Blender Mix Shader(surface, Translucent BSDF): share lit through from behind
+    half _Cull;             // the render state's cull mode (2: one-sided), read by the see-through's cap pass
 CBUFFER_END
 
 TEXTURE2D(_RoughMap);
