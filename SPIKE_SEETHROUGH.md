@@ -51,16 +51,56 @@ Status after the last round. Shots: `reviews/seethrough_2026-10-13/` (summaries)
 | 4 | overlapping pieces inside a cut wall (fins) | Hamlet chapel north (-35.6, -128.2) | ok with real caps |
 | 5 | building beside the walker (no slicing along its line) | Hamlet bell tower (-26.6, -115.4) | ok |
 | 6 | houses behind the walker: round hole through roof, chimney, walls | cottage_2, inn, stable | ok |
-| 7 | **z-fighting at the cut**: caps of overlapping pieces in one plane | user shots (a cut cask/vat, chapel stub) | open |
-| 8 | **grass inside a cut building**: needs a floor where the interior shows | user shots (stable, red-roofed house) | open |
-| 9 | **stained-glass pane** standing in a cut wall's window | user shot (chapel) | open |
-| 10 | **trunk cap with a gap** (a section polygon not filled right) | user shot (forest trunk) | open |
-| 11 | bark caps show bark, not end grain | trees | open |
-| 12 | market stall / awning | user shot (Hamlet stalls) | to look at |
-| 13 | Greywall houses, the town wall ring and its corners | Greywall | untested with real caps |
+| 7 | **z-fighting at the cut** (stone house corners, both towns) | Greywall inn, smithy, approach_21 | ok, round 1 |
+| 8 | **grass inside a cut building**: a floor where the interior shows | Greywall inn | ok, round 1 (planks) |
+| 9 | **stained-glass pane** standing in a cut wall's window | Hamlet chapel window (-31.4, -125.2) | ok, round 1 |
+| 10 | **trunk cap with a gap** (a root inside a trunk cut out as a hole) | Hamlet pine (-23.6, -50.6) | ok, round 1 (0 unfilled) |
+| 11 | bark caps show bark, not end grain | Hamlet oak, pine | ok, round 1 (rings) |
+| 12 | market stall / awning | Hamlet stall | looked at: a low piece not in the way stays (right) |
+| 13 | Greywall houses, the town wall ring and its corners | Greywall | ok with real caps |
+| 17 | **the gate does not dissolve** (portcullis, timber gallery stay) | Greywall gatehouse (-115, -80) | ok, round 1 |
+| 18 | **the item on the player's back is cut** | user shot 4 | asked: shields and weapons use URP Lit (never cut); the shot's cut object looks like the vat in front of the player |
 | 14 | a building on a terrain tier, a porch, an outside stair | ShepherdDowns / Greywall | untested |
 | 15 | interiors, dungeons, sewers (no KitVillage: no caps, no groups) | | untested |
 | 16 | player build: caps are made by an editor hook today | | open (bake at level build) |
+
+## Round 1 (2026-10-13 evening)
+
+The user's shots: the gate not dissolving, z-fighting at stone house corners in both towns, the item on the player's back
+cut, grass inside cut buildings, plus the open cases 9-11. Before/after captures: MedievalSetting
+`Logs/SeeThroughSpike/20261013_210608_Greywall` (before) and `..._212425_Greywall` (after).
+
+- **Gate:** a piece under Props with many meshes (the gatehouse: 44, at their own heights) had each mesh cut over its own
+  origin -- the gallery 6 m up was cut at 7.4 m and stayed. Now every mesh is cut over the base of the piece it belongs
+  to (`KitVillage.PieceRoot`).
+- **Z-fighting at corners:** measured, not guessed (a check over every cap mesh in play). Between pieces the caps were
+  already apart; the fight was *inside* one piece's cap: a stone corner's quoin blocks sit embedded in its rubble core,
+  so the cut gave two filled outlines in one plane -- 51 of Greywall's 161 cap meshes, 13 m2 doubled (the gatehouse
+  alone 11.5). Now caps are stacked by area, larger below: inside a cap each outline 0.5 mm over the larger ones it
+  overlaps, and in a building each piece's cap 8 steps over the larger caps it overlaps (a rank pass once its caps are
+  made). After: 16 cap meshes with 0.15 m2 still tied (small self-overlaps of single outlines), 2 of 316 overlapping
+  piece pairs at the same height. A first try that ranked caps by a depth bias in the shader was dropped (it did
+  nothing for the overlaps inside one cap, which were the real ones).
+- **Floors:** a house (not an L-shaped generated one) gets a plank floor over its walls' box, a cap of its building,
+  drawn only where the hole opens it.
+- **Outer loops vs holes** are now told by the faces' own direction, not by nesting: a root's outline inside a trunk's
+  was cut out as a hole (case 10). Unfilled outlines in Greywall: 11 -> 0.
+- **End grain:** bark caps take `M_VK_EndGrain`, the rings centred on each cut outline.
+- **Sheets in a building** (stained glass, ivy, cloth) open down to the feet: no section to cap, their stubs stood in
+  the cut.
+- **Carried items are never cut:** a new rendering-layer bit (`KitSeeThrough.KeepBit`, 15) set by MedievalSetting on
+  everything a character carries (`CreatureSilhouettes.Tag`, PlayerModel's weapon and shield props).
+- Seen but right as it is: a low lean-to in front of the player at the Greywall bakery stays inside the hole -- it is
+  below the sight line, so it does not hide the player.
+- **After, both towns** (Tools > See-through Spike > Check Cap Overlaps): Greywall 16 cap meshes with 0.15 m2 tied
+  (was 51, 13 m2), Hamlet 9 with 0.07 m2 (market stalls, chapel walls, bell tower, lean-tos: a centimetre square each);
+  overlapping piece pairs at the same height: Greywall 2 of 316, Hamlet 0 of 72. Captures: Greywall `..._212425`,
+  Hamlet `20261013_215339_Hamlet`.
+- **Carried items:** checked in play -- all 43 of the player's renderers carry the keep bit; but the shields and weapons
+  are URP Lit, not KitLit, so the see-through never touched them. The user's shot 4 (an item "on the back of the
+  character" cut) shows a big vat in front of the player, cut because it hides him: asked what was meant.
+- Noted: in the background the editor spreads cap making over ~10 s of wall time (8 ms a frame at the editor's slow
+  background rate); in the focused editor it was ~1 s. Baking at level build removes this.
 
 ## Tools
 
@@ -71,6 +111,9 @@ Status after the last round. Shots: `reviews/seethrough_2026-10-13/` (summaries)
   and opening per case). Play Hamlet / Play Greywall (no saving) in the same menu. First run: 14 Hamlet cases in about a
   minute, 2026-10-13 20:27. Add a case to its list when a new one turns up.
 - `tools/zfight_scan_*.py`, `tools/cull_render_*.py` (main): the kit's overlap scans.
+- **Tools > See-through Spike > Check Cap Overlaps** (same file, round 1): in play, rasterises every cap mesh on a 2 cm
+  grid and counts cells where two of its outlines tie in height, and the pairs of a building's caps at the same height
+  whose footprints touch (console). The z-fighting measure: 0 is the goal.
 
 ## When the spike ends (integration)
 

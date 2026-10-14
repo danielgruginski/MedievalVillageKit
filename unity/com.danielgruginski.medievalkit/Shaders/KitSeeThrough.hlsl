@@ -54,6 +54,7 @@ static const uint kKitSeeThroughOpen = 1u << 19;               // KitSeeThrough.
 static const uint kKitSeeThroughCapMesh = 1u << 20;            // KitSeeThrough.CapLayer (C#): a real cap (KitSeeThroughCaps)
 static const uint kKitSeeThroughCut = 1u << 21;                // KitSeeThrough.CutLayer (C#): its cut kept in bits 22-31
 static const float kKitSeeThroughCutStep = 0.05;               // KitSeeThroughCaps.Step (C#)
+static const uint kKitSeeThroughKeep = 1u << 15;               // KitSeeThrough.KeepBit (C#): never cut (what a character carries)
 
 // a stable screen-space dither (no frame-to-frame noise)
 float KitBayer4(float2 pixel)
@@ -153,6 +154,9 @@ float3 KitSeeThroughLevelPoint(float3 positionWS)
 float KitSeeThroughFoot()
 {
     uint layers = KitSeeThroughLayers();
+    // a sheet in a building (a window pane, ivy, a cloth): opens down to the feet -- it has no section to cap, and its
+    // stub stood in the cut (the chapel's stained glass, 2026-10-13)
+    if ((layers & kKitSeeThroughGroup) && !KIT_SEE_THROUGH_SOLID) return _KitSeeThroughArgs.x - 0.25;
     if (layers & kKitSeeThroughCut)
     {
         int q = (int)((layers >> 22) & 0x3FF);
@@ -217,9 +221,10 @@ void KitSeeThroughClip(float3 positionWS, float2 pixel)
     }
     if (_KitSeeThroughProbe > 0.5)                             // the hidden check's view: only what the hole would open
     {
-        clip(KitSeeThroughOpens(positionWS, cam, v, d, L, t) ? 1 : -1);
+        clip(!(KitSeeThroughLayers() & kKitSeeThroughKeep) && KitSeeThroughOpens(positionWS, cam, v, d, L, t) ? 1 : -1);
         return;
     }
+    if (KitSeeThroughLayers() & kKitSeeThroughKeep) return;   // what a character carries: never cut
     float r = _KitSeeThrough.w;
     if (r <= 0) return;
     if (!KitSeeThroughOpens(positionWS, cam, v, d, L, t)) return;

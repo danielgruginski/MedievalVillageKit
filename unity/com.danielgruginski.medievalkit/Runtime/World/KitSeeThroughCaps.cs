@@ -23,6 +23,15 @@ namespace MedievalKit
     /// the queued caps between frames (<see cref="Flush"/>, from MedievalKit.Editor's KitSeeThroughCapsHook): the kit's
     /// meshes are not Read/Write, and in play mode only editor code may read them (Mesh.AcquireReadOnlyMeshData). A player
     /// build gets no caps until they are baked (the cut itself works there).</para>
+    /// <para>Spike round 1 (2026-10-13, the user's shots): caps that overlap fought in one plane -- within one piece (a stone
+    /// corner's quoin blocks sit in its rubble core: two filled outlines in one plane, 51 of Greywall's 161 cap meshes) and
+    /// between pieces (a corner over its walls' ends). Now every cap is stacked, by area, larger below: inside a cap mesh
+    /// each outline lies <see cref="Layer"/> above the larger ones it overlaps, and in a building each piece's cap lies
+    /// <see cref="RankStride"/> layers above the larger caps it overlaps (a rank pass when its caps are made) -- distinct
+    /// heights, so nothing ties whatever the depth buffer; a few millimetres at most, far under a pixel. A section's loops are told
+    /// outer from hole by the faces' own direction, not by nesting (a root inside a trunk left a gap in the trunk's cap);
+    /// bark caps take the kit's end grain, its rings centred on each cut; a house gets a floor over its walls' box, shown
+    /// only where the hole opens it (the grass inside showed).</para>
     /// </summary>
     public static class KitSeeThroughCaps
     {
@@ -33,9 +42,42 @@ namespace MedievalKit
         const float Weld = 1e-3f;               // section points closer than this are one
         const float Tile = 0.5f;                // the cap's texture: tiles per (local) metre
 
-        static readonly Dictionary<(Mesh, int, uint), (Mesh mesh, int[] mats)> cache = new Dictionary<(Mesh, int, uint), (Mesh, int[])>();
-        static readonly Queue<(MeshRenderer r, Mesh mesh, int q, uint solid, KitSeeThrough.Building b)> pending =
-            new Queue<(MeshRenderer, Mesh, int, uint, KitSeeThrough.Building)>();
+        /// <summary>one step of the caps' stacking (m): an outline over the larger ones it overlaps in its own cap</summary>
+        public const float Layer = 0.0005f;
+        /// <summary>a piece's cap over the larger caps of its building it overlaps: this many layers (a cap holds up to 7)</summary>
+        public const int RankStride = 8;
+
+        static readonly Dictionary<(Mesh, int, uint, uint), (Mesh mesh, int[] mats, bool[] grain, float area)> cache =
+            new Dictionary<(Mesh, int, uint, uint), (Mesh, int[], bool[], float)>();
+        static readonly Dictionary<KitSeeThrough.Building, List<(MeshRenderer cap, float area)>> toRank =
+            new Dictionary<KitSeeThrough.Building, List<(MeshRenderer, float)>>();
+        static readonly Queue<(MeshRenderer r, Mesh mesh, int q, uint solid, uint bark, KitSeeThrough.Building b)> pending =
+            new Queue<(MeshRenderer, Mesh, int, uint, uint, KitSeeThrough.Building)>();
+        static readonly Dictionary<string, Material> named = new Dictionary<string, Material>();
+
+        /// <summary>a material the level does not use, by name (the editor hook looks in the package)</summary>
+        public static System.Func<string, Material> FindMaterial;
+
+        /// <summary>the materials a level's renderers use, by name (the end grain, the floors)</summary>
+        public static void Learn(GameObject root)
+        {
+            foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+                foreach (var m in r.sharedMaterials)
+                    if (m != null && !named.ContainsKey(m.name)) named[m.name] = m;
+        }
+
+        static Material Named(params string[] names)
+        {
+            foreach (var n in names)
+            {
+                if (named.TryGetValue(n, out var m) && m != null) return m;
+                m = FindMaterial?.Invoke(n);
+                if (m != null) { named[n] = m; return m; }
+            }
+            return null;
+        }
+
+        static bool Bark(Material m) => m != null && m.name.StartsWith("M_VK_Bark");
         static float flushStart = -1f;
         static int flushPlaced;
 
@@ -67,9 +109,41 @@ namespace MedievalKit
             if (y <= bb.min.y + 1e-3f || y >= bb.max.y - 1e-3f) return;
             var mats = r.sharedMaterials;
             uint solid = 0;
-            for (int s = 0; s < mats.Length && s < mesh.subMeshCount && s < 32; s++) if (Solid(mats[s])) solid |= 1u << s;
+            uint bark = 0;
+            for (int s = 0; s < mats.Length && s < mesh.subMeshCount && s < 32; s++)
+                if (Solid(mats[s])) { solid |= 1u << s; if (Bark(mats[s])) bark |= 1u << s; }
             if (solid == 0) return;
-            pending.Enqueue((r, mesh, q, solid, b));
+            pending.Enqueue((r, mesh, q, solid, bark, b));
+        }
+
+        /// <summary>a house's floor: a plank quad over its walls' box (the BoxCollider KitVillage puts on its root), at its
+        /// floor, a cap of its building (drawn only where the hole opened it): the ground inside a house is the map's grass</summary>
+        public static MeshRenderer Floor(KitSeeThrough.Building b)
+        {
+            var root = b.Root;
+            var box = root != null ? root.GetComponent<BoxCollider>() : null;
+            var mat = Named("M_VK_Planks", "M_VK_Wood");
+            if (box == null || mat == null) return null;
+            float hx = Mathf.Max(0.1f, box.size.x * 0.5f - 0.05f), hz = Mathf.Max(0.1f, box.size.z * 0.5f - 0.05f);
+            var c = box.center;
+            var m = new Mesh { name = root.name + "_SeeThroughFloor" };
+            m.vertices = new[] { new Vector3(c.x - hx, 0.02f, c.z - hz), new Vector3(c.x - hx, 0.02f, c.z + hz), new Vector3(c.x + hx, 0.02f, c.z + hz), new Vector3(c.x + hx, 0.02f, c.z - hz) };
+            m.uv = new[] { new Vector2(c.x - hx, c.z - hz) * Tile, new Vector2(c.x - hx, c.z + hz) * Tile, new Vector2(c.x + hx, c.z + hz) * Tile, new Vector2(c.x + hx, c.z - hz) * Tile };
+            m.normals = new[] { Vector3.up, Vector3.up, Vector3.up, Vector3.up };
+            m.tangents = new[] { new Vector4(1, 0, 0, 1), new Vector4(1, 0, 0, 1), new Vector4(1, 0, 0, 1), new Vector4(1, 0, 0, 1) };
+            m.colors = new[] { new Color(1, 1, 1, 0), new Color(1, 1, 1, 0), new Color(1, 1, 1, 0), new Color(1, 1, 1, 0) };
+            m.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            m.RecalculateBounds();
+            var go = new GameObject("SeeThroughFloor");
+            go.layer = root.gameObject.layer;
+            go.transform.SetParent(root, false);
+            go.AddComponent<MeshFilter>().sharedMesh = m;
+            var fr = go.AddComponent<MeshRenderer>();
+            fr.sharedMaterial = mat;
+            fr.shadowCastingMode = ShadowCastingMode.Off;
+            fr.renderingLayerMask = 1u | KitSeeThrough.GroupBit | KitSeeThrough.CapBit | (b.open ? KitSeeThrough.OpenBit : 0u);
+            b.caps.Add(fr);
+            return fr;
         }
 
         /// <summary>make queued caps for up to `budgetMs` of this frame; returns how many are left. Editor only for now
@@ -81,13 +155,15 @@ namespace MedievalKit
             if (flushStart < 0f) { flushStart = start; flushPlaced = Placed; }
             while (pending.Count > 0 && (Time.realtimeSinceStartup - start) * 1000f < budgetMs)
             {
-                var (r, mesh, q, solid, b) = pending.Dequeue();
+                var (r, mesh, q, solid, bark, b) = pending.Dequeue();
                 if (r == null) continue;
-                var cap = Place(r, mesh, q, solid);
+                var cap = Place(r, mesh, q, solid, bark, b);
                 if (cap != null && b != null) b.caps.Add(cap);
             }
             if (pending.Count == 0)
             {
+                foreach (var kv in toRank) Rank(kv.Value);
+                toRank.Clear();
                 Debug.Log($"[KitSeeThroughCaps] {Placed - flushPlaced} caps placed ({Made} cap meshes so far, {Failed} polygons not filled) " +
                           $"over {(Time.realtimeSinceStartup - flushStart) * 1000f:F0} ms");
                 flushStart = -1f;
@@ -95,45 +171,70 @@ namespace MedievalKit
             return pending.Count;
         }
 
-        static MeshRenderer Place(MeshRenderer r, Mesh mesh, int q, uint solid)
+        static MeshRenderer Place(MeshRenderer r, Mesh mesh, int q, uint solid, uint bark, KitSeeThrough.Building owner)
         {
             var t = r.transform;
             float sy = t.localToWorldMatrix.m11;
             var b = mesh.bounds;
             var mats = r.sharedMaterials;
-            var key = (mesh, q, solid);
-            if (!cache.TryGetValue(key, out var cap)) cache[key] = cap = Make(mesh, q * Step, solid);
+            var key = (mesh, q, solid, bark);
+            if (!cache.TryGetValue(key, out var cap)) cache[key] = cap = Make(mesh, q * Step, solid, bark);
             if (cap.mesh == null) return null;
 
             var go = new GameObject("SeeThroughCap");
             go.layer = r.gameObject.layer;
             go.transform.SetParent(t, false);
-            // a millimetre or few under the cut, by place: the caps of pieces that overlap (a wall's end inside a corner
-            // buttress) do not lie in one plane and fight
-            var p = t.position;
-            float jitter = 0.001f + 0.003f * Mathf.Repeat(Mathf.Sin(p.x * 12.9898f + p.z * 78.233f) * 43758.5453f, 1f);
-            go.transform.localPosition = new Vector3(0f, -jitter / sy, 0f);
+            go.transform.localPosition = new Vector3(0f, -0.001f / sy, 0f);        // a millimetre under the cut
             go.AddComponent<MeshFilter>().sharedMesh = cap.mesh;
             var cr = go.AddComponent<MeshRenderer>();
+            var grain = Named("M_VK_EndGrain");
             var cm = new Material[cap.mats.Length];
-            for (int i = 0; i < cm.Length; i++) cm[i] = mats[cap.mats[i]];
+            for (int i = 0; i < cm.Length; i++) cm[i] = cap.grain[i] && grain != null ? grain : mats[cap.mats[i]];
             cr.sharedMaterials = cm;
             cr.shadowCastingMode = ShadowCastingMode.Off;
             cr.receiveShadows = r.receiveShadows;
             cr.lightProbeUsage = r.lightProbeUsage;
+            cr.localBounds = new Bounds(b.center + new Vector3(0f, 0.001f / sy, 0f), b.size);   // the piece's own bounds
             cr.renderingLayerMask = r.renderingLayerMask | KitSeeThrough.CapBit;
-            cr.localBounds = new Bounds(b.center + new Vector3(0f, jitter / sy, 0f), b.size);   // the piece's own bounds
+            if (owner != null)
+            {
+                if (!toRank.TryGetValue(owner, out var l)) toRank[owner] = l = new List<(MeshRenderer, float)>();
+                l.Add((cr, cap.area * Mathf.Abs(t.lossyScale.x * t.lossyScale.z)));
+            }
             Placed++;
             return cr;
         }
 
+        /// <summary>a building's caps stacked: larger below; each over the larger caps it overlaps (same cut plane) by
+        /// <see cref="RankStride"/> layers</summary>
+        static void Rank(List<(MeshRenderer cap, float area)> caps)
+        {
+            caps.Sort((a, b) => b.area.CompareTo(a.area));
+            var rank = new int[caps.Count];
+            var foot = new Bounds[caps.Count];
+            for (int i = 0; i < caps.Count; i++)
+            {
+                if (caps[i].cap == null) continue;
+                var mb = caps[i].cap.GetComponent<MeshFilter>().sharedMesh.bounds;
+                var t = caps[i].cap.transform;
+                foot[i] = new Bounds(t.TransformPoint(mb.center), Vector3.Scale(mb.size, t.lossyScale) + new Vector3(0.02f, 0.02f, 0.02f));
+                int r = 0;
+                for (int j = 0; j < i; j++)
+                    if (caps[j].cap != null && Mathf.Abs(foot[j].center.y - foot[i].center.y) < 0.02f && foot[j].Intersects(foot[i]))
+                        r = Mathf.Max(r, rank[j] + 1);
+                rank[i] = Mathf.Min(r, 15);
+                float sy = Mathf.Max(1e-4f, t.parent.localToWorldMatrix.m11);
+                t.localPosition = new Vector3(0f, (-0.001f + rank[i] * RankStride * Layer) / sy, 0f);
+            }
+        }
+
         // ------------------------------------------------------------------ the section
 
-        struct Seg { public Vector2 a, b; public int sub; }
+        struct Seg { public Vector2 a, b, n; public int sub; }
 
-        /// <summary>the mesh's solid submeshes cut at local y, filled: a cap mesh (one submesh per material that has a cap)
-        /// and the source submesh of each</summary>
-        static (Mesh, int[]) Make(Mesh mesh, float y, uint solid)
+        /// <summary>the mesh's solid submeshes cut at local y, filled: a cap mesh (one submesh per material that has a cap),
+        /// the source submesh of each, and which take the end grain (bark)</summary>
+        static (Mesh, int[], bool[], float) Make(Mesh mesh, float y, uint solid, uint bark)
         {
             Vector3[] v;
             var tris0 = new int[mesh.subMeshCount][];
@@ -158,7 +259,7 @@ namespace MedievalKit
                     }
                 }
             }
-            catch (System.Exception e) { Debug.LogWarning($"[KitSeeThroughCaps] {mesh.name}: {e.Message}"); return (null, null); }
+            catch (System.Exception e) { Debug.LogWarning($"[KitSeeThroughCaps] {mesh.name}: {e.Message}"); return (null, null, null, 0f); }
             var segs = new List<Seg>();
             for (int s = 0; s < mesh.subMeshCount && s < 32; s++)
             {
@@ -177,58 +278,89 @@ namespace MedievalKit
                         n++;
                     }
                     Edge(p0, d0, p1, d1); Edge(p1, d1, p2, d2); Edge(p2, d2, p0, d0);
-                    if (n == 2 && (a - b).sqrMagnitude > Weld * Weld) segs.Add(new Seg { a = a, b = b, sub = s });
+                    var fn = Vector3.Cross(p1 - p0, p2 - p0);                  // the face's outward side (Unity's winding)
+                    if (n == 2 && (a - b).sqrMagnitude > Weld * Weld) segs.Add(new Seg { a = a, b = b, n = new Vector2(fn.x, fn.z), sub = s });
                 }
             }
             // closed loops per material first; what is left open (a solid whose faces change material round it) together
-            var loopsBySub = new Dictionary<int, List<List<Vector2>>>();
+            var loopsBySub = new Dictionary<int, List<(List<Vector2>, bool)>>();
             var left = new List<Seg>();
             var bySub = new Dictionary<int, List<Seg>>();
             foreach (var sg in segs) { if (!bySub.TryGetValue(sg.sub, out var l)) bySub[sg.sub] = l = new List<Seg>(); l.Add(sg); }
             foreach (var kv in bySub)
-                foreach (var (loop, sub) in Loops(kv.Value, left))
+                foreach (var (loop, sub, solidIn) in Loops(kv.Value, left))
                 {
-                    if (!loopsBySub.TryGetValue(sub, out var l)) loopsBySub[sub] = l = new List<List<Vector2>>();
-                    l.Add(loop);
+                    if (!loopsBySub.TryGetValue(sub, out var l)) loopsBySub[sub] = l = new List<(List<Vector2>, bool)>();
+                    l.Add((loop, solidIn));
                 }
             if (left.Count > 0)
-                foreach (var (loop, sub) in Loops(new List<Seg>(left), null))
+                foreach (var (loop, sub, solidIn) in Loops(new List<Seg>(left), null))
                 {
-                    if (!loopsBySub.TryGetValue(sub, out var l)) loopsBySub[sub] = l = new List<List<Vector2>>();
-                    l.Add(loop);
+                    if (!loopsBySub.TryGetValue(sub, out var l)) loopsBySub[sub] = l = new List<(List<Vector2>, bool)>();
+                    l.Add((loop, solidIn));
                 }
 
-            var verts = new List<Vector3>();
-            var subs = new List<int>();
-            var tris = new List<List<int>>();
+            // every outline, filled; then stacked by area (larger below), each Layer over the larger ones it overlaps
+            var polys = new List<(List<Vector2> poly, List<int> tri, Vector2 centre, float radius, int sub, Rect box, float area)>();
             foreach (var kv in loopsBySub)
-            {
-                var idx = new List<int>();
-                foreach (var poly in Polygons(kv.Value))
+                foreach (var (poly, centre, radius) in Polygons(kv.Value))
                 {
                     var t = new List<int>();
                     if (!EarClip(poly, t)) { Failed++; continue; }
-                    int o = verts.Count;
-                    foreach (var p in poly) verts.Add(new Vector3(p.x, y, p.y));
+                    float area = 0f;
                     for (int i = 0; i + 2 < t.Count; i += 3)
                     {
                         Vector2 a = poly[t[i]], b = poly[t[i + 1]], c = poly[t[i + 2]];
-                        float cr = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-                        if (cr > 0) { idx.Add(o + t[i]); idx.Add(o + t[i + 2]); idx.Add(o + t[i + 1]); }   // facing up (Unity winds clockwise)
-                        else { idx.Add(o + t[i]); idx.Add(o + t[i + 1]); idx.Add(o + t[i + 2]); }
+                        area += Mathf.Abs((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) * 0.5f;
                     }
+                    Vector2 mn = poly[0], mx = poly[0];
+                    foreach (var p in poly) { mn = Vector2.Min(mn, p); mx = Vector2.Max(mx, p); }
+                    polys.Add((poly, t, centre, radius, kv.Key, Rect.MinMaxRect(mn.x, mn.y, mx.x, mx.y), area));
                 }
-                if (idx.Count == 0) continue;
-                subs.Add(kv.Key); tris.Add(idx);
+            polys.Sort((a, b) => b.area.CompareTo(a.area));
+            var layer = new int[polys.Count];
+            for (int i = 0; i < polys.Count; i++)
+                for (int j = 0; j < i; j++)
+                    if (polys[j].box.Overlaps(polys[i].box)) layer[i] = Mathf.Min(RankStride - 1, Mathf.Max(layer[i], layer[j] + 1));
+
+            var verts = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var subs = new List<int>();
+            var grains = new List<bool>();
+            var tris = new List<List<int>>();
+            float total = 0f;
+            for (int k = 0; k < polys.Count; k++)
+            {
+                var (poly, t, centre, radius, sub, _, area) = polys[k];
+                int si = subs.IndexOf(sub);
+                if (si < 0) { si = subs.Count; subs.Add(sub); grains.Add((bark & (1u << sub)) != 0); tris.Add(new List<int>()); }
+                bool grain = grains[si];
+                var idx = tris[si];
+                float py = y + layer[k] * Layer;
+                int o = verts.Count;
+                foreach (var p in poly)
+                {
+                    verts.Add(new Vector3(p.x, py, p.y));
+                    // end grain: the rings centred on this cut; anything else: its texture laid flat
+                    uvs.Add(grain ? new Vector2(0.5f, 0.5f) + (p - centre) / (2f * Mathf.Max(radius, 0.05f)) : p * Tile);
+                }
+                for (int i = 0; i + 2 < t.Count; i += 3)
+                {
+                    Vector2 a = poly[t[i]], b = poly[t[i + 1]], c = poly[t[i + 2]];
+                    float cr = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+                    if (cr > 0) { idx.Add(o + t[i]); idx.Add(o + t[i + 2]); idx.Add(o + t[i + 1]); }   // facing up (Unity winds clockwise)
+                    else { idx.Add(o + t[i]); idx.Add(o + t[i + 1]); idx.Add(o + t[i + 2]); }
+                }
+                total += area;
             }
-            if (subs.Count == 0) return (null, null);
+            if (subs.Count == 0) return (null, null, null, 0f);
             var m = new Mesh { name = mesh.name + "_Cap" };
             if (verts.Count > 65000) m.indexFormat = IndexFormat.UInt32;
             m.SetVertices(verts);
             var nrm = new Vector3[verts.Count]; var uv = new Vector2[verts.Count]; var col = new Color[verts.Count]; var tan = new Vector4[verts.Count];
             for (int i = 0; i < verts.Count; i++)
             {
-                nrm[i] = Vector3.up; uv[i] = new Vector2(verts[i].x, verts[i].z) * Tile;
+                nrm[i] = Vector3.up; uv[i] = uvs[i];
                 col[i] = new Color(1f, 1f, 1f, 0f);           // no baked shading, no moss
                 tan[i] = new Vector4(1f, 0f, 0f, 1f);
             }
@@ -237,16 +369,17 @@ namespace MedievalKit
             for (int s = 0; s < subs.Count; s++) m.SetTriangles(tris[s], s);
             m.RecalculateBounds();
             Made++;
-            return (m, subs.ToArray());
+            return (m, subs.ToArray(), grains.ToArray(), total);
         }
 
         static float Side(float d) => Mathf.Abs(d) < 1e-6f ? 1e-6f : d;      // a vertex on the plane counts as above
 
         static long Key(Vector2 p) => ((long)Mathf.RoundToInt(p.x / Weld) << 32) ^ (Mathf.RoundToInt(p.y / Weld) & 0xffffffffL);
 
-        /// <summary>the closed loops the segments make (each with the submesh most of its segments came from); the segments
-        /// of open or branching parts go to `left` (or are dropped when it is null)</summary>
-        static IEnumerable<(List<Vector2>, int)> Loops(List<Seg> segs, List<Seg> left)
+        /// <summary>the closed loops the segments make (each with the submesh most of its segments came from, and whether the
+        /// solid lies inside it -- by the faces' own direction: an outer boundary's faces look out of it, a hole's into it);
+        /// the segments of open or branching parts go to `left` (or are dropped when it is null)</summary>
+        static IEnumerable<(List<Vector2>, int, bool)> Loops(List<Seg> segs, List<Seg> left)
         {
             var pos = new Dictionary<long, Vector2>();
             var adj = new Dictionary<long, List<(long to, int seg)>>();
@@ -285,6 +418,7 @@ namespace MedievalKit
                     continue;
                 }
                 var loop = new List<Vector2>();
+                var steps = new List<(Vector2 d, Vector2 n)>();
                 var votes = new Dictionary<int, int>();
                 long prev = long.MinValue, cur = start;
                 do
@@ -292,11 +426,22 @@ namespace MedievalKit
                     loop.Add(pos[cur]);
                     var nb = adj[cur][0].to == prev ? adj[cur][1] : adj[cur][0];
                     votes.TryGetValue(segs[nb.seg].sub, out int nv); votes[segs[nb.seg].sub] = nv + 1;
+                    steps.Add((pos[nb.to] - pos[cur], segs[nb.seg].n));
                     prev = cur; cur = nb.to;
                 } while (cur != start && loop.Count <= comp.Count);
                 int sub = -1, best = -1;
                 foreach (var kv in votes) if (kv.Value > best) { best = kv.Value; sub = kv.Key; }
-                if (loop.Count >= 3) yield return (loop, sub);
+                if (loop.Count < 3) continue;
+                // walked counter-clockwise, the loop's region lies left of each step, its outside to the right
+                bool ccw = Area(loop) > 0;
+                float vote = 0;
+                foreach (var (d, fn) in steps)
+                {
+                    var outward = ccw ? new Vector2(d.y, -d.x) : new Vector2(-d.y, d.x);
+                    float ln = fn.magnitude;
+                    if (ln > 1e-12f) vote += Vector2.Dot(fn / ln, outward);
+                }
+                yield return (loop, sub, vote >= 0);
             }
         }
 
@@ -336,37 +481,40 @@ namespace MedievalKit
             return c;
         }
 
-        /// <summary>loops to fillable polygons: each outer loop (counter-clockwise) with the loops directly inside it merged
-        /// in as holes</summary>
-        static IEnumerable<List<Vector2>> Polygons(List<List<Vector2>> raw)
+        /// <summary>loops to fillable polygons: each outer loop (the solid inside it, counter-clockwise) with the holes
+        /// directly inside it merged in; an outer loop inside another (a root inside a trunk, two pieces of one mesh) is
+        /// filled on its own, not cut out. Also the outer loop's centre and reach (for the end grain).</summary>
+        static IEnumerable<(List<Vector2>, Vector2, float)> Polygons(List<(List<Vector2> loop, bool solidIn)> raw)
         {
             var loops = new List<List<Vector2>>();
-            foreach (var l in raw) { var c = Clean(l); if (c.Count >= 3 && Mathf.Abs(Area(c)) > 1e-6f) loops.Add(c); }
+            var solidIn = new List<bool>();
+            foreach (var (l, si) in raw) { var c = Clean(l); if (c.Count >= 3 && Mathf.Abs(Area(c)) > 1e-6f) { loops.Add(c); solidIn.Add(si); } }
             int n = loops.Count;
-            var depth = new int[n];
             var parent = new int[n];
             for (int i = 0; i < n; i++)
             {
                 parent[i] = -1;
-                for (int j = 0; j < n; j++)
-                    if (i != j && Inside(loops[i][0], loops[j])) depth[i]++;
+                if (solidIn[i]) continue;
+                float best = float.MaxValue;
+                for (int j = 0; j < n; j++)                                    // a hole goes to the smallest outer round it
+                    if (i != j && solidIn[j] && Inside(loops[i][0], loops[j]) && Mathf.Abs(Area(loops[j])) < best)
+                    { best = Mathf.Abs(Area(loops[j])); parent[i] = j; }
             }
             for (int i = 0; i < n; i++)
             {
-                if (depth[i] % 2 == 0) continue;
-                for (int j = 0; j < n; j++)
-                    if (i != j && depth[j] == depth[i] - 1 && Inside(loops[i][0], loops[j])) { parent[i] = j; break; }
-            }
-            for (int i = 0; i < n; i++)
-            {
-                if (depth[i] % 2 != 0) continue;
+                if (!solidIn[i]) continue;
                 var outer = new List<Vector2>(loops[i]);
                 if (Area(outer) < 0) outer.Reverse();
+                var centre = Vector2.zero;
+                foreach (var p in outer) centre += p;
+                centre /= outer.Count;
+                float reach = 0f;
+                foreach (var p in outer) reach = Mathf.Max(reach, (p - centre).magnitude);
                 var holes = new List<List<Vector2>>();
                 for (int j = 0; j < n; j++)
                     if (parent[j] == i) { var h = new List<Vector2>(loops[j]); if (Area(h) > 0) h.Reverse(); holes.Add(h); }
                 var merged = Merge(outer, holes);
-                if (merged != null) yield return merged; else Failed++;
+                if (merged != null) yield return (merged, centre, reach); else Failed++;
             }
         }
 

@@ -168,15 +168,29 @@ namespace MedievalKit
                 if (g.name == "Props") seeThroughBuildings.AddRange(KitSeeThrough.Runs(g.gameObject));
                 else if (g.name == "Buildings") foreach (Transform b in g) seeThroughBuildings.Add(new KitSeeThrough.Building(b.gameObject));
             }
+            KitSeeThroughCaps.Learn(gameObject);
             foreach (var b in seeThroughBuildings)
+            {
                 foreach (var r in b.pieces)
-                    if (r != null) KitSeeThroughCaps.Cut(r, b.perPiece ? r.transform.position.y : b.Floor, b);
+                    if (r != null) KitSeeThroughCaps.Cut(r, b.perPiece ? PieceRoot(r.transform, b.Root).position.y : b.Floor, b);
+                // a house's floor where the hole opens it (not an L-shaped generated house: its walls' box is not its floor)
+                var hg = b.perPiece ? null : b.Root.GetComponent<KitHouseGenerator>();
+                if (!b.perPiece && (hg == null || hg.shape != KitHouseGenerator.Shape.L)) KitSeeThroughCaps.Floor(b);
+            }
             foreach (var piece in loose)
                 foreach (var r in piece.GetComponentsInChildren<MeshRenderer>(true)) KitSeeThroughCaps.Cut(r, piece.position.y);
             Debug.Log($"[KitVillage] {name}: see-through cuts set, {KitSeeThroughCaps.Pending} caps queued, in {(Time.realtimeSinceStartup - t0) * 1000f:F0} ms");
         }
 
         void LateUpdate() => KitSeeThrough.Decide(seeThroughBuildings);
+
+        /// <summary>the piece a renderer belongs to: its ancestor standing directly in `group` (a gatehouse's 44 meshes sit at
+        /// their own heights: each was cut over its own origin, so its timber gallery 6 m up was cut at 7.4 m)</summary>
+        static Transform PieceRoot(Transform t, Transform group)
+        {
+            while (t.parent != null && t.parent != group) t = t.parent;
+            return t;
+        }
 
         GameObject Prefab(string name)
         {

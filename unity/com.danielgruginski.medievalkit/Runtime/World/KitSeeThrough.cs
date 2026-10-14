@@ -39,6 +39,18 @@ namespace MedievalKit
         /// KitSeeThroughCaps.Step, over the renderer's origin, local units): kKitSeeThroughCapMesh / Cut in the shader</summary>
         public const int CapLayer = 20, CutLayer = 21;
         public const uint CapBit = 1u << CapLayer, CutBit = 1u << CutLayer, CutMask = 0x3FFu << 22;
+        /// <summary>never cut (kKitSeeThroughKeep): what a character carries -- a weapon, a shield, a held prop, a missile --
+        /// is drawn with the kit's materials and was cut like a level piece (the player's shield, 2026-10-13); the game sets
+        /// it (MedievalSetting: CreatureSilhouettes.Tag, PlayerModel's props)</summary>
+        public const int KeepLayer = 15;
+        public const uint KeepBit = 1u << KeepLayer;
+
+        /// <summary>every renderer under go is never cut (<see cref="KeepBit"/>)</summary>
+        public static void Keep(GameObject go)
+        {
+            if (go == null) return;
+            foreach (var r in go.GetComponentsInChildren<Renderer>(true)) r.renderingLayerMask |= KeepBit;
+        }
 
         /// <summary>the mask with the cut at q steps over the renderer's origin</summary>
         public static uint WithCut(uint mask, int q) => (mask & ~CutMask) | CutBit | ((uint)(q & 0x3FF) << 22);
@@ -125,6 +137,8 @@ namespace MedievalKit
             public bool perPiece;
             /// <summary>a house's floor (world y): its root's height</summary>
             public float Floor => root != null ? root.position.y : 0f;
+            /// <summary>a house's root; a run's: the group its pieces stand in</summary>
+            public Transform Root => root;
             readonly Transform root;
             Bounds all;                       // all its pieces (world), measured with the root at `at`
             Vector3 at = new Vector3(float.NaN, 0f, 0f);

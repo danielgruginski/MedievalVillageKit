@@ -12,6 +12,16 @@ namespace MedievalKit.Editor
     {
         static KitSeeThroughCapsHook()
         {
+            // a material the level does not use (the end grain on a map without stumps): from the package
+            KitSeeThroughCaps.FindMaterial = name =>
+            {
+                foreach (var g in AssetDatabase.FindAssets(name + " t:Material", new[] { "Packages/com.danielgruginski.medievalkit" }))
+                {
+                    var p = AssetDatabase.GUIDToAssetPath(g);
+                    if (System.IO.Path.GetFileNameWithoutExtension(p) == name) return AssetDatabase.LoadAssetAtPath<UnityEngine.Material>(p);
+                }
+                return null;
+            };
             EditorApplication.update += () =>
             {
                 if (EditorApplication.isPlaying && KitSeeThroughCaps.Pending > 0) KitSeeThroughCaps.Flush();
