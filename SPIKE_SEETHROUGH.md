@@ -13,17 +13,19 @@ lengthways, the grass inside a house)?
 | | main line | spike |
 |---|---|---|
 | Kit (git) | `main` (263b0da: grass saturation, FreeAssets, one-sided materials) | branch `spike/seethrough` |
-| MedievalSetting (Plastic) | `/main` (cs:26) | pending changes in the workspace + shelveset (latest: sh:4) |
+| MedievalSetting (Plastic) | `/main` (cs:26) | pending changes in the workspace + shelveset (latest: sh:5) |
 
-MedievalSetting's side of the spike is eight files left pending on `/main` -- `GameCamera.cs` (hidden check, cut
+MedievalSetting's side of the spike is twelve files left pending on `/main` -- `GameCamera.cs` (hidden check, cut
 fields), `ClickToMove.cs` (cut test), `README.md`, `POLISH.md` (notes), the capture tool
-`Assets/Game/Scripts/Editor/SeeThroughSpike.cs` (+ .meta, added) -- and kept safe in a shelveset, re-shelved after each
-round (`cm shelveset create <files> --all -c=...`). Round 1 added `CreatureSilhouettes.cs` and `Player/PlayerModel.cs` (the keep mark). Not a branch: switching the shared workspace would shelve and
+`Assets/Game/Scripts/Editor/SeeThroughSpike.cs` (+ .meta, added); round 1's `CreatureSilhouettes.cs` and
+`Player/PlayerModel.cs` (the keep mark); the z-fight watch `Assets/Game/Scripts/ZFightWatch.cs` and
+`Assets/Game/Resources/ZFightProbe.shader` (+ .metas, added) -- and kept safe in a shelveset, re-shelved after each
+round (`cm shelveset create <files> --all -c=...`). Not a branch: switching the shared workspace would shelve and
 re-apply every session's pending files (and rewrite them under a running Unity), and other sessions' check-ins would
-then land on the spike branch. So: never check those eight files in to `/main` until the spike ends.
+then land on the spike branch. So: never check those files in to `/main` until the spike ends.
 
 The two go together: the game's spike code needs the kit's spike API (KitSeeThroughProbe, KitSeeThrough.CutY). Back to
-the main game (not while Unity plays): `git checkout main` in the kit and `cm undo` the eight files in MedievalSetting
+the main game (not while Unity plays): `git checkout main` in the kit and `cm undo` the twelve files in MedievalSetting
 (they are in the shelveset); back to the spike: `git checkout spike/seethrough` and `cm shelveset apply sh:<n>`.
 
 ## What the spike holds (HANDOFF 99-103)
@@ -60,6 +62,7 @@ Status after the last round. Shots: `reviews/seethrough_2026-10-13/` (summaries)
 | 13 | Greywall houses, the town wall ring and its corners | Greywall | ok with real caps |
 | 17 | **the gate does not dissolve** (portcullis, timber gallery stay) | Greywall gatehouse (-115, -80) | ok, round 1 |
 | 18 | **the item on the player's back is cut** | user shot 4 | asked: shields and weapons use URP Lit (never cut); the shot's cut object looks like the vat in front of the player |
+| 19 | **z-fighting away from the cut**: kit meshes with two faces in one plane, painted differently | Greywall apothecary (-152, -180) and neighbours | found by the z-fight watch (below); kit meshes to fix |
 | 14 | a building on a terrain tier, a porch, an outside stair | ShepherdDowns / Greywall | untested |
 | 15 | interiors, dungeons, sewers (no KitVillage: no caps, no groups) | | untested |
 | 16 | player build: caps are made by an editor hook today | | open (bake at level build) |
@@ -102,6 +105,36 @@ cut, grass inside cut buildings, plus the open cases 9-11. Before/after captures
 - Noted: in the background the editor spreads cap making over ~10 s of wall time (8 ms a frame at the editor's slow
   background rate); in the focused editor it was ~1 s. Baking at level build removes this.
 
+## The z-fight watch (2026-10-13 night)
+
+The user, after round 1: z-fighting is left "in a lot of little places", mostly not at the cuts; a tool to log it while
+playing. MedievalSetting `ZFightWatch` (F8 in play, or Tools > See-through Spike > Z-fight Watch; editor and development
+builds only): once a second it draws the game camera's view twice off screen (`Resources/ZFightProbe.shader`) -- the
+nearest surface per pixel and the nearest other surface behind it, each with its draw, triangle, view depth, flat normal
+and painted brightness, keeping each material's culling, cut-out and the kit's hole. Two surfaces in one plane (normals
+within ~6 degrees) under 0.2 mm apart fight; painted 10/255 apart, the fight shows. Spots (pair of renderers per 4 m of
+ground) go to `Logs/ZFightWatch/<time>/spots.csv`, the fights first, with a cropped shot of each while in view.
+
+- **Checks:** a duplicated fence planted in play was found at 0.000 mm; the trough's iron band flush on its wood; the
+  camera's depth is reversed 32-bit float (near 0.3, far 400), so at 20-25 m it resolves well under 0.1 mm and anything
+  that really fights is inside the 0.2 mm band.
+- **Bugs met building it:** `CommandBuffer.SetViewProjectionMatrices` wants the camera's own projection (an already
+  converted `GL.GetGPUProjectionMatrix` was converted twice: the farther surface won); the game view is wider than
+  16:9 (shots and probe now take its shape); a `HideFlags.DontSave` object outlives play mode (one stale watch per
+  session).
+- **The apothecary** (the user had seen it there), a ring of 12 stops round it: 35 fights, 28 "same look", 16 near. The
+  biggest are inside kit meshes: `SM_VK_Wall_StoneUp_Twin` / `_Loading` / `_Door` have a `M_VK_Stone_Warm` face and a
+  `M_VK_StoneBlock` face in one plane (the twin window's reveal by the mullion swaps stone when the camera moves 4 mm:
+  seen in a zoomed render); the outside stair `SM_VK_Stair_Stone_Ext` against `SM_VK_Wall_StoneUp_Door`; the stepped
+  gable against the upper walls; `SM_VK_Roof_Pent` / `Roof_Gable_Stepped` slates over slates. Neighbours: the wizard's
+  outside stair base on the ground, the chapel bell tower (`M_VK_Ashlar` over `M_VK_StoneDressed`), a plaster window
+  wall's wood frame (`main_n_3`), a thatch gable's wood. Inside the apothecary: nothing within 1 mm.
+- Faces that are exact copies (the same triangles twice) tie at bit-equal depth and do not flicker; the apothecary's
+  pairs were not copies (depths differ), so they fight as the camera moves. Most fights are small slivers (tens to
+  hundreds of probe pixels a sighting), which matches "little places".
+- Next: fix the meshes in Blender (pull one face back or delete the hidden copy), piece by piece from the watch's list;
+  re-walk with the watch to confirm.
+
 ## Tools
 
 - MedievalSetting **Tools > See-through Spike > Capture Cases** (`Assets/Game/Scripts/Editor/SeeThroughSpike.cs`, on the
@@ -114,6 +147,9 @@ cut, grass inside cut buildings, plus the open cases 9-11. Before/after captures
 - **Tools > See-through Spike > Check Cap Overlaps** (same file, round 1): in play, rasterises every cap mesh on a 2 cm
   grid and counts cells where two of its outlines tie in height, and the pairs of a building's caps at the same height
   whose footprints touch (console). The z-fighting measure: 0 is the goal.
+- **Z-fight watch** (MedievalSetting `Assets/Game/Scripts/ZFightWatch.cs` + `Assets/Game/Resources/ZFightProbe.shader`):
+  F8 in play or Tools > See-through Spike > Z-fight Watch; logs to `Logs/ZFightWatch/<time>/` (see above). Debug:
+  `debugImages` on the ZFightWatch object saves each probe (nearest | behind, fights magenta, same-look cyan).
 
 ## When the spike ends (integration)
 
@@ -122,4 +158,4 @@ cut, grass inside cut buildings, plus the open cases 9-11. Before/after captures
 3. Fold HANDOFF 99-103 and this file into one HANDOFF entry; LEVEL_BUILDING; MedievalSetting README / POLISH; the itch
    waiting list.
 4. Merge `spike/seethrough` into `main`; check the MedievalSetting files in to `/main` (the capture tool too, or drop
-   it).
+   it; the z-fight watch is worth keeping as a dev tool).
