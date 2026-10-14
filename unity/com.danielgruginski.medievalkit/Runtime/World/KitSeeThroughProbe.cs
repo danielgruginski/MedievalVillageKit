@@ -13,9 +13,11 @@ namespace MedievalKit
     /// has set the see-through's globals; it reads <see cref="Cover"/> and opens or shuts the hole by it.
     /// How: a small camera of its own (32 x 40 px, at the game camera, framing the walker from its waist to over its
     /// head) renders with _KitSeeThroughProbe = 1, so the kit's shader draws only what the hole would open (in front of
-    /// the walker, above the foot kept, of a piece in its way -- the cone left out) in flat magenta; everything else draws
-    /// as usual, and what stands behind the walker is not drawn. An asynchronous read-back counts the magenta pixels in
-    /// an ellipse over the body: <see cref="Cover"/> (0..1), a frame or two late. At most <see cref="Rate"/> renders a
+    /// the walker, above the foot kept, of a piece in its way -- the cone left out; of a building, all that stands in front
+    /// of the walker) in flat magenta, a building's tag in green, alpha 0.5; everything else draws as usual, and what
+    /// stands behind the walker is not drawn. An asynchronous read-back counts the magenta pixels in an ellipse over the
+    /// body: <see cref="Cover"/> (0..1), a frame or two late; and each tag's, which decide the buildings
+    /// (<see cref="KitSeeThrough.Probed"/>: one opens only where its own surface hides the walker). At most <see cref="Rate"/> renders a
     /// second, none while a read is pending; no shadows, no post-processing, no grass (<see cref="IsProbe"/>). About 0.7
     /// ms of CPU a render in the editor (MedievalSetting's hamlet, 2026-10-13), so ~0.2 ms a frame at 15 a second.
     /// </summary>
@@ -37,6 +39,7 @@ namespace MedievalKit
         readonly Action<AsyncGPUReadbackRequest> done;
         bool pending;
         int gen, asked;                                                // reads asked before Forget are dropped
+        readonly int[] tags = new int[KitSeeThrough.MaxTag + 1];
 
         /// <summary>the share of the walker's upper body behind what the hole would open, at the last read (0..1)</summary>
         public float Cover { get; private set; }
@@ -107,6 +110,7 @@ namespace MedievalKit
             Cover = 0f;
             Reads = 0;
             last = -1f;
+            KitSeeThrough.Probed(null, 0);
         }
 
         void Done(AsyncGPUReadbackRequest r)
@@ -115,6 +119,7 @@ namespace MedievalKit
             if (r.hasError || cam == null || asked != gen) return;
             var px = r.GetData<Color32>();
             int hit = 0, all = 0;
+            Array.Clear(tags, 0, tags.Length);
             for (int y = 0; y < Height; y++)
             {
                 float v = (y + 0.5f) / Height * 2f - 1f;
@@ -124,11 +129,15 @@ namespace MedievalKit
                     if (u * u / 0.5f + v * v > 1f) continue;           // the body: an ellipse 0.57 m wide, the frame's height
                     all++;
                     var c = px[y * Width + x];
-                    if (c.r > 240 && c.g < 16 && c.b > 240) hit++;
+                    if (c.r < 240 || c.b < 240 || c.a < 112 || c.a > 144) continue;   // the kit's view: magenta, alpha 0.5
+                    hit++;
+                    int tg = (c.g + 1) / 2;                            // a building's tag x 2 (0: not a building's)
+                    if (tg > 0 && tg < tags.Length) tags[tg]++;
                 }
             }
             Cover = all > 0 ? (float)hit / all : 0f;
             Reads++;
+            KitSeeThrough.Probed(tags, all);
         }
 
         public void Dispose()

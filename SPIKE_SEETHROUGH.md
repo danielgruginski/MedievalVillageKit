@@ -12,7 +12,7 @@ lengthways, the grass inside a house)?
 
 | | main line | spike |
 |---|---|---|
-| Kit (git) | `main` (263b0da: grass saturation, FreeAssets, one-sided materials) | branch `spike/seethrough` |
+| Kit (git) | `main` (8c081cf: round 2's z-fighting mesh fixes on top of 263b0da) | branch `spike/seethrough` |
 | MedievalSetting (Plastic) | `/main` (cs:26) | pending changes in the workspace + shelveset (latest: sh:5) |
 
 MedievalSetting's side of the spike is twelve files left pending on `/main` -- `GameCamera.cs` (hidden check, cut
@@ -61,8 +61,8 @@ Status after the last round. Shots: `reviews/seethrough_2026-10-13/` (summaries)
 | 12 | market stall / awning | Hamlet stall | looked at: a low piece not in the way stays (right) |
 | 13 | Greywall houses, the town wall ring and its corners | Greywall | ok with real caps |
 | 17 | **the gate does not dissolve** (portcullis, timber gallery stay) | Greywall gatehouse (-115, -80) | ok, round 1 |
-| 18 | **the item on the player's back is cut** | user shot 4 | asked: shields and weapons use URP Lit (never cut); the shot's cut object looks like the vat in front of the player |
-| 19 | **z-fighting away from the cut**: kit meshes with two faces in one plane, painted differently | Greywall apothecary (-152, -180) and neighbours | found by the z-fight watch (below); kit meshes to fix |
+| 18 | **a building behind the walker opens** (user shot 4: a vat hid the player, the barn behind him opened too) | every Greywall building, a vat planted before the walker | ok, round 2 (probe tags) |
+| 19 | **z-fighting away from the cut**: kit meshes with two faces in one plane, painted differently | Greywall apothecary (-152, -180), chapel, wizard's tower | round 2: 15 pieces fixed (also on main); smaller ones left (below) |
 | 14 | a building on a terrain tier, a porch, an outside stair | ShepherdDowns / Greywall | untested |
 | 15 | interiors, dungeons, sewers (no KitVillage: no caps, no groups) | | untested |
 | 16 | player build: caps are made by an editor hook today | | open (bake at level build) |
@@ -134,6 +134,39 @@ ground) go to `Logs/ZFightWatch/<time>/spots.csv`, the fights first, with a crop
   hundreds of probe pixels a sighting), which matches "little places".
 - Next: fix the meshes in Blender (pull one face back or delete the hidden copy), piece by piece from the watch's list;
   re-walk with the watch to confirm.
+
+## Round 2 (2026-10-13/14 night)
+
+The user: shot 4's "item on the back" was not the item -- "The vat triggered the transparency, but the barn behind the
+player got transparent as well, it didn't had to be transparent, as it was behind the player". And: "You can start
+fixing things" (the watch's finds).
+
+- **A building opens only where its own surface hides the walker.** The CPU test asked whether a sight line to the
+  walker crossed a piece's *box*: a roof's box is mostly air above its slope, so a barn behind the walker crossed the
+  lines (its roof did not) and opened as soon as anything else -- the vat -- opened the hole. Now each building's pieces
+  carry a tag (rendering layer bits 8-14, `KitSeeThrough.TagShift`, 1..100); the hidden check's view draws every
+  building's pieces that stand in front of the walker above their foot, open or not (`KitSeeThroughCovers`), magenta
+  with the tag in green and alpha 0.5 (`KitSeeThroughProbeTag`; alpha marks the kit's pixels, so a pink shirt does not
+  count); the read-back counts each tag over the body (`KitSeeThrough.Probed`), and `Building.Decide` opens a building
+  while its tag covers 1% of the body (stays while any pixel does, held 0.3 s). Without a recent check (no probe, 1.5
+  s) the box test decides as before.
+- **Checked:** all 46 reachable Greywall buildings, the walker set 0.7 m before each (camera side) with a 2.4 m vat
+  before him: the hole opened at 45; the old box test would have opened 4 buildings behind him (barracks, a keep-street
+  house, both hovels), the new one opens 1 -- the bakery, whose lean-to roof really hangs over him. Capture Cases
+  (`Logs/SeeThroughSpike/20261013_234356_Greywall`): every "behind" case still opens (cover 0.5-1.0), "beside a house"
+  stays shut.
+- **Z-fighting meshes** (kit main + spike, HANDOFF 98 "B, partly done"): reveals 3 mm into their openings (StoneUp twin
+  window, loading door, door; shop reveals), the StoneUp door's hole up to its arch crown, the outer stair, the bell
+  tower's plinth and belfry lintels, the stone gable parapet's seat, skirt tops, the plaster window's sill; 15 pieces
+  rebuilt and exported, .blend saved. Measured with the watch: round the apothecary 40,057 fight pixels -> 4,514; with
+  the chapel and the wizard's tower too, 2,546 (`Logs/ZFightWatch/20261014_000135`).
+- **Left** (smaller, mostly faces crossing at a shallow angle rather than lying in one plane): a crop's soil on the
+  ground (506 px), a turret segment against a StoneUp window wall (449), StoneUp corners' quoins against their core
+  and the slit wall (490), slates crossing slates on the stepped gable and the pent roof (395), the thatch gable's wood
+  (125), a grave cross, a town-wall module.
+- How the meshes were worked: a background Blender (`blender -b medievalDiorama.blend --python <runner>`, jobs dropped
+  in a folder) since the live Blender had the Humans file open; `flush_pairs` measured each piece (same-facing faces
+  in one plane under 0.5 mm, visible from above), before and after.
 
 ## Tools
 

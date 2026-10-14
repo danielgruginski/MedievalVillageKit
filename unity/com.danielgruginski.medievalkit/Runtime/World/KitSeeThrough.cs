@@ -16,11 +16,15 @@ namespace MedievalKit
     /// <item><b>A building opens as one</b> (<see cref="Building"/>): the shader opens only a piece in the walker's way
     /// (its bounds reach into the line of sight to the walker's upper body), so of a house's walls and roof one piece
     /// opened and its neighbour did not. A building's pieces carry <see cref="GroupLayer"/> instead, and each frame
-    /// (<see cref="Decide"/>, from KitVillage.LateUpdate) the building is tested piece by piece: when one is in the way,
-    /// all of them carry <see cref="OpenLayer"/> and open (still only in the hole, in front of the walker, above its feet
-    /// + the foot kept). On the CPU a piece is in the way when a sight line to the walker's waist, middle or head (and a
-    /// half-width to each side) crosses its own box, turned with it (<see cref="Crosses"/>): the world box of a turned
-    /// piece is loose (a chapel at 37 degrees opened its corner buttress beside a walker it did not hide).</item>
+    /// (<see cref="Decide"/>, from KitVillage.LateUpdate) the building is decided as one: when it is in the way, all of
+    /// them carry <see cref="OpenLayer"/> and open (still only in the hole, above the foot kept). In the way: with the
+    /// hidden check running (<see cref="KitSeeThroughProbe"/>), when its own surface stands over the walker's upper body
+    /// in the check's view -- each building's pieces carry its tag (<see cref="TagShift"/>), which colours them there
+    /// (2026-10-13 night: a vat hid the walker, the hole opened, and the barn behind the walker opened too -- its roof's
+    /// box crossed the sight lines, though the roof did not); without it, when a sight line to the walker's waist, middle
+    /// or head (and a half-width to each side) crosses a piece's own box, turned with it (<see cref="Crosses"/>: the
+    /// world box of a turned piece is loose -- a chapel at 37 degrees opened its corner buttress beside a walker it did
+    /// not hide).</item>
     /// <item><b>Walls placed as props</b> (<see cref="IsStanding"/>: a town wall, a palisade, a gatehouse, a gate, a tower,
     /// laid along a line as a fence is) are not loose: they keep their foot as a building's walls do, and each run of
     /// them (modules whose boxes touch, <see cref="Runs"/>) opens as one, as a building does (Greywall's town wall is 125
@@ -44,6 +48,35 @@ namespace MedievalKit
         /// it (MedievalSetting: CreatureSilhouettes.Tag, PlayerModel's props)</summary>
         public const int KeepLayer = 15;
         public const uint KeepBit = 1u << KeepLayer;
+        /// <summary>a building's tag (1..<see cref="MaxTag"/>, bits 8-14; kKitSeeThroughTagShift): the hidden check's view
+        /// draws its pieces in it, so the read-back says which building stands over the walker</summary>
+        public const int TagShift = 8, MaxTag = 100;
+        public const uint TagMask = 0x7Fu << TagShift;
+        static int nextTag;
+
+        // the hidden check's last read (KitSeeThroughProbe): pixels of each tag over the walker's body, of all
+        static readonly int[] probeTags = new int[MaxTag + 1];
+        static int probeAll;
+        static float probeAt = -10f;
+        /// <summary>a hidden check's read this recent decides the buildings (s); older, the boxes do</summary>
+        public const float ProbeFresh = 1.5f;
+        /// <summary>a building opens when its tag covers this share of the walker's body in the check's view, and stays
+        /// open while any of it does and for <see cref="Hold"/> s after</summary>
+        public const float OpenShare = 0.01f, Hold = 0.3f;
+
+        /// <summary>the hidden check's answer (KitSeeThroughProbe): pixels per tag over the body, the body's pixels;
+        /// null: forget it (the walker was moved)</summary>
+        public static void Probed(int[] tags, int all)
+        {
+            System.Array.Clear(probeTags, 0, probeTags.Length);
+            if (tags == null) { probeAt = -10f; probeAll = 0; return; }
+            System.Array.Copy(tags, probeTags, Mathf.Min(tags.Length, probeTags.Length));
+            probeAll = all;
+            probeAt = Time.unscaledTime;
+        }
+
+        /// <summary>is a hidden check deciding the buildings (a recent read)?</summary>
+        public static bool Probing => Time.unscaledTime - probeAt < ProbeFresh;
 
         /// <summary>every renderer under go is never cut (<see cref="KeepBit"/>)</summary>
         public static void Keep(GameObject go)
@@ -131,6 +164,9 @@ namespace MedievalKit
         {
             public MeshRenderer[] pieces;
             public bool open;
+            /// <summary>its tag in the hidden check's view (<see cref="TagShift"/>)</summary>
+            public readonly int tag;
+            float seenAt = -10f;
             /// <summary>its pieces' caps (KitSeeThroughCaps), opened with them</summary>
             public readonly List<MeshRenderer> caps = new List<MeshRenderer>();
             /// <summary>a run of walls placed as props: each piece cut over its own foot (a house: over its floor)</summary>
@@ -150,7 +186,9 @@ namespace MedievalKit
             {
                 this.root = root;
                 this.pieces = pieces;
-                foreach (var r in pieces) r.renderingLayerMask = (r.renderingLayerMask | GroupBit) & ~OpenBit;
+                tag = nextTag++ % MaxTag + 1;
+                uint t = (uint)tag << TagShift;
+                foreach (var r in pieces) r.renderingLayerMask = ((r.renderingLayerMask | GroupBit) & ~OpenBit & ~TagMask) | t;
             }
 
             /// <summary>its pieces' bounds together (measured again if the level moved)</summary>
@@ -174,12 +212,19 @@ namespace MedievalKit
                     if (r != null) r.renderingLayerMask = on ? r.renderingLayerMask | OpenBit : r.renderingLayerMask & ~OpenBit;
             }
 
-            /// <summary>open when one of its pieces is in the walker's way</summary>
+            /// <summary>open while it is in the walker's way: its surface over the walker in the hidden check's view (held a
+            /// moment), or without a check, one of its pieces' boxes across the sight lines</summary>
             public void Decide(Vector3 cam, Vector4 see, Vector4 args)
             {
                 bool on = false;
                 bool walker = see.x != 0f || see.y != 0f || see.z != 0f;   // (the hole may be shut: the hidden check)
-                if (walker && InTheWay(All(), cam, see, args))             // (most buildings: nowhere near)
+                if (walker && Probing)
+                {
+                    int px = probeTags[tag];
+                    if (px >= (open ? 1 : Mathf.Max(2, Mathf.CeilToInt(OpenShare * probeAll)))) seenAt = Time.unscaledTime;
+                    on = Time.unscaledTime - seenAt < Hold;
+                }
+                else if (walker && InTheWay(All(), cam, see, args))        // (most buildings: nowhere near)
                     foreach (var r in pieces)
                         if (r != null && r.enabled && r.gameObject.activeInHierarchy && InTheWay(r.bounds, cam, see, args)
                             && Crosses(r, cam, see, args)) { on = true; break; }

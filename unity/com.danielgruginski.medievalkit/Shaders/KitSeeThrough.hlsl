@@ -12,15 +12,18 @@
 //          their foot (the walls' footprint stays; a tree would be left a stump);
 //   round (RoundLayer: the Nature) -- in the way when the ellipsoid inside its bounds meets the sight lines to the
 //          walker's chest or head (a bush's box reaches the feet of a walker beside it, its leaves do not);
-//   group (GroupLayer: a building's pieces) -- tested on the CPU, the building as one (KitSeeThrough.Decide): all its
-//          pieces open (OpenLayer) when one is in the way, so the hole stays round across walls, roof and chimney.
+//   group (GroupLayer: a building's pieces) -- decided on the CPU, the building as one (KitSeeThrough.Decide): all its
+//          pieces open (OpenLayer) when it is in the way, so the hole stays round across walls, roof and chimney. Its
+//          tag (bits 8-14, KitSeeThrough.TagShift) colours it in the hidden check's view: in the way = its own surface
+//          stands over the walker there (2026-10-13 night; the boxes of its pieces opened a barn behind the walker).
 // Shadows stay (the shadow pass does not clip); the depth passes clip too, so SSAO and depth priming see the same hole.
 // Caps (KitLit's SeeThroughCap pass, 2026-10-13): the kit's solid materials are one-sided, so a solid the hole opens
 // showed hollow; inside the hole its back faces are drawn flat, in shade, a little behind in depth (a real face always
 // wins): a sliced wall reads solid.
 // The hidden check (KitSeeThroughProbe.cs) renders a small view of the walker with _KitSeeThroughProbe = 1: then only
-// what the hole would open is drawn (the cone left out), flat magenta (KitLit), and the share of magenta over the
-// walker's upper body says whether anything hides it; the game opens and closes the hole by that.
+// what the hole would open is drawn (the cone left out) -- of a building, all that stands in front of the walker, open
+// or not -- flat magenta (KitLit; a building's tag in green), and the share of magenta over the walker's upper body says
+// whether anything hides it (the game opens and closes the hole by that), its tags which buildings.
 // Off until a game sets the globals (Shader.SetGlobalVector):
 //   _KitSeeThrough      xyz: the walker's chest (world; all 0: no walker), w: the hole's radius at the walker (m);
 //                          w <= 0: shut (the hidden check still runs)
@@ -55,6 +58,7 @@ static const uint kKitSeeThroughCapMesh = 1u << 20;            // KitSeeThrough.
 static const uint kKitSeeThroughCut = 1u << 21;                // KitSeeThrough.CutLayer (C#): its cut kept in bits 22-31
 static const float kKitSeeThroughCutStep = 0.05;               // KitSeeThroughCaps.Step (C#)
 static const uint kKitSeeThroughKeep = 1u << 15;               // KitSeeThrough.KeepBit (C#): never cut (what a character carries)
+static const uint kKitSeeThroughTagShift = 8;                  // KitSeeThrough.TagShift (C#): a building's tag, bits 8-14
 
 // a stable screen-space dither (no frame-to-frame noise)
 float KitBayer4(float2 pixel)
@@ -166,6 +170,20 @@ float KitSeeThroughFoot()
     return _KitSeeThroughArgs.x + ((layers & kKitSeeThroughLoose) ? -0.25 : _KitSeeThroughArgs.y);
 }
 
+// is the point in front of the walker, along the camera's level heading, by more than _KitSeeThroughArgs.z? (lv: the
+// point where "in front" is judged, from the camera; d: the line of sight to the walker, unit, L its length)
+bool KitSeeThroughInFront(float3 lv, float3 cam, float3 d, float L)
+{
+    float2 h = d.xz;                                           // the camera's level heading
+    float hl = length(h);
+    if (hl > 0.05)
+    {
+        h /= hl;
+        return dot(lv.xz, h) <= dot(_KitSeeThrough.xz - cam.xz, h) - _KitSeeThroughArgs.z;
+    }
+    return dot(lv, d) <= L - _KitSeeThroughArgs.z;            // (looking straight down: along the line of sight)
+}
+
 // would the hole open this point, the cone left out: in front of the walker, above the foot kept (askFoot), of a piece
 // in its way? (v: the point from the camera, d: the line of sight to the walker, unit, L its length, t the point along it)
 bool KitSeeThroughOpensAt(float3 positionWS, float3 cam, out float3 v, out float3 d, out float L, out float t, bool askFoot)
@@ -180,20 +198,27 @@ bool KitSeeThroughOpensAt(float3 positionWS, float3 cam, out float3 v, out float
     // it is cut as a whole inside the hole; judged point by point, a building beside the walker (the hamlet's bell
     // tower) was sliced along the walker's level line and showed its hollow inside, and the far slope of a roof floated
     // over the hole (2026-10-13)
-    if (!(KitSeeThroughLayers() & kKitSeeThroughGroup))
-    {
-        float3 lv = KitSeeThroughLevelPoint(positionWS) - cam;
-        float2 h = d.xz;                                       // the camera's level heading
-        float hl = length(h);
-        if (hl > 0.05)
-        {
-            h /= hl;
-            if (dot(lv.xz, h) > dot(_KitSeeThrough.xz - cam.xz, h) - _KitSeeThroughArgs.z) return false;   // level with or behind it
-        }
-        else if (dot(lv, d) > L - _KitSeeThroughArgs.z) return false;   // (looking straight down: along the line of sight)
-    }
+    if (!(KitSeeThroughLayers() & kKitSeeThroughGroup) && !KitSeeThroughInFront(KitSeeThroughLevelPoint(positionWS) - cam, cam, d, L))
+        return false;                                          // level with or behind it
     if (askFoot && positionWS.y < KitSeeThroughFoot()) return false;   // the foot kept
     return KitSeeThroughInTheWay(cam);                         // out of the walker's way (beside it): whole
+}
+
+// in the hidden check's view, a building's piece: does this point stand over the walker -- in front of it, above the foot
+// kept? Asked of every building, open or not: what the view shows of it over the walker is what opens it (its tag)
+bool KitSeeThroughCovers(float3 positionWS, float3 cam)
+{
+    float3 d = _KitSeeThrough.xyz - cam;
+    float L = length(d);
+    d /= max(L, 1e-4);
+    float3 v = positionWS - cam;
+    return dot(v, d) > 0 && KitSeeThroughInFront(v, cam, d, L) && positionWS.y >= KitSeeThroughFoot();
+}
+
+// the hidden check's colour of a piece (green): its building's tag x 2 / 255 (0: not a building's)
+half KitSeeThroughProbeTag()
+{
+    return (half)(((KitSeeThroughLayers() >> kKitSeeThroughTagShift) & 0x7F) * 2) / 255.0;
 }
 
 bool KitSeeThroughOpens(float3 positionWS, float3 cam, out float3 v, out float3 d, out float L, out float t)
@@ -220,8 +245,11 @@ void KitSeeThroughClip(float3 positionWS, float2 pixel)
         return;
     }
     if (_KitSeeThroughProbe > 0.5)                             // the hidden check's view: only what the hole would open
-    {
-        clip(!(KitSeeThroughLayers() & kKitSeeThroughKeep) && KitSeeThroughOpens(positionWS, cam, v, d, L, t) ? 1 : -1);
+    {                                                          // -- a building: what stands over the walker, open or not
+        uint layers = KitSeeThroughLayers();
+        bool draw = !(layers & kKitSeeThroughKeep)
+            && ((layers & kKitSeeThroughGroup) ? KitSeeThroughCovers(positionWS, cam) : KitSeeThroughOpens(positionWS, cam, v, d, L, t));
+        clip(draw ? 1 : -1);
         return;
     }
     if (KitSeeThroughLayers() & kKitSeeThroughKeep) return;   // what a character carries: never cut

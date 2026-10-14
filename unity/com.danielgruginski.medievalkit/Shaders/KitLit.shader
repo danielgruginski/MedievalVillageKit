@@ -148,7 +148,7 @@ Shader "MedievalKit/KitLit"
                 clip(alpha - _Cutoff);
                 #endif
                 KitSeeThroughClip(input.positionWS, input.positionCS.xy);
-                if (_KitSeeThroughProbe > 0.5) return half4(1, 0, 1, 1);   // the hidden check's view (KitSeeThroughProbe)
+                if (_KitSeeThroughProbe > 0.5) return half4(1, KitSeeThroughProbeTag(), 1, 0.5);   // the hidden check's view (KitSeeThroughProbe; green: a building's tag, alpha 0.5: the kit's)
                 half3 n = normalize(input.normalWS);
                 n = frontFace ? n : -n;     // the kit's cards and open-backed pieces render both sides
 
