@@ -2,7 +2,7 @@
 
 Only the summaries are in the repo (`summary.jpg`, `sheet_*.jpg`, the chapel close-ups); the full-size pairs named
 below are kept outside it, in `GameArtGeneration/_captures/seethrough_2026-10-13/` (81 MB). Part of the see-through
-spike (branch `spike/seethrough`, `SPIKE_SEETHROUGH.md`).
+spike (branch `spike/seethrough`, `docs/history/SPIKE_SEETHROUGH.md`; merged 2026-10-14, HANDOFF 104).
 
 MedievalSetting play mode, the game camera's own view (50 degrees down, 22 m), the player warped to each spot.
 Each `pair_*.png`: the see-through off (left), on (right).

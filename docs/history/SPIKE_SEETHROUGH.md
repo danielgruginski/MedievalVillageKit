@@ -1,5 +1,8 @@
 # Spike: the see-through (branch `spike/seethrough`)
 
+**Ended 2026-10-14:** merged into the kit's `main`, MedievalSetting's side checked in to `/main` as cs:27. The
+see-through as it stands: HANDOFF 104. This file is the spike's record (moved to `docs/history/`).
+
 Started 2026-10-13, after a day of see-through rounds landed straight in the kit and the game (HANDOFF 99-103). The
 user's call, on a friend's advice: settle the graphics question in a spike -- try things freely, check them against a
 fixed set of edge cases, then integrate once.
@@ -12,10 +15,10 @@ lengthways, the grass inside a house)?
 
 | | main line | spike |
 |---|---|---|
-| Kit (git) | `main` (8c081cf: round 2's z-fighting mesh fixes on top of 263b0da) | branch `spike/seethrough` |
-| MedievalSetting (Plastic) | `/main` (cs:26) | pending changes in the workspace + shelveset (latest: sh:6) |
+| Kit (git) | `main` (the spike merged 2026-10-14) | branch `spike/seethrough` (kept on GitHub) |
+| MedievalSetting (Plastic) | `/main` (cs:27: the spike's files checked in) | was: pending changes in the workspace + shelveset (last: sh:7) |
 
-MedievalSetting's side of the spike is fourteen files left pending on `/main` -- `GameCamera.cs` (hidden check, cut
+While the spike ran, MedievalSetting's side of it was fourteen files left pending on `/main` -- `GameCamera.cs` (hidden check, cut
 fields), `ClickToMove.cs` (cut test), `README.md`, `POLISH.md` (notes), the capture tool
 `Assets/Game/Scripts/Editor/SeeThroughSpike.cs` (+ .meta, added); round 1's `CreatureSilhouettes.cs` and
 `Player/PlayerModel.cs` (the keep mark); the z-fight watch `Assets/Game/Scripts/ZFightWatch.cs` and
@@ -65,7 +68,7 @@ Status after the last round. Shots: `reviews/seethrough_2026-10-13/` (summaries)
 | 18 | **a building behind the walker opens** (user shot 4: a vat hid the player, the barn behind him opened too) | every Greywall building, a vat planted before the walker | ok, round 2 (probe tags) |
 | 19 | **z-fighting away from the cut**: kit meshes with two faces in one plane, painted differently | Greywall apothecary (-152, -180), chapel, wizard's tower | round 2: 15 pieces fixed (also on main); smaller ones left (below) |
 | 14 | a building on a terrain tier, a porch, an outside stair | Greywall keep (on a tier, outer stair), windmill (tier), apothecary stair, main_n_2 porch | ok, round 3: the walker up a stair stood over a hole (the keep) -- a cut never lies under the walker's feet now |
-| 15 | interiors, dungeons, sewers (no KitVillage: no caps, no groups) | | untested |
+| 15 | interiors, dungeons, sewers (no KitVillage: no caps, no groups) | Greywall_Inn's interior (8 spots), Greywall_Sewer (8 spots) | ok, 2026-10-14: walls low or pre-cut, nothing hides the walker, the hole stays shut (spots warped into the sewer's rock fill, unreachable, open a hole round the walker, as they should) |
 | 16 | player build: caps were made by an editor hook | every level | ok, round 3 (baked before every build; pooled) |
 
 ## Round 1 (2026-10-13 evening)
@@ -218,11 +221,13 @@ editor hook in play, so a player build had none.
   F8 in play or Tools > See-through Spike > Z-fight Watch; logs to `Logs/ZFightWatch/<time>/` (see above). Debug:
   `debugImages` on the ZFightWatch object saves each probe (nearest | behind, fights magenta, same-look cyan).
 
-## When the spike ends (integration)
+## When the spike ends (integration) -- done 2026-10-14
 
-1. Pick what stays; delete the dead ends (the back-face cap pass if the real caps cover everything).
+1. ~~Pick what stays~~: everything stays. The back-face cap pass is still needed: it caps what has no real cap (no
+   KitVillage: interiors, dungeons, sewers) and a cut held up at a raised walker's feet (round 3). The box test stays
+   as the fallback without a probe answer.
 2. ~~Bake the caps at level build~~ -- done in round 3 (`KitSeeThroughCapsBake`, before every player build too).
-3. Fold HANDOFF 99-103 and this file into one HANDOFF entry; LEVEL_BUILDING; MedievalSetting README / POLISH; the itch
-   waiting list.
-4. Merge `spike/seethrough` into `main`; check the MedievalSetting files in to `/main` (the capture tool too, or drop
-   it; the z-fight watch is worth keeping as a dev tool).
+3. ~~Fold HANDOFF 99-103 and this file into one HANDOFF entry~~ (104); LEVEL_BUILDING; MedievalSetting README /
+   POLISH; the itch waiting list.
+4. ~~Merge `spike/seethrough` into `main`~~; the MedievalSetting files checked in to `/main` as cs:27, the capture tool
+   and the z-fight watch with them (dev tools).

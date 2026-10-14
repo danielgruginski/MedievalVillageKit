@@ -1098,7 +1098,8 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     ground flattened under them), pine and bush leaf cards, hip-roof tiles where two slopes meet, the real caps' own
     self-overlaps (spike).
 
-99. 2026-10-13 (MedievalSetting, the user's screenshots of the see-through: "that first one is a tree, getting cut in
+99. 2026-10-13 (99-103: the road to the see-through as it stands, entry 104; MedievalSetting, the user's
+    screenshots of the see-through: "that first one is a tree, getting cut in
     the base, I don't understand why"; bush tops and a chapel's eave speckled though nothing hid the player; roof holes
     with a wall end standing whole in them and straight edges at joints). Four causes: the hole is open whether or not
     anything hides the walker; everything is sliced at feet + 1.4 (a tree left a stump); each piece decides alone
@@ -1226,6 +1227,39 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     level build (a player build gets none now; the cut itself works there), the other outdoor maps (Greywall's 47
     buildings and town wall untested), interiors / dungeons / sewers (no KitVillage), a stained-glass pane still shows
     as a thin coloured line at a cut wall's end, bark caps show bark rather than end grain.
+
+104. 2026-10-14 (MedievalSetting; the see-through spike ended and was merged into `main` -- the user: "Proceed").
+    Entries 99-103 were the road; the spike's rounds, its gallery of 19 edge cases and its tools are in
+    [docs/history/SPIKE_SEETHROUGH.md](docs/history/SPIKE_SEETHROUGH.md). **The see-through as it stands:** the hole
+    opens only while kit pieces hide the walker (`KitSeeThroughProbe`), and a building opens only where its own surface
+    hides it -- each building's pieces carry a tag (rendering layer bits 8-14, `KitSeeThrough.TagShift`), the probe
+    draws it in green, and `Building.Decide` opens a building while its tag covers 1% of the walker's body (held 0.3 s;
+    the box test decides only without a probe answer in the last 1.5 s): a barn behind the walker no longer opens
+    because a vat before it did. Every piece of a KitVillage map is cut 1.4 m over its base (`KitVillage.PieceRoot`:
+    each mesh of a many-mesh prop such as the gatehouse over the prop's base), never under the walker's feet + 5 cm
+    (`KitSeeThrough.AboveFeet` / `CutAt`: up the keep's outer stair the walker stood over a hole to the ground), and
+    closed by a real cap. **Caps baked:** `KitSeeThroughCapBank`, a Resources asset named `KitSeeThroughCaps`
+    (MedievalSetting `Assets/Game/Resources/KitSeeThroughCaps.asset`), made by `Editor/KitSeeThroughCapsBake.cs` --
+    Tools > Medieval Kit > Bake See-through Caps, and by itself before every player build: each build scene with a
+    KitVillage is opened additively, asked for its keys (`KitVillage.SetUpSeeThrough` with
+    `KitSeeThroughCaps.Collecting` set; rendering layers put back) and closed unsaved (8 levels, 295 keys, 263 cap
+    meshes, 12,034 triangles, 9.4 s). An entry keeps its source mesh's vertex count and bounds, so a piece re-exported
+    since is ignored and, in the editor, made in play by the hook as before: re-bake after re-exporting pieces (a build
+    does it anyway). **Caps pooled:** a cut piece is registered, not given a renderer; 96 pooled renderers are laid each
+    camera frame over the registered pieces in the hole's cone, nearest first (Greywall: 96 instead of 4,255). Round 1's
+    fixes: the gatehouse's gallery cut with it, caps stacked by area inside a piece and across a building (a stone
+    corner's quoins z-fought in its rubble core), a plank floor in a cut house (the grass showed), end grain on bark
+    caps, sheets in a building (stained glass, ivy, cloth) opened to the feet, nothing a character carries is cut
+    (`KitSeeThrough.KeepBit`, bit 15). Rendering layers in play: 8-14 the building's tag, 15 keep, 16-19 loose / round /
+    group / open, 20 cap mesh, 21 cut + 22-31 its offset. KitLit's back-face `SeeThroughCap` pass stays: it caps what
+    has no real cap (no KitVillage: interiors, dungeons, sewers) and a cut held up at a raised walker's feet. Checked:
+    every gallery case (15 last, 2026-10-14: the Greywall inn's interior and the generated sewer -- their walls are low
+    or pre-cut, nothing hides the walker, the hole stays shut). MedievalSetting's side, checked in as cs:27: the hidden
+    check and the cut in `GameCamera`, `ClickToMove.SeenThrough` (`CutAt`), the keep bit on carried items
+    (`CreatureSilhouettes`, `PlayerModel`), the baked bank, the capture tool (Tools > See-through Spike) and the z-fight
+    watch (`ZFightWatch`, F8; the find list behind entry 98's two batches). **Open:** entry 98's smaller z-fighting
+    leftovers; a crop's soil on undulating ground (the user's call: raised beds, or the ground flattened under them);
+    self-overlapping outlines inside one cap (16 Greywall cap meshes, 0.15 m2 in all).
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

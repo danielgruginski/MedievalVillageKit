@@ -576,19 +576,27 @@ keep their foot (up to the height kept, below: the walls' footprint); trees, bus
 walker's feet (no stumps). Only a piece in the walker's upper body's way opens: one whose bounds (`Renderer.bounds`)
 stay out of the wedge from the camera to the walker's waist..head stays whole -- a wall beside the walker running
 towards the camera, the rock past it, a fence before its legs. On an outdoor map `KitVillage` refines this in play
-(`Runtime/World/KitSeeThrough.cs`, rendering layers 16-19, nothing saved): the nature is tested by the ellipsoid inside
+(`Runtime/World/KitSeeThrough.cs`, rendering layers 8-31, nothing saved): the nature is tested by the ellipsoid inside
 its bounds, and a building opens as one -- all its pieces or none, decided each frame on the CPU from each piece's own
 turned box -- so a roof's hole stays round across walls, roof and chimney; walls laid as props along a line (a town
 wall, a palisade, a gatehouse: `KitSeeThrough.IsStanding`) keep their foot and open in runs the same way. The game
 can open the hole only while something hides the walker: `KitSeeThroughProbe` (a 32 x 40 px render of the walker's
 upper body in which the kit's shader draws only what the hole would open, in magenta; `Cover` is the hidden share,
 read back a frame or two late, 15 times a second) -- MedievalSetting's `GameCamera` grows and shrinks the hole by it.
+The same render tells the buildings apart (each building's tag, rendering layer bits 8-14, drawn in its green): a
+building opens only while its own surface covers the walker, not because something else opened the hole (the box test
+decides only without a recent answer).
 Every piece of a KitVillage map is cut 1.4 m over its base (a house's floor, a tree's or prop's foot; kept in its
 rendering layer, `KitSeeThrough.WithCut`) and, where it spans the cut, closed by a real cap -- its own cross-section,
 sliced from the mesh and filled (`KitSeeThroughCaps`) -- drawn only where the hole opened it; an open building is cut
 as a whole inside the hole, and a tree beside the walker keeps its trunk whole (a loose piece's solid parts are in
-front or behind by its origin). Prototype: the caps are made in play by an editor hook (the meshes are not Read/Write),
-so a player build has the cut but no caps yet; KitLit's back-face `SeeThroughCap` pass fills in where a piece has none.
+front or behind by its origin). A cut never lies under the walker's feet + 5 cm (`KitSeeThrough.AboveFeet`): a walker
+up an outer stair keeps the floor it stands on. The caps are baked -- the kit's meshes are not Read/Write, so only editor
+code can slice them: `KitSeeThroughCapBank`, a Resources asset named `KitSeeThroughCaps`, made by Tools > Medieval Kit >
+Bake See-through Caps and by itself before every player build (re-bake after re-exporting pieces; in the editor a piece
+the bank lacks is made in play) -- and drawn by a pool of 96 renderers laid each frame over the pieces in the hole's
+cone. KitLit's back-face `SeeThroughCap` pass fills in where a piece has no real cap (interiors, dungeons: no
+KitVillage).
 Off until the game sets two globals each frame: `_KitSeeThrough` (xyz the walker's
 chest, all 0: no walker; w the hole's radius at the walker, 0: shut) and `_KitSeeThroughArgs` (x the walker's feet height, y the height
 kept above the feet -- the ground, low and cut walls --, z how far in front of the walker, level, things are kept: an
