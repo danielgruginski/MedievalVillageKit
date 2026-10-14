@@ -1087,6 +1087,16 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     ground, a turret segment against a window wall, StoneUp corners' quoins crossing their core, slates crossing slates.
     Gotcha met: `vk_mod_town` already had a `twn_reveal` further down (the shops'); a second one of that name, defined
     earlier, was silently replaced and the walls came out with parts turned 90 degrees.
+    Second batch (2026-10-14, the user's own walk with the watch through the hamlet and Greywall): the porch's step is
+    0.13 high, under a door wall's own 0.2 step (both jittered 2 cm, they crossed in front of the door); the plaster
+    ground walls' panels end 3 mm under the top beam (`plaster_ground` PT: their tops z-fought where the hole opens the
+    roof); the ale cask's cradles were inside out (every face pointing in, the bottom up in the ground's plane) -- now
+    wound outward; the gable chimney's base set back behind its quoin rocks; a thatch ridge cap's liggers and spars stop
+    8 cm short of a gable's rake roll (`thatch_ridge_cap`, when an end runs past GX). Rebuilt and exported: Porch,
+    Wall_Plaster / _Window / _Door, Prop_AleCask, Chimney_Gable_H30, RoofThatch_Gable / _Gable_Planks / _Gable_Cruck /
+    _Single, RoofThatchS_Gable / _Single. Left: crop beds' soil crossing undulating ground (needs raised beds or the
+    ground flattened under them), pine and bush leaf cards, hip-roof tiles where two slopes meet, the real caps' own
+    self-overlaps (spike).
 
 
 ## 6. Gotchas
