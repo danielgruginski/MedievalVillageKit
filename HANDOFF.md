@@ -1245,7 +1245,9 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     `KitSeeThroughCaps.Collecting` set; rendering layers put back) and closed unsaved (8 levels, 295 keys, 263 cap
     meshes, 12,034 triangles, 9.4 s). An entry keeps its source mesh's vertex count and bounds, so a piece re-exported
     since is ignored and, in the editor, made in play by the hook as before: re-bake after re-exporting pieces (a build
-    does it anyway). **Caps pooled:** a cut piece is registered, not given a renderer; 96 pooled renderers are laid each
+    does it anyway; before a build a bank that holds exactly the caps needed, none stale, is left untouched -- a bake
+    rewrites the asset, and every build would leave it changed in Plastic; the menu always bakes anew; first Windows
+    build with it 2026-10-14: 1,622 MB, 7 min, the bank found current in 9.9 s). **Caps pooled:** a cut piece is registered, not given a renderer; 96 pooled renderers are laid each
     camera frame over the registered pieces in the hole's cone, nearest first (Greywall: 96 instead of 4,255). Round 1's
     fixes: the gatehouse's gallery cut with it, caps stacked by area inside a piece and across a building (a stone
     corner's quoins z-fought in its rubble core), a plank floor in a cut house (the grass showed), end grain on bark

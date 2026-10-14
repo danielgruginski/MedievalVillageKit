@@ -16,8 +16,10 @@ namespace MedievalKit.Editor
     /// (<see cref="KitVillage.SetUpSeeThrough"/> with <see cref="KitSeeThroughCaps.Collecting"/> set; every renderer's
     /// rendering layers are put back), makes each cap mesh once (<see cref="KitSeeThroughCaps.MakeCap"/>: only editor code
     /// may read the kit's meshes) and keeps them in the bank asset (Resources "KitSeeThroughCaps"; a new one goes to
-    /// Assets/Resources). Tools > Medieval Kit > Bake See-through Caps, and before every player build (a build without
-    /// them would show the cuts uncapped).
+    /// Assets/Resources). Tools > Medieval Kit > Bake See-through Caps (always bakes anew: after a change to the cap code),
+    /// and before every player build (a build without them would show the cuts uncapped) -- there a bank that already
+    /// holds exactly the caps needed, none stale, is left as it is (a bake rewrites the asset: the build would leave it
+    /// changed in version control every time).
     /// </summary>
     public sealed class KitSeeThroughCapsBake : IPreprocessBuildWithReport
     {
@@ -27,7 +29,7 @@ namespace MedievalKit.Editor
 
         public void OnPreprocessBuild(BuildReport report)
         {
-            try { Debug.Log("[KitSeeThroughCapsBake] before the build: " + Bake()); }
+            try { Debug.Log("[KitSeeThroughCapsBake] before the build: " + Bake(force: false)); }
             catch (System.Exception e) { Debug.LogWarning("[KitSeeThroughCapsBake] the caps were not baked: " + e); }
         }
 
@@ -35,12 +37,13 @@ namespace MedievalKit.Editor
         static void Menu()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) { Debug.LogWarning("[KitSeeThroughCapsBake] not while playing"); return; }
-            Debug.Log("[KitSeeThroughCapsBake] " + Bake());
+            Debug.Log("[KitSeeThroughCapsBake] " + Bake(force: true));
         }
 
         /// <summary>bake the caps of these scenes' levels (default: the build's enabled scenes) into the bank (the one in the
-        /// project, else a new one at `bankPath` or <see cref="DefaultPath"/>); returns a report</summary>
-        public static string Bake(IEnumerable<string> scenes = null, string bankPath = null)
+        /// project, else a new one at `bankPath` or <see cref="DefaultPath"/>); not `force`d, a bank already holding exactly
+        /// those caps (<see cref="Current"/>) is left untouched; returns a report</summary>
+        public static string Bake(IEnumerable<string> scenes = null, string bankPath = null, bool force = true)
         {
             float t0 = Time.realtimeSinceStartup;
             scenes ??= EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToList();
@@ -72,7 +75,11 @@ namespace MedievalKit.Editor
                 finally { if (!wasOpen) EditorSceneManager.CloseScene(scene, true); }
             }
 
-            var bank = FindBank() ?? CreateBank(bankPath ?? DefaultPath);
+            var bank = FindBank();
+            if (!force && bank != null && Current(bank, keys))
+                return $"{levels} levels ({villages} KitVillage), {keys.Count} caps needed: the bank has them all, none stale " +
+                       $"(left as it is), {(Time.realtimeSinceStartup - t0):F1} s -> {AssetDatabase.GetAssetPath(bank)}";
+            bank ??= CreateBank(bankPath ?? DefaultPath);
             var path_ = AssetDatabase.GetAssetPath(bank);
             foreach (var o in AssetDatabase.LoadAllAssetsAtPath(path_))
                 if (o is Mesh) { AssetDatabase.RemoveObjectFromAsset(o); Object.DestroyImmediate(o, true); }
@@ -111,6 +118,20 @@ namespace MedievalKit.Editor
             AssetDatabase.SaveAssets();
             KitSeeThroughCaps.ResetBank();
             return report;
+        }
+
+        /// <summary>the bank holds exactly these keys, each from its source mesh as it is now (vertex count, bounds:
+        /// <see cref="KitSeeThroughCaps"/>' own staleness test)</summary>
+        static bool Current(KitSeeThroughCapBank bank, HashSet<(Mesh, int, uint, uint)> keys)
+        {
+            if (bank.entries.Count != keys.Count) return false;
+            foreach (var e in bank.entries)
+            {
+                if (e.source == null || !keys.Contains((e.source, e.q, e.solid, e.bark))) return false;
+                if (e.source.vertexCount != e.vertexCount || (e.source.bounds.center - e.bounds.center).sqrMagnitude >= 1e-8f ||
+                    (e.source.bounds.size - e.bounds.size).sqrMagnitude >= 1e-8f) return false;
+            }
+            return true;
         }
 
         static string VillageScriptGuid()

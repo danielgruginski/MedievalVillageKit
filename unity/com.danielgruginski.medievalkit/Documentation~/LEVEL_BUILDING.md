@@ -593,8 +593,8 @@ as a whole inside the hole, and a tree beside the walker keeps its trunk whole (
 front or behind by its origin). A cut never lies under the walker's feet + 5 cm (`KitSeeThrough.AboveFeet`): a walker
 up an outer stair keeps the floor it stands on. The caps are baked -- the kit's meshes are not Read/Write, so only editor
 code can slice them: `KitSeeThroughCapBank`, a Resources asset named `KitSeeThroughCaps`, made by Tools > Medieval Kit >
-Bake See-through Caps and by itself before every player build (re-bake after re-exporting pieces; in the editor a piece
-the bank lacks is made in play) -- and drawn by a pool of 96 renderers laid each frame over the pieces in the hole's
+Bake See-through Caps and by itself before every player build (only when the bank lacks a cap or holds a stale one:
+re-bake after re-exporting pieces; in the editor a piece the bank lacks is made in play) -- and drawn by a pool of 96 renderers laid each frame over the pieces in the hole's
 cone. KitLit's back-face `SeeThroughCap` pass fills in where a piece has no real cap (interiors, dungeons: no
 KitVillage).
 Off until the game sets two globals each frame: `_KitSeeThrough` (xyz the walker's
