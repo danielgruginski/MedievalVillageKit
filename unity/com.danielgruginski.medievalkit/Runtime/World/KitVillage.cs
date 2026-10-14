@@ -148,6 +148,61 @@ namespace MedievalKit
             return t;
         }
 
+        [NonSerialized] List<KitSeeThrough.Building> seeThroughBuildings;
+
+        /// <summary>in play, what the see-through needs (<see cref="KitSeeThrough"/>, nothing saved): the nature and the
+        /// props are loose (the nature by its round shape), each building opens as one, and so does each run of walls
+        /// placed as props (a town wall, a palisade); every piece is cut 1.4 m over its base -- a house's floor, a tree's or
+        /// a prop's foot -- with a real cap where it spans the cut (<see cref="KitSeeThroughCaps"/>)</summary>
+        void Start()
+        {
+            if (!Application.isPlaying) return;
+            SetUpSeeThrough();
+        }
+
+        /// <summary>the see-through's marks, cuts and caps for this level (<see cref="Start"/>); the cap bake calls it in the
+        /// editor with <see cref="KitSeeThroughCaps.Collecting"/> set, to learn which caps the level needs (it puts every
+        /// renderer's rendering layers back after)</summary>
+        public void SetUpSeeThrough()
+        {
+            float t0 = Time.realtimeSinceStartup;
+            seeThroughBuildings = new List<KitSeeThrough.Building>();
+            var loose = new List<Transform>();
+            foreach (Transform g in transform)
+            {
+                if (g.name == "Nature" || g.name == "Props") KitSeeThrough.Loose(g.gameObject, round: g.name == "Nature");
+                if (g.name == "Nature" || g.name == "Props")
+                    foreach (Transform piece in g) if (!KitSeeThrough.IsStanding(piece.name)) loose.Add(piece);
+                if (g.name == "Props") seeThroughBuildings.AddRange(KitSeeThrough.Runs(g.gameObject));
+                else if (g.name == "Buildings") foreach (Transform b in g) seeThroughBuildings.Add(new KitSeeThrough.Building(b.gameObject));
+            }
+            KitSeeThroughCaps.Learn(gameObject);
+            foreach (var b in seeThroughBuildings)
+            {
+                foreach (var r in b.pieces)
+                    if (r != null) KitSeeThroughCaps.Cut(r, b.perPiece ? PieceRoot(r.transform, b.Root).position.y : b.Floor, b);
+                // a house's floor where the hole opens it (not an L-shaped generated house: its walls' box is not its floor)
+                var hg = b.perPiece ? null : b.Root.GetComponent<KitHouseGenerator>();
+                if (!b.perPiece && (hg == null || hg.shape != KitHouseGenerator.Shape.L)) KitSeeThroughCaps.Floor(b);
+            }
+            foreach (var piece in loose)
+                foreach (var r in piece.GetComponentsInChildren<MeshRenderer>(true)) KitSeeThroughCaps.Cut(r, piece.position.y);
+            if (KitSeeThroughCaps.Collecting != null) return;
+            KitSeeThroughCaps.Settle();
+            Debug.Log($"[KitVillage] {name}: see-through cuts set, {KitSeeThroughCaps.Registered} caps registered so far " +
+                      $"({KitSeeThroughCaps.Baked} baked cap meshes, {KitSeeThroughCaps.Pending} caps still to make), in {(Time.realtimeSinceStartup - t0) * 1000f:F0} ms");
+        }
+
+        void LateUpdate() => KitSeeThrough.Decide(seeThroughBuildings);
+
+        /// <summary>the piece a renderer belongs to: its ancestor standing directly in `group` (a gatehouse's 44 meshes sit at
+        /// their own heights: each was cut over its own origin, so its timber gallery 6 m up was cut at 7.4 m)</summary>
+        static Transform PieceRoot(Transform t, Transform group)
+        {
+            while (t.parent != null && t.parent != group) t = t.parent;
+            return t;
+        }
+
         GameObject Prefab(string name)
         {
             if (string.IsNullOrEmpty(name)) return null;

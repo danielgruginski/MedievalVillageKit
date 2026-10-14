@@ -81,6 +81,7 @@ namespace MedievalKit
         void Draw(ScriptableRenderContext ctx, Camera cam)
         {
             if (clumpBuf == null || cam == null || cam.cameraType == CameraType.Preview || cam.cameraType == CameraType.Reflection) return;
+            if (KitSeeThroughProbe.IsProbe(cam)) return;                     // the see-through's hidden check
             if (!perCam.TryGetValue(cam, out var b))
             {
                 foreach (var dead in new List<Camera>(perCam.Keys))

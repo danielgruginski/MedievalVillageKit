@@ -27,6 +27,7 @@ namespace MedievalKit
             var agx = VolumeManager.instance.stack.GetComponent<KitAgX>();
             if (agx == null || !agx.IsActive()) return;
             if (renderingData.cameraData.cameraType == CameraType.Preview) return;
+            if (KitSeeThroughProbe.IsProbe(renderingData.cameraData.camera)) return;   // its magenta must stay magenta
             renderer.EnqueuePass(pass);
         }
 

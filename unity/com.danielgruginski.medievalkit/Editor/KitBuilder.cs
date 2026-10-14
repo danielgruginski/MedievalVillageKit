@@ -318,6 +318,7 @@ namespace MedievalKit.Editor
             m.renderQueue = transparent ? (int)RenderQueue.Transparent : alpha == "clip" ? (int)RenderQueue.AlphaTest : -1;
             m.SetShaderPassEnabled("ShadowCaster", !(d["no_shadow"] != null && (bool)d["no_shadow"]) && !transparent);
             m.SetFloat("_Cull", (bool)d["double_sided"] ? (float)CullMode.Off : (float)CullMode.Back);
+            m.SetShaderPassEnabled("SRPDefaultUnlit", !(bool)d["double_sided"] && !transparent);   // the see-through's caps (KitLit)
             m.enableInstancing = true;
         }
 

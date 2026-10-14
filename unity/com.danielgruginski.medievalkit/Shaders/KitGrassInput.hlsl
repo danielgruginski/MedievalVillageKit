@@ -94,7 +94,7 @@ float3 KitGrassWorld(float3 positionOS, float h)
     gust *= gust;
     float flutter = 0.22 * sin(_Time.y * 3.3 + ws.x * 1.9 + ws.z * 2.7);
     float2 off = wd * _WindStrength * (0.3 + gust + flutter) * h2;
-    if (_KitSeeThrough.w > 0)
+    if (any(_KitSeeThrough.xyz != 0))            // a walker (the hole may be shut: the hidden check)
     {
         float2 d = ws.xz - _KitSeeThrough.xz;
         float dist = length(d);
