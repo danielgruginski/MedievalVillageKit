@@ -59,6 +59,7 @@ static const uint kKitSeeThroughCut = 1u << 21;                // KitSeeThrough.
 static const float kKitSeeThroughCutStep = 0.05;               // KitSeeThroughCaps.Step (C#)
 static const uint kKitSeeThroughKeep = 1u << 15;               // KitSeeThrough.KeepBit (C#): never cut (what a character carries)
 static const uint kKitSeeThroughTagShift = 8;                  // KitSeeThrough.TagShift (C#): a building's tag, bits 8-14
+static const float kKitSeeThroughAboveFeet = 0.05;             // KitSeeThrough.AboveFeet (C#): a cut never under the walker's feet + this
 
 // a stable screen-space dither (no frame-to-frame noise)
 float KitBayer4(float2 pixel)
@@ -153,8 +154,11 @@ float3 KitSeeThroughLevelPoint(float3 positionWS)
 
 // the foot kept (world y): where the piece's own cut lies when it has one (KitSeeThroughCaps: 1.4 m over its base -- a
 // house's floor, a tree's foot -- kept in its rendering layer as an offset over its origin, so the shader cuts exactly
-// where its cap lies); else a building's up to feet + y and a loose piece's only below the feet (a little under them:
-// the flare of a trunk's roots at the walker's own level stayed as a thin dark curve)
+// where its cap lies), but never under the walker's feet (+ kKitSeeThroughAboveFeet: a walker up an outer stair or on
+// the keep's walk stood over a hole down to the ground, its floor cut away, 2026-10-14 -- there the real cap lies under
+// the floor kept and is not drawn, and the back-face cap pass finishes the cut); else a building's up to feet + y and a
+// loose piece's only below the feet (a little under them: the flare of a trunk's roots at the walker's own level stayed
+// as a thin dark curve)
 float KitSeeThroughFoot()
 {
     uint layers = KitSeeThroughLayers();
@@ -165,7 +169,7 @@ float KitSeeThroughFoot()
     {
         int q = (int)((layers >> 22) & 0x3FF);
         if (q >= 512) q -= 1024;
-        return UNITY_MATRIX_M._m13 + UNITY_MATRIX_M._m11 * (q * kKitSeeThroughCutStep);
+        return max(UNITY_MATRIX_M._m13 + UNITY_MATRIX_M._m11 * (q * kKitSeeThroughCutStep), _KitSeeThroughArgs.x + kKitSeeThroughAboveFeet);
     }
     return _KitSeeThroughArgs.x + ((layers & kKitSeeThroughLoose) ? -0.25 : _KitSeeThroughArgs.y);
 }
@@ -234,7 +238,9 @@ void KitSeeThroughClip(float3 positionWS, float2 pixel)
     // rim included; never in the hidden check's view, never while the hole is shut
     if (KitSeeThroughLayers() & kKitSeeThroughCapMesh)
     {
-        if (_KitSeeThroughProbe > 0.5 || _KitSeeThrough.w <= 0 || !KitSeeThroughOpensAt(positionWS, cam, v, d, L, t, false))
+        // (a cap under the walker's feet: its piece is kept up to them, the cap would lie inside it)
+        if (_KitSeeThroughProbe > 0.5 || _KitSeeThrough.w <= 0 || positionWS.y < _KitSeeThroughArgs.x + kKitSeeThroughAboveFeet - 0.01
+            || !KitSeeThroughOpensAt(positionWS, cam, v, d, L, t, false))
         {
             clip(-1);
             return;

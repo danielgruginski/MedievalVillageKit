@@ -51,6 +51,18 @@ namespace MedievalKit
         /// <summary>a building's tag (1..<see cref="MaxTag"/>, bits 8-14; kKitSeeThroughTagShift): the hidden check's view
         /// draws its pieces in it, so the read-back says which building stands over the walker</summary>
         public const int TagShift = 8, MaxTag = 100;
+        /// <summary>a piece's cut never lies under the walker's feet + this (m; kKitSeeThroughAboveFeet): a walker up an outer
+        /// stair or on a wall walk keeps the floor it stands on (2026-10-14)</summary>
+        public const float AboveFeet = 0.05f;
+
+        /// <summary>where a cut piece is cut while the walker's feet are at `feet` (world y): its own cut, but never under
+        /// the walker's feet (<see cref="AboveFeet"/>; the shader's KitSeeThroughFoot)</summary>
+        public static bool CutAt(Renderer r, float feet, out float y)
+        {
+            if (!CutY(r, out y)) return false;
+            y = Mathf.Max(y, feet + AboveFeet);
+            return true;
+        }
         public const uint TagMask = 0x7Fu << TagShift;
         static int nextTag;
 

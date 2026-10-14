@@ -64,7 +64,7 @@ Status after the last round. Shots: `reviews/seethrough_2026-10-13/` (summaries)
 | 17 | **the gate does not dissolve** (portcullis, timber gallery stay) | Greywall gatehouse (-115, -80) | ok, round 1 |
 | 18 | **a building behind the walker opens** (user shot 4: a vat hid the player, the barn behind him opened too) | every Greywall building, a vat planted before the walker | ok, round 2 (probe tags) |
 | 19 | **z-fighting away from the cut**: kit meshes with two faces in one plane, painted differently | Greywall apothecary (-152, -180), chapel, wizard's tower | round 2: 15 pieces fixed (also on main); smaller ones left (below) |
-| 14 | a building on a terrain tier, a porch, an outside stair | ShepherdDowns / Greywall | untested |
+| 14 | a building on a terrain tier, a porch, an outside stair | Greywall keep (on a tier, outer stair), windmill (tier), apothecary stair, main_n_2 porch | ok, round 3: the walker up a stair stood over a hole (the keep) -- a cut never lies under the walker's feet now |
 | 15 | interiors, dungeons, sewers (no KitVillage: no caps, no groups) | | untested |
 | 16 | player build: caps were made by an editor hook | every level | ok, round 3 (baked before every build; pooled) |
 
@@ -192,6 +192,13 @@ editor hook in play, so a player build had none.
   each only where the hole opened it. Greywall: 96 cap renderers instead of 4,255; behind the inn 8 are in use.
   Stacking (round 1) is kept per piece (`Settle()` ranks a building's pieces once its caps are known).
 - Capture Cases after (`Logs/SeeThroughSpike/20261014_131610_Greywall`): same pictures as before the pool.
+- **Edge case 14** (a building on a terrain tier, an outer stair, a porch): the windmill and the keep from their low
+  side, the main_n_2 porch and the apothecary's stair landing were right; on the keep's stair landing (5.5 m up) the
+  walker stood over a hole to the ground -- the keep is cut 1.4 m over its floor, under the walker's feet. Now a cut
+  never lies under the walker's feet + 5 cm (`KitSeeThroughFoot`, `KitSeeThrough.AboveFeet` / `CutAt`, MedievalSetting
+  `ClickToMove.SeenThrough` follows); a real cap under that height is not drawn (its piece is kept over it) and the
+  back-face cap pass finishes the cut there. After: the walker stands on the kept stone; the hidden check also stops
+  counting the floor under the walker as cover. Shots in the scratchpad `edges3/`.
 - Also this morning (HANDOFF 98, second batch): porches, plaster wall tops, the ale cask, the gable chimney, thatch
   gables (the user's own walk with the watch).
 
