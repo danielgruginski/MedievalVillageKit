@@ -1285,6 +1285,31 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     from a bed's middle, no crop or plot among the watch's 24 spots; the see-through caps unaffected (crops never reach
     the cut). `docs/PIECES.md` rows updated.
 
+106. 2026-10-14 (MedievalSetting's skill books, the user: "shelves and books as 3D assets, it is actually weird we don't
+    have those", then "Maybe work on the shelves and books now? As in the models?"). **Library props**, a new interior
+    package `library` (`src/interior/vki_props_library.py`, in VKI_TEXTS after `vki_props_orc`):
+    `SM_VKI_Prop_Bookcase_150` (1.40 x 0.36 x 2.00, four shelves of books: runs of a set, gaps with a book leaning in, a
+    few lying flat), `_Bookcase_150_Sparse` (half empty: a crock, scrolls, stacks, leaning books), `_Bookcase_075`
+    (narrow), `_ScrollRack_120` (five by five dark oak pigeonholes, two or three scrolls in each, ribbons on a few),
+    `_TableDress_Books` (a stack, an open book, ink and quill; on a table at 0.80), `_Book` (one closed oxblood book
+    lying: a skill book or a tome on the ground, 12 triangles), `_Book_Open`, `_Books_Pile` (two stacks, loose books,
+    one propped). **The book atlas** `T_VKI_Books` (new generator text `vki_tex_library`, run with `vki_tex_run`): 4 x 4
+    cells, painted 512 and stored 256 -- spines in six leathers (oxblood, brown, green, blue, black, vellum), two
+    designs each side by side in the cell (four raised bands and a title label; three bands, gold rules at head and
+    tail), their covers (gilt frame and lozenge on oxblood, blue, black; blind on the others), the page edges (the
+    boards' dark edges painted at both sides, so a single box reads as covers and pages), an open spread (text, a red
+    initial, a framed picture), a scroll and a scroll's end; `M_VKI_Books` (VKI_MAT_MAP) on the TEXTILE slot overridden
+    per master (`k.slot_mats`; not a style-swapped slot). The user, at the first look: "books look dirty" -- the
+    leather's mottle, grain, stains and wear and the paper's noise cut to about a third (bump too). Every book is a
+    closed 12-triangle box and every scroll and ribbon closed (test T7 wants props closed); the scroll rack's 6-sided
+    scrolls keep it at 1,768 triangles (T9: over the 1,500 soft budget, under the 2,000 hard one -- a warning).
+    `vki_test_pieces` otherwise clean. Built in `WS_vki_library`, adopted into VKI_Pieces (`vki_adopt`; instances `*_ws`
+    left in the workshop's assembly), exported (8 pieces, the atlas's BC/N/R), Unity: Build Materials + Build Prefabs
+    (these 8): `Generated/Prefabs/VKI/Prop/`. Renders: `renders/interior/WS_vki_library/`. `M_VKI_Books` is two-sided
+    like every `M_VKI_` material (the export's cull policy). **Not yet:** the interior generators do not place them
+    (KitInteriorRules); the game's uses (town shelves to search for general-skill books, the guild hall's library work,
+    the tome item's ground model) are MedievalSetting work.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

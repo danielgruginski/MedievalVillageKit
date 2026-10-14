@@ -405,3 +405,22 @@ Generated from the masters in `VKI_Pieces` (triangles, footprint in 1.5 m cells,
 | `SM_VKI_Prop_Lectern` | 396 | 1,1 | floor |
 | `SM_VKI_Prop_Pew_300` | 1192 | 2,1 | floor |
 | `SM_VKI_Prop_VotiveRack` | 1228 | 1,1 | wall_floor |
+
+### Library (8)
+
+Package `library` (`src/interior/vki_props_library.py`, 2026-10-14). Books, scrolls and pages are painted on the book
+atlas `T_VKI_Books` (`vki_tex_library`: 4 x 4 cells -- six leathers' spines in two designs each, their covers, page
+edges, an open spread, a scroll and a scroll's end; stored at 1024) through `M_VKI_Books` on the TEXTILE slot,
+overridden per master. Every book is a closed 12-triangle box, a scroll a closed 6-7 sided roll (test T7). Workshop
+scene: `WS_vki_library` (the masters' instances in a row).
+
+| Piece | Tris | Cells | Mount |
+|---|---|---|---|
+| `SM_VKI_Prop_Book` | 12 | 1,1 | floor |
+| `SM_VKI_Prop_Book_Open` | 60 | 1,1 | table |
+| `SM_VKI_Prop_Bookcase_075` | 832 | 1,1 | wall_floor |
+| `SM_VKI_Prop_Bookcase_150` | 1312 | 1,1 | wall_floor |
+| `SM_VKI_Prop_Bookcase_150_Sparse` | 1028 | 1,1 | wall_floor |
+| `SM_VKI_Prop_Books_Pile` | 132 | 1,1 | floor |
+| `SM_VKI_Prop_ScrollRack_120` | 1768 | 1,1 | wall_floor |
+| `SM_VKI_Prop_TableDress_Books` | 144 | 1,1 | table |

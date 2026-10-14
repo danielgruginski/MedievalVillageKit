@@ -15,7 +15,7 @@ VKI_RENDERS = os.path.join(VKI_ROOT, "renders", "interior")
 # load order of the package texts (vki_tex / vki_textiles are generators, executed on demand, not listed)
 VKI_TEXTS = ["vki_fam_timber", "vki_floors", "vki_fam_stone", "vki_fam_board", "vki_fam_wattle", "vki_fam_ashlar",
              "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_fam_sewer", "vki_fam_water", "vki_fam_dwarf", "vki_props_home", "vki_props_tavern",
-             "vki_props_smithy", "vki_props_chapel", "vki_props_dungeon", "vki_props_adventure", "vki_props_lair", "vki_props_orc",
+             "vki_props_smithy", "vki_props_chapel", "vki_props_dungeon", "vki_props_adventure", "vki_props_lair", "vki_props_orc", "vki_props_library",
              "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_rooms_dwarf", "vki_props_poi", "vki_props_debris", "vki_fam_mine", "vki_rooms_mine", "vki_world", "vki_test"]
 
 
@@ -733,6 +733,8 @@ VKI_MAT_MAP = {
     "M_VKI_Web": dict(kind="web"),
     # sewn hides (goblin tents, lean-tos, bedrolls): T_VKI_Hide, patchwork pieces laced together (vki_tex_dungeon)
     "M_VKI_Hide": dict(tex="T_VKI_Hide", ph="#6E5038", nstr=1.0, spec=0.3),
+    # the book atlas (vki_tex_library; the library props' TEXTILE slot, vki_props_library): spines, covers, pages, scrolls
+    "M_VKI_Books": dict(tex="T_VKI_Books", ph="#5E3A26", nstr=0.6, spec=0.3),
     # sewer kit: old wet brick walls and brick paving (vki_tex_dungeon), dressed stone from T_VKI_StoneBlockIn (caps a
     # step paler than the brick), murky channel water (glossy, 88 % opaque over the dark bed), sludge, falling foam
     "M_VKI_SewerBrick": dict(tex="T_VKI_SewerBrick", ph="#4A3228", nstr=1.1, spec=0.35),
