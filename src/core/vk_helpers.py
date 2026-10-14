@@ -776,24 +776,25 @@ def braces_pattern(k,pattern):
 # ---------------- plaster ground floor (cheaper houses): stone plinth + timber frame + plaster
 PL=0.75
 def plaster_ground(k,kind="."):
+    PT=H1-0.003            # the plaster panels' top: 3 mm under the top beam's (in one plane they z-fought where a hole opens the roof)
     stone_panel(k,-1.5,1.5,0,PL,-0.28,0.25); plinth(k); batter(k,0.05)
     k.box((0,-0.2,PL+0.1),(CELL,0.4,0.2),WOOD,bevel=0.035)
     k.box((0,-0.2,H1-0.11),(CELL,0.4,0.22),WOOD,bevel=0.035)
     k.box((-1.5,-0.24,(PL+H1)/2),(0.24,0.2,H1-PL-0.2),WOOD,bevel=0.03)
     if kind==".":
-        grid_cut(k,k.box((0,-0.02,(PL+H1)/2),(CELL,0.44,H1-PL),PLASTER,bevel=0))
+        grid_cut(k,k.box((0,-0.02,(PL+PT)/2),(CELL,0.44,PT-PL),PLASTER,bevel=0))
         k.box((0,-0.24,(PL+H1)/2),(0.22,0.2,H1-PL-0.2),WOOD,bevel=0.03)
         for s_ in(-1,1): brace(k,s_*1.35,PL+0.25,s_*0.15,H1-0.3,y=-0.24)
     elif kind=="W":
         x0,x1,z0,z1=-0.55,0.55,1.1,2.25
-        for (a,b,c,d) in ((-1.5,x0,PL,H1),(x1,1.5,PL,H1),(x0,x1,PL,z0),(x0,x1,z1,H1)):
+        for (a,b,c,d) in ((-1.5,x0,PL,PT),(x1,1.5,PL,PT),(x0,x1,PL,z0),(x0,x1,z1,PT)):
             grid_cut(k,k.box(((a+b)/2,-0.02,(c+d)/2),(b-a,0.44,d-c),PLASTER,bevel=0))
         window_frame(k,x0,x1,z0,z1,depth_y=0.0,sill=False,face=-0.2)
         k.box((0,-0.3,z0-0.08+0.003),(1.5,0.3,0.16),WOOD,bevel=0.03)        # sill: 3 mm over the plaster under it (z-fighting)
         for s_ in(-1,1): k.box((s_*0.85,-0.24,(PL+H1)/2),(0.2,0.2,H1-PL-0.2),WOOD,bevel=0.03)
     elif kind=="D":
         hw=0.62; top=2.3
-        for (a,b,c,d) in ((-1.5,-hw,PL,H1),(hw,1.5,PL,H1),(-hw,hw,top,H1)):
+        for (a,b,c,d) in ((-1.5,-hw,PL,PT),(hw,1.5,PL,PT),(-hw,hw,top,PT)):
             grid_cut(k,k.box(((a+b)/2,-0.02,(c+d)/2),(b-a,0.44,d-c),PLASTER,bevel=0))
         # cut the plinth for the door
         for v in [v for v in k.bm.verts]: pass
@@ -1200,8 +1201,9 @@ def porch(k):
     k.box((0,yo+0.1,zl+0.05),(W_,0.2,0.22),WOOD,bevel=0.04)
     L=math.hypot(-yo+0.5,zh-zl+0.25); ang=math.atan2(zh-zl+0.25,-yo+0.5)
     k.box((0,(yo-0.5)/2,(zh+zl)/2+0.2),(W_+0.5,L,0.14),ROOF,rot=(ang,0,0),bevel=0.04)
-    # step
-    k.box((0,-0.75,0.1),(1.9,0.9,0.2),STONE,bevel=0.05,segs=2,jitter=0.02,seed=9)
+    # step: 0.13 high, under a door wall's own step (0.2 with 2 cm jitter, Wall_Stone_Door / Wall_Plaster_Door): at the same
+    # height the two crossed and z-fought in front of the door (MedievalSetting's z-fight watch, 2026-10-14)
+    k.box((0,-0.75,0.065),(1.9,0.9,0.13),STONE,bevel=0.05,segs=2,jitter=0.02,seed=9)
 
 def _cyl(k,center,r1,r2,depth,segs,mi,rot=None):
     vs=bmesh.ops.create_cone(k.bm,cap_ends=True,segments=segs,radius1=r1,radius2=r2,depth=depth)["verts"]
@@ -2183,9 +2185,10 @@ def ale_cask(k):
             a=math.asin(xs/r)*(1-2*i/8); prof.append((r*math.sin(a),zc-r*math.cos(a)))
         prof.append((-xs,zs)); prof.append((-0.58,zs))
         fr=[k.bm.verts.new((x,yc-0.08,z)) for x,z in prof]; bk=[k.bm.verts.new((x,yc+0.08,z)) for x,z in prof]
-        fs=[k.bm.faces.new(fr[::-1]),k.bm.faces.new(bk)]
+        # wound outward (they were inside out: every face pointing in, the bottom up in the ground's plane -- z-fighting)
+        fs=[k.bm.faces.new(fr),k.bm.faces.new(bk[::-1])]
         for i in range(len(prof)):
-            j=(i+1)%len(prof); fs.append(k.bm.faces.new((fr[i],fr[j],bk[j],bk[i])))
+            j=(i+1)%len(prof); fs.append(k.bm.faces.new((fr[i],bk[i],bk[j],fr[j])))
         for f in fs: f.material_index=WOOD
         k.bm.normal_update(); k.project(fs,WOOD)
     zt=zc-0.25
@@ -2841,13 +2844,15 @@ def thatch_ridge_cap(k,x0,x1):
         if f.normal.z<-0.2 or (abs(f.normal.z)<0.5 and f.normal.y*f.calc_center_median().y<0): f.normal_flip()
         f.material_index=THATCH; f.smooth=True
         for l in f.loops: p=l.vert.co; l[k.uv].uv=(p.x/1.2,0.1+abs(p.y)/1.2)
-    # liggers + zigzag spars
+    # liggers + zigzag spars -- stopped 8 cm short of a gable's rake roll where the cap runs past GX (run into the roll,
+    # they crossed its curve and z-fought: MedievalSetting's z-fight watch, 2026-10-14)
+    dx0=-GX+0.08 if x0<-GX else x0; dx1=GX-0.08 if x1>GX else x1
     for s_ in(-1,1):
         for ay in (0.36,0.66):
-            _cyl(k,((x0+x1)/2,s_*ay,roof_z(ay)+0.16*(1-(ay/0.8)**5)+0.035),0.028,0.028,x1-x0,6,WOOD,rot=Matrix.Rotation(math.pi/2,4,"Y"))
-        n=int(round((x1-x0)/0.3))
+            _cyl(k,((dx0+dx1)/2,s_*ay,roof_z(ay)+0.16*(1-(ay/0.8)**5)+0.035),0.028,0.028,dx1-dx0,6,WOOD,rot=Matrix.Rotation(math.pi/2,4,"Y"))
+        n=int(round((dx1-dx0)/0.3))
         for i in range(n):
-            xa=x0+i*(x1-x0)/n; xb=xa+(x1-x0)/n
+            xa=dx0+i*(dx1-dx0)/n; xb=xa+(dx1-dx0)/n
             ya,yb=(0.36,0.66) if i%2==0 else (0.66,0.36)
             pa=Vector((xa,s_*ya,roof_z(ya)+0.17*(1-(ya/0.8)**5)+0.03)); pb=Vector((xb,s_*yb,roof_z(yb)+0.17*(1-(yb/0.8)**5)+0.03))
             d=pb-pa; L=d.length; c=(pa+pb)/2

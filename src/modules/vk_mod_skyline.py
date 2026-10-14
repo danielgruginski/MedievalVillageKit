@@ -546,7 +546,9 @@ def sky_roof_gable_hoist(k):
 def sky_chimney_gable(k,wall_top):
     """end-wall chimney, wall-local (outer -Y), origin on the ridge line at the ground"""
     zt=wall_top+RIDGE+1.0; zf=zt-0.2
-    k.box((0,-0.7,0.8),(1.6,1.1,2.8),STONE,bevel=0.06,segs=2,tile=1.8)           # base z -0.6..2.2 (skirt)
+    # base z -0.6..2.2 (skirt): front and sides set back behind the quoin rocks (1-3 cm proud of them before, their tilt
+    # crossed the faces: z-fighting, 2026-10-14)
+    k.box((0,-0.68,0.8),(1.52,1.06,2.8),STONE,bevel=0.06,segs=2,tile=1.8)
     rock(k,(0,-0.75,0.1),(1.85,1.35,0.34),seed=41,tilt=0.02)
     rnd=random.Random(int(wall_top*10)); z=0.26; i=0
     while z<2.1:
