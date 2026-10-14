@@ -11,8 +11,8 @@ namespace MedievalKit
     /// A random ground floor for <see cref="KitRoom"/> (the kit's houses in outline): a footprint by kind, a hall with the
     /// front door in the south wall and the hearth (Timber fireplace / Stone hearth) on its north wall, side rooms split off
     /// by partitions with doors, windows round the walls, the side walls raked at the camera end; each room a type
-    /// (bedroom, kitchen, pantry, store, workroom) with its zone styles and furniture codes, placed so every room stays
-    /// walkable from its door. Set-pieces go first (<see cref="KitSetPieces"/>: the taproom's bar, the kitchen's oven
+    /// (bedroom, kitchen, pantry, store, workroom; a study, a library) with its zone styles and furniture codes, placed so
+    /// every room stays walkable from its door. Books by how learned and rich the house is (<see cref="Options.books"/>). Set-pieces go first (<see cref="KitSetPieces"/>: the taproom's bar, the kitchen's oven
     /// and worktable, the workroom's bench under its tool wall), dressing last (on the tables, a chest by the bed, a log
     /// basket by the hearth, lanterns on the walls).
     /// </summary>
@@ -28,6 +28,10 @@ namespace MedievalKit
             [Tooltip("One room: the hall over the whole floor, no side rooms (a great hall).")] public bool open;
             [Tooltip("A stair up the hall's west wall at its north end: \"up\" (arrival in front of its foot) or \"down\" (an upper " +
                      "floor: arrival beside its top, bedrooms aside, no front door); empty: none.")] public string stair = "";
+            [Tooltip("Books, by how learned and rich the house is (2026-10-14): 0 none, 1 a narrow bookcase in the hall, 2 a " +
+                     "bookcase in the hall and a study (a side room of bookcases, a scroll rack, a desk, a reading table), 3 a " +
+                     "library (the hall lined with bookcases and scroll racks). -1: by kind -- a townhouse 1 or 2 (its upper " +
+                     "floor none), the rest 0.")] public int books = -1;
         }
 
         const float IG = 1.5f;
@@ -44,11 +48,15 @@ namespace MedievalKit
             ["pantry"] = new[] { ("PN", 1, 1, "wall"), ("ba", 1, 2, "wall"), ("ja", 1, 1, "wall"), ("bx", 0, 1, "wall") },
             ["store"] = new[] { ("bx", 2, 3, "wall"), ("ba", 1, 2, "wall"), ("GR", 0, 1, "wall"), ("BS", 0, 1, "wall") },
             ["workroom"] = new[] { ("GR", 1, 1, "wall"), ("bx", 1, 2, "wall"), ("ir", 0, 1, "wall"), ("GS", 0, 1, "wall"), ("SH", 0, 1, "wall") },
+            // the library props (2026-10-14): BK bookcase, bk a half-empty one, BN a narrow one, SR a scroll rack, bp books heaped.
+            // A study's and a library's shelves go up first in runs along plain walls (Shelves); these are the rest
+            ["study"] = new[] { ("DK", 0, 1, "wall"), ("tb", 1, 1, "mid"), ("bp", 0, 1, "wall"), ("CH", 0, 1, "wall"), ("bk", 0, 1, "wall") },
+            ["library"] = new[] { ("TB", 1, 1, "mid"), ("DK", 0, 1, "wall"), ("bp", 1, 2, "wall"), ("rg", 0, 1, "mid"), ("bk", 0, 1, "wall") },
         };
         static readonly Dictionary<string, string> FloorOf = new Dictionary<string, string>
         {
             ["hall"] = "FlagRustic", ["taproom"] = "Boards_EW", ["bar"] = "Flag", ["bedroom"] = "Boards_NS", ["kitchen"] = "FlagRustic",
-            ["pantry"] = "Earth", ["store"] = "Earth", ["workroom"] = "FlagRustic",
+            ["pantry"] = "Earth", ["store"] = "Earth", ["workroom"] = "FlagRustic", ["study"] = "Boards_NS", ["library"] = "Boards_EW",
         };
         static readonly string[] Plasters = { "PlasterCream", "PlasterWhite", "PlasterOchre", "PlasterCream" };
         // room type -> dressing for its trestle tables, for its small tables; lanterns on its walls
@@ -59,6 +67,8 @@ namespace MedievalKit
             ["kitchen"] = (new[] { "TableDress_Meal_B" }, new[] { "TableDress_Meal_A" }, 1),
             ["bedroom"] = (null, null, 1), ["workroom"] = (null, null, 1), ["store"] = (null, null, 0), ["pantry"] = (null, null, 0),
             ["bar"] = (null, new[] { "TableDress_Tavern_C" }, 1),
+            ["study"] = (new[] { "TableDress_Books" }, new[] { "TableDress_Books" }, 1),
+            ["library"] = (new[] { "TableDress_Books" }, new[] { "TableDress_Books" }, 2),
         };
 
         public static (string plan, JObject record) Generate(Options o, Func<string, (int, int)> fp = null)
@@ -98,6 +108,11 @@ namespace MedievalKit
                 parts.Add(new Part { type = sideTypes[1 + rnd.Next(sideTypes.Length - 1)], c0 = sc0, c1 = sc1, r0 = 0, r1 = split - 1 });
             }
             else parts.Add(new Part { type = sideTypes[0], c0 = sc0, c1 = sc1, r0 = 0, r1 = nr - 1 });
+            // books (Options.books), decided on a random of their own: a house without them comes out as it always did
+            var brnd = new System.Random(o.seed * 7919 + 11);
+            int books = o.books >= 0 ? o.books : kind == "Townhouse" && !down ? 1 + brnd.Next(2) : 0;
+            if (books >= 3) hall.type = "library";
+            else if (books >= 2 && parts.Count > 1) parts[parts.Count - 1].type = "study";        // the last side room (a pantry, a bedroom)
             Part PartOf((int, int) p) => parts.FirstOrDefault(q => q.Has(p));
 
             // ---- walls: perimeter (windows, the front door, the hearth), partitions (a door from the hall into each room)
@@ -175,10 +190,14 @@ namespace MedievalKit
                     if (KitSetPieces.Strip(rnd, area, new[] { "WB", "WB" }) != null) KitSetPieces.WallHung(rnd, area, props, "ToolWall_150", 1, 1, new[] { "WB" });
                     else table.Insert(0, ("WB", 1, 1, "wall"));
                 }
+                var tall = Tall(area, nr);                                                                   // where a 2 m case may stand
+                if (p.type == "study" || p.type == "library") Shelves(rnd, tall, p.type == "library");      // the shelves first
                 if (p == hall && hearth is int hx && KitSetPieces.Beside(rnd, area, new[] { (hx, nr - 1), (hx + 1, nr - 1) }, "WP", q => q.Item2 == nr - 1) == null)
                     table.Add(("WP", 0, 1, "wall"));
                 if (p.type == "bedroom" && kind == "Townhouse" && rnd.Next(2) == 0)
                     table = table.Select(t => t.code == "BX" ? ("HT", t.min, t.max, t.place) : t).ToList();          // a half-tester
+                if (p == hall && books == 1) KitSetPieces.Strip(rnd, tall, new[] { "BN" }, "NEW");             // a narrow bookcase
+                if (p == hall && books == 2) KitSetPieces.Strip(rnd, tall, new[] { "BK" }, "NEW");             // a bookcase
                 KitFurnisher.Place(rnd, p.c0, p.r0, p.c1, p.r1, table, codes, reserved, doorCells, noWalk, fp);
                 if (p.type == "bedroom")
                 {
@@ -221,6 +240,32 @@ namespace MedievalKit
                 if (down) { R["floor"] = 1; R["links"] = new JArray(); }
             }
             return (Plan(nc, nr, codes, ew, ns), R);
+        }
+
+        /// <summary>the room as a tall piece sees it: a wall to stand against on a cell's north side anywhere, on its east or
+        /// west side only in the house's back half (the camera looks from the south: a 2 m case in the front rows hid the
+        /// room behind it), never on the south</summary>
+        static KitSetPieces.Area Tall(KitSetPieces.Area a, int nr) => new KitSetPieces.Area
+        {
+            c0 = a.c0, r0 = a.r0, c1 = a.c1, r1 = a.r1, codes = a.codes, reserved = a.reserved, ways = a.ways, noWalk = a.noWalk,
+            wall = (q, s) => s == 'N' || ((s == 'E' || s == 'W') && q.Item2 >= nr / 2) ? a.wall(q, s) : 0,
+        };
+
+        /// <summary>a study's or a library's shelves: runs of bookcases and scroll racks side by side along its plain walls
+        /// (never before a window or a door, nor the front wall: cut low for the camera, a 2 m case there hid the room),
+        /// each run tried in turn where it still fits</summary>
+        static void Shelves(System.Random rnd, KitSetPieces.Area area, bool library)
+        {
+            var runs = library
+                ? new[] { new[] { "BK", "BK", "SR", "BK" }, new[] { "BK", "SR", "BK" }, new[] { "BK", "BN", "BK" }, new[] { "BN", "SR", "BN" },
+                          new[] { "BK", "BK" }, new[] { "SR", "BK" }, new[] { "BN", "SR" }, new[] { "BK" }, new[] { "BN" }, new[] { "SR" } }
+                : new[] { new[] { "BK", "SR", "BK" }, new[] { "BK", "BK" }, new[] { "BK" }, new[] { "BN" } };
+            int placed = 0;
+            foreach (var run in runs)
+            {
+                if (!library && placed >= 1) break;                                    // a study: one run
+                if (KitSetPieces.Strip(rnd, area, run, "NEW") != null) placed++;
+            }
         }
 
         static string Plan(int nc, int nr, Dictionary<(int, int), string> codes, Dictionary<(int, int), string> ew, Dictionary<(int, int), string> ns)

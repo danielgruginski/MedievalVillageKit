@@ -64,7 +64,10 @@ VKI_ROOMS_CODES = {"Bed_Box": "BX", "Bed_HalfTester": "HT", "Bed_Straw": "bd", "
                    "Prop_WeaponRack": "WR", "Prop_Bellows": "BL", "Prop_Anvil": "AN", "QuenchTrough_150": "QT",
                    "CoalBin_150": "CO", "GoodsRack_150": "GR", "Prop_Grindstone": "GS", "Workbench_300": "WB",
                    "Workbench_Carpenter": "WB", "IronStock_150": "ir", "PoleLathe": "PL", "Pew_300": "PW",
-                   "Altar_300": "AL", "CandleStand_Pricket": "cd", "Lectern": "LC", "Font": "FT", "VotiveRack": "vr"}
+                   "Altar_300": "AL", "CandleStand_Pricket": "cd", "Lectern": "LC", "Font": "FT", "VotiveRack": "vr",
+                   # the library props (vki_props_library, 2026-10-14)
+                   "Bookcase_150": "BK", "Bookcase_150_Sparse": "bk", "Bookcase_075": "BN", "ScrollRack_120": "SR",
+                   "Books_Pile": "bp"}
 
 
 # ---------------------------------------------------------------- §6 ASCII plans (verbatim except the fixes listed in VKI_PLAN_CHANGES)

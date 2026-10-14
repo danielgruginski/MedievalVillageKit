@@ -1310,6 +1310,20 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     (KitInteriorRules); the game's uses (town shelves to search for general-skill books, the guild hall's library work,
     the tome item's ground model) are MedievalSetting work.
 
+107. 2026-10-14 (MedievalSetting, the user: "have the interior generators place them, for example the wizard's tower,
+    the chapel and townhouses", then "richer houses should have more books"). **The library props in the interiors.**
+    Plan codes (`vki_rooms` `VKI_ROOMS_CODES`, exported in `interior_rules.json`, Build Interior Rules): BK
+    `Bookcase_150`, bk `_Sparse`, BN `Bookcase_075`, SR `ScrollRack_120`, bp `Books_Pile`.
+    `KitInteriorGenerator.Options.books` (0-3, -1 by kind: a townhouse 1 or 2, its upper floor and every other kind 0)
+    -- decided on `new Random(seed * 7919 + 11)`, so a house without books comes out exactly as before: 1 a narrow
+    bookcase in the hall, 2 a bookcase and the last side room a **study** (a run of shelves, a desk, a reading table
+    with `TableDress_Books`, maybe a pile), 3 the hall a **library** (runs of shelves, a trestle table with books, desk,
+    piles, rug). Shelves go up first and in runs side by side (`Shelves` -> `KitSetPieces.Strip`: along plain walls,
+    never before a window or a door); the furnisher's rule of a clear cell round every piece kept a library to three
+    cases. **A tall piece's walls** (`Tall`): a north wall anywhere, an east or west wall only in the house's back half,
+    never the front (south) wall -- a 2 m case on the camera's side, or in the front rows, hid the room behind it. (`DK`
+    desks and the rest use the furnisher as before.)
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
