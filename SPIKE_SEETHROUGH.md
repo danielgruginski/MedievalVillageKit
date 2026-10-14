@@ -13,17 +13,17 @@ lengthways, the grass inside a house)?
 | | main line | spike |
 |---|---|---|
 | Kit (git) | `main` (263b0da: grass saturation, FreeAssets, one-sided materials) | branch `spike/seethrough` |
-| MedievalSetting (Plastic) | `/main` (cs:26) | pending changes in the workspace + shelveset (latest: sh:3) |
+| MedievalSetting (Plastic) | `/main` (cs:26) | pending changes in the workspace + shelveset (latest: sh:4) |
 
-MedievalSetting's side of the spike is six files left pending on `/main` -- `GameCamera.cs` (hidden check, cut
+MedievalSetting's side of the spike is eight files left pending on `/main` -- `GameCamera.cs` (hidden check, cut
 fields), `ClickToMove.cs` (cut test), `README.md`, `POLISH.md` (notes), the capture tool
 `Assets/Game/Scripts/Editor/SeeThroughSpike.cs` (+ .meta, added) -- and kept safe in a shelveset, re-shelved after each
-round (`cm shelveset create <files> --all -c=...`). Not a branch: switching the shared workspace would shelve and
+round (`cm shelveset create <files> --all -c=...`). Round 1 added `CreatureSilhouettes.cs` and `Player/PlayerModel.cs` (the keep mark). Not a branch: switching the shared workspace would shelve and
 re-apply every session's pending files (and rewrite them under a running Unity), and other sessions' check-ins would
-then land on the spike branch. So: never check those six files in to `/main` until the spike ends.
+then land on the spike branch. So: never check those eight files in to `/main` until the spike ends.
 
 The two go together: the game's spike code needs the kit's spike API (KitSeeThroughProbe, KitSeeThrough.CutY). Back to
-the main game (not while Unity plays): `git checkout main` in the kit and `cm undo` the six files in MedievalSetting
+the main game (not while Unity plays): `git checkout main` in the kit and `cm undo` the eight files in MedievalSetting
 (they are in the shelveset); back to the spike: `git checkout spike/seethrough` and `cm shelveset apply sh:<n>`.
 
 ## What the spike holds (HANDOFF 99-103)
