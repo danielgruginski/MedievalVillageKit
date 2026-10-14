@@ -5,6 +5,7 @@
 
 TWN_SF=-0.25          # stone wall face (y)
 TWN_PF=-0.24          # plaster wall face (y)
+TWN_PROUD=0.003       # a dressed face laid over a wall's own face stands this proud of it (flush, the two z-fought)
 
 def twn_pick(name,fallback):
     """use another agent's piece only if it exists, else a kit / own fallback"""
@@ -64,6 +65,14 @@ def twn_fan(k,cx,hw,spring,y,mi=WINDOW,n=10):
         f=k.bm.faces.new((c,arc[i],arc[i+1])); f.material_index=mi
         for l in f.loops: l[k.uv].uv=(l.vert.co.x-cx+hw,l.vert.co.z)
     k.bm.normal_update()
+
+def twn_side_reveal(k,x,s,y0,y1,z0,z1,mi=STONE_BLOCK):
+    """a dressed reveal on an opening's side at x (s -1: its left side, facing +X; +1: its right), y0..y1, z0..z1 --
+       TWN_PROUD into the opening, over the wall panel's own side face: laid on it, the two z-fought (the game's z-fight
+       watch, 2026-10-13: the twin window's reveals by the mullion swapped stone as the camera moved)"""
+    xx=x-s*TWN_PROUD
+    v=[k.bm.verts.new(p) for p in ((xx,y0,z0),(xx,y1,z0),(xx,y1,z1),(xx,y0,z1))]
+    f=k.bm.faces.new(v if s<0 else v[::-1]); f.material_index=mi
 
 def twn_glass(k,x0,x1,z0,z1,y):
     k.quad([(x0,y,z0),(x1,y,z0),(x1,y,z1),(x0,y,z1)],WINDOW,uvs=[(x0,z0),(x1,z0),(x1,z1),(x0,z1)])
@@ -127,9 +136,7 @@ def twn_wall_stoneup_twin(k):
         yg=-0.05
         twn_glass(k,cx-hw,cx+hw,zb,sp,yg); twn_fan(k,cx,hw,sp,yg)
         # reveals (dressed stone) so the recess reads
-        for s in(-1,1):
-            v=[k.bm.verts.new(p) for p in ((cx+s*hw,-0.25,zb),(cx+s*hw,yg,zb),(cx+s*hw,yg,sp),(cx+s*hw,-0.25,sp))]
-            f=k.bm.faces.new(v if s<0 else v[::-1]); f.material_index=STONE_BLOCK
+        for s in(-1,1): twn_side_reveal(k,cx+s*hw,s,-0.25,yg,zb,sp)
         twn_arch_soffit(k,cx,hw,sp,-0.25,yg,STONE_BLOCK,n=10)
         k.box((cx,-0.15,zb+0.01),(2*hw,0.2,0.02),STONE_BLOCK,bevel=0)
         twn_voussoirs(k,cx,hw,sp,-0.27,-0.13,n=7,th=0.18,seed=int(cx*10)+5,out=0.06,segs=1)
@@ -189,9 +196,7 @@ def twn_wall_stoneup_loading(k):
     twn_jambs(k,-hw,hw,0.18,z1,gap=0.02,seed=7,long_=0.34,short_=0.22)
     # interior darkness + floor + a sack
     k.quad([(-hw,0.2,z0),(hw,0.2,z0),(hw,0.2,z1),(-hw,0.2,z1)],VOID,uvs=[(0,0),(1,0),(1,1),(0,1)])
-    for s in(-1,1):
-        v=[k.bm.verts.new(p) for p in ((s*hw,-0.25,z0),(s*hw,0.2,z0),(s*hw,0.2,z1),(s*hw,-0.25,z1))]
-        f=k.bm.faces.new(v if s<0 else v[::-1]); f.material_index=STONE_BLOCK
+    for s in(-1,1): twn_side_reveal(k,s*hw,s,-0.25,0.2,z0,z1)
     k.box((0,0.0,z0+0.02),(2*hw,0.45,0.04),PLANKS,bevel=0)
     k.box((0.25,0.05,z0+0.3),(0.4,0.3,0.55),BURLAP,bevel=0.1,segs=2,jitter=0.03,seed=4)
     k.box((-0.3,0.05,z0+0.22),(0.45,0.4,0.4),WOOD,bevel=0.03)
@@ -201,8 +206,10 @@ def twn_wall_stoneup_loading(k):
 
 def twn_wall_stoneup_door(k):
     hw=0.55; sp=1.8; zt=0.3
-    twn_hole(k,-1.5,1.5,0,H2,-hw,hw,0,sp)
-    twn_arch_fill(k,0,hw,sp,H2,-0.25,0.25)
+    # the hole up to the arch's crown, the spandrels filled up to it (as the twin window's): with the hole to the springing
+    # line, a solid panel stood over the arch and the spandrels and an upper panel were built over it (flush, z-fighting)
+    twn_hole(k,-1.5,1.5,0,H2,-hw,hw,0,sp+hw)
+    twn_arch_fill(k,0,hw,sp,sp+hw,-0.25,0.25)
     twn_belt(k,x0=-1.5,x1=-hw-0.12,n=2,seed=7); twn_belt(k,x0=hw+0.12,x1=1.5,n=2,seed=8)
     k.box((0,-0.2,zt/2),(2*hw+0.3,0.62,zt),STONE_BLOCK,bevel=0.04,segs=2)                     # threshold slab
     twn_voussoirs(k,0,hw,sp,-0.27,-0.1,n=7,th=0.24,seed=12)
@@ -210,9 +217,7 @@ def twn_wall_stoneup_door(k):
         for j,(zc,w) in enumerate(((zt+0.3,0.38),(zt+0.8,0.26),(zt+1.25,0.38))):
             k.box((s*(hw+w/2),-0.24,zc),(w,0.2,0.42),STONE_BLOCK,bevel=0.04,segs=1,jitter=0.008,seed=60+j+(s>0)*4)
     twn_arch_soffit(k,0,hw,sp,-0.25,0.02,STONE_BLOCK,n=12)
-    for s in(-1,1):
-        v=[k.bm.verts.new(p) for p in ((s*hw,-0.25,zt),(s*hw,0.02,zt),(s*hw,0.02,sp),(s*hw,-0.25,sp))]
-        f=k.bm.faces.new(v if s<0 else v[::-1]); f.material_index=STONE_BLOCK
+    for s in(-1,1): twn_side_reveal(k,s*hw,s,-0.25,0.02,zt,sp)
     # door leaf (boards follow the arch)
     nb=5
     for i in range(nb):
@@ -320,10 +325,13 @@ def twn_inner_corner_plasterup(k):
 TWN_CZ=0.95           # counter top (Stock socket at wall-local (0,-0.55,TWN_CZ))
 
 def twn_skirt(k,x0=-1.5,x1=1.5,y0=-0.3,y1=0.25,z0=-0.6,mi=STONE):
-    """hidden skirt so the piece never floats on uneven terrain"""
-    k.box(((x0+x1)/2,(y0+y1)/2,z0/2),(x1-x0,y1-y0,-z0),mi,bevel=0)
+    """hidden skirt so the piece never floats on uneven terrain -- its top TWN_PROUD under the piece's base: where it shows
+       beside the piece (a stair's foot), at the base it lay in the ground's plane and z-fought (2026-10-13)"""
+    k.box(((x0+x1)/2,(y0+y1)/2,(z0-TWN_PROUD)/2),(x1-x0,y1-y0,-z0-TWN_PROUD),mi,bevel=0)
 
 def twn_reveal(k,x0,x1,z0,z1,yf,yb,mi=STONE_BLOCK,top=True,bottom=False):
+    # TWN_PROUD inside the opening, over the wall panels' own faces (laid on them, the two z-fought)
+    x0+=TWN_PROUD; x1-=TWN_PROUD; z1-=TWN_PROUD*top; z0+=TWN_PROUD*bottom
     for s,x in((-1,x0),(1,x1)):
         v=[k.bm.verts.new(p) for p in ((x,yf,z0),(x,yb,z0),(x,yb,z1),(x,yf,z1))]
         f=k.bm.faces.new(v if s<0 else v[::-1]); f.material_index=mi
@@ -832,15 +840,17 @@ def twn_stair_stone_ext(k):
     twn_prism_xz(k,[(x0,0.0),(xL,0.0),(xL,rise-0.28),(x0+run,rise-0.28)],y1,y0,ASHLAR)
     for i in range(n):
         k.box((x0+t*(i+0.5),(y0+yw)/2,(i+1)*h-0.2),(t+0.03,y0-yw,0.4),STONE_BLOCK,bevel=0.025,segs=1,jitter=0.006,seed=i)
-    k.box(((x0+run+xL)/2,(y0+y1)/2,rise-0.12),(xL-x0-run,y0-y1,0.24),STONE_BLOCK,bevel=0.03)   # landing slab
+    # landing slab: its top TWN_PROUD under a door's threshold slab (Wall_StoneUp_Door's, at the same height: z-fighting)
+    k.box(((x0+run+xL)/2,(y0+y1)/2,rise-0.12-TWN_PROUD),(xL-x0-run,y0-y1,0.24),STONE_BLOCK,bevel=0.03)
     # parapet: sloped band then level along the landing, capped
     twn_prism_xz(k,[(x0,-0.45),(x0+run,rise-0.45),(x0+run,rise+0.72),(x0,0.72)],y1-0.03,yw,ASHLAR)
-    twn_prism_xz(k,[(x0+run,rise-0.45),(xL,rise-0.45),(xL,rise+0.72),(x0+run,rise+0.72)],y1-0.03,yw,ASHLAR)
+    xP=xL+TWN_PROUD                                                  # (its end proud of the end wall's and the slab's)
+    twn_prism_xz(k,[(x0+run,rise-0.45),(xP,rise-0.45),(xP,rise+0.72),(x0+run,rise+0.72)],y1-0.03,yw,ASHLAR)
     L=math.hypot(run,rise); a=math.atan2(rise,run)
     k.box((x0+run/2,(yw+y1)/2-0.015,rise/2+0.78),(L+0.1,0.42,0.12),STONE_BLOCK,rot=(0,-a,0),bevel=0.03)
     k.box(((x0+run+xL)/2,(yw+y1)/2-0.015,rise+0.78),(xL-x0-run+0.1,0.42,0.12),STONE_BLOCK,bevel=0.03)
     k.box((xL-0.2,(y0+y1)/2,rise+0.36),(0.4,y0-y1,0.72),ASHLAR,bevel=0)                     # landing end wall
-    k.box((xL-0.2,(y0+y1)/2,rise+0.78),(0.42,y0-y1+0.02,0.12),STONE_BLOCK,bevel=0.03)
+    k.box((xL-0.2,(y0+y1)/2,rise+0.78+TWN_PROUD),(0.42,y0-y1+0.02,0.12),STONE_BLOCK,bevel=0.03)   # (over the landing coping)
     k.box((x0-0.12,(yw+y1)/2-0.03,0.5),(0.5,0.5,1.0),STONE_BLOCK,bevel=0.05,segs=2)          # newel
     _ico(k,(x0-0.12,(yw+y1)/2-0.03,1.12),0.17,STONE_BLOCK,sub=1)
     # arched store under the landing

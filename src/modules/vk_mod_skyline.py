@@ -442,11 +442,15 @@ def sky_roof_crossgable(k):
 # ------------------------------------------------------------------ stone parapet gables
 SKY_PAR=(1.25,1.75)
 SKY_SADDLE_TOP=RIDGE+0.3+0.2+0.52       # top of the flush apex stone (emblem mount height)
+SKY_SEAT=0.04         # the parapet's seat (0.3 m down into the wall under it) is this much narrower each side: flush with
+                      # the wall's faces, the two z-fought (the walls wobble 35 mm; MedievalSetting's z-fight watch, 2026-10-13)
+
 def sky_parapet(k,x0,x1,kind="flush",band=True):
     xc=(x0+x1)/2; w=x1-x0; ye=2.9
     if kind=="flush":
-        pts=[(-ye,-0.3),(ye,-0.3),(ye,roof_z(ye)+0.3),(0.0,RIDGE+0.3),(-ye,roof_z(ye)+0.3)]
+        pts=[(-ye,0.0),(ye,0.0),(ye,roof_z(ye)+0.3),(0.0,RIDGE+0.3),(-ye,roof_z(ye)+0.3)]
         sky_prism(k,pts,x0,x1,STONE,axis="x")
+        k.box((xc,0,-0.15),(w-2*SKY_SEAT,2*ye,0.3),STONE,bevel=0)          # the seat
         L=math.hypot(ye,RIDGE-roof_z(ye)); ang=math.atan2(RIDGE-roof_z(ye),ye); n=6
         for s in(-1,1):
             for i in range(n):
@@ -458,11 +462,13 @@ def sky_parapet(k,x0,x1,kind="flush",band=True):
         for kk in range(6):
             a0=3.0-0.5*(kk+1); a1=3.0-0.5*kk; zt=roof_z(a0)+0.3
             if kk==5:
-                k.box((xc,0,(zt-0.3)/2),(w,1.0,zt+0.3),STONE,bevel=0)
+                k.box((xc,0,zt/2),(w,1.0,zt),STONE,bevel=0)
+                k.box((xc,0,-0.15),(w-2*SKY_SEAT,1.0,0.3),STONE,bevel=0)               # the seat
                 k.box((xc,0,zt+0.05),(w+0.12,1.1,0.1),ASHLAR,bevel=0.025)
             else:
                 for s in(-1,1):
-                    k.box((xc,s*(a0+a1)/2,(zt-0.3)/2),(w,0.5,zt+0.3),STONE,bevel=0)
+                    k.box((xc,s*(a0+a1)/2,zt/2),(w,0.5,zt),STONE,bevel=0)
+                    k.box((xc,s*(a0+a1)/2,-0.15),(w-2*SKY_SEAT,0.5,0.3),STONE,bevel=0)   # the seat
                     k.box((xc,s*(a0+a1)/2+s*0.02,zt+0.05),(w+0.12,0.56,0.1),ASHLAR,bevel=0.025)
         zt=RIDGE+0.3+0.1
         k.box((xc,0,zt+0.45),(0.5,0.5,0.9),ASHLAR,bevel=0.03)
