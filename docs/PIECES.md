@@ -2,7 +2,7 @@
 
 Generated from the .blend on 2026-09-23 (`docs/PIECES.md`). Dimensions are the master's bounding box in metres (x × y × z).
 Every piece is a hidden master; the maps place instances that share its mesh.
-Total: 483 masters.
+Total: 483 masters (the crop rows updated 2026-10-14: raised beds, + `SM_VK_Crop_Bed`).
 
 The interior kit's 146 pieces (`SM_VKI_*`, added 2026-09-26) are listed in [INTERIOR_KIT.md §6](INTERIOR_KIT.md#6-pieces).
 The Mats column below predates two material slots added since: `kit_mats()` now returns 55 slots.
@@ -26,11 +26,12 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VK_Corner_Plaster` | 0.83 × 0.80 × 3.02 | 260 | 52 |
 | `SM_VK_Corner_Stone` | 1.27 × 1.26 × 3.06 | 768 | 52 |
 | `SM_VK_Corner_Timber` | 0.74 × 0.74 × 3.78 | 284 | 52 |
-| `SM_VK_Crop_Cabbage` | 3.16 × 3.10 × 0.48 | 2,868 | 52 |
-| `SM_VK_Crop_Carrot` | 3.09 × 3.01 × 0.60 | 2,000 | 52 |
-| `SM_VK_Crop_Lavender` | 3.19 × 3.00 × 0.90 | 1,072 | 52 |
-| `SM_VK_Crop_Pumpkin` | 2.91 × 3.06 × 0.69 | 2,592 | 52 |
-| `SM_VK_Crop_Wheat` | 3.36 × 3.13 × 1.15 | 1,832 | 52 |
+| `SM_VK_Crop_Bed` | 2.92 × 2.92 × 0.66 | 672 | 55 |
+| `SM_VK_Crop_Cabbage` | 3.04 × 2.98 × 0.97 | 3,220 | 55 |
+| `SM_VK_Crop_Carrot` | 2.96 × 2.92 × 1.09 | 2,352 | 55 |
+| `SM_VK_Crop_Lavender` | 3.07 × 2.93 × 1.38 | 1,424 | 55 |
+| `SM_VK_Crop_Pumpkin` | 2.92 × 2.99 × 1.18 | 2,944 | 55 |
+| `SM_VK_Crop_Wheat` | 3.24 × 3.01 × 1.63 | 2,184 | 55 |
 | `SM_VK_Deco_Bush` | 1.95 × 1.84 × 1.24 | 240 | 52 |
 | `SM_VK_Deco_Ivy_A` | 2.26 × 0.37 × 2.96 | 752 | 52 |
 | `SM_VK_Deco_Ivy_B` | 1.75 × 0.38 × 4.23 | 904 | 52 |
@@ -176,7 +177,7 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VK_Corner_Posts_Barn` | 1.01 × 1.01 × 4.86 | 360 | 52 |
 | `SM_VK_Corner_Shed` | 0.55 × 0.55 × 3.22 | 272 | 52 |
 | `SM_VK_Corner_Shed_Raised` | 0.42 × 0.42 × 2.74 | 196 | 52 |
-| `SM_VK_Crop_TreeNursery` | 2.98 × 2.94 × 1.45 | 1,964 | 52 |
+| `SM_VK_Crop_TreeNursery` | 2.93 × 2.92 × 1.94 | 2,316 | 55 |
 | `SM_VK_Prop_GranaryStep` | 1.17 × 1.24 × 1.47 | 360 | 52 |
 | `SM_VK_Prop_StaddleStone` | 0.73 × 0.73 × 1.25 | 154 | 52 |
 | `SM_VK_RoofS_Gable` | 3.88 × 5.14 × 3.75 | 4,202 | 52 |

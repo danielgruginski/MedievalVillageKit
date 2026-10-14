@@ -158,7 +158,30 @@ namespace MedievalKit
         {
             if (!Application.isPlaying) return;
             SetUpSeeThrough();
+            CarveBeds();
         }
+
+        /// <summary>the kit's crop fields are raised beds since 2026-10-14 (SM_VK_Crop_*: the soil 0.2 m up in a timber frame;
+        /// a flat bed z-fought with the undulating ground), so in play each carves the navmesh as a box the frame's size --
+        /// the levels were baked when a field was a slab one walked through, and a walker wading through a frame read
+        /// wrong</summary>
+        void CarveBeds()
+        {
+            foreach (var mf in GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (mf.sharedMesh == null || !mf.name.StartsWith("SM_VK_Crop_", StringComparison.Ordinal)) continue;
+                if (mf.GetComponent<UnityEngine.AI.NavMeshObstacle>() != null) continue;
+                var ob = mf.gameObject.AddComponent<UnityEngine.AI.NavMeshObstacle>();
+                ob.shape = UnityEngine.AI.NavMeshObstacleShape.Box;
+                ob.center = Vector3.zero;
+                ob.size = new Vector3(BedSize, 0.7f, BedSize);
+                ob.carving = true;
+                ob.carveOnlyStationary = true;
+            }
+        }
+
+        /// <summary>a raised bed's frame across (m; the Blender kit's crop beds, vk_helpers bed_frame)</summary>
+        public const float BedSize = 2.92f;
 
         /// <summary>the see-through's marks, cuts and caps for this level (<see cref="Start"/>); the cap bake calls it in the
         /// editor with <see cref="KitSeeThroughCaps.Collecting"/> set, to learn which caps the level needs (it puts every

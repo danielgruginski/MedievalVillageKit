@@ -566,7 +566,9 @@ of an outdoor map also reports its islands (`KitVillageTools.Islands`): the piec
 from the start spawn, on the ground (inside buildings, a cage, the siege tower, a pocket among trunks) and on top of
 things (rocks, roofs, walkways), with the largest; a spawn, marker or encounter point whose nearest navmesh within
 1.5 m (where a creature is put down) is an island is a warning, unless it is meant to be there (an encounter point
-lifted off the ground: archers on a walkway or a tower, a lookout; a marker in a cage).
+lifted off the ground: archers on a walkway or a tower, a lookout; a marker in a cage). The crop fields
+(`SM_VK_Crop_*`) are raised beds: in play `KitVillage` gives each a carving NavMeshObstacle the frame's size
+(`CarveBeds`), so a level baked with its fields walkable is walked round them.
 
 **See-through.** The kit's shader (KitLit, every kit material) can open a hole round the game's walker: what stands
 between the camera and the walker (in a cone to a disc round its chest, in front of it along the camera's level

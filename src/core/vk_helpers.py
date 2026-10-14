@@ -3124,12 +3124,32 @@ EXTRA_SPECS+=[("SM_VK_Prop_Fountain",lambda k: prop_fountain(k),dict(wobble=Fals
               ("SM_VK_LowWall_Lychgate",lambda k: lychgate(k),dict(wobble=False,grime=True))]
 
 # =====================  FARM SET  =====================
+# Raised beds (2026-10-14, the user's call: a field's flat 6 cm of soil cut in and out of the undulating ground and
+# z-fought with it): the soil CROPBED_RAISE up inside a timber frame whose boards reach CROPBED_SINK under the piece's base, so a
+# bump or a slope under the bed stays behind them. Everything grown on a bed sits CROPBED_LIFT higher than on the old slab.
+CROPBED_RAISE=0.2; CROPBED_SINK=0.35; CROPBED_T=0.07
+CROPBED_LIFT=CROPBED_RAISE-0.06
+def bed_frame(k,W=2.9,D=2.9):
+    """a raised bed's frame: four boards (the short ones between the long ones) and corner posts 1 cm proud of them;
+    returns the inside (w, d)"""
+    T=CROPBED_T; top=CROPBED_RAISE+0.05; bot=-CROPBED_SINK
+    for s in(-1,1):
+        k.box((0,s*(D/2-T/2),(top+bot)/2),(W,T,top-bot),WOOD,bevel=0.015)
+        k.box((s*(W/2-T/2),0,(top+bot)/2),(T,D-2*T,top-bot),WOOD,bevel=0.015)
+    pt=top+0.06
+    for sx in(-1,1):
+        for sy in(-1,1): k.box((sx*(W/2-0.04),sy*(D/2-0.04),(pt+bot)/2),(0.1,0.1,pt-bot),WOOD,bevel=0.02)
+    return W-2*T,D-2*T
 def soil_bed(k,W=2.9,D=2.9,rows=7,ridge_h=0.12):
-    k.box((0,0,0.03),(W,D,0.06),SOIL,bevel=0)
+    """a raised bed of soil ridges (bed_frame); returns the inside (w, d)"""
+    w,d=bed_frame(k,W,D)
+    k.box((0,0,(CROPBED_RAISE-CROPBED_SINK)/2),(w-0.004,d-0.004,CROPBED_RAISE+CROPBED_SINK),SOIL,bevel=0)
     for i in range(rows):
-        y=-D/2+(i+0.5)*D/rows
-        k.box((0,y,0.08),(W-0.1,D/rows*0.62,ridge_h),SOIL,bevel=0.05,segs=1,jitter=0.01,seed=i)
-def crop_rows(k,cell,rows=7,per=8,h=(0.8,1.05),w=0.55,seed=0,W=2.9,D=2.9,z0=0.12):
+        y=-d/2+(i+0.5)*d/rows
+        k.box((0,y,CROPBED_RAISE+0.02),(w-0.06,d/rows*0.62,ridge_h),SOIL,bevel=0.05,segs=1,jitter=0.01,seed=i)
+    return w,d
+def crop_bed(k): soil_bed(k)                         # an empty bed (the game's bare garden plot)
+def crop_rows(k,cell,rows=7,per=8,h=(0.8,1.05),w=0.55,seed=0,W=2.9-2*CROPBED_T,D=2.9-2*CROPBED_T,z0=0.12+CROPBED_LIFT):
     rnd=random.Random(seed)
     for i in range(rows):
         y=-D/2+(i+0.5)*D/rows
@@ -3143,15 +3163,15 @@ def crop_wheat(k): soil_bed(k); crop_rows(k,"wheat",rows=7,per=9,seed=1)
 def crop_carrot(k): soil_bed(k); crop_rows(k,"leafy",rows=7,per=10,h=(0.35,0.5),w=0.42,seed=2)
 def crop_lavender(k): soil_bed(k,rows=5); crop_rows(k,"lavender",rows=5,per=7,h=(0.6,0.8),w=0.6,seed=3)
 def crop_cabbage(k):
-    soil_bed(k); rnd=random.Random(4)
+    w,d=soil_bed(k); rnd=random.Random(4); L=CROPBED_LIFT
     for i in range(7):
-        y=-1.45+(i+0.5)*2.9/7
+        y=-d/2+(i+0.5)*d/7
         for j in range(7):
-            x=-1.45+(j+0.5)*2.9/7+rnd.uniform(-0.05,0.05)
-            goods_map(k,_ico(k,(x,y,0.3),0.19,LEAF,(1,1,0.85),sub=1,jit=0.02,seed=i*9+j),"cabbage",ref=(math.cos(i+j),math.sin(i+j),0))
+            x=-w/2+(j+0.5)*w/7+rnd.uniform(-0.05,0.05)
+            goods_map(k,_ico(k,(x,y,0.3+L),0.19,LEAF,(1,1,0.85),sub=1,jit=0.02,seed=i*9+j),"cabbage",ref=(math.cos(i+j),math.sin(i+j),0))
             for a in range(4):
                 aa=a*1.57+rnd.uniform(-0.3,0.3)
-                card(k,(x+math.cos(aa)*0.16,y+math.sin(aa)*0.16,0.24),(math.cos(aa+1.57),math.sin(aa+1.57),0),(math.cos(aa)*0.8,math.sin(aa)*0.8,0.6),0.3,0.3,"ivy",flip=a%2==0)
+                card(k,(x+math.cos(aa)*0.16,y+math.sin(aa)*0.16,0.24+L),(math.cos(aa+1.57),math.sin(aa+1.57),0),(math.cos(aa)*0.8,math.sin(aa)*0.8,0.6),0.3,0.3,"ivy",flip=a%2==0)
 def pumpkin(k,c,r,seed=0):
     rnd=random.Random(seed); n=16; rings=[]
     prof=[(0.0,-1.0),(0.45,-0.92),(0.8,-0.62),(1.0,-0.1),(0.95,0.35),(0.7,0.72),(0.3,0.9),(0.0,0.82)]
@@ -3169,13 +3189,13 @@ def pumpkin(k,c,r,seed=0):
     goods_map(k,fs,"pumpkin",c=c)                    # the atlas grooves (u = k/4) sit on the modelled ribs (a = k*pi/4)
     _cyl(k,(cx,cy,cz+r*0.75),0.035,0.025,0.16,6,LEAF)
 def crop_pumpkin(k):
-    soil_bed(k,rows=4); rnd=random.Random(5)
+    soil_bed(k,rows=4); rnd=random.Random(5); L=CROPBED_LIFT
     for i in range(9):
         x=rnd.uniform(-1.2,1.2); y=rnd.uniform(-1.2,1.2); r=rnd.uniform(0.2,0.34)
-        pumpkin(k,(x,y,0.12+r*0.72),r,seed=i)
+        pumpkin(k,(x,y,0.12+L+r*0.72),r,seed=i)
     for i in range(26):
-        x=rnd.uniform(-1.35,1.35); y=rnd.uniform(-1.35,1.35); aa=rnd.uniform(0,6.28)
-        card(k,(x,y,0.2),(math.cos(aa),math.sin(aa),0),(0,0.3,1),0.45,0.35,"ivy",flip=i%2==0)
+        x=rnd.uniform(-1.3,1.3); y=rnd.uniform(-1.3,1.3); aa=rnd.uniform(0,6.28)
+        card(k,(x,y,0.2+L),(math.cos(aa),math.sin(aa),0),(0,0.3,1),0.45,0.35,"ivy",flip=i%2==0)
 def scarecrow(k):
     k.box((0,0,1.1),(0.1,0.1,2.2),WOOD,bevel=0.02)
     k.box((0,0,1.65),(1.5,0.09,0.09),WOOD,bevel=0.02)
@@ -3234,6 +3254,7 @@ EXTRA_SPECS+=[("SM_VK_Crop_Wheat",lambda k: crop_wheat(k),dict(wobble=False,grim
               ("SM_VK_Crop_Lavender",lambda k: crop_lavender(k),dict(wobble=False,grime=True)),
               ("SM_VK_Crop_Cabbage",lambda k: crop_cabbage(k),dict(wobble=False,grime=True)),
               ("SM_VK_Crop_Pumpkin",lambda k: crop_pumpkin(k),dict(wobble=False,grime=True)),
+              ("SM_VK_Crop_Bed",lambda k: crop_bed(k),dict(wobble=False,grime=True)),
               ("SM_VK_Prop_Scarecrow",lambda k: scarecrow(k),dict(wobble=False,grime=False)),
               ("SM_VK_Prop_Chickens",lambda k: chickens(k),dict(wobble=False,grime=False)),
               ("SM_VK_Prop_ChickenCoop",lambda k: chicken_coop(k),dict(wobble=False,grime=True))]

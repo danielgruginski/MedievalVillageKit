@@ -1260,8 +1260,30 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     check and the cut in `GameCamera`, `ClickToMove.SeenThrough` (`CutAt`), the keep bit on carried items
     (`CreatureSilhouettes`, `PlayerModel`), the baked bank, the capture tool (Tools > See-through Spike) and the z-fight
     watch (`ZFightWatch`, F8; the find list behind entry 98's two batches). **Open:** entry 98's smaller z-fighting
-    leftovers; a crop's soil on undulating ground (the user's call: raised beds, or the ground flattened under them);
+    leftovers; a crop's soil on undulating ground (the user's call: raised beds, or the ground flattened under them -- done: raised beds, entry 105);
     self-overlapping outlines inside one cap (16 Greywall cap meshes, 0.15 m2 in all).
+
+105. 2026-10-14 (MedievalSetting, the user's call on entry 98's leftover, the crops' soil on undulating ground: "raise
+    beds"). **Crop fields are raised beds** (`vk_helpers` `bed_frame` / `soil_bed`; `CROPBED_RAISE` 0.2, `CROPBED_SINK`
+    0.35, `CROPBED_T` 0.07): a timber frame of four boards (the short ones between the long ones) and corner posts 1 cm
+    proud of them, the boards from 0.35 m under the piece's base to 0.25 m over it; the soil inside at 0.2 m (a fill
+    down to the boards' foot, 2 mm inside them), the ridges and every plant lifted by `CROPBED_LIFT` (0.14 m) and set
+    inside the frame (2.76 m). A flat bed's 6 cm of soil cut in and out of the undulating ground and z-fought with it
+    (the watch: the hamlet's lavender, pumpkin and wheat, Greywall's carrots, the guild garden's plots); behind the
+    boards a bump or a slope under a bed no longer shows. Wheat, carrot, lavender, cabbage, pumpkin and the tree nursery
+    (`vk_mod_frontier`, the same `soil_bed`) rebuilt and exported, and a new **`SM_VK_Crop_Bed`**, an empty bed (the
+    game's bare garden plot). Name clash met: `BED_T` is also `vk_terrain`'s (a tuple), loaded later into the same
+    namespace -- hence `CROPBED_*`. The frame is now each crop's first material (`M_VK_Wood` sorts before `M_VK_Soil`):
+    the crop prefabs were rebuilt (Build Prefabs, crops only); the maps' 90 crops (Hamlet, Greywall, Northfields,
+    VK_ValleyTown) are prefab instances and follow. **Walked round:** the levels' navmesh runs through the fields (one
+    waded through a slab); `KitVillage.CarveBeds` gives each `SM_VK_Crop_*` a carving `NavMeshObstacle` the frame's size
+    (`KitVillage.BedSize` 2.92) in play, so no level had to be baked again. MedievalSetting: a bare garden plot is the
+    empty bed (`GameRules.plotSoil`; drawing only the carrot field's first material would now draw only its frame), a
+    field grows from its soil line (scaled 0.6 / 0.75 / 0.85 / 1 about the soil, so the frame barely moves), plants set
+    out on a bed stand on its soil, and a plot carves the navmesh too (reached from 1.34 m; its use radius is 1.7).
+    Checked in play (Greywall): the fenced garden's beds and the guild garden's plots right, the walkable edge 1.76 m
+    from a bed's middle, no crop or plot among the watch's 24 spots; the see-through caps unaffected (crops never reach
+    the cut). `docs/PIECES.md` rows updated.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

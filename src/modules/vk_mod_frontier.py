@@ -617,13 +617,13 @@ def fro_staddle(k):
 def fro_tree_nursery(k):
     """Crop_TreeNursery: one 3x3 cell of soil ridges with 4 rows of young trees (forester's sapling beds).
        Rows 0/2 young conifers (stacked cones), rows 1/3 staked broadleaf whips; taller toward the back (+Y)."""
-    soil_bed(k,rows=4,ridge_h=0.14)
+    w,d=soil_bed(k,rows=4,ridge_h=0.14)                 # a raised bed since 2026-10-14 (vk_helpers CROPBED_*)
     rnd=random.Random(7)
     for i in range(4):
-        y=-1.45+(i+0.5)*2.9/4
+        y=-d/2+(i+0.5)*d/4
         for j in range(4):
-            x=-1.45+(j+0.5)*2.9/4+rnd.uniform(-0.08,0.08); yy=y+rnd.uniform(-0.05,0.05)
-            h=(0.65+0.17*i)*rnd.uniform(0.85,1.12); z0=0.13
+            x=-w/2+(j+0.5)*w/4+rnd.uniform(-0.08,0.08); yy=y+rnd.uniform(-0.05,0.05)
+            h=(0.65+0.17*i)*rnd.uniform(0.85,1.12); z0=0.13+CROPBED_LIFT
             if i%2==0:
                 _cyl(k,(x,yy,z0+0.12),0.035,0.03,0.24,5,BARK_PINE)
                 for t,(rr,dz) in enumerate(((0.30,0.16),(0.23,0.42),(0.15,0.66))):
