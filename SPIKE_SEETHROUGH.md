@@ -13,13 +13,14 @@ lengthways, the grass inside a house)?
 | | main line | spike |
 |---|---|---|
 | Kit (git) | `main` (8c081cf: round 2's z-fighting mesh fixes on top of 263b0da) | branch `spike/seethrough` |
-| MedievalSetting (Plastic) | `/main` (cs:26) | pending changes in the workspace + shelveset (latest: sh:5) |
+| MedievalSetting (Plastic) | `/main` (cs:26) | pending changes in the workspace + shelveset (latest: sh:6) |
 
-MedievalSetting's side of the spike is twelve files left pending on `/main` -- `GameCamera.cs` (hidden check, cut
+MedievalSetting's side of the spike is fourteen files left pending on `/main` -- `GameCamera.cs` (hidden check, cut
 fields), `ClickToMove.cs` (cut test), `README.md`, `POLISH.md` (notes), the capture tool
 `Assets/Game/Scripts/Editor/SeeThroughSpike.cs` (+ .meta, added); round 1's `CreatureSilhouettes.cs` and
 `Player/PlayerModel.cs` (the keep mark); the z-fight watch `Assets/Game/Scripts/ZFightWatch.cs` and
-`Assets/Game/Resources/ZFightProbe.shader` (+ .metas, added) -- and kept safe in a shelveset, re-shelved after each
+`Assets/Game/Resources/ZFightProbe.shader` (+ .metas, added); round 3's baked caps
+`Assets/Game/Resources/KitSeeThroughCaps.asset` (+ .meta, added) -- and kept safe in a shelveset, re-shelved after each
 round (`cm shelveset create <files> --all -c=...`). Not a branch: switching the shared workspace would shelve and
 re-apply every session's pending files (and rewrite them under a running Unity), and other sessions' check-ins would
 then land on the spike branch. So: never check those files in to `/main` until the spike ends.
@@ -65,7 +66,7 @@ Status after the last round. Shots: `reviews/seethrough_2026-10-13/` (summaries)
 | 19 | **z-fighting away from the cut**: kit meshes with two faces in one plane, painted differently | Greywall apothecary (-152, -180), chapel, wizard's tower | round 2: 15 pieces fixed (also on main); smaller ones left (below) |
 | 14 | a building on a terrain tier, a porch, an outside stair | ShepherdDowns / Greywall | untested |
 | 15 | interiors, dungeons, sewers (no KitVillage: no caps, no groups) | | untested |
-| 16 | player build: caps are made by an editor hook today | | open (bake at level build) |
+| 16 | player build: caps were made by an editor hook | every level | ok, round 3 (baked before every build; pooled) |
 
 ## Round 1 (2026-10-13 evening)
 
@@ -168,6 +169,32 @@ fixing things" (the watch's finds).
   in a folder) since the live Blender had the Humans file open; `flush_pairs` measured each piece (same-facing faces
   in one plane under 0.5 mm, visible from above), before and after.
 
+## Round 3 (2026-10-14): caps baked and pooled
+
+The user asked whether every instance gets its own cut model. It did not: the cut is the shader's (each instance only
+keeps its cut height in its rendering layer) and cap meshes were shared per mesh, cut step and solid materials (Greywall
+4,255 cut pieces, 161 cap meshes) -- but every cut piece had a cap renderer of its own, and the caps were made by an
+editor hook in play, so a player build had none.
+
+- **Bake:** `KitSeeThroughCapBank` (MedievalSetting `Assets/Game/Resources/KitSeeThroughCaps.asset`, loaded from
+  Resources) holds each cap mesh as a sub-asset with its key and its source mesh's vertex count and bounds (a
+  re-exported mesh no longer matches: ignored until the next bake). `KitSeeThroughCapsBake` (Tools > Medieval Kit >
+  Bake See-through Caps, and `IPreprocessBuildWithReport` before every player build) opens each build scene that has a
+  `KitVillage` (scene text checked for its script GUID first) additively, runs `KitVillage.SetUpSeeThrough()` with
+  `KitSeeThroughCaps.Collecting` set (keys only; every renderer's rendering layers put back), makes each cap once and
+  closes the scene unsaved. First bake: 8 levels, 295 keys, 263 cap meshes (12,034 triangles, 3 MB), 32 empty, 0
+  unfilled, 9.4 s. In play Greywall registers its 4,255 caps from the bank in 110 ms (was ~1.4 s of slicing spread
+  over frames); the editor still makes what the bank lacks.
+- **Pool:** a cut piece is registered (`KitSeeThroughCaps.Piece`: renderer, shared cap mesh, materials, its own
+  bounds, stacking offset) instead of getting a child renderer. Each main-camera frame
+  (`RenderPipelineManager.beginCameraRendering`) 96 pooled renderers are laid over the registered pieces whose bounds
+  meet the cone from the camera to the walker (the hole's radius at the walker), nearest first; the shader still draws
+  each only where the hole opened it. Greywall: 96 cap renderers instead of 4,255; behind the inn 8 are in use.
+  Stacking (round 1) is kept per piece (`Settle()` ranks a building's pieces once its caps are known).
+- Capture Cases after (`Logs/SeeThroughSpike/20261014_131610_Greywall`): same pictures as before the pool.
+- Also this morning (HANDOFF 98, second batch): porches, plaster wall tops, the ale cask, the gable chimney, thatch
+  gables (the user's own walk with the watch).
+
 ## Tools
 
 - MedievalSetting **Tools > See-through Spike > Capture Cases** (`Assets/Game/Scripts/Editor/SeeThroughSpike.cs`, on the
@@ -187,7 +214,7 @@ fixing things" (the watch's finds).
 ## When the spike ends (integration)
 
 1. Pick what stays; delete the dead ends (the back-face cap pass if the real caps cover everything).
-2. Bake the caps at level build (a player build has no editor hook).
+2. ~~Bake the caps at level build~~ -- done in round 3 (`KitSeeThroughCapsBake`, before every player build too).
 3. Fold HANDOFF 99-103 and this file into one HANDOFF entry; LEVEL_BUILDING; MedievalSetting README / POLISH; the itch
    waiting list.
 4. Merge `spike/seethrough` into `main`; check the MedievalSetting files in to `/main` (the capture tool too, or drop

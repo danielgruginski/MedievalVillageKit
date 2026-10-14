@@ -4,8 +4,9 @@ namespace MedievalKit.Editor
 {
     /// <summary>
     /// Makes the see-through's queued caps in play mode (<see cref="KitSeeThroughCaps.Flush"/>), between frames: the kit's
-    /// meshes are not Read/Write, and in play mode only editor code may read them. Prototype (2026-10-13); a player build
-    /// would need the caps baked.
+    /// meshes are not Read/Write, and in play mode only editor code may read them. Since 2026-10-14 the caps come baked
+    /// (<see cref="KitSeeThroughCapsBake"/>, also before every player build); this makes only what the bake lacks (a piece
+    /// changed or added since).
     /// </summary>
     [InitializeOnLoad]
     static class KitSeeThroughCapsHook

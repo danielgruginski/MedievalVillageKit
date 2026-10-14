@@ -16,18 +16,22 @@ namespace MedievalKit
     /// are closed, so their sections are closed loops (checked on walls, corners, the bell tower, the town wall and its
     /// tower, a palisade, trees, a well); sheets (leaf cards, a door leaf, a window pane) are open and get no cap.
     /// <para>The cut is kept per renderer in its rendering layer (<see cref="KitSeeThrough.WithCut"/>: an offset over its own
-    /// origin in <see cref="Step"/> steps), so the shader cuts exactly where the cap lies. A cap is a child of its piece
-    /// (same materials, the texture laid flat on the cut, lit as a level face), sharing its bounds and its see-through
-    /// bits; cap meshes are cached per mesh, cut and solid materials, so the instances of a piece share one.</para>
-    /// <para>Prototype: when the level starts, <see cref="Cut"/> sets each piece's cut and queues its cap; the editor makes
-    /// the queued caps between frames (<see cref="Flush"/>, from MedievalKit.Editor's KitSeeThroughCapsHook): the kit's
-    /// meshes are not Read/Write, and in play mode only editor code may read them (Mesh.AcquireReadOnlyMeshData). A player
-    /// build gets no caps until they are baked (the cut itself works there).</para>
+    /// origin in <see cref="Step"/> steps), so the shader cuts exactly where the cap lies; the piece's own mesh is drawn,
+    /// shared by all its instances. A cap mesh is made per mesh, cut and set of solid materials, so the instances of a
+    /// piece share one (Greywall: 4,255 cut pieces, 161 cap meshes).</para>
+    /// <para>Baked and pooled (2026-10-14, spike round 3; the user: "do they all use the same cut model or each individual
+    /// pine has an individual model?"): the cap meshes come from a bake (<see cref="KitSeeThroughCapBank"/>, Resources
+    /// "KitSeeThroughCaps": Tools > Medieval Kit > Bake See-through Caps, and before every player build, by MedievalKit.
+    /// Editor's KitSeeThroughCapsBake), so a player build has them -- the kit's meshes are not Read/Write, and only editor
+    /// code may read them; in the editor what the bake lacks is still made in play, between frames (<see cref="Flush"/>,
+    /// from KitSeeThroughCapsHook). And a cut piece no longer gets a cap renderer of its own (4,255 in Greywall): it is
+    /// registered with its cap mesh, and a pool of <see cref="PoolSize"/> renderers is laid each frame over the registered
+    /// pieces in the hole's reach (the cone from the camera to the walker), the nearest to the walker first.</para>
     /// <para>Spike round 1 (2026-10-13, the user's shots): caps that overlap fought in one plane -- within one piece (a stone
     /// corner's quoin blocks sit in its rubble core: two filled outlines in one plane, 51 of Greywall's 161 cap meshes) and
     /// between pieces (a corner over its walls' ends). Now every cap is stacked, by area, larger below: inside a cap mesh
     /// each outline lies <see cref="Layer"/> above the larger ones it overlaps, and in a building each piece's cap lies
-    /// <see cref="RankStride"/> layers above the larger caps it overlaps (a rank pass when its caps are made) -- distinct
+    /// <see cref="RankStride"/> layers above the larger caps it overlaps (a rank pass when its caps are known) -- distinct
     /// heights, so nothing ties whatever the depth buffer; a few millimetres at most, far under a pixel. A section's loops are told
     /// outer from hole by the faces' own direction, not by nesting (a root inside a trunk left a gap in the trunk's cap);
     /// bark caps take the kit's end grain, its rings centred on each cut; a house gets a floor over its walls' box, shown
@@ -46,17 +50,87 @@ namespace MedievalKit
         public const float Layer = 0.0005f;
         /// <summary>a piece's cap over the larger caps of its building it overlaps: this many layers (a cap holds up to 7)</summary>
         public const int RankStride = 8;
+        /// <summary>cap renderers in the pool: the caps drawn at once, the pieces nearest the walker in the hole's cone first</summary>
+        public const int PoolSize = 96;
+
+        /// <summary>a cut piece and its cap (shared by the instances of its mesh, cut and solid materials)</summary>
+        public sealed class Piece
+        {
+            public MeshRenderer r;
+            public Transform t;
+            public Mesh cap;
+            public Material[] mats;
+            /// <summary>the piece's own mesh bounds (the cap renderer takes them: the shader's in-the-way tests agree)</summary>
+            public Bounds local;
+            /// <summary>the cap's area (world, m2) and its height over the cut (world m: under it, stacked by area)</summary>
+            public float area, offset = -0.001f;
+            public KitSeeThrough.Building building;
+            internal Vector3 at, centre;            // world, measured with the piece at `at`
+            internal float radius;
+        }
 
         static readonly Dictionary<(Mesh, int, uint, uint), (Mesh mesh, int[] mats, bool[] grain, float area)> cache =
             new Dictionary<(Mesh, int, uint, uint), (Mesh, int[], bool[], float)>();
-        static readonly Dictionary<KitSeeThrough.Building, List<(MeshRenderer cap, float area)>> toRank =
-            new Dictionary<KitSeeThrough.Building, List<(MeshRenderer, float)>>();
         static readonly Queue<(MeshRenderer r, Mesh mesh, int q, uint solid, uint bark, KitSeeThrough.Building b)> pending =
             new Queue<(MeshRenderer, Mesh, int, uint, uint, KitSeeThrough.Building)>();
+        static readonly List<Piece> pieces = new List<Piece>();
+        static readonly Dictionary<KitSeeThrough.Building, List<Piece>> byBuilding = new Dictionary<KitSeeThrough.Building, List<Piece>>();
+        static readonly HashSet<KitSeeThrough.Building> unranked = new HashSet<KitSeeThrough.Building>();
         static readonly Dictionary<string, Material> named = new Dictionary<string, Material>();
 
-        /// <summary>a material the level does not use, by name (the editor hook looks in the package)</summary>
+        /// <summary>a material the level does not use, by name (the editor hook looks in the package; a build, in the bank)</summary>
         public static System.Func<string, Material> FindMaterial;
+
+        /// <summary>while set (the bake), <see cref="Cut"/> only collects each piece's cap key here: nothing is queued or
+        /// registered, no floor is made</summary>
+        public static HashSet<(Mesh, int, uint, uint)> Collecting;
+
+        static KitSeeThroughCapBank bank;
+        static bool bankRead;
+
+        /// <summary>the baked caps (Resources "KitSeeThroughCaps"; none: everything is made in play, in the editor only)</summary>
+        public static KitSeeThroughCapBank Bank
+        {
+            get
+            {
+                if (!bankRead)
+                {
+                    bankRead = true;
+                    bank = Resources.Load<KitSeeThroughCapBank>(KitSeeThroughCapBank.ResourceName);
+                    if (bank != null)
+                        foreach (var e in bank.entries)
+                        {
+                            if (e == null || e.source == null) continue;
+                            if (e.source.vertexCount != e.vertexCount || !Near(e.source.bounds, e.bounds)) { Stale++; continue; }
+                            var key = (e.source, e.q, e.solid, e.bark);
+                            if (!cache.ContainsKey(key)) { cache[key] = e.cap != null ? (e.cap, e.mats, e.grain, e.area) : (null, null, null, 0f); Baked++; }
+                        }
+                }
+                return bank;
+            }
+        }
+
+        static bool Near(Bounds a, Bounds b) => (a.center - b.center).sqrMagnitude < 1e-8f && (a.size - b.size).sqrMagnitude < 1e-8f;
+
+        /// <summary>forget the bank (it was baked again) and what came from it</summary>
+        public static void ResetBank()
+        {
+            bank = null; bankRead = false; Baked = 0; Stale = 0;
+            cache.Clear();
+        }
+
+        /// <summary>a new play session (domain reload or not): nothing registered, the pool gone with the last session's scenes</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void NewSession()
+        {
+            pending.Clear(); pieces.Clear(); byBuilding.Clear(); unranked.Clear();
+            pool.Clear(); poolFilters.Clear(); poolRoot = null; poolFrame = -1;
+            System.Array.Clear(shown, 0, shown.Length);
+            Registered = Made = Failed = Missed = 0;
+            var gone = new List<(Mesh, int, uint, uint)>();
+            foreach (var kv in cache) if (kv.Value.mesh == null && kv.Value.mats != null) gone.Add(kv.Key);   // made in play, destroyed since
+            foreach (var k in gone) cache.Remove(k);
+        }
 
         /// <summary>the materials a level's renderers use, by name (the end grain, the floors)</summary>
         public static void Learn(GameObject root)
@@ -72,6 +146,8 @@ namespace MedievalKit
             {
                 if (named.TryGetValue(n, out var m) && m != null) return m;
                 m = FindMaterial?.Invoke(n);
+                if (m == null && Bank != null)
+                    foreach (var bm in bank.materials) if (bm != null && bm.name == n) { m = bm; break; }
                 if (m != null) { named[n] = m; return m; }
             }
             return null;
@@ -79,20 +155,25 @@ namespace MedievalKit
 
         static bool Bark(Material m) => m != null && m.name.StartsWith("M_VK_Bark");
         static float flushStart = -1f;
-        static int flushPlaced;
+        static int flushRegistered;
 
-        /// <summary>caps still to make</summary>
+        /// <summary>caps still to make (in the editor, in play)</summary>
         public static int Pending => pending.Count;
 
-        /// <summary>made since the start: caps placed, cap meshes made, polygons that could not be filled</summary>
-        public static int Placed, Made, Failed;
+        /// <summary>pieces registered with a cap; cap meshes made in play; polygons that could not be filled; pieces a player
+        /// build found no baked cap for; caps taken from the bank; bank entries ignored (their mesh changed)</summary>
+        public static int Registered, Made, Failed, Missed, Baked, Stale;
+
+        /// <summary>the pieces registered with a cap (the spike's checks)</summary>
+        public static IReadOnlyList<Piece> Pieces => pieces;
 
         static bool Solid(Material m) =>
             m != null && m.shader != null && m.shader.name == "MedievalKit/KitLit" && m.HasProperty("_Cull") && m.GetFloat("_Cull") > 1.5f
             && (!m.HasProperty("_Surface") || m.GetFloat("_Surface") < 0.5f);
 
         /// <summary>the renderer's cut at baseY + <see cref="Height"/> (world), kept in its rendering layer; where it spans the
-        /// cut, its cap is queued (made by <see cref="Flush"/>; a building's caps open with it)</summary>
+        /// cut, it is registered with its cap -- baked, made before, or queued to be made (the editor) -- and a building's
+        /// caps open with it</summary>
         public static void Cut(MeshRenderer r, float baseY, KitSeeThrough.Building b = null)
         {
             var t = r.transform;
@@ -113,13 +194,23 @@ namespace MedievalKit
             for (int s = 0; s < mats.Length && s < mesh.subMeshCount && s < 32; s++)
                 if (Solid(mats[s])) { solid |= 1u << s; if (Bark(mats[s])) bark |= 1u << s; }
             if (solid == 0) return;
-            pending.Enqueue((r, mesh, q, solid, bark, b));
+            var key = (mesh, q, solid, bark);
+            if (Collecting != null) { Collecting.Add(key); return; }
+            _ = Bank;
+            if (cache.TryGetValue(key, out var cap) && (cap.mesh != null || cap.mats == null))
+            {
+                if (cap.mesh != null) Register(r, cap, b);
+                return;
+            }
+            if (Application.isEditor) pending.Enqueue((r, mesh, q, solid, bark, b));
+            else Missed++;                                              // a player build: not baked
         }
 
         /// <summary>a house's floor: a plank quad over its walls' box (the BoxCollider KitVillage puts on its root), at its
         /// floor, a cap of its building (drawn only where the hole opened it): the ground inside a house is the map's grass</summary>
         public static MeshRenderer Floor(KitSeeThrough.Building b)
         {
+            if (Collecting != null) return null;
             var root = b.Root;
             var box = root != null ? root.GetComponent<BoxCollider>() : null;
             var mat = Named("M_VK_Planks", "M_VK_Wood");
@@ -146,85 +237,191 @@ namespace MedievalKit
             return fr;
         }
 
-        /// <summary>make queued caps for up to `budgetMs` of this frame; returns how many are left. Editor only for now
-        /// (see the class).</summary>
+        /// <summary>make queued caps for up to `budgetMs` of this frame (the editor, in play); returns how many are left</summary>
         public static int Flush(float budgetMs = 8f)
         {
             if (pending.Count == 0) return 0;
             float start = Time.realtimeSinceStartup;
-            if (flushStart < 0f) { flushStart = start; flushPlaced = Placed; }
+            if (flushStart < 0f) { flushStart = start; flushRegistered = Registered; }
             while (pending.Count > 0 && (Time.realtimeSinceStartup - start) * 1000f < budgetMs)
             {
                 var (r, mesh, q, solid, bark, b) = pending.Dequeue();
                 if (r == null) continue;
-                var cap = Place(r, mesh, q, solid, bark, b);
-                if (cap != null && b != null) b.caps.Add(cap);
+                var key = (mesh, q, solid, bark);
+                if (!cache.TryGetValue(key, out var cap) || (cap.mesh == null && cap.mats != null)) cache[key] = cap = Make(mesh, q * Step, solid, bark);
+                if (cap.mesh != null) Register(r, cap, b);
             }
             if (pending.Count == 0)
             {
-                foreach (var kv in toRank) Rank(kv.Value);
-                toRank.Clear();
-                Debug.Log($"[KitSeeThroughCaps] {Placed - flushPlaced} caps placed ({Made} cap meshes so far, {Failed} polygons not filled) " +
-                          $"over {(Time.realtimeSinceStartup - flushStart) * 1000f:F0} ms");
+                Settle();
+                Debug.Log($"[KitSeeThroughCaps] {Registered - flushRegistered} more caps registered in play ({Made} cap meshes made so far, " +
+                          $"{Failed} polygons not filled; {Baked} from the bake, {Stale} stale) over {(Time.realtimeSinceStartup - flushStart) * 1000f:F0} ms");
                 flushStart = -1f;
             }
             return pending.Count;
         }
 
-        static MeshRenderer Place(MeshRenderer r, Mesh mesh, int q, uint solid, uint bark, KitSeeThrough.Building owner)
-        {
-            var t = r.transform;
-            float sy = t.localToWorldMatrix.m11;
-            var b = mesh.bounds;
-            var mats = r.sharedMaterials;
-            var key = (mesh, q, solid, bark);
-            if (!cache.TryGetValue(key, out var cap)) cache[key] = cap = Make(mesh, q * Step, solid, bark);
-            if (cap.mesh == null) return null;
+        /// <summary>the bake's cap for a mesh, its cut (in <see cref="Step"/>s) and solid / bark submeshes</summary>
+        public static (Mesh mesh, int[] mats, bool[] grain, float area) MakeCap(Mesh mesh, int q, uint solid, uint bark) =>
+            Make(mesh, q * Step, solid, bark);
 
-            var go = new GameObject("SeeThroughCap");
-            go.layer = r.gameObject.layer;
-            go.transform.SetParent(t, false);
-            go.transform.localPosition = new Vector3(0f, -0.001f / sy, 0f);        // a millimetre under the cut
-            go.AddComponent<MeshFilter>().sharedMesh = cap.mesh;
-            var cr = go.AddComponent<MeshRenderer>();
+        static void Register(MeshRenderer r, (Mesh mesh, int[] mats, bool[] grain, float area) cap, KitSeeThrough.Building b)
+        {
+            var src = r.sharedMaterials;
             var grain = Named("M_VK_EndGrain");
             var cm = new Material[cap.mats.Length];
-            for (int i = 0; i < cm.Length; i++) cm[i] = cap.grain[i] && grain != null ? grain : mats[cap.mats[i]];
-            cr.sharedMaterials = cm;
-            cr.shadowCastingMode = ShadowCastingMode.Off;
-            cr.receiveShadows = r.receiveShadows;
-            cr.lightProbeUsage = r.lightProbeUsage;
-            cr.localBounds = new Bounds(b.center + new Vector3(0f, 0.001f / sy, 0f), b.size);   // the piece's own bounds
-            cr.renderingLayerMask = r.renderingLayerMask | KitSeeThrough.CapBit;
-            if (owner != null)
+            for (int i = 0; i < cm.Length; i++)
+                cm[i] = cap.grain[i] && grain != null ? grain : cap.mats[i] < src.Length ? src[cap.mats[i]] : null;
+            var t = r.transform;
+            var p = new Piece
             {
-                if (!toRank.TryGetValue(owner, out var l)) toRank[owner] = l = new List<(MeshRenderer, float)>();
-                l.Add((cr, cap.area * Mathf.Abs(t.lossyScale.x * t.lossyScale.z)));
+                r = r, t = t, cap = cap.mesh, mats = cm, local = r.GetComponent<MeshFilter>().sharedMesh.bounds,
+                area = cap.area * Mathf.Abs(t.lossyScale.x * t.lossyScale.z), building = b,
+            };
+            Measure(p);
+            pieces.Add(p);
+            Registered++;
+            if (b != null)
+            {
+                if (!byBuilding.TryGetValue(b, out var l)) byBuilding[b] = l = new List<Piece>();
+                l.Add(p);
+                unranked.Add(b);
             }
-            Placed++;
-            return cr;
+            if (!hooked) { hooked = true; RenderPipelineManager.beginCameraRendering += BeginCamera; }
         }
 
-        /// <summary>a building's caps stacked: larger below; each over the larger caps it overlaps (same cut plane) by
-        /// <see cref="RankStride"/> layers</summary>
-        static void Rank(List<(MeshRenderer cap, float area)> caps)
+        static void Measure(Piece p)
+        {
+            p.at = p.t.position;
+            var wb = p.r.bounds;
+            p.centre = wb.center;
+            p.radius = wb.extents.magnitude;
+        }
+
+        /// <summary>stack the caps of the buildings that got new ones (larger below; each over the larger caps it overlaps in
+        /// the same cut plane by <see cref="RankStride"/> layers): when a level's cuts are set, and when the editor has made
+        /// what the bake lacked</summary>
+        public static void Settle()
+        {
+            foreach (var b in unranked) if (byBuilding.TryGetValue(b, out var l)) Rank(l);
+            unranked.Clear();
+        }
+
+        static void Rank(List<Piece> caps)
         {
             caps.Sort((a, b) => b.area.CompareTo(a.area));
             var rank = new int[caps.Count];
             var foot = new Bounds[caps.Count];
             for (int i = 0; i < caps.Count; i++)
             {
-                if (caps[i].cap == null) continue;
-                var mb = caps[i].cap.GetComponent<MeshFilter>().sharedMesh.bounds;
-                var t = caps[i].cap.transform;
-                foot[i] = new Bounds(t.TransformPoint(mb.center), Vector3.Scale(mb.size, t.lossyScale) + new Vector3(0.02f, 0.02f, 0.02f));
+                var p = caps[i];
+                if (p.r == null) continue;
+                var mb = p.cap.bounds;
+                foot[i] = new Bounds(p.t.TransformPoint(mb.center), Vector3.Scale(mb.size, p.t.lossyScale) + new Vector3(0.02f, 0.02f, 0.02f));
                 int r = 0;
                 for (int j = 0; j < i; j++)
-                    if (caps[j].cap != null && Mathf.Abs(foot[j].center.y - foot[i].center.y) < 0.02f && foot[j].Intersects(foot[i]))
+                    if (caps[j].r != null && Mathf.Abs(foot[j].center.y - foot[i].center.y) < 0.02f && foot[j].Intersects(foot[i]))
                         r = Mathf.Max(r, rank[j] + 1);
                 rank[i] = Mathf.Min(r, 15);
-                float sy = Mathf.Max(1e-4f, t.parent.localToWorldMatrix.m11);
-                t.localPosition = new Vector3(0f, (-0.001f + rank[i] * RankStride * Layer) / sy, 0f);
+                p.offset = -0.001f + rank[i] * RankStride * Layer;
+            }
+        }
+
+        // ------------------------------------------------------------------ the pool
+
+        static readonly int SeeId = Shader.PropertyToID("_KitSeeThrough");
+        static readonly List<MeshRenderer> pool = new List<MeshRenderer>();
+        static readonly List<MeshFilter> poolFilters = new List<MeshFilter>();
+        static readonly Piece[] shown = new Piece[PoolSize];
+        static readonly List<(float d, Piece p)> near = new List<(float, Piece)>();
+        static readonly System.Comparison<(float d, Piece p)> ByDistance = (a, b) => a.d.CompareTo(b.d);
+        static Transform poolRoot;
+        static int poolFrame = -1;
+        static bool hooked;
+
+        static void BeginCamera(ScriptableRenderContext ctx, Camera cam)
+        {
+            if (cam != null && cam == Camera.main) LayPool(cam);
+        }
+
+        /// <summary>the pool's caps over the registered pieces the hole can reach this frame: those whose bounds meet the cone
+        /// from the camera to the walker (the hole's radius there), the nearest to the walker first; the shader draws each
+        /// only where the hole opened its piece. Nothing while the hole is shut.</summary>
+        static void LayPool(Camera cam)
+        {
+            if (poolFrame == Time.frameCount) return;
+            poolFrame = Time.frameCount;
+            var see = Shader.GetGlobalVector(SeeId);
+            near.Clear();
+            if (see.w > 0f && pieces.Count > 0)
+            {
+                Vector3 eye = cam.transform.position, walker = see;
+                var d = walker - eye;
+                float L = d.magnitude;
+                if (L > 1e-3f)
+                {
+                    d /= L;
+                    bool audit = Time.frameCount % 60 == 0;                     // (pieces of unloaded or moved levels)
+                    for (int i = pieces.Count - 1; i >= 0; i--)
+                    {
+                        var p = pieces[i];
+                        if (audit)
+                        {
+                            if (p.r == null) { pieces.RemoveAt(i); continue; }
+                            if (p.t.position != p.at) Measure(p);
+                        }
+                        var v = p.centre - eye;
+                        float t = Vector3.Dot(v, d);
+                        if (t < -p.radius || t > L + p.radius) continue;
+                        float tc = Mathf.Clamp(t, 0f, L), reach = see.w * tc / L + p.radius + 0.25f;
+                        if ((v - d * tc).sqrMagnitude > reach * reach) continue;
+                        if (p.r == null) { pieces.RemoveAt(i); continue; }      // its level was unloaded
+                        if (!p.r.enabled || !p.r.gameObject.activeInHierarchy) continue;
+                        near.Add(((p.centre - walker).sqrMagnitude, p));
+                    }
+                    near.Sort(ByDistance);
+                }
+            }
+            int n = Mathf.Min(near.Count, PoolSize);
+            if (n > 0 && pool.Count == 0) MakePool();
+            for (int i = 0; i < pool.Count; i++)
+            {
+                var cr = pool[i];
+                if (cr == null) continue;
+                if (i >= n) { if (cr.enabled) cr.enabled = false; shown[i] = null; continue; }
+                var p = near[i].p;
+                var t = p.t;
+                float ly = p.offset / Mathf.Max(1e-4f, t.localToWorldMatrix.m11);
+                cr.transform.SetPositionAndRotation(t.TransformPoint(0f, ly, 0f), t.rotation);
+                cr.transform.localScale = t.lossyScale;
+                if (shown[i] != p)
+                {
+                    shown[i] = p;
+                    poolFilters[i].sharedMesh = p.cap;
+                    cr.sharedMaterials = p.mats;
+                    cr.gameObject.layer = p.r.gameObject.layer;
+                    cr.receiveShadows = p.r.receiveShadows;
+                    cr.lightProbeUsage = p.r.lightProbeUsage;
+                }
+                cr.localBounds = new Bounds(p.local.center - new Vector3(0f, ly, 0f), p.local.size);   // the piece's own bounds
+                cr.renderingLayerMask = p.r.renderingLayerMask | KitSeeThrough.CapBit;            // its building open or not
+                if (!cr.enabled) cr.enabled = true;
+            }
+        }
+
+        static void MakePool()
+        {
+            poolRoot = new GameObject("KitSeeThroughCaps").transform;     // (not DontSave: it goes with the play session)
+            Object.DontDestroyOnLoad(poolRoot.gameObject);
+            for (int i = 0; i < PoolSize; i++)
+            {
+                var go = new GameObject("SeeThroughCap");
+                go.transform.SetParent(poolRoot, false);
+                poolFilters.Add(go.AddComponent<MeshFilter>());
+                var cr = go.AddComponent<MeshRenderer>();
+                cr.shadowCastingMode = ShadowCastingMode.Off;
+                cr.enabled = false;
+                pool.Add(cr);
             }
         }
 

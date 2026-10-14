@@ -157,6 +157,14 @@ namespace MedievalKit
         void Start()
         {
             if (!Application.isPlaying) return;
+            SetUpSeeThrough();
+        }
+
+        /// <summary>the see-through's marks, cuts and caps for this level (<see cref="Start"/>); the cap bake calls it in the
+        /// editor with <see cref="KitSeeThroughCaps.Collecting"/> set, to learn which caps the level needs (it puts every
+        /// renderer's rendering layers back after)</summary>
+        public void SetUpSeeThrough()
+        {
             float t0 = Time.realtimeSinceStartup;
             seeThroughBuildings = new List<KitSeeThrough.Building>();
             var loose = new List<Transform>();
@@ -179,7 +187,10 @@ namespace MedievalKit
             }
             foreach (var piece in loose)
                 foreach (var r in piece.GetComponentsInChildren<MeshRenderer>(true)) KitSeeThroughCaps.Cut(r, piece.position.y);
-            Debug.Log($"[KitVillage] {name}: see-through cuts set, {KitSeeThroughCaps.Pending} caps queued, in {(Time.realtimeSinceStartup - t0) * 1000f:F0} ms");
+            if (KitSeeThroughCaps.Collecting != null) return;
+            KitSeeThroughCaps.Settle();
+            Debug.Log($"[KitVillage] {name}: see-through cuts set, {KitSeeThroughCaps.Registered} caps registered so far " +
+                      $"({KitSeeThroughCaps.Baked} baked cap meshes, {KitSeeThroughCaps.Pending} caps still to make), in {(Time.realtimeSinceStartup - t0) * 1000f:F0} ms");
         }
 
         void LateUpdate() => KitSeeThrough.Decide(seeThroughBuildings);
