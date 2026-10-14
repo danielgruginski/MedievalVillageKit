@@ -1071,6 +1071,22 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     MedievalSetting play: the shrine opened by the see-through shows no layers any more. **B, open:** the flush
     overlaps -- lift trims and corbels a few millimetres or drop the face hidden under them, down
     `reviews/zfight_2026-10-13/pieces.csv` (same_facing_m2) and `structures.csv`; then rescan.
+    **B, partly done (2026-10-13 night; found in play by MedievalSetting's z-fight watch, `ZFightWatch`):** dressed
+    reveals laid on a window or door hole's own side faces now stand 3 mm into the opening (`TWN_PROUD`:
+    `twn_side_reveal` for the StoneUp twin window, loading door and door; the shops' `twn_reveal`); Wall_StoneUp_Door's
+    hole runs up to the arch's crown (a panel and the spandrels had been built over each other above the door); the
+    outer stair's landing parapet end, end-wall coping and landing top (under an upper door's threshold slab); the bell
+    tower's plinth front (in the door's gap) and its belfry lintels (front/back the whole width, sides between, 3 mm
+    proud of the piers); the stone gable parapet's 0.3 m seat into the wall below is 4 cm narrower a side (`SKY_SEAT`:
+    the upper walls wobble 35 mm, so its faces crossed theirs); `twn_skirt` tops 3 mm under the piece's base (beside a
+    stair's foot they lay in the ground's plane); the plaster window's sill 3 mm over the plaster under it. Rebuilt and
+    exported: Wall_StoneUp_Twin / _Loading / _Door, Wall_Stone_Shop, Wall_Plaster_Shop, Wall_Stone_Passage,
+    Passage_Vault, Stoop_Stone, Stair_Stone_Ext, Prop_CellarHatch, BellTower, Roof_Gable_Flush, Roof_Firewall,
+    Roof_Gable_Stepped, Wall_Plaster_Window; .blend saved. Checked with the watch round Greywall's apothecary (the same
+    12 stops): fight pixels 40,057 -> 4,514; with the chapel and the wizard's tower too, 2,546 left -- crop soil on the
+    ground, a turret segment against a window wall, StoneUp corners' quoins crossing their core, slates crossing slates.
+    Gotcha met: `vk_mod_town` already had a `twn_reveal` further down (the shops'); a second one of that name, defined
+    earlier, was silently replaced and the walls came out with parts turned 90 degrees.
 
 99. 2026-10-13 (MedievalSetting, the user's screenshots of the see-through: "that first one is a tree, getting cut in
     the base, I don't understand why"; bush tops and a chapel's eave speckled though nothing hid the player; roof holes

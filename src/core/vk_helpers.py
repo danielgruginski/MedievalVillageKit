@@ -789,7 +789,7 @@ def plaster_ground(k,kind="."):
         for (a,b,c,d) in ((-1.5,x0,PL,H1),(x1,1.5,PL,H1),(x0,x1,PL,z0),(x0,x1,z1,H1)):
             grid_cut(k,k.box(((a+b)/2,-0.02,(c+d)/2),(b-a,0.44,d-c),PLASTER,bevel=0))
         window_frame(k,x0,x1,z0,z1,depth_y=0.0,sill=False,face=-0.2)
-        k.box((0,-0.3,z0-0.08),(1.5,0.3,0.16),WOOD,bevel=0.03)
+        k.box((0,-0.3,z0-0.08+0.003),(1.5,0.3,0.16),WOOD,bevel=0.03)        # sill: 3 mm over the plaster under it (z-fighting)
         for s_ in(-1,1): k.box((s_*0.85,-0.24,(PL+H1)/2),(0.2,0.2,H1-PL-0.2),WOOD,bevel=0.03)
     elif kind=="D":
         hw=0.62; top=2.3
@@ -1687,7 +1687,9 @@ def bell_tower(k):
     """square tower 3.6m, local origin at its base centre; front (door side) toward -Y"""
     W=3.6; h1=8.0; hb=3.0
     stone_panel(k,-W/2,W/2,0,h1,-W/2,W/2,mi=ASHLAR)
-    k.box((0,0.075,0.3),(W+0.3,W+0.15,0.6),CH_DRESS,bevel=0.05,segs=2)          # plinth: the front strip is cut for the door
+    # plinth: the front strip is cut for the door -- its front face 3 mm inside the wall's (in the door's gap the two lay
+    # in one plane and z-fought: MedievalSetting's z-fight watch, 2026-10-13)
+    k.box((0,0.075+0.0015,0.3),(W+0.3,W+0.15-0.003,0.6),CH_DRESS,bevel=0.05,segs=2)
     for sx in (-1,1): k.box((sx*(W/2+0.15+0.98)/2,-W/2-0.075,0.3),(W/2+0.15-0.98,0.15,0.6),CH_DRESS,bevel=0.05,segs=2)
     for zz in(3.5,h1): k.box((0,0,zz),(W+0.24,W+0.24,0.28),CH_DRESS,bevel=0.05,segs=2)
     for sx in(-1,1):
@@ -1707,7 +1709,9 @@ def bell_tower(k):
     for a in range(4):
         R=Matrix.Rotation(a*math.pi/2,4,"Z")
         sub=Kit()
-        sub.box((0,-W/2+0.3,z0+hb-0.25),(W,0.6,0.5),CH_DRESS,bevel=0.05,segs=2)
+        # the lintel band, 3 mm proud of the piers (outside and in); the front and back ones the whole width, the side ones between them
+        # (all four the whole width over the piers' faces: one plane at every corner, z-fighting -- 2026-10-13)
+        sub.box((0,-W/2+0.3,z0+hb-0.25),(W+0.006 if a%2==0 else W-1.2,0.606,0.5),CH_DRESS,bevel=0.05,segs=2)
         sub.box((0,-W/2+0.3,z0+0.175),(W-1.2,0.56,0.35),ASHLAR,bevel=0.03)          # breast wall under the opening ...
         sub.box((0,-W/2+0.3,z0+0.41),(W-1.1,0.66,0.13),CH_DRESS,bevel=0.03)         # ... and its sill coping
         # voussoir ring: the intrados (1.2 x 1.0) meets the piers' inner faces, the extrados (1.55 x 1.3) lands on the
