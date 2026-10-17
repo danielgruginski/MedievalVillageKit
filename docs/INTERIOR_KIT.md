@@ -86,6 +86,11 @@ EarthSooty.
 **Doors and exits.** An exit is `Door_150_Cut` + a closed `Leaf_Plank_Cut` + `Apron_300x150` outside (cobble, dirt or
 grass) + a `RushMat` inside. Wide exits: `DoorWide_300_Cut` + two leaves (`Leaf_Wide_Cut_L/R` for Stone,
 `Leaf_Wide160_Cut_L/R` for the Ashlar pointed door) + `Apron_Wide_300x150`. Every door keeps a free cell on both sides.
+Full-height wide doors (2026-10-17) take `Leaf_Wide_Full_L/R` (Stone, the planks' tops follow the segmental arch) or
+`Leaf_Wide160_Full_L/R` (Ashlar, pointed), at the same sockets. `Wall_Ashlar_Door_150_Full/Cut` is a single pointed
+portal (a lintel at 2.20 and a tympanum under the arch) that takes `Leaf_Plank_Full` / `_Cut` at its socket. For
+abandoned places: `Leaf_Wide160_Full_Broken_L` and `Leaf_Plank_Full_Broken` hang ajar on their lower hinge, sagging,
+the meeting-edge plank gone and the next snapped -- static pieces (`vki_leaf_state` "broken"), placed at the socket.
 
 **Stairs.** `Stair_Up_150x450_RailR` and `Stair_Down_150x450_RailR` share their origin and rotation on the two floors
 (rotation 0/±90, never 180). The up flight rises "through the ceiling"; the down stair is a hole with rails. They are
@@ -299,6 +304,8 @@ Generated from the masters in `VKI_Pieces` (triangles, footprint in 1.5 m cells,
 | `SM_VKI_Post_Ashlar_Mid_Full` | 232 | 1,1 | – |
 | `SM_VKI_Wall_Ashlar_DoorWide_300_Cut` | 492 | 2,1 | – |
 | `SM_VKI_Wall_Ashlar_DoorWide_300_Full` | 1828 | 2,1 | – |
+| `SM_VKI_Wall_Ashlar_Door_150_Cut` | 400 | 1,1 | – |
+| `SM_VKI_Wall_Ashlar_Door_150_Full` | 1476 | 1,1 | – |
 | `SM_VKI_Wall_Ashlar_LancetTall_150_Full` | 1388 | 1,1 | – |
 | `SM_VKI_Wall_Ashlar_Lancet_150_Cut` | 348 | 1,1 | – |
 | `SM_VKI_Wall_Ashlar_Lancet_150_Full` | 1408 | 1,1 | – |
@@ -329,6 +336,10 @@ Generated from the masters in `VKI_Pieces` (triangles, footprint in 1.5 m cells,
 | `SM_VKI_Leaf_Wide160_Cut_R` | 492 | 1,1 | – |
 | `SM_VKI_Leaf_Wide_Cut_L` | 492 | 1,1 | – |
 | `SM_VKI_Leaf_Wide_Cut_R` | 492 | 1,1 | – |
+| `SM_VKI_Leaf_Wide_Full_L` / `_R` | 628 | 1,1 | – |
+| `SM_VKI_Leaf_Wide160_Full_L` / `_R` | 628 | 1,1 | – |
+| `SM_VKI_Leaf_Wide160_Full_Broken_L` | 428 | 1,1 | – |
+| `SM_VKI_Leaf_Plank_Full_Broken` | 428 | 1,1 | – |
 | `SM_VKI_Rug_300x150` | 132 | 2,1 | floor |
 | `SM_VKI_Runner_150` | 20 | 1,1 | floor |
 | `SM_VKI_Runner_300` | 32 | 2,1 | floor |

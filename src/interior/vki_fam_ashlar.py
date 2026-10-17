@@ -339,6 +339,99 @@ def vki_ash_doorwide_full(k): vki_ash_door(k, "Full")
 def vki_ash_doorwide_cut(k): vki_ash_door(k, "Cut")
 
 
+# ---------------------------------------------------------------- Door_150 (2026-10-17, the monastery's side doors)
+# A single pointed portal: the Stone door's clear 0.84 (x 0.33-1.17), so Leaf_Plank_Full / _Cut hang in it (socket at
+# the inner order's step); a DRESS lintel at the leaf's head (2.20) with a recessed tympanum filling the pointed arch
+# over it; two orders as on DoorWide_300, narrower (0.12 / 0.22).
+VKI_ASH_DOOR1 = dict(x=(0.33, 1.17), spring=2.20, d1=0.12, d2=0.22, step_y=-0.09, thr=0.03, n=3, topz=3.25,
+                     lintel=(2.205, 2.34), tymp_y=0.03)
+
+
+def vki_ash_door1(k, height):
+    """pointed single door, L 1.5: piers x 0-0.11 / 1.39-1.5, outer order jambs x 0.11-0.21 full depth, inner order
+    jambs x 0.21-0.33 behind the step (y -0.09); Full: rings r 0.714 .. +0.12 .. +0.22 springing 2.20 (apex 2.85),
+    body strips over the outer ring to 3.25, the lintel (2.205-2.34, x 0.27-1.23, 8 mm inside the inner ring) and the tympanum
+    (the arch above the lintel, set back 3 cm behind the step), courses on the piers, cornice. Cut: the lower metre."""
+    L = 1.5
+    full = height == "Full"
+    D = VKI_ASH_DOOR1
+    xL, xR = D["x"]; zs = D["spring"]; sy = D["step_y"]; T2 = k.T / 2; tk = VKI_ASH_TUCK
+    r = 0.85 * (xR - xL); cR, cL = xR - r, xL + r; xa = (xL + xR) / 2
+    R0, R1, R2 = r, r + D["d1"], r + D["d2"]
+    xo, xi = xL - D["d2"], xL - D["d1"]
+    c0, c1 = VKI_ASH_COURSES[0]
+    tb = VKI_ASH_CORNICE[0] if full else c0
+    vki_ash_body(k, 0.0, xo, VKI_FOOT_Z, tb)                           # piers
+    vki_ash_body(k, L - xo, L, VKI_FOOT_Z, tb)
+    vki_ash_body(k, xi, L - xi, VKI_FOOT_Z, -0.10)                       # footing under the threshold
+    vki_tim_member(k, xi, L - xi, 0.0, D["thr"], y0=-VKI_ASH_HW, y1=VKI_ASH_HW, mi=DRESS, bev=0.01)   # threshold
+    jt = zs if full else c0 + tk
+    for a, b in ((xo, xi), (L - xi, L - xo)):                            # outer order jambs
+        vki_tim_member(k, a, b, VKI_FOOT_Z, jt, y0=-T2, y1=T2, mi=DRESS, bev=0.015)
+    for a, b in ((xi, xL), (xR, L - xi)):                                # inner order jambs (behind the step)
+        vki_tim_member(k, a, b, D["thr"], jt, y0=sy, y1=T2, mi=DRESS, bev=0.015)
+    if full:
+        m = D["n"]
+        ta1 = math.acos((xa - cR) / R1)
+        angs = [ta1 * j / m for j in range(m)]
+
+        def pt(cx, sgn, R, t):
+            return (cx + sgn * R * math.cos(t), zs + R * math.sin(t))
+
+        def apex(R):
+            return (xa, zs + math.sqrt(R * R - (xa - cR) ** 2))
+        for Ra, Rb, ya, yb in ((R0, R1, sy, T2), (R1, R2, -T2, T2)):   # inner ring, outer ring
+            for sgn, cx in ((1, cR), (-1, cL)):
+                for j in range(m):
+                    last = j == m - 1
+                    poly = [pt(cx, sgn, Ra, angs[j]), apex(Ra) if last else pt(cx, sgn, Ra, angs[j + 1]),
+                            apex(Rb) if last else pt(cx, sgn, Rb, angs[j + 1]), pt(cx, sgn, Rb, angs[j])]
+                    vki_prism(k, poly if sgn > 0 else poly[::-1], ya, yb, DRESS, axis="y", bevel=0.012)
+        Z = D["topz"]
+        for sgn, cx in ((1, cR), (-1, cL)):                             # body strips over the outer ring
+            pts = [pt(cx, sgn, R2, a) for a in angs] + [apex(R2)]
+            for j in range(m):
+                pa, pb = pts[j], pts[j + 1]
+                poly = [pa, pb, (pb[0], Z), (pa[0], Z)]
+                vs, fs = vki_prism(k, poly if sgn > 0 else poly[::-1], -T2, T2, VKI_WALL_A, axis="y")
+                for f in fs:
+                    if f.normal.y > 0.7:
+                        k.project([f], VKI_WALL_B)
+                k.mark_body(vs)
+        vki_ash_body(k, xo, L - xo, Z, tb)
+        l0, l1 = D["lintel"]                                             # the lintel, bearing on the inner jambs
+        vki_tim_member(k, xL - 0.06, xR + 0.06, l0, l1, y0=sy + 0.008, y1=T2 - 0.008, mi=DRESS, bev=0.015)   # (inset: never
+                                                                         # coplanar with the inner ring it runs into)
+        t0 = math.asin((l1 - zs) / R0)                                   # the tympanum: the arch over the lintel
+        tym = [pt(cR, 1, R0 - 0.002, t0 + (math.acos((xa - cR) / R0) - t0) * j / 4) for j in range(4)] + [apex(R0 - 0.002)]
+        tym += [pt(cL, -1, R0 - 0.002, t0 + (math.acos((xa - cR) / R0) - t0) * j / 4) for j in range(3, -1, -1)]
+        tym = [(p[0], l1 - 0.005) if i in (0, len(tym) - 1) else p for i, p in enumerate(tym)]
+        vki_prism(k, tym, sy + D["tymp_y"], T2 - 0.01, DRESS, axis="y")
+        for cz0, cz1 in VKI_ASH_COURSES:                                 # courses run 1 cm into the outer jambs
+            vki_ash_course(k, 0.0, xo + 0.01, cz0, cz1)
+            vki_ash_course(k, L - xo - 0.01, L, cz0, cz1)
+        vki_ash_cornice(k, 0.0, L)
+        holes = vki_ash_course_holes(L) + [(xo, 0.0, L - xo, Z + 0.3)]
+        z1 = l0
+    else:
+        vki_ash_course(k, 0.0, xL, c0, c1)                               # the cap wraps the orders
+        vki_ash_course(k, xR, L, c0, c1)
+        holes = [(xo, 0.0, L - xo, c1)]
+        z1 = 1.0
+    vki_ash_wobble(k, L, holes, tb)
+    k.meta.update(vki_nav="door", vki_nav_open=[xL, xR])
+    k.meta.update(vki_class="wall", vki_opening={"x0": xL, "x1": xR, "z0": 0.0, "z1": z1, "spring": zs,
+                                                 "pointed": 1, "head": "lintel + tympanum" if full else "cut"},
+                  vki_trigger=[0.75, -0.65, 1.0, 0.9, 0.8, 2.0], vki_spawn_local=[0.75, -1.60],
+                  vki_prompt_local=[0.75, -0.30, 1.40], vki_leaf_socket=[xL, sy, 0.0], vki_leaf_open_deg=90,
+                  vki_leaf="SM_VKI_Leaf_Plank_" + height,
+                  vki_collider=[[xL / 2, 0.0, 1.1, xL, k.T, 2.2], [(xR + L) / 2, 0.0, 1.1, L - xR, k.T, 2.2]])
+
+
+def vki_ash_door1_full(k): vki_ash_door1(k, "Full")
+def vki_ash_door1_cut(k): vki_ash_door1(k, "Cut")
+
+
 # ---------------------------------------------------------------- posts (§2.2, §2.3)
 def vki_ash_frustum(k, z0, z1, h0, h1, mi):
     """closed truncated pyramid: rectangle +-h0 (x, y) at z0 to +-h1 at z1"""
@@ -409,6 +502,8 @@ VKI_ASH_SPECS = [
     ("SM_VKI_Wall_Ashlar_LancetTall_150_Full", vki_ash_lancettall_full),
     ("SM_VKI_Wall_Ashlar_DoorWide_300_Full", vki_ash_doorwide_full),
     ("SM_VKI_Wall_Ashlar_DoorWide_300_Cut", vki_ash_doorwide_cut),
+    ("SM_VKI_Wall_Ashlar_Door_150_Full", vki_ash_door1_full),
+    ("SM_VKI_Wall_Ashlar_Door_150_Cut", vki_ash_door1_cut),
     ("SM_VKI_Post_Ashlar_Corner_Full", vki_ash_post_corner_full),
     ("SM_VKI_Post_Ashlar_Corner_Cut", vki_ash_post_corner_cut),
     ("SM_VKI_Post_Ashlar_Mid_Full", vki_ash_post_mid_full),

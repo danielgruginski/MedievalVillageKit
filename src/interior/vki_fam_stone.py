@@ -1127,6 +1127,142 @@ def vki_sto_leaf_wide160_l(k): vki_sto_leaf_wide(k, "L", VKI_STO_WIDE160_LEAF_W,
 def vki_sto_leaf_wide160_r(k): vki_sto_leaf_wide(k, "R", VKI_STO_WIDE160_LEAF_W, "SM_VKI_Wall_Ashlar_DoorWide_300_Cut")
 
 
+# ---------------------------------------------------------------- full-height leaves (2026-10-17)
+# The wide doors' Full walls had openings but no leaves (only the Cut exits did). A tall leaf's planks are prisms whose
+# tops follow the arch over them (ztop: the arch's underside at a leaf-local x, the distance from the hinge, less 1 cm),
+# so the leaf fills a segmental (Stone) or pointed (Ashlar) head; the Cut leaves' rules otherwise: hinge at the origin
+# on the room-side face, planks at local y 0.004..0.084, straps on both faces, a ring pull near the meeting edge.
+VKI_LEAF_TALL_STRAPS = (0.36, 1.12, 1.88)
+VKI_LEAF_TALL_RING_Z = 1.02
+
+
+def vki_sto_wide_full_top(xl):
+    """Stone DoorWide_300_Full: the segmental arch's underside over leaf-local x (either leaf: the arch is symmetric)"""
+    D = VKI_STO_WIDE
+    x0, x1 = D["open"]
+    cx, half, rise = (x0 + x1) / 2, (x1 - x0) / 2, D["crown"] - D["spring"]
+    R = (half * half + rise * rise) / (2 * rise)
+    cz = D["crown"] - R
+    x = x0 + xl
+    return cz + math.sqrt(max(R * R - (x - cx) ** 2, 0.0)) - 0.01
+
+
+def vki_ash_wide_full_top(xl):
+    """Ashlar DoorWide_300_Full: the pointed arch's underside (r 0.85 w about the far spring) over leaf-local x"""
+    xL, xR = 0.70, 2.30
+    r = 0.85 * (xR - xL)
+    return 2.20 + math.sqrt(max(r * r - (r - xl) ** 2, 0.0)) - 0.012
+
+
+def vki_leaf_tall(k, side, W, ztop, fits, n=4, broken=None):
+    """a full-height leaf from its hinge (_L extends +X, _R -X): n oak planks as prisms, each top a 3-point line
+    under ztop; broken: dict(miss=plank index left out, snap=(index, z) -- a plank snapped at z with a splinter --,
+    sag=deg, ajar=deg); its straps end where the planks still there at their height stop"""
+    sg = 1.0 if side == "L" else -1.0
+    z0 = VKI_STO_DOOR["thr"] + 0.005
+    xa, xb = 0.005, 0.005 + W
+    w = (xb - xa) / n
+    t, y0 = VKI_LEAF_T, VKI_LEAF_Y0
+    br = broken or {}
+    for i in range(n):
+        if i == br.get("miss"):
+            continue
+        a, b = xa + i * w, xa + (i + 1) * w
+        m = (a + b) / 2
+        if br.get("snap") and br["snap"][0] == i:
+            zs = br["snap"][1]
+            poly = [(a, z0), (b, z0), (b, zs - 0.06), (a, zs)]
+            vki_prism(k, [(sg * p[0], p[1]) for p in (poly if sg > 0 else poly[::-1])], y0, y0 + t, WOOD, axis="y",
+                      bevel=0.012)
+            spl = [(a + 0.01, zs - 0.005), (a + 0.45 * w, zs - 0.03), (a + 0.12 * w, zs + 0.28)]   # the splinter
+            vki_prism(k, [(sg * p[0], p[1]) for p in (spl if sg > 0 else spl[::-1])], y0 + 0.01, y0 + t - 0.01, WOOD,
+                      axis="y")
+            continue
+        poly = [(a, z0), (b, z0), (b, ztop(b)), (m, ztop(m)), (a, ztop(a))]
+        vki_prism(k, [(sg * p[0], p[1]) for p in (poly if sg > 0 else poly[::-1])], y0, y0 + t, WOOD, axis="y",
+                  bevel=0.012)
+    sx0 = VKI_LEAF_STRAP_X0
+    xs1, xo1 = xb - 0.035, xb - 0.045
+    def wood_to(z):                                       # the planks still there at height z, from the hinge
+        i = 0
+        while i < n and i != br.get("miss") and not (br.get("snap") and br["snap"][0] == i and z > br["snap"][1] - 0.1):
+            i += 1
+        return xa + i * w
+    for j, z in enumerate(VKI_LEAF_TALL_STRAPS):
+        if z > ztop(sx0) - 0.08:
+            continue
+        e1 = min(xs1, wood_to(z) - 0.035)
+        e2 = min(xo1, wood_to(z) - 0.045)
+        k.box((sg * (sx0 + e1) / 2, y0 - 0.006, z), (e1 - sx0, 0.012, 0.045), IRON, bevel=0.004)     # room side
+        k.box((sg * (0.05 + e2) / 2, y0 + t + 0.006, z), (e2 - 0.05, 0.012, 0.045), IRON, bevel=0.004)  # outer
+    zr = VKI_LEAF_TALL_RING_Z
+    xr = sg * (xb - 0.115)
+    if br.get("miss") != n - 1 and not (br.get("snap") and br["snap"][0] == n - 1 and br["snap"][1] < zr + 0.1):
+        k.box((xr, y0 - 0.006, zr + 0.03), (0.07, 0.012, 0.09), IRON, bevel=0.003)
+        before = set(k.bm.verts)
+        ring(k, (xr, y0 - 0.018, zr), 0.034, 0.054, 0.012, IRON, n=12, axis="Y")
+        rv = [v for v in k.bm.verts if v not in before]
+        bmesh.ops.rotate(k.bm, verts=rv, cent=Vector((xr, y0 - 0.008, zr + 0.054)),
+                         matrix=Matrix.Rotation(math.radians(-8.0), 3, "X"))
+    if broken:
+        vki_leaf_break(k, sg, z0, broken.get("sag", 0.0), broken.get("ajar", 0.0))
+    top_a = ztop(xa); top_b = ztop(xb)
+    k.meta.update(vki_class="leaf", hinge_axis="local Z", vki_hinge=[0.0, 0.0, 0.0], vki_leaf_clearance=0.005,
+                  vki_leaf_width=round(xb - xa, 3), vki_leaf_height=round(max(top_a, top_b, ztop((xa + xb) / 2)) - z0, 3),
+                  vki_leaf_side=side, vki_leaf_fits=fits)
+    if broken:
+        k.meta.update(vki_leaf_state="broken", vki_leaf_open_deg=0,
+                      vki_leaf_note="baked hanging ajar %d deg and sagging %d deg (the upper hinge torn): a static "
+                                    "piece, it does not open" % (broken.get("ajar", 0), broken.get("sag", 0)))
+    else:
+        k.meta.update(vki_leaf_state="closed", vki_leaf_open_deg=90,
+                      vki_leaf_open_dir="rotation %sdeg about local Z (toward the room, -Y)" % ("-" if sg > 0 else "+"))
+
+
+def vki_leaf_break(k, sg, z0, sag, ajar):
+    """a torn upper hinge: the leaf drops in its own plane about its lower strap at the hinge (its top swings toward
+    the meeting edge), rests its free bottom corner on the floor, and hangs open ajar deg into the room (-Y)"""
+    zh = VKI_LEAF_TALL_STRAPS[0]
+    a = math.radians(sag) * sg
+    for v in k.bm.verts:
+        x, z = v.co.x, v.co.z - zh
+        v.co.x = x * math.cos(a) + z * math.sin(a)
+        v.co.z = zh - x * math.sin(a) + z * math.cos(a)
+    lo = min(v.co.z for v in k.bm.verts)
+    if lo < z0 - 0.03:                                    # the free corner rests on the floor (the hinge side lifts)
+        for v in k.bm.verts:
+            v.co.z += (z0 - 0.03) - lo
+    R = Matrix.Rotation(-math.radians(ajar) * sg, 3, "Z")
+    for v in k.bm.verts:
+        v.co = R @ v.co
+    for v in k.bm.verts:                                  # old, weathered wood
+        k.set_dark([v], 0.22)
+    k.bm.normal_update()
+
+
+def vki_sto_leaf_wide_full_l(k):
+    vki_leaf_tall(k, "L", VKI_STO_WIDE_LEAF_W, vki_sto_wide_full_top, "SM_VKI_Wall_Stone_DoorWide_300_Full at vki_leaf_socket[0], same rotation")
+def vki_sto_leaf_wide_full_r(k):
+    vki_leaf_tall(k, "R", VKI_STO_WIDE_LEAF_W, vki_sto_wide_full_top, "SM_VKI_Wall_Stone_DoorWide_300_Full at vki_leaf_socket[1], same rotation")
+def vki_sto_leaf_wide160_full_l(k):
+    vki_leaf_tall(k, "L", VKI_STO_WIDE160_LEAF_W, vki_ash_wide_full_top, "SM_VKI_Wall_Ashlar_DoorWide_300_Full at vki_leaf_socket[0], same rotation")
+def vki_sto_leaf_wide160_full_r(k):
+    vki_leaf_tall(k, "R", VKI_STO_WIDE160_LEAF_W, vki_ash_wide_full_top, "SM_VKI_Wall_Ashlar_DoorWide_300_Full at vki_leaf_socket[1], same rotation")
+
+
+# broken leaves for abandoned places (2026-10-17, the monastery): hanging ajar on the lower hinge, the meeting-edge
+# plank gone and the next snapped (a gap in the middle left that plank floating on the bottom strap), the straps ending
+# with the wood
+def vki_sto_leaf_wide160_full_broken_l(k):
+    vki_leaf_tall(k, "L", VKI_STO_WIDE160_LEAF_W, vki_ash_wide_full_top,
+                  "SM_VKI_Wall_Ashlar_DoorWide_300_Full at vki_leaf_socket[0], same rotation",
+                  broken=dict(miss=3, snap=(2, 1.55), sag=7.0, ajar=38.0))
+def vki_sto_leaf_plank_full_broken(k):
+    zt = VKI_TIM_DOOR["thr"] + 0.005 + 2.16
+    vki_leaf_tall(k, "L", 0.83, lambda xl: zt, "SM_VKI_Wall_*_Door_150_Full at its vki_leaf_socket, same rotation",
+                  broken=dict(miss=3, snap=(2, 1.25), sag=6.0, ajar=55.0))
+
+
 VKI_STO_SPECS = [
     ("SM_VKI_Wall_Stone_Plain_150A_Full", vki_sto_plain_150a_full, "wall"),
     ("SM_VKI_Wall_Stone_Plain_150A_Cut", vki_sto_plain_150a_cut, "wall"),
@@ -1153,6 +1289,12 @@ VKI_STO_SPECS = [
     ("SM_VKI_Leaf_Wide_Cut_R", vki_sto_leaf_wide_r, "prop"),
     ("SM_VKI_Leaf_Wide160_Cut_L", vki_sto_leaf_wide160_l, "prop"),
     ("SM_VKI_Leaf_Wide160_Cut_R", vki_sto_leaf_wide160_r, "prop"),
+    ("SM_VKI_Leaf_Wide_Full_L", vki_sto_leaf_wide_full_l, "prop"),
+    ("SM_VKI_Leaf_Wide_Full_R", vki_sto_leaf_wide_full_r, "prop"),
+    ("SM_VKI_Leaf_Wide160_Full_L", vki_sto_leaf_wide160_full_l, "prop"),
+    ("SM_VKI_Leaf_Wide160_Full_R", vki_sto_leaf_wide160_full_r, "prop"),
+    ("SM_VKI_Leaf_Wide160_Full_Broken_L", vki_sto_leaf_wide160_full_broken_l, "prop"),
+    ("SM_VKI_Leaf_Plank_Full_Broken", vki_sto_leaf_plank_full_broken, "prop"),
 ]
 VKI_STO_NAMES = [n for n, _, _ in VKI_STO_SPECS]
 vki_register([(n, fn, {"grime": gr}, "stone") for n, fn, gr in VKI_STO_SPECS])

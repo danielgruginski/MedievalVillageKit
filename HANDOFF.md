@@ -1400,6 +1400,26 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     A first try (one outcrop with a split-off slab leaning off its front) did not read: the slab merged with the rock.
     Preview: the bottom row of `Ores_Preview` (with the old `SM_VK_Pile_Stone_2` beside it).
 
+115. 2026-10-17 (MedievalSetting's coming areas, the abandoned monastery and a castle's inside; the user: "build the
+    missing door pieces first: full-height double leaves, the pointed single Ashlar door, and a broken/ajar leaf").
+    **Full-height double leaves**: the wide doors' Full walls had openings but only the Cut exits had leaves.
+    `vki_leaf_tall` (vki_fam_stone): planks as prisms whose 3-point tops follow the arch over them, 1 cm under it
+    (`vki_sto_wide_full_top`: Stone's segmental arch; `vki_ash_wide_full_top`: Ashlar's pointed one), straps at 0.36 /
+    1.12 / 1.88 on both faces, the ring at 1.02 -- `SM_VKI_Leaf_Wide_Full_L/R` (0.89 x 2.50, 628 tris) and
+    `SM_VKI_Leaf_Wide160_Full_L/R` (0.795 x 3.39, pointed). **Single pointed door** `SM_VKI_Wall_Ashlar_Door_150_Full`
+    (1,476 tris) / `_Cut` (400; `vki_ash_door1`): the Stone door's clear 0.84 (x 0.33-1.17), two narrower orders
+    (0.12 / 0.22), a DRESS lintel 2.205-2.34 (inset 8 mm in y: T5S flagged it coplanar with the inner ring) and a
+    recessed tympanum filling the pointed arch (apex 2.85) -- so the existing `Leaf_Plank_Full` / `_Cut` hang in it
+    (socket at the inner order's step, y -0.09; `vki_leaf` names them). **Broken leaves** `SM_VKI_Leaf_Wide160_Full_
+    Broken_L` and `SM_VKI_Leaf_Plank_Full_Broken` (428 tris; `vki_leaf_break`): the meeting-edge plank gone and the next
+    snapped with a splinter, the straps ending with the wood, sagged 7 / 6 deg in their plane about the lower strap (the
+    free corner on the floor), hanging ajar 38 / 55 deg, darkened; static (`vki_leaf_state` "broken"). A first try with
+    the gap in the middle left the snapped meeting-edge plank floating on the bottom strap. Existing pieces rebuild
+    identical; `vki_test_pieces` clean. Test wall: scene `WS_vki_doors`. **Not done:** the Full wide walls' metadata
+    still lists no `vki_leaf` (the generators will not hang the new leaves by themselves), and the Ashlar
+    `DoorWide_300_Cut` lists `Leaf_Wide_Cut_L/R` though its leaves are the narrower `Leaf_Wide160_Cut` (the plans use
+    Wide160).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
