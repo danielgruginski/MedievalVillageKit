@@ -80,6 +80,20 @@ def goblin_herb_material():
     if painted: m=leaf_material("M_VK_GoblinHerb","T_VK_GoblinHerb"); m["vk_wg"]="leaf"
     else: m=tex_mat("M_VK_GoblinHerb",None,0.6,flat=(0.42,0.44,0.17)); m["vk_wg"]="flat"
     return m
+ORE_TINTS={"iron":dict(flat=(0.95,0.42,0.20),rough_mul=0.8),                  # the ore nodes' nuggets (SM_VK_Ore_*): the
+           "coal":dict(flat=(0.11,0.11,0.12),rough_mul=0.45,spec=0.5),         # ore's own texture tinted all over the ore's
+           "silver":dict(flat=(1.5,1.53,1.6),metallic=0.3,rough_mul=0.4)}      # colour (pbr_material flat: shading kept;
+#                                                                         silver barely metallic: a metal reflects the dark cave and read grey)
+def ore_material(kind,chunk=False):
+    """an ore node's rock (T_VK_Ore<Kind>: vk_texgen.gen_ore) or its nuggets (the same texture tinted, ORE_TINTS); a
+    flat stand-in until the texture is painted. Built once (kit_mats runs for every piece)."""
+    name="M_VK_Ore"+kind.capitalize()+("Chunk" if chunk else ""); tex="T_VK_Ore"+kind.capitalize()
+    m=bpy.data.materials.get(name); painted=tex+"_BC" in bpy.data.images
+    if m is not None and m.get("vk_ore")==("tex" if painted else "flat"): return m
+    if painted:
+        m=m or bpy.data.materials.new(name); pbr_material(m,tex,**(ORE_TINTS[kind] if chunk else {})); m["vk_ore"]="tex"
+    else: m=tex_mat(name,None,0.6,flat=ORE_TINTS[kind]["flat"] if chunk else (0.5,0.5,0.5)); m["vk_ore"]="flat"
+    return m
 def kit_mats():
     return [tex_mat("M_VK_Stone","T_VK_Stone"), tex_mat("M_VK_Plaster","T_VK_Plaster",0.9), tex_mat("M_VK_Wood","T_VK_Wood",0.8),
             tex_mat("M_VK_RoofRed","T_VK_RoofRed",0.7), tex_mat("M_VK_Window","T_VK_Window",0.25), tex_mat("M_VK_Iron",None,0.5,flat=(0.08,0.08,0.09)),
@@ -102,8 +116,10 @@ def kit_mats():
             tex_mat("M_VK_Hide",None,0.8,flat=(0.50,0.33,0.20)), tex_mat("M_VK_Pigskin",None,0.7,flat=(0.90,0.62,0.56)),
             tex_mat("M_VK_Coal",None,0.95,flat=(0.045,0.043,0.050)), bpy.data.materials["M_VK_Net"],
             tex_mat("M_VK_Goods","T_VK_Goods_BC",0.5),
-            tex_mat("M_VK_StoneDressed","T_VK_StoneBlock",tint=DRESS_TINT), hewn_material(), wild_garlic_material(), yarrow_material(), cotton_material(), goblin_herb_material()]
-STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS,DRESS,HEWN,WILD_GARLIC,YARROW,COTTON,GOBLIN_HERB=range(59)
+            tex_mat("M_VK_StoneDressed","T_VK_StoneBlock",tint=DRESS_TINT), hewn_material(), wild_garlic_material(), yarrow_material(), cotton_material(), goblin_herb_material(),
+            ore_material("iron"), ore_material("coal"), ore_material("silver"),
+            ore_material("iron",True), ore_material("coal",True), ore_material("silver",True)]
+STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS,DRESS,HEWN,WILD_GARLIC,YARROW,COTTON,GOBLIN_HERB,ORE_IRON,ORE_COAL,ORE_SILVER,ORE_IRON_CHUNK,ORE_COAL_CHUNK,ORE_SILVER_CHUNK=range(65)
 # ---- goods atlas (T_VK_Goods, painted by vk_goods; keep the cell order in sync with vk_goods.GOODS_CELLS) ----
 GOODS_CELLS=("cabbage","pumpkin","carrot","apple","bread","cheese","fish","fish_smoked",
              "hide","fur","meat","ham","sausage","turnip","herbs","pomace")

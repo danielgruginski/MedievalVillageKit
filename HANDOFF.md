@@ -1361,6 +1361,20 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     out -- the crop atlas's `leafy` cell (the carrot tops) read as grass. Both use the frame-first material order of
     entry 105. Exported, Build Prefabs (the two). Preview scene `Crops_Preview` (with the carrot and cabbage fields).
 
+112. 2026-10-17 (the user: "go for the ores"; MedievalSetting's ore spots were recoloured kit rocks). First try: coal
+    and silver added to the mine kit's vein family (banded lumps); the user: "these don't look good, we need better ones"
+    -- reverted (code, masters, package files). **Ore nodes** in the nature kit instead: `SM_VK_Ore_Iron` (520 tris),
+    `SM_VK_Ore_Coal` (520), `SM_VK_Ore_Silver` (1,200), about 2.0 x 1.5 x 1.0-1.2 m (`make_ore_node` in vk_nature,
+    `NATURE_SPECS` sharp 40 deg): a broad chiselled boulder and two smaller ones in ore-bearing rock, 10 nuggets breaking
+    out of their front (-y) and top, 4 loose before it -- iron rounded rusty lumps, coal angular black blocks, silver
+    nuggets each with 3-4 crystal shards (`ore_shard`). The rock is `T_VK_Ore<Kind>` (`vk_texgen.gen_ore`: gen_rock's
+    chiselled rock, cooler and bare, with the ore painted in -- iron rust bands and blotches, coal black strata with
+    glinting flakes, silver thin bright veins over blue-grey galena; zero-crossing veins of plain noise curled into
+    worm loops, so they are stretched, `ax` 4); the nuggets the same texture tinted (`ORE_TINTS`, pbr_material `flat`;
+    silver barely metallic -- a metal reflected the dark and read grey). Six slots 59-64 (`ore_material`). The front is
+    Unity +Z: MedievalSetting's `GatherDef.facing` (new) turns it out of a cave wall (0) or, at a cliff marker that faces
+    the cliff, to the camera (180). Preview `Ores_Preview` (the old vein row hidden). `renders/wip/ore_nodes.png`.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

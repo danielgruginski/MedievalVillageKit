@@ -1024,6 +1024,50 @@ def boulder(k,c,size,seed,mi=None,cuts=7,sub=3,flat_bottom=0.3,tile=1.5,rot=0.0,
     for f in faces: f.material_index=mi
     k.bm.normal_update(); box_uv(k,faces,tile,(rnd.random(),rnd.random()))
     return vs
+# ---- ore nodes (2026-10-17, MedievalSetting's mining spots, the cliffs' ore_* and the caves' vein_*): a cluster of
+# chiselled boulders in ore-bearing rock (T_VK_Ore<Kind>, vk_texgen.gen_ore) with the ore breaking out of their front and
+# top as chunky nuggets on the same texture tinted (ORE_TINTS) -- iron rust-red lumps, coal black blocks, silver bright
+# nuggets with crystal shards -- and a few loose on the ground before it. The front is -y (Unity +Z, which the game turns
+# out of a cave wall or toward the camera at a cliff); the back is plain.
+ORE_SLOTS={"iron":(ORE_IRON,ORE_IRON_CHUNK),"coal":(ORE_COAL,ORE_COAL_CHUNK),"silver":(ORE_SILVER,ORE_SILVER_CHUNK)}
+def ore_shard(k,base,d,L,r,mi):
+    """a crystal shard: a five-sided prism from base along d, its last third tapering to a point"""
+    d=Vector(d).normalized(); a=d.cross(Vector((0,0,1)) if abs(d.z)<0.9 else Vector((1,0,0))).normalized(); b=d.cross(a)
+    rings=[]
+    for t,rr in ((-0.05,r),(0.62,r),(1.0,0.0)):
+        rings.append([k.bm.verts.new(Vector(base)+d*L*t+(a*math.cos(i*2*math.pi/5)+b*math.sin(i*2*math.pi/5))*max(rr,0.002)) for i in range(5)])
+    fs=[]
+    for A,B in zip(rings[:-1],rings[1:]):
+        for i in range(5): j=(i+1)%5; fs.append(k.bm.faces.new((A[i],A[j],B[j],B[i])))
+    for f in fs: f.material_index=mi
+    k.bm.normal_update(); box_uv(k,fs,0.6,(0.3,0.7))
+def make_ore_node(k,seed,kind):
+    """an ore node about 1.7 m across and 1 m high: a broad chiselled boulder flanked by two smaller ones, 8-10 nuggets
+    of ore breaking out of their front and top, 4 loose before it"""
+    rng=random.Random(seed); rock,ore=ORE_SLOTS[kind]
+    def spots(vs): return [(v.co.copy(),v.normal.copy()) for v in vs]   # (copied at once: later geometry frees the refs)
+    sites=spots(boulder(k,(0,0.05,-0.08),(1.5,1.15,1.05),seed,mi=rock,cuts=8,sub=2,flat_bottom=0.35))
+    for i,(sx,w,h) in enumerate(((-1,0.75,0.62),(1,0.6,0.48))):
+        sites+=spots(boulder(k,(sx*0.72,0.12+rng.uniform(-0.08,0.08),-0.05),(w,w*0.85,h),seed+3+i,mi=rock,cuts=6,sub=2,flat_bottom=0.4))
+    sites=[(c,n) for c,n in sites if (n.z>0.3 or n.y<-0.35) and c.z>0.12]
+    rng.shuffle(sites); used=[]
+    for c,n in sites:
+        if len(used)>=10: break
+        if any((c-u).length<0.26 for u in used): continue
+        used.append(c); s_=rng.uniform(0.18,0.28)
+        if kind=="silver":                                        # a nugget with a few shards growing out of it
+            boulder(k,tuple(c-n*0.05),(s_*1.1,s_,s_*0.85),seed+40+len(used),mi=ore,cuts=4,sub=1,flat_bottom=0.6)
+            for m in range(rng.randint(3,4)):
+                d=(n+Vector((rng.uniform(-0.5,0.5),rng.uniform(-0.5,0.5),rng.uniform(0.2,0.8)))).normalized()
+                ore_shard(k,c-n*0.02,d,rng.uniform(0.22,0.38),rng.uniform(0.035,0.055),ore)
+        elif kind=="coal":                                        # angular blocks of coal
+            boulder(k,tuple(c-n*0.06),(s_*1.2,s_*0.9,s_*0.8),seed+40+len(used),mi=ore,cuts=7,sub=1,flat_bottom=0.5,
+                    rot=rng.uniform(0,6.28))
+        else:                                                     # iron: rounded rusty lumps
+            boulder(k,tuple(c-n*0.06),(s_,s_*0.9,s_*0.85),seed+40+len(used),mi=ore,cuts=3,sub=1,flat_bottom=0.6)
+    for i,(x,y,r) in enumerate(((-0.42,-0.72,0.11),(0.05,-0.82,0.09),(0.38,-0.70,0.12),(0.70,-0.55,0.08))):   # loose nuggets
+        boulder(k,(x,y,-0.02),(r*1.6,r*1.4,r*1.1),seed+80+i,mi=ore,cuts=5,sub=1,flat_bottom=0.5,rot=rng.uniform(0,6.28))
+    k.wind_fn=lambda p: 0.0
 def make_rock_cluster(k,seed,n=5,R=1.2,big=1.4):
     rng=random.Random(seed)
     for i in range(n):
@@ -1292,6 +1336,9 @@ NATURE_SPECS=[
  ("SM_VK_Rock_Boulder_Flat",lambda k: boulder(k,(0,0,-0.1),(2.4,1.7,0.8),145,cuts=6,flat_bottom=0.5),{"sharp":_R40,"bark_ao":(0.72,0.4)}),
  ("SM_VK_Rock_Small_A",lambda k: boulder(k,(0,0,-0.05),(0.6,0.5,0.4),147,mi=ROCK,cuts=5,sub=2),{"sharp":_R40,"bark_ao":(0.75,0.3)}),
  ("SM_VK_Rock_Small_B",lambda k: boulder(k,(0,0,-0.05),(0.5,0.45,0.55),149,mi=ROCK,cuts=5,sub=2),{"sharp":_R40,"bark_ao":(0.75,0.3)}),
+ ("SM_VK_Ore_Iron",lambda k: make_ore_node(k,161,"iron"),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
+ ("SM_VK_Ore_Coal",lambda k: make_ore_node(k,163,"coal"),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
+ ("SM_VK_Ore_Silver",lambda k: make_ore_node(k,165,"silver"),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
  ("SM_VK_Rock_Cluster",lambda k: make_rock_cluster(k,151),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
  ("SM_VK_Rock_Pebbles",lambda k: make_pebbles(k,153),{"sharp":_R40,"bark_ao":(0.8,0.2)}),
  ("SM_VK_Rock_StepStones",lambda k: make_stepstones(k,155),{"sharp":_R40,"bark_ao":(0.8,0.2)}),

@@ -3,7 +3,8 @@
 Generated from the .blend on 2026-09-23 (`docs/PIECES.md`). Dimensions are the master's bounding box in metres (x × y × z).
 Every piece is a hidden master; the maps place instances that share its mesh.
 Total: 483 masters (the crop rows updated 2026-10-14: raised beds, + `SM_VK_Crop_Bed`). 2026-10-16/17: + onion and turnip fields, + yarrow, wild
-cotton and goblin herb (each herb its own material slot: `kit_mats()` returns 59).
+cotton and goblin herb (each herb its own material slot), + iron, coal and silver ore nodes (two slots each: `kit_mats()`
+returns 65).
 
 The interior kit's 146 pieces (`SM_VKI_*`, added 2026-09-26) are listed in [INTERIOR_KIT.md §6](INTERIOR_KIT.md#6-pieces).
 The Mats column below predates two material slots added since: `kit_mats()` now returns 55 slots.
@@ -488,6 +489,9 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VK_Mushrooms_Brown` | 0.29 × 0.34 × 0.21 | 1,128 | 2 |
 | `SM_VK_Mushrooms_Glow` | 0.38 × 0.59 × 0.73 | 1,316 | 2 |
 | `SM_VK_Mushrooms_Red` | 0.66 × 0.67 × 0.42 | 1,728 | 2 |
+| `SM_VK_Ore_Coal` | 2.03 × 1.46 × 0.95 | 520 | 2 |
+| `SM_VK_Ore_Iron` | 2.03 × 1.51 × 1.07 | 520 | 2 |
+| `SM_VK_Ore_Silver` | 2.07 × 1.46 × 1.19 | 1,200 | 2 |
 | `SM_VK_Plant_Fern` | 1.22 × 1.25 × 1.29 | 144 | 1 |
 | `SM_VK_Plant_Cotton` | 1.15 × 0.86 × 0.92 | 900 | 1 |
 | `SM_VK_Plant_GoblinHerb` | 1.27 × 1.23 × 0.43 | 1,540 | 1 |

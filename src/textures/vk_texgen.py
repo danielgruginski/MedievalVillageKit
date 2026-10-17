@@ -403,6 +403,53 @@ def gen_rock(S=1024,seed=111,tile=1.5,depth=0.05):
     PBR_SETS["T_VK_Rock"]=dict(depth=depth,tile=tile)
     return write_set("T_VK_Rock",col.astype(f32),h,rough,depth,tile,ao=ao,ao_in_albedo=0.5)
 
+# ---- ore-bearing rock (2026-10-17, MedievalSetting's mining spots; SM_VK_Ore_* in vk_nature): gen_rock's chiselled grey
+# rock, cooler and bare (no moss or lichen), shot through with the ore -- iron: rust-red bands and blotches with dark
+# hematite specks; coal: black strata, slightly glossy; silver: thin bright veins over blue-grey galena patches. The ore
+# stands a little proud in the height (the veins catch the light).
+ORE_LOOKS={"iron":dict(seed=401,col=(0.46,0.17,0.08),col2=(0.70,0.34,0.13),speck=(0.16,0.07,0.05),rough=0.7),
+           "coal":dict(seed=411,col=(0.06,0.06,0.07),col2=(0.17,0.17,0.19),speck=(0.30,0.30,0.33),rough=0.35),
+           "silver":dict(seed=421,col=(0.26,0.29,0.36),col2=(0.92,0.94,0.97),speck=(1.0,1.0,1.0),rough=0.25)}
+def gen_ore(kind,S=1024,tile=1.5,depth=0.05):
+    L=ORE_LOOKS[kind]; seed=L["seed"]
+    h=0.5+0.16*fbm(S,3.0,seed,fmin=2)+facets(S,seed+1,3,30,0.20)+facets(S,seed+2,8,80,0.08)+0.006*fbm(S,1.6,seed+3,fmin=120)
+    warm=smooth(-1,1,fbm(S,3.2,seed+5,fmin=1.5))[...,None]
+    base=np.array([0.46,0.46,0.47],f32)*(1-warm)+np.array([0.55,0.51,0.45],f32)*warm
+    if kind=="coal":                                              # strata: wavy bands along x, a few broad, some thin
+        band=fbm(S,2.6,seed+10,fmin=2,fmax=30,ax=5.0)
+        ore=smooth(0.75,1.15,band)
+        patch=smooth(1.0,1.8,fbm(S,2.4,seed+11,fmin=3,fmax=40))*0.5
+    elif kind=="iron":                                            # rust: bands where a broad noise crosses zero, blotches round them
+        r_=fbm(S,2.8,seed+10,fmin=1.5,fmax=18,ax=4.0,angle=0.5); ore=smooth(0.30,0.06,np.abs(r_))*smooth(-0.6,0.4,fbm(S,2.6,seed+14,fmin=2,fmax=20))
+        patch=smooth(1.0,1.8,fbm(S,2.6,seed+11,fmin=2,fmax=25))
+    else:                                                         # silver: galena patches and thin bright veins
+        r_=fbm(S,2.4,seed+10,fmin=2,fmax=25,ax=4.0,angle=-0.6); ore=smooth(0.13,0.03,np.abs(r_))*smooth(-0.6,0.4,fbm(S,2.6,seed+14,fmin=2,fmax=20))
+        patch=smooth(0.5,1.3,fbm(S,2.6,seed+11,fmin=2,fmax=50))
+    mask=np.clip(np.maximum(ore,patch*0.85),0,1)
+    h=np.clip(h+0.05*ore+0.025*patch,0,1)
+    h=blur(h,0.7)
+    n=normal_from_height(blur(h,2),depth*3,tile); light=painted_light(n)
+    col=base*(0.72+0.42*light[...,None])*(1+0.05*fbm(S,2.4,seed+6,fmin=4,fmax=100)[...,None])
+    if kind=="silver":                                            # the patches galena (dark blue-grey), the veins bright metal
+        oc=np.array(L["col"],f32)*(0.8+0.4*light[...,None])
+        col=col*(1-patch[...,None]*0.85)+oc*patch[...,None]*0.85
+        vc=np.array(L["col2"],f32)*(0.85+0.3*light[...,None])
+        col=col*(1-ore[...,None])+vc*ore[...,None]
+    else:
+        tone=smooth(-1,1,fbm(S,2.6,seed+12,fmin=4,fmax=80))[...,None]
+        oc=np.array(L["col"],f32)*(1-tone)+np.array(L["col2"],f32)*tone
+        if kind=="coal":                                          # coal's broken faces catch the light in flakes
+            oc=oc*(0.55+1.1*smooth(-1.2,1.6,fbm(S,2.0,seed+15,fmin=12,fmax=140))[...,None])
+        else: oc=oc*(0.75+0.45*light[...,None])
+        col=col*(1-mask[...,None])+oc*mask[...,None]
+    sp=smooth(2.2,2.8,fbm(S,1.2,seed+13,fmin=60,fmax=400))*mask                 # specks: hematite, coal sheen, silver glints
+    col=col*(1-sp[...,None])+np.array(L["speck"],f32)*sp[...,None]
+    ao=cavity_ao(h,radii=(3,12,30),k=(3.0,2.2,1.4),floor=0.3)
+    rough=np.clip(0.86*(1-mask)+L["rough"]*mask-0.15*sp+0.04*fbm(S,2.4,seed+9,fmin=6),0.05,1)
+    name="T_VK_Ore"+kind.capitalize()
+    PBR_SETS[name]=dict(depth=depth,tile=tile)
+    return write_set(name,col.astype(f32),h,rough.astype(f32),depth,tile,ao=ao,ao_in_albedo=0.5)
+
 def gen_clock(S=512,seed=121):
     x,y=grid(S); cx=x-0.5; cy=y-0.5; r=np.sqrt(cx*cx+cy*cy); a=np.arctan2(cx,-cy)   # a=0 at 12 o'clock
     col=np.zeros((S,S,3),f32)+np.array([0.93,0.87,0.68],f32)*(0.95+0.05*fbm(S,2.5,seed,fmin=3)[...,None])
