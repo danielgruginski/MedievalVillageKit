@@ -714,7 +714,7 @@ def mushroom(k,c,h,r,cap_mi,seed=0,spots=False,tilt=0.0,shape="dome"):
 # in loose umbels on stalks above them. Its own sheet T_VK_WildGarlic (vk_leafgen.paint_wild_garlic), material
 # WILD_GARLIC (the leaves' shader). The game's gatherable herb (MedievalSetting: wild garlic by the forest path).
 WG_UV={"leaf":(0.004,0.496,0.004,0.996),"flower":(0.504,0.996,0.504,0.996),"stalk":(0.504,0.996,0.004,0.496)}
-def wg_grid(k,P,uvr,nfn=None,aofn=None,flip=False):
+def wg_grid(k,P,uvr,nfn=None,aofn=None,flip=False,mi=WILD_GARLIC):
     """faces over a grid of points P[j][i] (j along, i across), its uvs spread over uvr (flip: mirrored across)"""
     u0,u1,v0,v1=uvr
     if flip: u0,u1=u1,u0
@@ -729,13 +729,13 @@ def wg_grid(k,P,uvr,nfn=None,aofn=None,flip=False):
     for j in range(rows):
         for i in range(cols):
             ids=((j,i),(j,i+1),(j+1,i+1),(j+1,i))
-            f=k.bm.faces.new([vs[a][b] for a,b in ids]); f.material_index=WILD_GARLIC; f.smooth=True
+            f=k.bm.faces.new([vs[a][b] for a,b in ids]); f.material_index=mi; f.smooth=True
             for l,(a,b) in zip(f.loops,ids): l[k.uv].uv=(u0+(u1-u0)*b/cols,v0+(v1-v0)*a/rows)
     return vs
-def wg_leaf(k,base,az,L,W,rng,nfn,aofn,rows=6):
-    """one leaf from base, out along azimuth az: it rises steeply and arches over toward the tip, twisting a little,
-    its halves folded up from the midrib (a shallow V)"""
-    e0=math.radians(rng.uniform(56,78)); e1=math.radians(rng.uniform(0,20)); roll=rng.uniform(-0.4,0.4)
+def wg_leaf(k,base,az,L,W,rng,nfn,aofn,rows=6,uvr=WG_UV["leaf"],mi=WILD_GARLIC,e0r=(56,78),e1r=(0,20)):
+    """one leaf from base, out along azimuth az: it rises steeply (e0r, degrees) and arches over toward the tip (e1r;
+    below 0 the tip droops), twisting a little, its halves folded up from the midrib (a shallow V)"""
+    e0=math.radians(rng.uniform(*e0r)); e1=math.radians(rng.uniform(*e1r)); roll=rng.uniform(-0.4,0.4)
     fold=W*rng.uniform(0.10,0.16); side=Vector((-math.sin(az),math.cos(az),0.0)); p=Vector(base); P=[]
     for j in range(rows+1):
         t=j/rows; e=e0+(e1-e0)*t**1.2
@@ -745,7 +745,7 @@ def wg_leaf(k,base,az,L,W,rng,nfn,aofn,rows=6):
         w=W*(0.45+0.55*min(1.0,t*2.5))                               # the narrow base (the sheet's leaf narrows there)
         mid=p-n*fold*math.sin(math.pi*min(t,0.9))
         P.append([p-s*w/2,mid,p+s*w/2]); p=p+d*(L/rows)
-    wg_grid(k,P,WG_UV["leaf"],nfn,aofn,flip=rng.random()<0.5)
+    wg_grid(k,P,uvr,nfn,aofn,flip=rng.random()<0.5,mi=mi)
 def wg_stalk(k,base,top,w=0.022,aofn=None):
     """a flower stalk: two crossed strips from the ground to the umbel"""
     B=Vector(base); T=Vector(top); d=(T-B)
@@ -781,6 +781,151 @@ def make_wild_garlic(k,seed,R=0.36,crowns=10,stalks=7):
         top=c+Vector((rng.uniform(-0.06,0.06),rng.uniform(-0.06,0.06),rng.uniform(0.32,0.44)))
         wg_stalk(k,c,top,aofn=aofn); wg_umbel(k,top,rng,n=rng.randint(10,14),aofn=aofn)
     k.wind_fn=lambda p: min(1.0,max(0.0,p.z/0.45))
+# ---- yarrow (Achillea millefolium): a low rosette of feathery leaves and stiff stalks, each topped by a flat head of
+# tiny white florets. Its own sheet T_VK_Yarrow (vk_leafgen.paint_yarrow), material YARROW (the leaves' shader). The
+# game's meadow herb for healing potions (MedievalSetting: herb_meadow gather spots). The heads face up and are drawn
+# about twice life size so the white reads from the colony camera.
+YA_UV={"leaf":(0.004,0.496,0.004,0.996),"flower":(0.504,0.996,0.504,0.996),"stalk":(0.504,0.996,0.004,0.496)}
+def ya_head(k,top,r,rng,aofn=None,n=10):
+    """a flat flower head: a shallow dome (centre + two rings) facing up, the sheet's round head mapped on it"""
+    T=Vector(top); u0,u1,v0,v1=YA_UV["flower"]; uc=(u0+u1)/2; vc=(v0+v1)/2; ur=(u1-u0)/2; vr=(v1-v0)/2
+    tilt=Vector((rng.uniform(-0.12,0.12),rng.uniform(-0.12,0.12),1.0)).normalized()
+    up=lambda p,tt=tilt.copy(): tt; rot=rng.uniform(0,6.28)
+    ctr=k.bm.verts.new(T+tilt*r*0.16); k.nfn[ctr]=up
+    if aofn: k.vinfo[ctr]=aofn
+    a_=tilt.cross(Vector((1,0,0))).normalized(); b_=tilt.cross(a_)
+    rings=[]
+    for rf,dz in ((0.55,0.10),(1.0,-0.06)):
+        ring=[]
+        for i in range(n):
+            th=rot+2*math.pi*i/n; rr=r*rf*rng.uniform(0.92,1.06)
+            v=k.bm.verts.new(T+(a_*math.cos(th)+b_*math.sin(th))*rr+tilt*r*dz); k.nfn[v]=up
+            if aofn: k.vinfo[v]=aofn
+            ring.append((v,th,rf*0.98))
+        rings.append(ring)
+    def uv(th,rf): return (uc+math.cos(th-rot)*rf*ur,vc+math.sin(th-rot)*rf*vr)
+    for i in range(n):
+        j=(i+1)%n; (va,ta,fa),(vb,tb,fb)=rings[0][i],rings[0][j]
+        f=k.bm.faces.new((ctr,va,vb)); f.material_index=YARROW; f.smooth=True
+        for l,q in zip(f.loops,((uc,vc),uv(ta,fa),uv(ta+2*math.pi/n,fb))): l[k.uv].uv=q
+        (wa,sa,ga),(wb,sb,gb)=rings[1][i],rings[1][j]
+        f=k.bm.faces.new((va,wa,wb,vb)); f.material_index=YARROW; f.smooth=True
+        for l,q in zip(f.loops,(uv(ta,fa),uv(sa,ga),uv(sa+2*math.pi/n,gb),uv(ta+2*math.pi/n,fb))): l[k.uv].uv=q
+def ya_stalk(k,base,mid,top,w=0.018,aofn=None):
+    """a stiff stalk with a slight bend: two crossed strips through base, mid and top"""
+    pts=[Vector(base),Vector(mid),Vector(top)]
+    for a in (0.0,math.pi/2):
+        s=Vector((math.cos(a),math.sin(a),0.0))*w/2
+        wg_grid(k,[[p-s,p+s] for p in pts],YA_UV["stalk"],lambda p: UP,aofn,mi=YARROW)
+def make_yarrow(k,seed,R=0.32,crowns=9,stalks=8):
+    """a clump of yarrow about 0.9 m across: a low rosette of feathery leaves (0.2-0.3 m, arching out flat) and stalks
+    0.45-0.65 m tall with a few small leaves up them and a flat white head each (0.18-0.24 m across)"""
+    rng=random.Random(seed); C0=Vector((0,0,0)); nfn,aofn=plant_fns(center=C0,H=0.6,ao_lo=0.7,radw=0.5)
+    cr=[]
+    for i in range(crowns):
+        a=i*GOLD+rng.uniform(-0.3,0.3); d=R*math.sqrt((i+0.5)/crowns)*rng.uniform(0.75,1.0) if i else 0.0
+        cr.append(Vector((math.cos(a)*d,math.sin(a)*d,-0.01)))
+    for c in cr:                                                  # the rosette: leaves rising a little, then lying out
+        out=math.atan2(c.y,c.x) if c.length>0.05 else rng.uniform(0,6.28)
+        for j in range(rng.randint(4,5)):
+            az=out+rng.uniform(-1.4,1.4) if c.length>0.05 else j*2*math.pi/5+rng.uniform(-0.3,0.3)
+            base=c+Vector((rng.uniform(-0.03,0.03),rng.uniform(-0.03,0.03),0.0))
+            wg_leaf(k,base,az,rng.uniform(0.22,0.32),rng.uniform(0.09,0.11),rng,nfn,aofn,uvr=YA_UV["leaf"],mi=YARROW)
+    for i in range(stalks):
+        c=cr[i%len(cr)]+Vector((rng.uniform(-0.04,0.04),rng.uniform(-0.04,0.04),0.0))
+        H=rng.uniform(0.45,0.65); lean=Vector((c.x,c.y,0.0))*0.35+Vector((rng.uniform(-0.05,0.05),rng.uniform(-0.05,0.05),0.0))
+        mid=c+lean*0.4+Vector((0,0,H*0.5)); top=c+lean+Vector((0,0,H))
+        ya_stalk(k,c,mid,top,aofn=aofn)
+        for j in range(rng.randint(2,3)):                         # small leaves up the stalk, clasping it
+            t=rng.uniform(0.15,0.6); p=c+(top-c)*t
+            wg_leaf(k,p,rng.uniform(0,6.28),rng.uniform(0.10,0.15),rng.uniform(0.045,0.06),rng,nfn,aofn,rows=4,uvr=YA_UV["leaf"],mi=YARROW)
+        ya_head(k,top,rng.uniform(0.09,0.12),rng,aofn=aofn)
+    k.wind_fn=lambda p: min(1.0,max(0.0,p.z/0.6))
+# ---- wild cotton: a small shrub of a few woody stems with side branches, broad five-lobed leaves held out flat on
+# their stalks, and open bolls (white puffs on dry brown husks) at the tips and along the branches. Its own sheet
+# T_VK_Cotton (vk_leafgen.paint_cotton), material COTTON (the leaves' shader). The game's wild cotton (MedievalSetting:
+# among the yarrow in the meadows, herb_meadow's patchAlt). The bolls are three crossed cards, so they read as balls
+# from any side, and about twice life size so the white reads from the colony camera.
+CT_UV={"leaf":(0.004,0.496,0.504,0.996),"leaf_b":(0.004,0.496,0.004,0.496),"boll":(0.504,0.996,0.504,0.996),
+       "stalk":(0.504,0.996,0.004,0.496)}
+def ct_stalk(k,pts,w,aofn=None):
+    """a woody stalk through pts: two crossed strips"""
+    pts=[Vector(p) for p in pts]
+    for a in (0.0,math.pi/2):
+        s=Vector((math.cos(a),math.sin(a),0.0))*w/2
+        wg_grid(k,[[p-s,p+s] for p in pts],CT_UV["stalk"],lambda p: UP,aofn,mi=COTTON)
+def ct_leaf(k,at,out,size,rng,nfn,aofn):
+    """a broad leaf on a short stalk from `at`, held out along `out` and tilted up a little, cupped slightly; the
+    sheet's leaf on it with its stalk end at `at`"""
+    d=Vector((out.x,out.y,0.0)).normalized(); e=math.radians(rng.uniform(5,30))
+    d=(d*math.cos(e)+UP*math.sin(e)).normalized(); s=d.cross(UP).normalized(); n=s.cross(d).normalized()
+    if n.z<0: n=-n
+    P=[]
+    for j in range(3):
+        row=[]
+        for i in range(3):
+            t=j/2; c=Vector(at)+d*size*t+s*size*(i/2-0.5)
+            cup=0.10*size*(1 if i!=1 else 0)+0.08*size*(1 if j==2 else 0)   # the rim a little up, the middle down
+            row.append(c+n*cup)
+        P.append(row)
+    wg_grid(k,P,CT_UV["leaf" if rng.random()<0.6 else "leaf_b"],nfn,aofn,mi=COTTON)
+def ct_boll(k,c,r,rng,aofn=None):
+    """an open boll: three crossed square cards round c, the sheet's puff on each"""
+    C=Vector(c); rot=rng.uniform(0,6.28)
+    axes=[Vector((math.cos(rot),math.sin(rot),0.0)),Vector((-math.sin(rot),math.cos(rot),0.0)),UP.copy()]
+    for i in range(3):
+        a=axes[i]; b=axes[(i+1)%3]; nrm=a.cross(b).normalized()
+        P=[[C-a*r-b*r,C+a*r-b*r],[C-a*r+b*r,C+a*r+b*r]]
+        wg_grid(k,P,CT_UV["boll"],(lambda p,cc=C.copy(): (p-cc).normalized()*0.5+UP*0.5),aofn,mi=COTTON)
+def make_cotton(k,seed,stems=4,H=0.85,R=0.12):
+    """a wild cotton shrub about 0.85 m tall and 0.8 m across: 4 woody stems leaning out from the crown, 2-3 side
+    branches each, broad leaves (0.15-0.24 m) along them and low round the crown, and 14-18 white bolls (0.1-0.15 m) at the tips and nodes"""
+    rng=random.Random(seed); nfn,aofn=plant_fns(center=Vector((0,0,0)),H=H,ao_lo=0.7,radw=0.4)
+    tips=[]; nodes=[]
+    for i in range(stems):
+        a=i*2*math.pi/stems+rng.uniform(-0.4,0.4); b=Vector((math.cos(a),math.sin(a),0.0))
+        base=b*R*rng.uniform(0.2,1.0)+Vector((0,0,-0.02)); h=H*rng.uniform(0.75,1.0)
+        top=base+b*rng.uniform(0.12,0.22)+Vector((rng.uniform(-0.05,0.05),rng.uniform(-0.05,0.05),h))
+        mid=base+(top-base)*0.5+b*0.03
+        ct_stalk(k,[base,mid,top],0.03,aofn); tips.append(top)
+        for j in range(rng.randint(2,3)):                         # side branches out and up
+            t=rng.uniform(0.35,0.75); p=base+(top-base)*t
+            ba=a+rng.choice((-1,1))*rng.uniform(0.5,1.2); bd=Vector((math.cos(ba),math.sin(ba),0.0))
+            L=rng.uniform(0.16,0.26); end=p+bd*L*0.8+Vector((0,0,L*0.6))
+            ct_stalk(k,[p,(p+end)/2+Vector((0,0,0.02)),end],0.02,aofn); tips.append(end)
+            nodes+=[(p+(end-p)*0.5,bd)]
+        nodes+=[(base+(top-base)*t,b) for t in (0.2,0.4,0.6,0.8)]
+    for p,bd in nodes:                                            # leaves at the nodes, turned round the stem
+        for m in range(rng.randint(2,3)):
+            o=Quaternion(UP,rng.uniform(-2.0,2.0))@bd
+            ct_leaf(k,p,o,rng.uniform(0.17,0.23),rng,nfn,aofn)
+    for i in range(7):                                            # low leaves round the crown hide the bare stems' feet
+        a=i*GOLD+rng.uniform(-0.3,0.3); p=Vector((math.cos(a),math.sin(a),0.0))*R*0.5+Vector((0,0,rng.uniform(0.06,0.14)))
+        ct_leaf(k,p,Vector((math.cos(a),math.sin(a),0.0)),rng.uniform(0.18,0.24),rng,nfn,aofn)
+    for t_ in tips:                                               # a leaf under each tip, a boll on it
+        o=Vector((t_.x,t_.y,0.0)); o=o.normalized() if o.length>1e-3 else Vector((1,0,0))
+        ct_leaf(k,t_-Vector((0,0,0.04)),Quaternion(UP,rng.uniform(-1.2,1.2))@o,rng.uniform(0.15,0.2),rng,nfn,aofn)
+        ct_boll(k,t_+Vector((0,0,0.04)),rng.uniform(0.06,0.075),rng,aofn)
+    for p,bd in rng.sample(nodes,min(len(nodes),5)):              # a few more bolls along the branches
+        ct_boll(k,p+bd*0.05+Vector((0,0,0.03)),rng.uniform(0.05,0.06),rng,aofn)
+    k.wind_fn=lambda p: min(1.0,max(0.0,p.z/H))*0.6
+# ---- goblin herb: a low olive patch of long strap leaves arching out of a few crowns and drooping at the tips, some
+# smooth, some crinkled and blotched. Its own sheet T_VK_GoblinHerb (vk_leafgen.paint_goblin_herb), material
+# GOBLIN_HERB (the leaves' shader). The game's cave herb (MedievalSetting: the goblins' cleansing herb).
+GH_UV={"smooth":(0.004,0.496,0.004,0.996),"crinkled":(0.504,0.996,0.004,0.996)}
+def make_goblin_herb(k,seed,R=0.30,crowns=10):
+    """a dense patch of goblin herb about 1.1 m across and 0.35 m high: crowns of 5-6 long leaves (0.34-0.52 m) rising
+    steeply, then arching over and drooping to the ground; the middle crown's leaves stand up (no hole in the middle)"""
+    rng=random.Random(seed); C0=Vector((0,0,0)); nfn,aofn=plant_fns(center=C0,H=0.35,ao_lo=0.65,radw=0.5)
+    for i in range(crowns):
+        a=i*GOLD+rng.uniform(-0.3,0.3); d=R*math.sqrt((i+0.5)/crowns)*rng.uniform(0.75,1.0) if i else 0.0
+        c=Vector((math.cos(a)*d,math.sin(a)*d,-0.01)); out=a if d>0.05 else rng.uniform(0,6.28); inner=d<0.15
+        for j in range(rng.randint(5,6) if i else 7):
+            az=out+rng.uniform(-1.8,1.8) if d>0.05 else j*2*math.pi/7+rng.uniform(-0.3,0.3)
+            L=rng.uniform(0.34,0.52); base=c+Vector((rng.uniform(-0.03,0.03),rng.uniform(-0.03,0.03),0.0))
+            wg_leaf(k,base,az,L,L*0.42,rng,nfn,aofn,rows=7,uvr=GH_UV["crinkled" if rng.random()<0.35 else "smooth"],
+                    mi=GOBLIN_HERB,e0r=(62,80) if inner else (45,68),e1r=(5,30) if inner else (-30,-8))
+    k.wind_fn=lambda p: min(1.0,max(0.0,p.z/0.3))*0.5
 def make_mushrooms(k,seed,kind="red"):
     rng=random.Random(seed)
     n={"red":4,"brown":6,"glow":7}[kind]
@@ -1133,6 +1278,9 @@ NATURE_SPECS=[
  ("SM_VK_Plant_TallGrass",lambda k: make_tufts(k,115,"tallgrass",n=10,R=0.7,Hs=(0.7,1.1),W=0.9),{"bark_ao":None}),
  ("SM_VK_Plant_Wildflowers",lambda k: make_tufts(k,117,"wildflowers",n=12,R=0.9,Hs=(0.5,0.75),W=0.9),{"bark_ao":None}),
  ("SM_VK_Plant_WildGarlic",lambda k: make_wild_garlic(k,119),{"bark_ao":None}),
+ ("SM_VK_Plant_Yarrow",lambda k: make_yarrow(k,127),{"bark_ao":None}),
+ ("SM_VK_Plant_Cotton",lambda k: make_cotton(k,129),{"bark_ao":None}),
+ ("SM_VK_Plant_GoblinHerb",lambda k: make_goblin_herb(k,131),{"bark_ao":None}),
  ("SM_VK_Mushrooms_Red",lambda k: make_mushrooms(k,121,"red"),{"bark_ao":None}),
  ("SM_VK_Mushrooms_Brown",lambda k: make_mushrooms(k,123,"brown"),{"bark_ao":None}),
  ("SM_VK_Mushrooms_Glow",lambda k: make_mushrooms(k,125,"glow"),{"bark_ao":None}),

@@ -583,3 +583,92 @@ def paint_wild_garlic(seed=331,S=512,name="T_VK_WildGarlic"):
     save_leaf_atlas(P,name)                                       # _BCA (alpha, dilated) and _N
     write_map(name+"_H",blur(P.h,0.8),True)
     return name
+# ---- yarrow (SM_VK_Plant_Yarrow): a small sheet of its own like the wild garlic's ----
+# T_VK_Yarrow (512): the left half one feathery leaf (base at the bottom, tip at the top: a midrib with short, finely
+# cut leaflets all along it), the top right a flat flower head seen from above (dozens of tiny white florets with
+# cream eyes, packed in a few round bunches), the bottom right a stalk. vk_nature.YA_UV maps the same regions.
+def paint_yarrow(seed=341,S=512,name="T_VK_Yarrow"):
+    P=Painter(S); h=S//2; rng=np.random.default_rng(seed)
+    BL=(4,4,h-4,S-4); cx=h/2                                      # the leaf: a midrib, leaflets both sides
+    pal=[(0.30,0.50,0.20),(0.35,0.56,0.23),(0.27,0.46,0.18),(0.39,0.58,0.26)]
+    pts=[(cx+6*math.sin(t*2.2),S-8-(S-24)*t) for t in np.linspace(0,1,26)]
+    P.poly(BL,pts,6,2.0,(0.34,0.50,0.22),0.45,col2=(0.40,0.58,0.26))
+    for i in range(2,len(pts)-1):
+        t=i/(len(pts)-1); (xa,ya),(xb,yb)=pts[i-1],pts[i]; a=math.atan2(yb-ya,xb-xa)
+        Lp=(h*0.40)*(0.35+0.65*math.sin(math.pi*min(1.0,0.15+t*0.95)))   # widest in the middle, short at both ends
+        for sd in (-1,1):
+            al=a+sd*rng.uniform(1.0,1.25); col=np.array(pal[rng.integers(0,4)],f32)*rng.uniform(0.9,1.1)
+            P.seg(BL,xb,yb,xb+math.cos(al)*Lp*0.9,yb+math.sin(al)*Lp*0.9,1.8,tuple(col*0.9),0.4)
+            for j in range(4):                                    # the leaflet's fine lobes along its own rib
+                f=0.2+0.2*j; lx=xb+math.cos(al)*Lp*f; ly=yb+math.sin(al)*Lp*f; ll=Lp*0.30*(1-0.15*j)
+                for s2 in (-1,1):
+                    P.leaf(BL,lx,ly,al+s2*rng.uniform(0.7,1.0),ll,ll*0.16,col*rng.uniform(0.92,1.08),kind=2,side=s2,minL=5)
+            P.leaf(BL,xb+math.cos(al)*Lp*0.85,yb+math.sin(al)*Lp*0.85,al,Lp*0.25,Lp*0.06,col,kind=2,minL=5)
+    BF=(h+4,4,S-4,h-4); fc=(h+h/2,h/2)                            # the flower head: round bunches of florets
+    P.disc(BF,fc[0],fc[1],h*0.34,(0.40,0.44,0.30),0.45,hl=False)  # the shaded gaps between the florets
+    bunches=[(0.0,0.0,0.24)]+[(math.cos(a)*0.25,math.sin(a)*0.25,0.15) for a in np.linspace(0,2*math.pi,8,endpoint=False)+0.3]
+    for bx,by,br in bunches:
+        x0=fc[0]+bx*h; y0=fc[1]+by*h
+        for j in range(int(br*br*1500)):
+            rr=br*h*math.sqrt(rng.random()); aa=rng.uniform(0,6.28); fx=x0+math.cos(aa)*rr; fy=y0+math.sin(aa)*rr
+            if math.hypot(fx-fc[0],fy-fc[1])>h*0.41: continue
+            c=np.array((0.97,0.96,0.90),f32)*rng.uniform(0.9,1.03)*(0.86+0.14*(1-rr/(br*h)))
+            P.flower(BF,fx,fy,rng.uniform(9,12),5,tuple(c),(0.86,0.80,0.52),rot=rng.uniform(0,6.28),inner=0.3,sharp=0.5,h=0.75)
+    BS=(h+4,h+4,S-4,S-4)                                          # the stalk: grey-green, a little ribbed
+    P.seg(BS,h+h/2,S-8,h+h/2,h+8,h*0.6,(0.36,0.48,0.24),0.45,col2=(0.44,0.56,0.30))
+    for k in range(5): P.seg(BS,h+h/2-h*0.24+k*h*0.12,S-10,h+h/2-h*0.24+k*h*0.12,h+10,2.0,(0.30,0.42,0.20),0.4)
+    save_leaf_atlas(P,name)                                       # _BCA (alpha, dilated) and _N
+    write_map(name+"_H",blur(P.h,0.8),True)
+    return name
+# ---- wild cotton (SM_VK_Plant_Cotton): a small sheet of its own like the wild garlic's ----
+# T_VK_Cotton (512): the top left a broad leaf with five pointed lobes (stalk at the bottom, the middle lobe at the
+# top), the bottom left a second, darker one; the top right an open boll (a white puff of four locks over its dry
+# brown husk), the bottom right a woody stalk. vk_nature.CT_UV maps the same regions.
+def paint_cotton(seed=351,S=512,name="T_VK_Cotton"):
+    P=Painter(S); h=S//2; rng=np.random.default_rng(seed)
+    def palm(B,col,vein):
+        W=B[2]-B[0]; x0=(B[0]+B[2])/2; y0=B[3]-W*0.30               # the lobes fan up from the stalk's end
+        for a,L,w in ((-90,0.66,0.20),(-140,0.48,0.17),(-40,0.48,0.17),(-182,0.30,0.13),(2,0.30,0.13)):
+            P.leaf(B,x0,y0,math.radians(a+rng.uniform(-4,4)),W*L,W*w,np.array(col,f32)*rng.uniform(0.95,1.05),kind=0,fit=True,minL=10)
+        for a,L in ((-90,0.50),(-140,0.36),(-40,0.36),(-182,0.20),(2,0.20)):
+            P.seg(B,x0,y0,x0+math.cos(math.radians(a))*W*L,y0+math.sin(math.radians(a))*W*L,3.0,vein,0.4)
+        P.seg(B,x0,B[3]-4,x0,y0,6,(0.40,0.46,0.22),0.45)          # its stalk
+    palm((4,4,h-4,h-4),(0.30,0.52,0.20),(0.40,0.60,0.28))
+    palm((4,h+4,h-4,S-4),(0.24,0.44,0.16),(0.34,0.52,0.22))
+    BF=(h+4,4,S-4,h-4); fx,fy=h+h/2,h/2                           # the boll: a husk of 4 dry points, the puff over it
+    def tuft(x,y,r,col):                                          # a soft white tuft: feathered edge, no dark rim
+        bb=P._box(BF,x-r-1,y-r-1,x+r+1,y+r+1)
+        if not bb: return
+        x0,y0,x1,y1=bb; yy,xx=np.mgrid[y0:y1,x0:x1].astype(f32); q=np.clip(1-np.hypot(xx-x,yy-y)/r,0,1)
+        P.put(bb,np.clip(q*1.6,0,1),np.array(col,f32)[None,None,:]*(0.9+0.1*q)[...,None],0.6+0.3*q)
+    P.flower(BF,fx,fy,h*0.40,4,(0.42,0.27,0.13),(0.30,0.20,0.10),rot=math.pi/4,inner=0.1,sharp=5.0,h=0.4)
+    for lk in range(4):                                           # four locks, each a heap of soft white tufts
+        a=lk*math.pi/2+rng.uniform(-0.15,0.15); lx=fx+math.cos(a)*h*0.14; ly=fy+math.sin(a)*h*0.14
+        for j in range(150):
+            rr=h*0.19*math.sqrt(rng.random()); aa=rng.uniform(0,6.28); x=lx+math.cos(aa)*rr; y=ly+math.sin(aa)*rr
+            sh=0.88+0.12*(1-math.hypot(x-fx,y-fy)/(h*0.34))
+            tuft(x,y,rng.uniform(8,13),tuple(np.array((1.0,0.99,0.96),f32)*sh*rng.uniform(0.97,1.03)))
+    BS=(h+4,h+4,S-4,S-4)                                          # the stalk: woody, brown going green
+    P.seg(BS,h+h/2,S-8,h+h/2,h+8,h*0.6,(0.38,0.27,0.15),0.45,col2=(0.36,0.44,0.22))
+    for k in range(9):                                            # bark striations along it
+        x=h+h/2+rng.uniform(-h*0.26,h*0.26); P.seg(BS,x,S-10-rng.uniform(0,h*0.4),x+rng.uniform(-4,4),h+10+rng.uniform(0,h*0.4),2.0,(0.28,0.20,0.11),0.4)
+    save_leaf_atlas(P,name)                                       # _BCA (alpha, dilated) and _N
+    write_map(name+"_H",blur(P.h,0.8),True)
+    return name
+# ---- goblin herb (SM_VK_Plant_GoblinHerb): a small sheet of its own like the wild garlic's ----
+# T_VK_GoblinHerb (512): two long olive strap leaves side by side (base at the bottom, tip at the top): the left half a
+# smooth one with a pale midrib, the right half a crinkled, browner one with darker blotches. vk_nature.GH_UV maps them.
+def paint_goblin_herb(seed=361,S=512,name="T_VK_GoblinHerb"):
+    P=Painter(S); h=S//2; rng=np.random.default_rng(seed)
+    for side,(col,kind,rib) in enumerate((((0.44,0.46,0.18),0,(0.66,0.64,0.34)),((0.40,0.38,0.15),1,(0.58,0.54,0.28)))):
+        B=(side*h+4,4,side*h+h-4,S-4); x=side*h+h/2
+        P.seg(B,x,S-8,x,S-48,h*0.07,tuple(np.array(col)*0.9),0.4)  # the narrow base (the blade starts off the edge)
+        P.leaf(B,x,S-40,-math.pi/2,S-56,h*0.22,col,kind=kind,fit=False,soft=0.3)
+        P.seg(B,x,S-10,x,24,4.0,rib,0.5,col2=tuple(np.array(rib)*0.85))   # the pale midrib
+        if side:                                                  # the sickly one's dark blotches
+            for j in range(14):
+                t=rng.uniform(0.15,0.85); y=S-40-(S-56)*t; w=h*0.22*math.sin(math.pi*t)**0.7*(1-0.3*t)*0.4
+                bx=x+rng.uniform(-w,w); P.disc(B,bx,y,rng.uniform(5,9),(0.26,0.24,0.10),0.45,hl=False)
+    save_leaf_atlas(P,name)                                       # _BCA (alpha, dilated) and _N
+    write_map(name+"_H",blur(P.h,0.8),True)
+    return name

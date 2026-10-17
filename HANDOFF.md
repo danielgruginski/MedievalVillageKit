@@ -1324,6 +1324,43 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     never the front (south) wall -- a 2 m case on the camera's side, or in the front rows, hid the room behind it. (`DK`
     desks and the rest use the furnisher as before.)
 
+108. 2026-10-16 (MedievalSetting's meadow herb, the user: "we need to model the yarrow herbs"): **yarrow**,
+    `SM_VK_Plant_Yarrow` (`make_yarrow` in vk_nature, seed 127; 1,552 tris, 0.87 x 0.92 x 0.66 m): a low rosette of
+    feathery leaves (wild garlic's `wg_leaf` cards, flat) and 8 stalks with 2-3 small leaves each and a flat head of
+    white florets on top (`ya_head`: a shallow dome facing up, about twice life size so the white reads from the colony
+    camera). Its own 512 sheet `T_VK_Yarrow` (`vk_leafgen.paint_yarrow`: feathery leaf, head from above, stalk),
+    material slot 56 `YARROW` (`yarrow_material`, `M_VK_Yarrow`, two-sided in `VKX_TWO_SIDED`). `wg_grid` / `wg_leaf`
+    take `mi` (and `uvr`) now; the wild garlic rebuilds identical (`check_nature_specs` ok). Exported alone, Unity Build
+    Materials + Build Prefabs (the yarrow only). Preview scene `Yarrow_Preview` (with wild garlic and wildflowers to
+    compare). In MedievalSetting it replaces the wildflower stand-in at the `herb_meadow` spots (1.15x) and in the garden.
+
+109. 2026-10-16 (the user: "make the wild cotton next"; MedievalSetting grows it among the yarrow): **wild cotton**,
+    `SM_VK_Plant_Cotton` (`make_cotton` in vk_nature, seed 129; 900 tris, 1.15 x 0.86 x 0.92 m): 4 woody stems
+    (crossed strips) leaning out from the crown with 2-3 side branches each, broad five-lobed leaves held out flat on
+    short stalks (`ct_leaf`: a 3 x 3 card, rim cupped up; two leaf shades) at the nodes and round the crown's foot, and
+    open bolls (`ct_boll`: three crossed cards, ~0.13 m, twice life size) at every tip and a few nodes. Its own 512
+    sheet `T_VK_Cotton` (`vk_leafgen.paint_cotton`: two leaves, the boll's white puff of soft tufts over a brown
+    four-pointed husk, a woody stalk), slot 57 `COTTON` (`cotton_material`, `M_VK_Cotton`, two-sided). Seen next to
+    the yarrow in `Yarrow_Preview`. In MedievalSetting it replaces the white round-bush stand-in (`cotton` gatherable).
+
+110. 2026-10-17 (the user: "the goblin herb next? It will be a olive colored patch of long leaves, grows in caves"):
+    **goblin herb**, `SM_VK_Plant_GoblinHerb` (`make_goblin_herb` in vk_nature, seed 131; 1,540 tris, 1.27 x 1.23 x
+    0.43 m): 10 crowns of 5-7 long strap leaves (0.34-0.52 m, `wg_leaf` with `e0r`/`e1r`: rising, then drooping to the
+    ground; the middle crown's stand up so the patch has no hole). Its own 512 sheet `T_VK_GoblinHerb`
+    (`vk_leafgen.paint_goblin_herb`: a smooth olive leaf with a pale midrib, a crinkled browner one with dark blotches),
+    slot 58 `GOBLIN_HERB` (`goblin_herb_material`, `M_VK_GoblinHerb`, two-sided). `wg_leaf` takes `e0r`/`e1r` (defaults
+    = the old ranges: garlic, yarrow, cotton rebuild identical). Seen on a dark floor in `Yarrow_Preview`. In
+    MedievalSetting a `goblin_herb` gatherable placed by the cave walls (`GameRules.veins`).
+
+111. 2026-10-17 (MedievalSetting's guild garden, the user: "onions and turnip first"; they grew as the lavender and
+    cabbage fields): two raised-bed crops in `vk_helpers` beside the others. **`SM_VK_Crop_Onion`** (`crop_onion` /
+    `onion`; 3,864 tris): 6 ridges of 9 golden bulbs (a 7-sided lathe, `BREAD`, smooth) on the ridge tops, each with 4-5
+    tubular leaves as twisted ribbons on `LEAF` (two-sided), flopping over at the tips. No red onions: `CLAY` is not in
+    `full_rebuild`'s smooth list. **`SM_VK_Crop_Turnip`** (`crop_turnip`; 4,298 tris): 7 x 7 roots, a lathe dome with
+    the goods atlas's `turnip` (white below, purple shoulders), each under a rosette of 4 `ivy` foliage cards leaning
+    out -- the crop atlas's `leafy` cell (the carrot tops) read as grass. Both use the frame-first material order of
+    entry 105. Exported, Build Prefabs (the two). Preview scene `Crops_Preview` (with the carrot and cabbage fields).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

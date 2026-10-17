@@ -53,6 +53,33 @@ def wild_garlic_material():
     if painted: m=leaf_material("M_VK_WildGarlic","T_VK_WildGarlic"); m["vk_wg"]="leaf"
     else: m=tex_mat("M_VK_WildGarlic",None,0.6,flat=(0.30,0.52,0.18)); m["vk_wg"]="flat"
     return m
+def yarrow_material():
+    """yarrow's own sheet (T_VK_Yarrow: feathery leaf, flower head, stalk; vk_leafgen.paint_yarrow) on the leaves'
+    shader; a flat green stand-in until the sheet is painted. Built once (kit_mats runs for every piece)."""
+    m=bpy.data.materials.get("M_VK_Yarrow")
+    painted="T_VK_Yarrow_BCA" in bpy.data.images and "T_VK_Yarrow_H" in bpy.data.images
+    if m is not None and m.get("vk_wg")==("leaf" if painted else "flat"): return m
+    if painted: m=leaf_material("M_VK_Yarrow","T_VK_Yarrow"); m["vk_wg"]="leaf"
+    else: m=tex_mat("M_VK_Yarrow",None,0.6,flat=(0.32,0.50,0.22)); m["vk_wg"]="flat"
+    return m
+def cotton_material():
+    """wild cotton's own sheet (T_VK_Cotton: two leaves, boll, stalk; vk_leafgen.paint_cotton) on the leaves' shader;
+    a flat green stand-in until the sheet is painted. Built once (kit_mats runs for every piece)."""
+    m=bpy.data.materials.get("M_VK_Cotton")
+    painted="T_VK_Cotton_BCA" in bpy.data.images and "T_VK_Cotton_H" in bpy.data.images
+    if m is not None and m.get("vk_wg")==("leaf" if painted else "flat"): return m
+    if painted: m=leaf_material("M_VK_Cotton","T_VK_Cotton"); m["vk_wg"]="leaf"
+    else: m=tex_mat("M_VK_Cotton",None,0.6,flat=(0.30,0.48,0.20)); m["vk_wg"]="flat"
+    return m
+def goblin_herb_material():
+    """the goblin herb's own sheet (T_VK_GoblinHerb: two long leaves; vk_leafgen.paint_goblin_herb) on the leaves'
+    shader; a flat olive stand-in until the sheet is painted. Built once (kit_mats runs for every piece)."""
+    m=bpy.data.materials.get("M_VK_GoblinHerb")
+    painted="T_VK_GoblinHerb_BCA" in bpy.data.images and "T_VK_GoblinHerb_H" in bpy.data.images
+    if m is not None and m.get("vk_wg")==("leaf" if painted else "flat"): return m
+    if painted: m=leaf_material("M_VK_GoblinHerb","T_VK_GoblinHerb"); m["vk_wg"]="leaf"
+    else: m=tex_mat("M_VK_GoblinHerb",None,0.6,flat=(0.42,0.44,0.17)); m["vk_wg"]="flat"
+    return m
 def kit_mats():
     return [tex_mat("M_VK_Stone","T_VK_Stone"), tex_mat("M_VK_Plaster","T_VK_Plaster",0.9), tex_mat("M_VK_Wood","T_VK_Wood",0.8),
             tex_mat("M_VK_RoofRed","T_VK_RoofRed",0.7), tex_mat("M_VK_Window","T_VK_Window",0.25), tex_mat("M_VK_Iron",None,0.5,flat=(0.08,0.08,0.09)),
@@ -75,8 +102,8 @@ def kit_mats():
             tex_mat("M_VK_Hide",None,0.8,flat=(0.50,0.33,0.20)), tex_mat("M_VK_Pigskin",None,0.7,flat=(0.90,0.62,0.56)),
             tex_mat("M_VK_Coal",None,0.95,flat=(0.045,0.043,0.050)), bpy.data.materials["M_VK_Net"],
             tex_mat("M_VK_Goods","T_VK_Goods_BC",0.5),
-            tex_mat("M_VK_StoneDressed","T_VK_StoneBlock",tint=DRESS_TINT), hewn_material(), wild_garlic_material()]
-STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS,DRESS,HEWN,WILD_GARLIC=range(56)
+            tex_mat("M_VK_StoneDressed","T_VK_StoneBlock",tint=DRESS_TINT), hewn_material(), wild_garlic_material(), yarrow_material(), cotton_material(), goblin_herb_material()]
+STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS,DRESS,HEWN,WILD_GARLIC,YARROW,COTTON,GOBLIN_HERB=range(59)
 # ---- goods atlas (T_VK_Goods, painted by vk_goods; keep the cell order in sync with vk_goods.GOODS_CELLS) ----
 GOODS_CELLS=("cabbage","pumpkin","carrot","apple","bread","cheese","fish","fish_smoked",
              "hide","fur","meat","ham","sausage","turnip","herbs","pomace")
@@ -3172,6 +3199,45 @@ def crop_cabbage(k):
             for a in range(4):
                 aa=a*1.57+rnd.uniform(-0.3,0.3)
                 card(k,(x+math.cos(aa)*0.16,y+math.sin(aa)*0.16,0.24+L),(math.cos(aa+1.57),math.sin(aa+1.57),0),(math.cos(aa)*0.8,math.sin(aa)*0.8,0.6),0.3,0.3,"ivy",flip=a%2==0)
+# onions (2026-10-17, MedievalSetting's garden): golden-skinned bulbs sitting on the ridges (smooth BREAD), each with a
+# few tubular leaves standing up and flopping over at the tips (twisted ribbons on the two-sided leaf material)
+def onion(k,c,r,rnd,mi=BREAD):
+    cx,cy,cz=c
+    prof=[(r*0.55,-r*0.7),(r*1.0,-r*0.15),(r*0.65,r*0.6),(r*0.15,r*1.25)]
+    lathe(k,prof,center=c,segs=7,mi=mi,smooth_=True)
+    for i in range(rnd.randint(4,5)):
+        az=i*1.4+rnd.uniform(-0.4,0.4); lean=rnd.uniform(0.1,0.3); L=rnd.uniform(0.34,0.5); flop=rnd.uniform(0.3,1.2)
+        d0=Vector((math.cos(az)*lean,math.sin(az)*lean,1)).normalized()
+        d1=Vector((math.cos(az)*(lean+flop),math.sin(az)*(lean+flop),1-flop*0.5)).normalized()
+        side=Vector((-math.sin(az+rnd.uniform(-0.6,0.6)),math.cos(az+rnd.uniform(-0.6,0.6)),0))
+        p0=Vector((cx,cy,cz+r*1.2)); p1=p0+d0*L*0.55; p2=p1+d1*L*0.45
+        ws=(0.04,0.032,0.008); vs=[]
+        for p,w in zip((p0,p1,p2),ws): vs.append((k.bm.verts.new(p-side*w/2),k.bm.verts.new(p+side*w/2)))
+        fs=[k.bm.faces.new((vs[j][0],vs[j][1],vs[j+1][1],vs[j+1][0])) for j in range(2)]
+        for f in fs: f.material_index=LEAF; f.smooth=True
+        k.bm.normal_update(); k.project(fs,LEAF)
+def crop_onion(k):
+    w,d=soil_bed(k,rows=6); rnd=random.Random(6); L=CROPBED_LIFT; top=CROPBED_RAISE+0.08
+    for i in range(6):
+        y=-d/2+(i+0.5)*d/6
+        for j in range(9):
+            x=-w/2+(j+0.5)*w/9+rnd.uniform(-0.05,0.05); r=rnd.uniform(0.055,0.075)
+            onion(k,(x,y+rnd.uniform(-0.04,0.04),top+r*0.5),r,rnd)
+# turnips (2026-10-17): purple-shouldered roots half out of the ridges (the goods atlas's turnip on a dome), each under a
+# rosette of broad leaves (the foliage's ivy cards, leaning out; the crop atlas's leafy cell read as grass)
+def crop_turnip(k):
+    w,d=soil_bed(k); rnd=random.Random(7); top=CROPBED_RAISE+0.08
+    for i in range(7):
+        y=-d/2+(i+0.5)*d/7
+        for j in range(7):
+            x=-w/2+(j+0.5)*w/7+rnd.uniform(-0.05,0.05); yy=y+rnd.uniform(-0.03,0.03); r=rnd.uniform(0.075,0.095)
+            prof=[(r*0.9,-0.02),(r,r*0.3),(r*0.75,r*0.75),(r*0.2,r*0.95)]
+            goods_map(k,lathe(k,prof,center=(x,yy,top),segs=7,mi=GOODS,smooth_=True),"turnip",ref=(math.cos(i+j),math.sin(i+j),0))
+            a0=rnd.uniform(0,6.28)
+            for m in range(4):                                     # four leaves round the crown, each leaning out
+                a=a0+m*1.57+rnd.uniform(-0.3,0.3); hh=rnd.uniform(0.26,0.34); o=Vector((math.cos(a),math.sin(a),0))
+                up=(o*rnd.uniform(0.45,0.7)+Vector((0,0,1))).normalized()
+                card(k,Vector((x,yy,top+r*0.9))+up*hh/2,(-math.sin(a),math.cos(a),0),up,0.22*rnd.uniform(0.9,1.1),hh,"ivy",flip=m%2==0)
 def pumpkin(k,c,r,seed=0):
     rnd=random.Random(seed); n=16; rings=[]
     prof=[(0.0,-1.0),(0.45,-0.92),(0.8,-0.62),(1.0,-0.1),(0.95,0.35),(0.7,0.72),(0.3,0.9),(0.0,0.82)]
@@ -3255,6 +3321,8 @@ EXTRA_SPECS+=[("SM_VK_Crop_Wheat",lambda k: crop_wheat(k),dict(wobble=False,grim
               ("SM_VK_Crop_Cabbage",lambda k: crop_cabbage(k),dict(wobble=False,grime=True)),
               ("SM_VK_Crop_Pumpkin",lambda k: crop_pumpkin(k),dict(wobble=False,grime=True)),
               ("SM_VK_Crop_Bed",lambda k: crop_bed(k),dict(wobble=False,grime=True)),
+              ("SM_VK_Crop_Onion",lambda k: crop_onion(k),dict(wobble=False,grime=True)),
+              ("SM_VK_Crop_Turnip",lambda k: crop_turnip(k),dict(wobble=False,grime=True)),
               ("SM_VK_Prop_Scarecrow",lambda k: scarecrow(k),dict(wobble=False,grime=False)),
               ("SM_VK_Prop_Chickens",lambda k: chickens(k),dict(wobble=False,grime=False)),
               ("SM_VK_Prop_ChickenCoop",lambda k: chicken_coop(k),dict(wobble=False,grime=True))]

@@ -2,7 +2,8 @@
 
 Generated from the .blend on 2026-09-23 (`docs/PIECES.md`). Dimensions are the master's bounding box in metres (x × y × z).
 Every piece is a hidden master; the maps place instances that share its mesh.
-Total: 483 masters (the crop rows updated 2026-10-14: raised beds, + `SM_VK_Crop_Bed`).
+Total: 483 masters (the crop rows updated 2026-10-14: raised beds, + `SM_VK_Crop_Bed`). 2026-10-16/17: + onion and turnip fields, + yarrow, wild
+cotton and goblin herb (each herb its own material slot: `kit_mats()` returns 59).
 
 The interior kit's 146 pieces (`SM_VKI_*`, added 2026-09-26) are listed in [INTERIOR_KIT.md §6](INTERIOR_KIT.md#6-pieces).
 The Mats column below predates two material slots added since: `kit_mats()` now returns 55 slots.
@@ -30,7 +31,9 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VK_Crop_Cabbage` | 3.04 × 2.98 × 0.97 | 3,220 | 55 |
 | `SM_VK_Crop_Carrot` | 2.96 × 2.92 × 1.09 | 2,352 | 55 |
 | `SM_VK_Crop_Lavender` | 3.07 × 2.93 × 1.38 | 1,424 | 55 |
+| `SM_VK_Crop_Onion` | 2.93 × 2.92 × 1.20 | 3,864 | 59 |
 | `SM_VK_Crop_Pumpkin` | 2.92 × 2.99 × 1.18 | 2,944 | 55 |
+| `SM_VK_Crop_Turnip` | 2.92 × 2.92 × 1.01 | 4,298 | 59 |
 | `SM_VK_Crop_Wheat` | 3.24 × 3.01 × 1.63 | 2,184 | 55 |
 | `SM_VK_Deco_Bush` | 1.95 × 1.84 × 1.24 | 240 | 52 |
 | `SM_VK_Deco_Ivy_A` | 2.26 × 0.37 × 2.96 | 752 | 52 |
@@ -486,9 +489,12 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VK_Mushrooms_Glow` | 0.38 × 0.59 × 0.73 | 1,316 | 2 |
 | `SM_VK_Mushrooms_Red` | 0.66 × 0.67 × 0.42 | 1,728 | 2 |
 | `SM_VK_Plant_Fern` | 1.22 × 1.25 × 1.29 | 144 | 1 |
+| `SM_VK_Plant_Cotton` | 1.15 × 0.86 × 0.92 | 900 | 1 |
+| `SM_VK_Plant_GoblinHerb` | 1.27 × 1.23 × 0.43 | 1,540 | 1 |
 | `SM_VK_Plant_Reeds` | 2.29 × 2.27 × 1.86 | 160 | 1 |
 | `SM_VK_Plant_TallGrass` | 1.69 × 1.95 × 1.06 | 160 | 1 |
 | `SM_VK_Plant_Wildflowers` | 2.06 × 2.13 × 0.75 | 192 | 1 |
+| `SM_VK_Plant_Yarrow` | 0.87 × 0.92 × 0.66 | 1,552 | 1 |
 | `SM_VK_Pond` | 7.03 × 7.18 × 1.82 | 1,826 | 7 |
 | `SM_VK_Rock_Boulder_A` | 1.71 × 1.31 × 1.21 | 320 | 1 |
 | `SM_VK_Rock_Boulder_B` | 2.70 × 2.15 × 1.93 | 320 | 1 |
