@@ -1375,6 +1375,31 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     Unity +Z: MedievalSetting's `GatherDef.facing` (new) turns it out of a cave wall (0) or, at a cliff marker that faces
     the cliff, to the camera (180). Preview `Ores_Preview` (the old vein row hidden). `renders/wip/ore_nodes.png`.
 
+113. 2026-10-17 (the user: "a worked out node and new herbs are good ideas ... some kind of gathered plant for the
+    scorched lands"; gem icons come later from a diffusion model, no gem models). **Worked-out ore nodes**
+    `SM_VK_Ore_<Kind>_Spent` (620 tris each; `make_ore_node(..., spent=True)`): the same boulders in the kit's plain
+    `ROCK`, a broken stub of ore sunk where each nugget was, rubble before it; MedievalSetting shows one while the ore
+    grows back (`GatherDef.spent`). **Ghostpipe** `SM_VK_Plant_Ghostpipe` (1,700 tris, 0.72 x 0.58 x 0.34 m;
+    `make_ghostpipe` / `gp_stem`): six clumps of waxy white stems bending into nodding bells, slot 65 `GHOSTPIPE`
+    (`ghostpipe_material`: flat white, a faint blue-white emission 0.35 so it reads in the barrow's dark) -- the Hollow
+    Barrow's crypt herb, a new item (the user's call; its use undecided). **Fireweed** `SM_VK_Plant_Fireweed` (1,132
+    tris, 0.6 x 0.6 x 1.28 m; `make_fireweed`): eight tall stems, narrow leaves spiralling up them, a magenta flower spike
+    on three crossed cards; its own sheet `T_VK_Fireweed` (`vk_leafgen.paint_fireweed`), slot 66 `FIREWEED` (two-sided)
+    -- the Burnt March's plant (a placeholder item: "look only for now"). `kit_mats()` returns 67. Previews: the spent
+    row in `Ores_Preview`, ghostpipe on the dark floor and fireweed in `Yarrow_Preview`.
+
+114. 2026-10-17 (the user: "a better resource for stone ... the current one is stone already cut lying on the floor ...
+    it can't be a quarry on each map"; models only, the game side left alone). **Stone node** `SM_VK_Stone_Node` (927
+    tris, 2.3 x 2.2 x 1.1 m; `make_stone_node` in vk_nature): a natural boulder being worked the medieval way -- split
+    clean in two (the same boulder seed built twice, each half cut at x 0 and set 0.13 m off it), the halves' inner faces
+    fresh rock (`STONE_FRESH`, slot 67: `fresh_stone_material`, the kit's rock texture paler and warmer) against a mossy
+    weathered skin (`ROCK_MOSSY`); a row of five iron wedges in dark slits across the right half (set on the surface by a
+    BVH ray); three rough-hewn blocks and chips before it. **`SM_VK_Stone_Node_Spent`** (392 tris, 0.52 m high): the
+    halves split down low, their tops fresh rock, more chips, no wedges or blocks. The cut squashed vertices together
+    and the slivers streaked the split faces: `remove_doubles` 3 cm + `dissolve_degenerate` after the cut, then re-mapped.
+    A first try (one outcrop with a split-off slab leaning off its front) did not read: the slab merged with the rock.
+    Preview: the bottom row of `Ores_Preview` (with the old `SM_VK_Pile_Stone_2` beside it).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

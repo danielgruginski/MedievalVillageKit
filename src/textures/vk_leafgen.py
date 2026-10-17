@@ -672,3 +672,27 @@ def paint_goblin_herb(seed=361,S=512,name="T_VK_GoblinHerb"):
     save_leaf_atlas(P,name)                                       # _BCA (alpha, dilated) and _N
     write_map(name+"_H",blur(P.h,0.8),True)
     return name
+# ---- fireweed (SM_VK_Plant_Fireweed): a small sheet of its own like the wild garlic's ----
+# T_VK_Fireweed (512): the left half one narrow willow-like leaf with a pale midrib (base at the bottom), the top right a
+# flower spike (magenta four-petalled flowers round a tapering raceme, dark buds at the top; painted wide, the cards that
+# carry it are narrow), the bottom right a reddish stalk. vk_nature.FW_UV maps the same regions.
+def paint_fireweed(seed=371,S=512,name="T_VK_Fireweed"):
+    P=Painter(S); h=S//2; rng=np.random.default_rng(seed)
+    BL=(4,4,h-4,S-4); x=h/2
+    P.seg(BL,x,S-8,x,S-40,h*0.06,(0.30,0.40,0.16),0.4)
+    P.leaf(BL,x,S-36,-math.pi/2,S-52,h*0.20,(0.26,0.44,0.16),kind=2,fit=False,soft=0.2)
+    P.seg(BL,x,S-12,x,30,3.0,(0.62,0.66,0.44),0.5,col2=(0.48,0.56,0.32))        # the pale midrib
+    BF=(h+4,4,S-4,h-4); cx=h+h/2
+    P.seg(BF,cx,h-8,cx,14,6,(0.42,0.20,0.26),0.45)                                # the raceme's stem
+    pinks=[(0.86,0.24,0.58),(0.92,0.34,0.66),(0.78,0.18,0.50),(0.95,0.45,0.72)]
+    for j in range(150):
+        t=rng.random()**0.8                                                       # 0 at the bottom, 1 at the top
+        y=h-20-t*(h-40); w=(h*0.46)*(1-t)**0.9+8; fx=cx+rng.uniform(-w,w)
+        if t>0.78: P.disc(BF,fx,y,rng.uniform(5,8),(0.50,0.16,0.30),0.6,hl=False)  # buds
+        else: P.flower(BF,fx,y,rng.uniform(13,19)*(1-0.4*t),4,np.array(pinks[rng.integers(0,4)],f32)*rng.uniform(0.9,1.05),
+                      (0.96,0.90,0.92),rot=rng.uniform(0,6.28),inner=0.18,sharp=0.6)
+    BS=(h+4,h+4,S-4,S-4)
+    P.seg(BS,h+h/2,S-8,h+h/2,h+8,h*0.6,(0.42,0.22,0.22),0.45,col2=(0.36,0.42,0.22))
+    save_leaf_atlas(P,name)                                       # _BCA (alpha, dilated) and _N
+    write_map(name+"_H",blur(P.h,0.8),True)
+    return name

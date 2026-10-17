@@ -926,6 +926,66 @@ def make_goblin_herb(k,seed,R=0.30,crowns=10):
             wg_leaf(k,base,az,L,L*0.42,rng,nfn,aofn,rows=7,uvr=GH_UV["crinkled" if rng.random()<0.35 else "smooth"],
                     mi=GOBLIN_HERB,e0r=(62,80) if inner else (45,68),e1r=(5,30) if inner else (-30,-8))
     k.wind_fn=lambda p: min(1.0,max(0.0,p.z/0.3))*0.5
+# ---- ghostpipe (2026-10-17, MedievalSetting's crypt herb in the Hollow Barrow): a plant that needs no sun -- clumps of
+# waxy white stems, each bending over at the top into a nodding bell; faintly glowing (GHOSTPIPE) so it reads in the
+# dark. About twice life size for the colony camera.
+def gp_stem(k,base,az,H,r,rng,aofn=None):
+    """one stem: a five-sided tube rising from base, bending over toward az at the top into a nodding bell"""
+    out=Vector((math.cos(az),math.sin(az),0.0)); B=Vector(base)
+    pts=[B,B+Vector((0,0,H*0.55))+out*H*0.05,B+Vector((0,0,H*0.92))+out*H*0.22]
+    head_d=(out*0.85+Vector((0,0,-0.55))).normalized()               # the bell nods out and down
+    def ring(c,d,rr,n=5):
+        a=d.cross(Vector((0,0,1)) if abs(d.z)<0.95 else Vector((1,0,0))).normalized(); b=d.cross(a)
+        vs=[k.bm.verts.new(c+(a*math.cos(i*2*math.pi/n)+b*math.sin(i*2*math.pi/n))*rr) for i in range(n)]
+        if aofn:
+            for v in vs: k.vinfo[v]=aofn
+        return vs
+    rings=[]
+    for i,p in enumerate(pts):
+        d=(pts[min(i+1,2)]-pts[max(i-1,0)]).normalized(); rings.append(ring(p,d,r*(1.0-0.25*i)))
+    tip=pts[-1]; bell=[ring(tip+head_d*0.012,head_d,r*1.3),ring(tip+head_d*H*0.16,head_d,r*2.3),ring(tip+head_d*H*0.2,head_d,r*1.9)]
+    fs=[]
+    for A,B_ in list(zip(rings[:-1],rings[1:]))+[(rings[-1],bell[0]),(bell[0],bell[1]),(bell[1],bell[2])]:
+        for i in range(5): j=(i+1)%5; fs.append(k.bm.faces.new((A[i],A[j],B_[j],B_[i])))
+    for f in fs: f.material_index=GHOSTPIPE; f.smooth=True
+    k.bm.normal_update(); box_uv(k,fs,0.5)
+def make_ghostpipe(k,seed,clumps=6,R=0.3):
+    """a patch of ghostpipe about 0.8 m across: clumps of 4-7 stems 0.22-0.36 m tall, the bells nodding outward"""
+    rng=random.Random(seed); nfn,aofn=plant_fns(center=Vector((0,0,0)),H=0.34,ao_lo=0.45,radw=0.3)   # (dim at the foot)
+    for i in range(clumps):
+        a=i*GOLD+rng.uniform(-0.3,0.3); d=R*math.sqrt((i+0.5)/clumps)*rng.uniform(0.7,1.0) if i else 0.0
+        c=Vector((math.cos(a)*d,math.sin(a)*d,-0.01))
+        for j in range(rng.randint(4,7)):
+            az=j*2*math.pi/6+rng.uniform(-0.5,0.5)
+            b=c+Vector((math.cos(az),math.sin(az),0.0))*rng.uniform(0.0,0.05)
+            gp_stem(k,b,az,rng.uniform(0.22,0.36),rng.uniform(0.010,0.013),rng,aofn)
+    k.wind_fn=lambda p: 0.0
+# ---- fireweed (2026-10-17, MedievalSetting's scorched-land plant: the first to come back after a fire): a clump of tall
+# stems, narrow leaves spiralling up them, each topped by a spike of magenta flowers (three crossed cards). Its own sheet
+# T_VK_Fireweed (vk_leafgen.paint_fireweed), material FIREWEED (the leaves' shader). Reads against grey ash.
+FW_UV={"leaf":(0.004,0.496,0.004,0.996),"spike":(0.504,0.996,0.504,0.996),"stalk":(0.504,0.996,0.004,0.496)}
+def make_fireweed(k,seed,stems=8,R=0.2):
+    """a clump of fireweed about 0.8 m across and 1.0-1.3 m tall: stems with 9-12 narrow leaves (0.13-0.2 m) spiralling
+    up their lower two thirds and a flower spike (0.32-0.42 m) over the top third"""
+    rng=random.Random(seed); nfn,aofn=plant_fns(center=Vector((0,0,0)),H=1.1,ao_lo=0.65,radw=0.4)
+    for i in range(stems):
+        a=i*GOLD+rng.uniform(-0.3,0.3); d=R*math.sqrt((i+0.5)/stems)*rng.uniform(0.7,1.0) if i else 0.0
+        c=Vector((math.cos(a)*d,math.sin(a)*d,-0.01)); H=rng.uniform(0.95,1.3)
+        lean=Vector((c.x,c.y,0.0))*0.4+Vector((rng.uniform(-0.05,0.05),rng.uniform(-0.05,0.05),0.0))
+        top=c+lean+Vector((0,0,H)); sp=H*rng.uniform(0.30,0.36)
+        foot=c+(top-c)*(1-sp/H)                                   # where the spike starts
+        for q in (0.0,math.pi/2):                                 # the stalk: two crossed strips
+            s_=Vector((math.cos(q),math.sin(q),0.0))*0.011
+            wg_grid(k,[[c+(foot-c)*t-s_,c+(foot-c)*t+s_] for t in (0.0,0.5,1.0)],FW_UV["stalk"],lambda p: UP,aofn,mi=FIREWEED)
+        n=rng.randint(9,12); a0=rng.uniform(0,6.28)
+        for j in range(n):                                        # leaves spiralling up, the lower ones longer
+            t=0.08+0.6*j/n; p=c+(foot-c)*t; L=rng.uniform(0.15,0.2)*(1.1-0.4*t)
+            wg_leaf(k,p,a0+j*GOLD,L,L*0.34,rng,nfn,aofn,rows=3,uvr=FW_UV["leaf"],mi=FIREWEED,e0r=(30,55),e1r=(-5,20))
+        a1=rng.uniform(0,3.14); w=sp*0.42                            # the spike: three crossed cards
+        for m in range(3):
+            q=a1+m*math.pi/3; s_=Vector((math.cos(q),math.sin(q),0.0))*w/2
+            wg_grid(k,[[foot-s_,foot+s_],[top-s_,top+s_]],FW_UV["spike"],lambda p,qq=q: Vector((-math.sin(qq),math.cos(qq),0.4)).normalized(),aofn,mi=FIREWEED)
+    k.wind_fn=lambda p: min(1.0,max(0.0,p.z/1.1))
 def make_mushrooms(k,seed,kind="red"):
     rng=random.Random(seed)
     n={"red":4,"brown":6,"glow":7}[kind]
@@ -1041,10 +1101,12 @@ def ore_shard(k,base,d,L,r,mi):
         for i in range(5): j=(i+1)%5; fs.append(k.bm.faces.new((A[i],A[j],B[j],B[i])))
     for f in fs: f.material_index=mi
     k.bm.normal_update(); box_uv(k,fs,0.6,(0.3,0.7))
-def make_ore_node(k,seed,kind):
+def make_ore_node(k,seed,kind,spent=False):
     """an ore node about 1.7 m across and 1 m high: a broad chiselled boulder flanked by two smaller ones, 8-10 nuggets
-    of ore breaking out of their front and top, 4 loose before it"""
+    of ore breaking out of their front and top, 4 loose before it. spent (2026-10-17, the game shows it while the ore
+    grows back): the same boulders in the kit's plain rock, a broken stub of ore where each nugget was, rubble before it"""
     rng=random.Random(seed); rock,ore=ORE_SLOTS[kind]
+    if spent: rock=ROCK
     def spots(vs): return [(v.co.copy(),v.normal.copy()) for v in vs]   # (copied at once: later geometry frees the refs)
     sites=spots(boulder(k,(0,0.05,-0.08),(1.5,1.15,1.05),seed,mi=rock,cuts=8,sub=2,flat_bottom=0.35))
     for i,(sx,w,h) in enumerate(((-1,0.75,0.62),(1,0.6,0.48))):
@@ -1055,7 +1117,10 @@ def make_ore_node(k,seed,kind):
         if len(used)>=10: break
         if any((c-u).length<0.26 for u in used): continue
         used.append(c); s_=rng.uniform(0.18,0.28)
-        if kind=="silver":                                        # a nugget with a few shards growing out of it
+        if spent:                                                 # a broken stub, sunk in its socket
+            boulder(k,tuple(c-n*0.07),(s_*0.6,s_*0.55,s_*0.4),seed+40+len(used),mi=ore,cuts=6,sub=1,flat_bottom=0.6,
+                    rot=rng.uniform(0,6.28))
+        elif kind=="silver":                                        # a nugget with a few shards growing out of it
             boulder(k,tuple(c-n*0.05),(s_*1.1,s_,s_*0.85),seed+40+len(used),mi=ore,cuts=4,sub=1,flat_bottom=0.6)
             for m in range(rng.randint(3,4)):
                 d=(n+Vector((rng.uniform(-0.5,0.5),rng.uniform(-0.5,0.5),rng.uniform(0.2,0.8)))).normalized()
@@ -1065,9 +1130,64 @@ def make_ore_node(k,seed,kind):
                     rot=rng.uniform(0,6.28))
         else:                                                     # iron: rounded rusty lumps
             boulder(k,tuple(c-n*0.06),(s_,s_*0.9,s_*0.85),seed+40+len(used),mi=ore,cuts=3,sub=1,flat_bottom=0.6)
-    for i,(x,y,r) in enumerate(((-0.42,-0.72,0.11),(0.05,-0.82,0.09),(0.38,-0.70,0.12),(0.70,-0.55,0.08))):   # loose nuggets
-        boulder(k,(x,y,-0.02),(r*1.6,r*1.4,r*1.1),seed+80+i,mi=ore,cuts=5,sub=1,flat_bottom=0.5,rot=rng.uniform(0,6.28))
+    if spent:                                                     # rubble before it: rock chips, a few crumbs of ore
+        for i in range(9):
+            x=rng.uniform(-0.75,0.8); y=rng.uniform(-0.95,-0.5); r=rng.uniform(0.05,0.11)
+            boulder(k,(x,y,-0.02),(r*1.6,r*1.3,r),seed+80+i,mi=ore if i%4==0 else ROCK,cuts=5,sub=1,flat_bottom=0.5,
+                    rot=rng.uniform(0,6.28))
+    else:
+        for i,(x,y,r) in enumerate(((-0.42,-0.72,0.11),(0.05,-0.82,0.09),(0.38,-0.70,0.12),(0.70,-0.55,0.08))):   # loose nuggets
+            boulder(k,(x,y,-0.02),(r*1.6,r*1.4,r*1.1),seed+80+i,mi=ore,cuts=5,sub=1,flat_bottom=0.5,rot=rng.uniform(0,6.28))
     k.wind_fn=lambda p: 0.0
+# ---- stone node (2026-10-17, MedievalSetting's building stone: the user wanted a node to gather, not cut blocks lying
+# about, and no quarry on every map): a natural boulder being worked the medieval way -- split clean in two, the halves
+# pushed a hand apart, their inner faces pale fresh rock (STONE_FRESH) against the weathered mossy skin; a row of iron
+# wedges driven into a second crack across one half; rough-hewn blocks and chips at its foot. spent: the halves split
+# down low, their tops all fresh rock, chips about, no wedges or blocks.
+def stone_fresh_faces(k,vs,cuts,size):
+    """the faces of a boulder (its verts vs) lying on its extra cuts (unit-sphere normals, before the boulder's scaling)
+    get the fresh-rock material: compare each face's normal with the cut's, carried through the scaling"""
+    ws=[Vector((n[0]/size[0],n[1]/size[1],n[2]/size[2])).normalized() for n in cuts]
+    for f in {f for v in vs for f in v.link_faces}:
+        if any(f.normal.dot(w)>0.97 for w in ws): f.material_index=STONE_FRESH
+def stone_block(k,c,size,rz,seed):
+    """a rough-hewn block of fresh stone, box-mapped like the rocks"""
+    before=set(k.bm.faces)
+    k.box(c,size,STONE_FRESH,rot=(0,0,rz),bevel=0.03,jitter=0.02,seed=seed)
+    fs=[f for f in k.bm.faces if f not in before]
+    k.bm.normal_update(); box_uv(k,fs,1.5,(seed*0.37%1,seed*0.61%1))
+def make_stone_node(k,seed,spent=False):
+    """a stone node about 2.3 m across and 1.1 m high (spent: 0.55 m): the split boulder, a wedge row, blocks, chips"""
+    from mathutils.bvhtree import BVHTree
+    rng=random.Random(seed); size=(2.0,1.5,1.2)
+    for sx in (-1,1):                                             # the two halves of one boulder (the same seed: they fit)
+        cuts=[((sx*-1.0,0.0,0.0),0.0)]+([((0.05,-0.1,1.0),0.12)] if spent else [])
+        vs=boulder(k,(sx*0.13,0.1,-0.1),size,seed,mi=ROCK_MOSSY,cuts=6,sub=2,flat_bottom=0.35,extra_cuts=cuts,cut_range=(0.72,0.92))
+        bmesh.ops.remove_doubles(k.bm,verts=vs,dist=0.03)        # the cut squashes verts together: slivers streaked the face
+        vs=[v for v in vs if v.is_valid]
+        bmesh.ops.dissolve_degenerate(k.bm,edges=list({e for v in vs for e in v.link_edges}),dist=0.005)
+        vs=[v for v in vs if v.is_valid]; k.bm.normal_update()
+        box_uv(k,list({f for v in vs for f in v.link_faces}),1.5,(0.31,0.57))
+        stone_fresh_faces(k,vs,[c[0] for c in cuts],size)
+    if not spent:
+        tree=BVHTree.FromBMesh(k.bm)
+        for i in range(5):                                        # iron wedges in a row across the right half, each in its slit
+            y=-0.42+i*0.2+rng.uniform(-0.02,0.02); x=0.62+0.06*y
+            hit=tree.ray_cast(Vector((x,y,3.0)),Vector((0,0,-1)))
+            if hit[0] is None: continue
+            z=hit[0].z
+            k.box((x,y,z-0.01),(0.2,0.05,0.06),VOID,rot=(0,0,0.06),bevel=0.0)                      # the slit, dark
+            k.box((x,y,z+0.04),(0.13,0.045,0.14),IRON,rot=(0.0,rng.uniform(-0.12,0.12),0.06),bevel=0.008)
+            k.box((x,y,z+0.12),(0.16,0.065,0.03),IRON,rot=(0,0,0.06),bevel=0.006)                  # the struck head
+        for i,(x,y,w,d,h,r) in enumerate(((-0.6,-1.05,0.5,0.32,0.28,0.4),(0.1,-1.18,0.42,0.3,0.24,-0.3),
+                                          (0.75,-0.92,0.46,0.34,0.26,0.9))):    # rough-hewn blocks
+            stone_block(k,(x,y,h/2-0.02),(w,d,h),r,seed+20+i)
+    for i in range(12 if spent else 7):                           # chips and spalls
+        a=rng.uniform(-2.7,-0.4); d=rng.uniform(0.85,1.45); r=rng.uniform(0.05,0.11)
+        boulder(k,(math.cos(a)*d,math.sin(a)*d,-0.02),(r*1.7,r*1.3,r*0.8),seed+40+i,mi=STONE_FRESH if i%3 else ROCK_MOSSY,
+                cuts=5,sub=1,flat_bottom=0.5,rot=rng.uniform(0,6.28))
+    k.wind_fn=lambda p: 0.0
+
 def make_rock_cluster(k,seed,n=5,R=1.2,big=1.4):
     rng=random.Random(seed)
     for i in range(n):
@@ -1325,6 +1445,8 @@ NATURE_SPECS=[
  ("SM_VK_Plant_Yarrow",lambda k: make_yarrow(k,127),{"bark_ao":None}),
  ("SM_VK_Plant_Cotton",lambda k: make_cotton(k,129),{"bark_ao":None}),
  ("SM_VK_Plant_GoblinHerb",lambda k: make_goblin_herb(k,131),{"bark_ao":None}),
+ ("SM_VK_Plant_Ghostpipe",lambda k: make_ghostpipe(k,133),{"bark_ao":None}),
+ ("SM_VK_Plant_Fireweed",lambda k: make_fireweed(k,135),{"bark_ao":None}),
  ("SM_VK_Mushrooms_Red",lambda k: make_mushrooms(k,121,"red"),{"bark_ao":None}),
  ("SM_VK_Mushrooms_Brown",lambda k: make_mushrooms(k,123,"brown"),{"bark_ao":None}),
  ("SM_VK_Mushrooms_Glow",lambda k: make_mushrooms(k,125,"glow"),{"bark_ao":None}),
@@ -1339,6 +1461,11 @@ NATURE_SPECS=[
  ("SM_VK_Ore_Iron",lambda k: make_ore_node(k,161,"iron"),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
  ("SM_VK_Ore_Coal",lambda k: make_ore_node(k,163,"coal"),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
  ("SM_VK_Ore_Silver",lambda k: make_ore_node(k,165,"silver"),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
+ ("SM_VK_Stone_Node",lambda k: make_stone_node(k,171),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
+ ("SM_VK_Stone_Node_Spent",lambda k: make_stone_node(k,171,spent=True),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
+ ("SM_VK_Ore_Iron_Spent",lambda k: make_ore_node(k,161,"iron",spent=True),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
+ ("SM_VK_Ore_Coal_Spent",lambda k: make_ore_node(k,163,"coal",spent=True),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
+ ("SM_VK_Ore_Silver_Spent",lambda k: make_ore_node(k,165,"silver",spent=True),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
  ("SM_VK_Rock_Cluster",lambda k: make_rock_cluster(k,151),{"sharp":_R40,"bark_ao":(0.72,0.5)}),
  ("SM_VK_Rock_Pebbles",lambda k: make_pebbles(k,153),{"sharp":_R40,"bark_ao":(0.8,0.2)}),
  ("SM_VK_Rock_StepStones",lambda k: make_stepstones(k,155),{"sharp":_R40,"bark_ao":(0.8,0.2)}),
