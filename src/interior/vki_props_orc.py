@@ -954,7 +954,8 @@ def vki_orc_cage(k, open_=False):
         vki_home_hoop(k, (XD + 0.06, -Y - 0.21, 1.08), 0.022, 0.034, 0.016, segs=8, mi=IRON,
                       rot=Matrix.Rotation(math.pi / 2, 3, "X"))
     st = vki_dpr_mound(k, (0.2, 0.15, 0.0), 0.95, 0.55, 0.06, VKI_STRAW, z0=0.001, nr=2, ns=12, seed=143, wob=0.2)
-    vki_home_meta(k, "floor", "furniture", use=[[0.0, -1.5, 0]], vki_nav="block", vki_see_through=1,
+    # the open door swings out to y -1.83: its use point stands clear of it (it lay inside the collider)
+    vki_home_meta(k, "floor", "furniture", use=[[0.0, -2.15 if open_ else -1.5, 0]], vki_nav="block", vki_see_through=1,
                   vki_note="outdoors: the door is in the -Y face" + ("; open" if open_ else "; the RPG puts its prisoners inside"))
 
 
@@ -1332,6 +1333,149 @@ def vki_orc_furs(k):
     vki_home_meta(k, "floor", "dressing", use=[], vki_class="overlay", vki_nav="none")
 
 
+# ---------------------------------------------------------------- the camp's other buildings (2026-10-18): forge, shaman, pen
+def vki_orc_forge(k):
+    """the camp forge (1.95 x 1.30, 0.80): a squat clay hearth on a footing of stones, a bed of glowing coals in its
+    dished top, a hide bellows on a log stand blowing into its side (+X), tongs and a poker leaning on it; light"""
+    rnd = random.Random(1010)
+    vs, fs = vki_home_lathe(k, [(0.58, 0.0), (0.62, 0.36), (0.56, 0.70), (0.46, 0.78), (0.40, 0.72), (0.0, 0.68)],
+                            segs=14, mi=CLAY)
+    for v in vs:                                                    # sooted, blackest round the fire
+        k.set_dark([v], 0.45 + 0.30 * vki_smoothstep(0.55, 0.78, v.co.z))
+    for i in range(10):                                                                        # the footing
+        a = 2 * math.pi * i / 10 + rnd.uniform(-0.1, 0.1)
+        vki_lair_stone(k, (math.cos(a) * 0.62, math.sin(a) * 0.62, 0.07), rnd.uniform(0.10, 0.13), 1011 + i,
+                       dark=0.15 + 0.2 * (i % 3) / 2)
+    for i in range(14):                                                                        # coals
+        a = rnd.uniform(0, 2 * math.pi); d = 0.30 * math.sqrt(rnd.random())
+        vki_smy_lump(k, (math.cos(a) * d, math.sin(a) * d, 0.70), rnd.uniform(0.05, 0.08), rnd, COAL)
+    vki_sto_embers(k, 0.0, 0.0, 0.69, 9, 0.28, 0.28, 1030, core=0.35, rmin=0.035, rmax=0.055, hmax=0.9)
+    vki_sto_flame(k, Vector((0.02, 0.0, 0.70)), 0.22, 0.07, 0.1, 0.3, 0.02, flat=0.8)
+    # the bellows: two boards with a hide between, on a stand, its iron nozzle into the hearth's side
+    vki_orc_stump(k, 1.05, 0.0, 0.42, 0.12, 1040)
+    for z0, z1, mi in ((0.44, 0.47, WOOD), (0.47, 0.60, HIDE), (0.60, 0.63, WOOD)):
+        vki_prism(k, [(0.70, -0.10), (1.40, -0.26), (1.40, 0.26), (0.70, 0.10)], z0, z1, mi, axis="z")
+    vki_lair_log(k, (1.25, 0.0, 0.64), (1.55, 0.0, 0.90), 0.025, 1041, segs=6, dark=0.3)       # its handle
+    vki_chp_cyl(k, (0.60, 0.0, 0.53), 0.03, 0.03, 0.24, 8, IRON, rot=Matrix.Rotation(math.pi / 2, 4, "Y"))
+    for (a, b) in (((-0.55, -0.55, 0.0), (-0.42, -0.40, 0.95)), ((-0.62, -0.48, 0.0), (-0.47, -0.34, 0.92))):
+        vki_dpr_rod(k, a, b, 0.022, IRON)                                                       # tongs and poker
+    vki_orc_hall_mats(k)
+    vki_home_meta(k, "floor", "furniture", use=[[-0.10, -1.00, 0]], vki_nav="block",
+                  vki_lights=[vki_dpr_light("forge", (0.0, -0.05, 1.05), 180.0, VKI_DPR_BRAZIER_COL, 6.0, 0.30)],
+                  vki_fx=[dict(fx="campfire", pos=[0.0, 0.0, 0.72], scale=0.6)],
+                  vki_note="freestanding: the bellows side (+X) wants 0.7 m clear")
+
+
+def vki_orc_anvil(k):
+    """an iron anvil on a bark stump (0.95 x 0.70, 0.86): a rough block with a horn, a half-beaten cleaver on it, a
+    hammer leaning on the stump, a quench bucket beside it"""
+    vki_orc_stump(k, 0.0, 0.0, 0.62, 0.27, 1100)
+    vki_home_box(k, -0.22, 0.20, -0.10, 0.10, 0.615, 0.77, IRON, bev=0.015)                     # the block
+    vki_home_box(k, -0.26, 0.24, -0.12, 0.12, 0.77, 0.83, IRON, bev=0.01)                       # its face
+    vki_chp_cyl(k, (0.36, 0.0, 0.79), 0.07, 0.01, 0.26, 8, IRON, smooth=False,
+                rot=Matrix.Rotation(math.pi / 2, 4, "Y"))                                       # the horn
+    vki_prism(k, [(-0.18, -0.04), (0.10, -0.08), (0.12, 0.06), (-0.16, 0.05)], 0.829, 0.841, STEEL, axis="z")
+    vki_dpr_rod(k, (-0.33, -0.30, 0.0), (-0.24, -0.22, 0.52), 0.03, WOOD, d=0.03)                # the hammer
+    vki_home_box(k, -0.31, -0.17, -0.27, -0.19, 0.50, 0.58, IRON, bev=0.008, rot=(0.0, 0.0, 0.5))
+    vki_home_lathe(k, [(0.13, 0.0), (0.15, 0.30), (0.0, 0.30)], c=(0.42, -0.28, 0.0), segs=10, mi=WOOD)   # bucket
+    vki_chp_cyl(k, (0.42, -0.28, 0.285), 0.135, 0.135, 0.01, 10, WATER)
+    k.slot_mats[WATER] = "M_VKI_WaterMurky"
+    vki_orc_hall_mats(k)
+    vki_home_meta(k, "floor", "furniture", use=[[0.0, -0.80, 0]], vki_nav="block")
+
+
+def vki_orc_scrap(k):
+    """a heap of loot for the forge (1.20 x 0.90): broken blades, a dented helm, a shield's iron rim, mail scraps and
+    cleaver blanks on a pile of grit and rust"""
+    rnd = random.Random(1200)
+    vki_dpr_mound(k, (0.0, 0.0, 0.0), 0.55, 0.40, 0.12, VKI_ASH, z0=0.001, nr=2, ns=12, seed=1201, wob=0.18, bump=0.3)
+    for i in range(6):                                                                         # broken blades
+        a = rnd.uniform(0, math.pi); x, y = rnd.uniform(-0.35, 0.35), rnd.uniform(-0.25, 0.25)
+        L = rnd.uniform(0.35, 0.60)
+        z = 0.10 * max(0.0, 1 - (x / 0.55) ** 2 - (y / 0.40) ** 2) + 0.02 + 0.012 * i
+        vki_dpr_rod(k, (x - math.cos(a) * L / 2, y - math.sin(a) * L / 2, z), (x + math.cos(a) * L / 2,
+                    y + math.sin(a) * L / 2, z + rnd.uniform(-0.03, 0.06)), 0.05, STEEL, d=0.008)
+    hv = vki_home_ico(k, (0.22, -0.12, 0.10), 0.13, IRON, scale=(1.0, 1.1, 0.8), sub=2)
+    k.set_dark(hv, 0.4)
+    vki_home_hoop(k, (-0.25, 0.12, 0.08), 0.26, 0.29, 0.03, segs=14, mi=IRON,
+                  rot=Matrix.Rotation(0.35, 4, "X"))
+    for i in range(3):                                                                         # cleaver blanks
+        x = -0.15 + 0.15 * i
+        vki_prism(k, [(x - 0.08, -0.32), (x + 0.10, -0.30), (x + 0.08, 0.05), (x - 0.06, 0.04)], 0.1317 + 0.0131 * i,
+                  0.1417 + 0.0131 * i, IRON, axis="z")
+    vki_orc_hall_mats(k)
+    vki_home_meta(k, "floor", "furniture", use=[], vki_nav="block")
+
+
+def vki_orc_altar(k):
+    """the shaman's altar (1.50 x 0.80, 1.20 to the candles): a rough stone slab on two boulders, a great skull with a
+    candle on its crown, two lesser skulls, a bowl of blood, a bundle of bones tied with rope, a curved knife, candles;
+    bones and a drum at its foot; light"""
+    for x in (-0.50, 0.50):
+        vki_lair_stone(k, (x, 0.0, 0.30), 0.32, 1300 + int(x * 10), dark=0.25, sub=1)
+    sv = vki_home_box(k, -0.76, 0.76, -0.38, 0.38, 0.58, 0.68, VKI_STONE_BLOCK_IN, bev=0.03)      # the slab
+    k.set_dark(sv, 0.2)
+    vki_dun_skull(k, (0.0, 0.10, 0.80), s=2.0)
+    lights = [vki_dpr_light("candle", vki_chp_candle(k, (0.0, 0.12, 0.93), r=0.035, h=0.16, segs=8,
+                                                     flame=(0.07, None)), 40.0, VKI_DPR_CANDLE_COL, 4.0, 0.04)]
+    for x in (-0.50, 0.52):
+        vki_dun_skull(k, (x, 0.18, 0.74), s=1.0, yaw=-20 if x < 0 else 25)
+    for x, y in ((-0.66, -0.22), (0.66, -0.20)):
+        vki_chp_candle(k, (x, y, 0.68), r=0.03, h=0.12 + 0.04 * (x > 0), segs=8, flame=(0.06, None))
+    vki_home_lathe(k, [(0.0, 0.68), (0.11, 0.685), (0.14, 0.74), (0.12, 0.745), (0.0, 0.72)], c=(-0.25, -0.18, 0.0),
+                   segs=12, mi=CLAY)                                                             # the bowl
+    vki_chp_cyl(k, (-0.25, -0.18, 0.734), 0.118, 0.118, 0.008, 12, WATER)
+    for i in range(4):                                                                         # the bone bundle
+        vki_dun_bone(k, (0.22 + 0.02 * i, -0.24 + 0.03 * i, 0.70), (0.48 + 0.02 * i, -0.18 + 0.03 * i, 0.705), r=0.016)
+    k.box((0.35, -0.17, 0.705), (0.04, 0.16, 0.05), BURLAP, bevel=0.0)
+    vki_prism(k, [(0.10, -0.32), (0.32, -0.33), (0.34, -0.30), (0.12, -0.29)], 0.681, 0.689, STEEL, axis="z")   # knife
+    for a, b in (((-0.6, -0.62, 0.02), (-0.25, -0.70, 0.025)), ((0.3, -0.66, 0.02), (0.62, -0.55, 0.025))):
+        vki_dun_bone(k, a, b, r=0.02)
+    k.slot_mats[WATER] = "M_VKI_Blood"
+    vki_orc_hall_mats(k)
+    vki_home_meta(k, "wall_floor", "furniture", back="geo", use=[[0.0, -0.95, 0]], vki_nav="block", vki_lights=lights,
+                  vki_note="the war-shaman's: back to a wall (the hut's end)")
+
+
+def vki_orc_herbrack(k):
+    """a shaman's drying pole (wall_hung, 1.30 wide, 1.45-2.30): bundles of herbs hung head down, tied with rope, an
+    animal skull and bone charms on cords between them"""
+    rnd = random.Random(1400)
+    z = 2.22
+    vki_chp_cyl(k, (0.0, -0.10, z), 0.025, 0.025, 1.30, 6, WOOD, rot=Matrix.Rotation(math.pi / 2, 4, "Y"))
+    for x in (-0.55, 0.55):
+        k.box((x, -0.05, z), (0.03, 0.10, 0.03), WOOD, bevel=0.0)
+    for i, x in enumerate((-0.45, -0.22, 0.20, 0.44)):
+        L = rnd.uniform(0.38, 0.50)
+        hv = vki_chp_cyl(k, (x, -0.10, z - 0.06 - L / 2), 0.025, 0.075, L, 8, HAY)              # a bundle, head down
+        k.set_dark(hv, rnd.uniform(0.50, 0.65))                                                # dried, dull
+        k.box((x, -0.10, z - 0.05), (0.06, 0.06, 0.03), BURLAP, bevel=0.0)
+    vki_dpr_rod(k, (0.0, -0.10, z), (0.0, -0.10, z - 0.18), 0.008, BURLAP)
+    vki_dun_skull(k, (0.0, -0.13, z - 0.27), s=0.8, pitch=-10)
+    for x in (-0.33, 0.32):
+        vki_dpr_rod(k, (x, -0.10, z), (x, -0.10, z - 0.30), 0.006, BURLAP)
+        vki_dun_bone(k, (x - 0.06, -0.10, z - 0.32), (x + 0.06, -0.10, z - 0.36), r=0.012)
+    vki_orc_hall_mats(k)
+    for v in k.bm.verts:
+        v.co.y = min(v.co.y, -0.004)
+    vki_home_meta(k, "wall_hung", "dressing", back=0.0, use=[], vki_nav="none", vki_mount_zmin=1.4, vki_mount_zmax=2.26,
+                  vki_note="authored at its real height (placer z 0)")
+
+
+def vki_orc_stocks(k):
+    """the stocks (1.80 x 0.45, 1.25): two bark posts, a split-log beam in two halves locked with an iron hasp, three
+    neck / wrist holes (dark), a chain to a stake; prisoners kneel at -Y"""
+    for x in (-0.80, 0.80):
+        vki_lair_log(k, (x, 0.0, -0.01), (x, 0.0, 1.25), 0.075, 1500 + int(x * 10), segs=7, tip=0.08, dark=0.25)
+    vki_orc_slab(k, -0.90, 0.90, -0.10, 0.10, 0.70, 0.84, dark=0.35, bev=0.02)
+    vki_orc_slab(k, -0.90, 0.90, -0.10, 0.10, 0.845, 0.98, dark=0.35, bev=0.02)
+    for x, r in ((-0.42, 0.045), (0.0, 0.08), (0.42, 0.045)):                                   # the holes
+        vki_chp_cyl(k, (x, -0.104, 0.843), r, r, 0.012, 10, VOID, rot=Matrix.Rotation(math.pi / 2, 4, "X"))
+    vki_home_box(k, 0.62, 0.70, -0.115, -0.103, 0.80, 0.90, IRON, bev=0.002)                    # the hasp
+    vki_orc_hall_mats(k)
+    vki_home_meta(k, "floor", "furniture", use=[[0.0, -0.75, 0]], vki_nav="block")
+
+
 # ---------------------------------------------------------------- specs
 VKI_ORC_SPECS = [
     ("SM_VKI_Prop_Ruin_Farmhouse_Burnt", vki_orc_farmhouse_ruin, "none"),
@@ -1365,6 +1509,12 @@ VKI_ORC_SPECS += [
     ("SM_VKI_Prop_Orc_MeatRack", vki_orc_meatrack, "prop"),
     ("SM_VKI_Prop_Orc_Cauldron", vki_orc_cauldron, "prop"),
     ("SM_VKI_Overlay_Orc_Furs", vki_orc_furs, "none"),
+    ("SM_VKI_Prop_Orc_Forge", vki_orc_forge, "prop"),
+    ("SM_VKI_Prop_Orc_Anvil", vki_orc_anvil, "prop"),
+    ("SM_VKI_Prop_Orc_ScrapPile", vki_orc_scrap, "prop"),
+    ("SM_VKI_Prop_Orc_Altar", vki_orc_altar, "prop"),
+    ("SM_VKI_Prop_Orc_HerbRack", vki_orc_herbrack, "none"),
+    ("SM_VKI_Prop_Orc_Stocks", vki_orc_stocks, "prop"),
 ]
 VKI_ORC_NAMES = [n for n, _, _ in VKI_ORC_SPECS]
 vki_register([(n, fn, {"grime": gr}, "adventure") for n, fn, gr in VKI_ORC_SPECS])

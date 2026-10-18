@@ -99,6 +99,8 @@ The newel stair: `Stair_Up_Spiral_300` (+ `_Tall`, 4.5 m) / `Stair_Down_Spiral_3
 The orc kit (2026-10-18): wall family `Orc` (`vki_fam_orc`: log walls on `T_VKI_OrcLogs`, a lashed rail, a log plate; Plain 150A/150B/300, Window_150,
 Door_150, DoorWide_300, posts, leaves `Leaf_Orc*`) and the halls' furniture in `vki_props_orc` (`Prop_Orc_Throne`, `_Bunk`, `_Table_240`,
 `_Bench_240`, `_WeaponRack`, `_Trophies`, `_MeatRack`, `_Cauldron`, `Overlay_Orc_Furs`); scene `VKI_Orc_Hall` (`vki_rooms_orc`).
+The camp's other buildings: `Prop_Orc_Forge`, `_Anvil`, `_ScrapPile`, `_Altar`, `_HerbRack`, `_Stocks`; scenes `VKI_Orc_Barracks`, `VKI_Orc_Forge`, `VKI_Orc_ShamanHut`,
+`VKI_Orc_Pen`.
 The abandoned monastery (`vki_props_monastery`, scene `VKI_Monastery_Church`): `Prop_ChoirStall_300`, `Prop_Pew_300_Broken` / `_Overturned`, `Prop_FallenBeam`,
 `Prop_Desk_Scriptorium`, `Overlay_GlassShards`, and the broken lancets `Wall_Ashlar_Lancet_150_Full_Broken` / `LancetTall_150_Full_Broken`.
 Abandoned twins: `Prop_Altar_300_Stripped`, `Prop_CandleStand_Pricket_Fallen`, `Prop_Desk_Scriptorium_Fallen`, `Prop_Bookcase_150_Ransacked`,

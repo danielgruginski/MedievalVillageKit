@@ -701,6 +701,7 @@ VKI_MAT_MAP = {
     "M_VKI_WoodScrubbed": dict(tex="T_VK_Planks", tint=(1.30, 1.25, 1.15), ph="#9C7A56", nstr=1.2, spec=0.15),
     # still water in troughs and barrels (coordinator 2026-09-26): a flat murky surface; the textured version
     # (T_VK_Water, normal 0.6) broke every interior light into white glitter
+    "M_VKI_Blood": dict(kind="flat", col=(.10, .008, .006), rough=0.35),          # the orc shaman's bowl
     "M_VKI_WaterMurky": dict(kind="flat", col=(.075, .085, .065), rough=0.6),     # 0.18 mirrored the room
     "M_VKI_Wax": dict(kind="flat", col=(.93, .88, .74), rough=0.5),
     "M_VKI_Ale": dict(kind="flat", col=(.45, .28, .08), rough=0.3),
@@ -811,7 +812,7 @@ VKI_STYLE_MATS = {
     "stained": {"In": "M_VKI_Stained_In", "Stained_In": "M_VKI_Stained_In", "Night": "M_VKI_Stained_Night",
                 "Stained_Night": "M_VKI_Stained_Night", "Leaded": "M_VKI_Leaded_In"},
     "glow": {"GlowIn": "M_VKI_GlowIn", "Glow": "M_VK_Glow"},
-    "water": {"Water": "M_VK_Water", "Ale": "M_VKI_Ale", "WaterMurky": "M_VKI_WaterMurky", "Puddle": "M_VKI_Puddle",
+    "water": {"Water": "M_VK_Water", "Ale": "M_VKI_Ale", "WaterMurky": "M_VKI_WaterMurky", "Blood": "M_VKI_Blood", "Puddle": "M_VKI_Puddle",
               "SewerWater": "M_VKI_SewerWater", "Sludge": "M_VKI_Sludge", "StreamWater": "M_VKI_StreamWater",
               "WaterFall": "M_VKI_WaterFall", "Lava": "M_VKI_Lava"},
     # "shutter", "cloth", "cloth_b": the exterior variants (variant_mat), e.g. shutter "Red", cloth "Blue"

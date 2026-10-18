@@ -1575,6 +1575,17 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     KitRoomLayout gives the same walls and posts. Not done: the game's `OrcHold_Hall` still uses the generator's
     Townhouse shell (switch it to the Orc family / the kit room in MedievalSetting's InteriorsMenu).
 
+124. 2026-10-18 (the user: "1 and 3" -- more orc rooms, then the game's warlord hall). In vki_props_orc:
+    **`Prop_Orc_Forge`** (a sooted clay hearth on a footing of stones, glowing coals, a hide bellows on a stand; light
+    180 W, keep its +X side clear), **`Prop_Orc_Anvil`** (on a stump, a half-beaten cleaver, hammer, quench bucket),
+    **`Prop_Orc_ScrapPile`** (loot to melt: blades, a helm, a shield rim, cleaver blanks), **`Prop_Orc_Altar`** (the
+    shaman's: a slab on boulders, a great skull with a candle, a bowl of blood -- new `M_VKI_Blood`, water style
+    `Blood` --, a bone bundle; candle light), **`Prop_Orc_HerbRack`** (wall_hung drying herbs, a skull, bone charms) and
+    **`Prop_Orc_Stocks`**. Fix: `Prop_Orc_Cage_Open`'s use point lay inside its own collider (the swung door): now
+    local y -2.15. Four rooms in vki_rooms_orc (Night, Orc family): **`VKI_Orc_Barracks`** (8 x 4), **`VKI_Orc_Forge`**
+    (6 x 4, the wide gate), **`VKI_Orc_ShamanHut`** (4 x 4), **`VKI_Orc_Pen`** (6 x 4: both cages, the stocks, the
+    dungeon's wall chains with a seated skeleton); `vki_check` 0 errors (Night floor-level warnings only).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
