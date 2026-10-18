@@ -1468,6 +1468,25 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     diagonal and cut the altar off -- keep long props near 0 / 90 deg in plans. The altar stays pristine (an
     abandoned one stripped of its linen and candles would read better).
 
+119. 2026-10-17 (the user: "stuff for an abandoned monastery, the one in the game will be abandoned (but keep the new
+    ones for the set)" -- the intact pieces stay; abandoned twins beside them, in `vki_props_monastery`):
+    **`SM_VKI_Prop_Altar_300_Stripped`** (500 tris: bare DRESS mensa, its front corner broken off and lying by it, a torn
+    strip of the frontal and a rag of it on the floor, a candlestick toppled on the mensa, the cross on the floor;
+    nothing lit; a tight collider over the block, the floor bits walked over), **`CandleStand_Pricket_Fallen`** (the
+    stand built, its flame deleted -- `vki_mon_drop_glow` -- and tipped 84 deg), **`Desk_Scriptorium_Fallen`** (the
+    desk's frame on its own, `vki_mon_desk_frame`, tipped onto its front; the manuscript, a book, the inkhorn, the
+    quill, the candle and leaves spilled round it), **`Bookcase_150_Ransacked`** (a case with its third shelf broken
+    out and slid down onto the second, a few books left, the rest heaped at its foot with leaves; collider over the
+    case only), **`Cot_Broken`** (780: a plank cot tipped over the diagonal between two legs onto its snapped leg's
+    stub -- the angle solved from the stub height --, the snapped leg by it, the straw pallet slid off, a blanket
+    rag), **`RoofCollapse`** (960: a mounded heap of rubble and slates, two broken rafters, a cold daylight SPOT from
+    6.5 m in its metadata; collider 2.0 x 1.6), **`Overlay_Pages`** (leaves and a torn open book; the book 1.5 mm under
+    the first leaf, T5S). The intact `Desk_Scriptorium` rebuilds from the shared frame (same mesh). Test rooms (all
+    `vki_check` 0 errors): `VKI_Monastery_Church` now with the stripped altar, the fallen stand and the roof collapse;
+    new `VKI_Monastery_Scriptorium` (Stone 6 x 4: the ransacked and the sparse bookcase, the fallen desk, leaves, a
+    pile of books) and `VKI_Monastery_Dorter` (Stone 6 x 3: broken cots, rags). The cots' tilt barely reads from the
+    game camera (their pallets on the floor carry it).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

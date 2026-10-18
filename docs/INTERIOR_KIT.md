@@ -94,6 +94,8 @@ the meeting-edge plank gone and the next snapped -- static pieces (`vki_leaf_sta
 A test castle hall from these pieces: scene `VKI_Castle_Hall` (`vki_rooms_castle`).
 The abandoned monastery (`vki_props_monastery`, scene `VKI_Monastery_Church`): `Prop_ChoirStall_300`, `Prop_Pew_300_Broken` / `_Overturned`, `Prop_FallenBeam`,
 `Prop_Desk_Scriptorium`, `Overlay_GlassShards`, and the broken lancets `Wall_Ashlar_Lancet_150_Full_Broken` / `LancetTall_150_Full_Broken`.
+Abandoned twins: `Prop_Altar_300_Stripped`, `Prop_CandleStand_Pricket_Fallen`, `Prop_Desk_Scriptorium_Fallen`, `Prop_Bookcase_150_Ransacked`,
+`Prop_Cot_Broken`, `Prop_RoofCollapse` (with a daylight spot), `Overlay_Pages`; scenes `VKI_Monastery_Scriptorium` and `VKI_Monastery_Dorter`.
 `Wall_Ashlar_Arch_300` is an open pointed arch (clear 1.9 m, no leaves, `vki_arch` 1) for cloister walks, nave
 arcades and a hall's screens passage; `Wall_Ashlar_Hearth_300` a hooded great-hall fireplace in the 4.5 m wall.
 

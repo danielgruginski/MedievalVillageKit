@@ -172,10 +172,9 @@ def vki_mon_fallen_beam(k):
 
 
 # ---------------------------------------------------------------- Desk_Scriptorium
-def vki_mon_desk(k):
-    """a slanted writing desk: two side boards (front 0.80, the slope rising 30 deg to 1.10 at the back, a back post
-    to 1.30), the desk board, a book stop, a shelf at 1.24-1.27 between the posts, a foot rail; an open manuscript on
-    the slope (HIDE cover, PAPER pages), on the shelf an inkhorn, a quill, a closed book and a candle (30 W)"""
+def vki_mon_desk_frame(k):
+    """the writing desk's woodwork: side boards, the desk board sloping 30 deg, its book stop, the shelf, the back
+    stretcher and the foot rail -> (slope angle, its rotation, the board's centre)"""
     ang = math.radians(30.0)
     for s in (-1, 1):
         x0, x1 = sorted((s * 0.46, s * 0.50))
@@ -188,6 +187,14 @@ def vki_mon_desk(k):
     vki_lnk_box(k, -0.46, 0.46, 0.16, 0.30, 1.235, 1.265, WOOD, bev=0.008)            # shelf
     vki_lnk_box(k, -0.46, 0.46, 0.25, 0.29, 0.30, 0.38, WOOD, bev=0.008)              # back stretcher
     vki_lnk_box(k, -0.46, 0.46, -0.24, -0.18, 0.10, 0.16, WOOD, bev=0.008)            # foot rail
+    return ang, R, c0
+
+
+def vki_mon_desk(k):
+    """a slanted writing desk: two side boards (front 0.80, the slope rising 30 deg to 1.10 at the back, a back post
+    to 1.30), the desk board, a book stop, a shelf at 1.24-1.27 between the posts, a foot rail; an open manuscript on
+    the slope (HIDE cover, PAPER pages), on the shelf an inkhorn, a quill, a closed book and a candle (30 W)"""
+    ang, R, c0 = vki_mon_desk_frame(k)
     k.box(tuple(c0 + R @ Vector((0.0, 0.0, 0.024))), (0.44, 0.32, 0.012), HIDE, rot=(ang, 0, 0), bevel=0.004)
     for s in (-1, 1):
         cp = c0 + R @ Vector((s * 0.105, 0.0, 0.040))
@@ -221,6 +228,219 @@ def vki_mon_glass_shards(k):
                   vki_place_rule="loose debris under a broken window; walkable (no collider)")
 
 
+# ================================================================ the abandoned state (2026-10-17, round 2: the user,
+# "the one in the game will be abandoned (but keep the new ones for the set)")
+#   Altar_300_Stripped          the altar bare: no linen or candles, the mensa's front corner broken off (the chip on
+#                               the floor), a torn strip of the frontal, a candlestick toppled, the cross on the floor
+#   CandleStand_Pricket_Fallen  the pricket stand toppled, its candle out
+#   Desk_Scriptorium_Fallen     the writing desk tipped onto its front, the manuscript, a book, the inkhorn, the quill,
+#                               the candle and loose leaves spilled round it
+#   Bookcase_150_Ransacked      a bookcase stripped: a shelf broken and slid down, a few books left, the rest heaped at
+#                               its foot with loose leaves
+#   Cot_Broken                  a monk's plank cot, a leg snapped so the bed has tipped onto that corner, the straw
+#                               pallet slid off onto the floor, a blanket rag
+#   RoofCollapse                a heap where the roof came in: rubble, slates, two broken rafters, daylight from the
+#                               hole above (a cold spot)
+#   Overlay_Pages               loose leaves and a torn open book strewn over ~1.3 x 0.9 m
+def vki_mon_drop_glow(k):
+    """delete the flame tongues (GLOW faces) of a built prop: an abandoned place's candles are out"""
+    vs = list({v for f in k.bm.faces if f.material_index == GLOW for v in f.verts})
+    if vs:
+        bmesh.ops.delete(k.bm, geom=vs, context="VERTS")
+    for key in ("vki_lights", "vki_fx"):
+        k.meta.pop(key, None)
+
+
+def vki_mon_settle(k, vs=None, centre=True):
+    """drop the geometry onto the floor (its lowest point 2 mm under z 0) and, centre=True, put its footprint's middle
+    on the origin"""
+    vs = list(k.bm.verts) if vs is None else vs
+    lo = min(v.co.z for v in vs)
+    dx = dy = 0.0
+    if centre:
+        xs = [v.co.x for v in vs]; ys = [v.co.y for v in vs]
+        dx, dy = -(min(xs) + max(xs)) / 2, -(min(ys) + max(ys)) / 2
+    bmesh.ops.translate(k.bm, verts=vs, vec=(dx, dy, -0.002 - lo))
+    k.bm.normal_update()
+
+
+def vki_mon_sheets(k, rng, n, rx, ry, cx=0.0, cy=0.0, z0=0.002):
+    """n loose parchment leaves (PAPER, 0.19 x 0.26) lying over +-rx, +-ry, each 1.2 mm over the last"""
+    for i in range(n):
+        z = z0 + 0.0012 * i
+        vki_mon_part(k, lambda z=z: vki_lnk_box(k, -0.095, 0.095, -0.13, 0.13, z, z + 0.0015, PAPER, bev=0.0),
+                     Matrix.Translation((cx + rng.uniform(-rx, rx), cy + rng.uniform(-ry, ry), 0.0)) @
+                     Matrix.Rotation(rng.uniform(0, 6.28), 4, "Z"))
+
+
+def vki_mon_altar_stripped(k):
+    zt = 1.0
+    vki_lnk_box(k, -0.84, 0.84, -0.36, 0.40, 0.0, 0.935, DRESS, bev=0.02)
+    slab = [(-0.90, -0.28), (-0.76, -0.45), (0.90, -0.45), (0.90, 0.45), (-0.90, 0.45)]   # the corner broken off
+    vki_prism(k, slab, 0.93, zt, DRESS, axis="z", bevel=0.012)
+    vki_deb_rock(k, -1.05, -0.72, 0.09, 6101, flat=0.6, mi=DRESS)                      # the broken corner
+    vki_deb_rock(k, -0.82, -0.86, 0.05, 6102, flat=0.6, mi=DRESS)
+    vs = vki_lnk_box(k, 0.06, 0.78, -0.378, -0.362, 0.42, 0.925, VKI_TEXTILE, bev=0.003)   # what is left of the frontal
+    vki_textile_map(k, vki_faces_of(vs), "altar_frontal", plane=((1, 0, 0), (0, 0, 1)))
+    rng = random.Random(611)
+    vs = vki_mon_part(k, lambda: vki_lnk_box(k, -0.30, 0.30, -0.20, 0.20, 0.0, 0.006, VKI_TEXTILE, bev=0.0),
+                      Matrix.Translation((0.35, -0.95, 0.002)) @ Matrix.Rotation(0.35, 4, "Z"))
+    vki_textile_map(k, vki_faces_of(vs), "altar_frontal", plane=((1, 0, 0), (0, 1, 0)))
+    def stick():                                          # a candlestick without its candle, lying on the mensa
+        for (cz, r1, r2, h, segs) in ((0.0125, 0.07, 0.07, 0.025, 16), (0.05, 0.065, 0.024, 0.05, 16),
+                                      (0.1575, 0.017, 0.017, 0.205, 10), (0.2575, 0.055, 0.055, 0.015, 16)):
+            vki_chp_cyl(k, (0.0, 0.0, cz), r1, r2, h, segs, BRONZE)
+    vki_mon_part(k, stick, Matrix.Translation((0.30, 0.12, zt + 0.068)) @ Matrix.Rotation(0.4, 4, "Z") @
+                 Matrix.Rotation(math.pi / 2, 4, "Y"))
+    def cross():                                          # the cross, lying on the floor before the altar
+        vki_lnk_box(k, -0.027, 0.027, -0.24, 0.24, 0.0, 0.054, BRONZE, bev=0.008)
+        vki_lnk_box(k, -0.18, 0.18, 0.07, 0.125, 0.003, 0.050, BRONZE, bev=0.008)
+    vki_mon_part(k, cross, Matrix.Translation((-0.45, -1.00, 0.0)) @ Matrix.Rotation(1.1, 4, "Z"))
+    for v in k.bm.verts:
+        k.set_dark([v], 0.15)
+    vki_home_meta(k, "floor", "furniture", vki_kind="Altar", vki_broken=1, vki_mensa_z=zt, use=[[0.0, -0.80, 0]],
+                  vki_collider=[[0.0, 0.0, 0.5, 1.80, 0.90, 1.0]], vki_textile="altar_frontal",
+                  vki_note="abandoned church: no candles, nothing lit; the cross and the chips before it are walked over")
+
+
+def vki_mon_candlestand_fallen(k):
+    vki_chp_candlestand(k)
+    vki_mon_drop_glow(k)
+    vs = list(k.bm.verts)
+    bmesh.ops.transform(k.bm, verts=vs, matrix=vki_mon_about((0.0, -0.13, 0.0), "X", 84.0) @
+                        Matrix.Rotation(0.5, 4, "Z"))
+    vki_mon_settle(k)
+    for v in k.bm.verts:
+        k.set_dark([v], 0.15)
+    vki_home_meta(k, "floor", "furniture", vki_kind="CandleStand", vki_broken=1, use=[])
+
+
+def vki_mon_desk_fallen(k):
+    k.slot_mats[VKI_TEXTILE] = VKI_LIB_MAT
+    vki_mon_desk_frame(k)
+    vs = list(k.bm.verts)
+    bmesh.ops.transform(k.bm, verts=vs, matrix=vki_mon_about((0.0, -0.31, 0.0), "X", 78.0))   # onto its front
+    vki_mon_settle(k)
+    rng = random.Random(631)
+    vki_lib_open_book(k, Matrix.Translation((0.62, 0.55, 0.0005)) @ Matrix.Rotation(0.5, 4, "Z"), colour="brown")
+    col, des = vki_lib_pick(rng)
+    vki_lib_lying(k, -0.70, 0.40, 0.0, 0.05, 0.22, 0.30, col, des, rz=-0.6)
+    vki_mon_part(k, lambda: vki_chp_cyl(k, (0.0, 0.0, 0.0), 0.035, 0.03, 0.07, 10, HIDE),
+                 Matrix.Translation((-0.55, -0.62, 0.033)) @ Matrix.Rotation(math.pi / 2, 4, "Y"))   # the inkhorn
+    vki_mon_part(k, lambda: vki_lnk_box(k, -0.004, 0.004, -0.12, 0.12, 0.0, 0.008, PAPER, bev=0.0),
+                 Matrix.Translation((-0.35, -0.75, 0.002)) @ Matrix.Rotation(0.9, 4, "Z"))           # the quill
+    vki_mon_part(k, lambda: vki_chp_cyl(k, (0.0, 0.0, 0.0), 0.025, 0.025, 0.14, 12, VKI_WAX),
+                 Matrix.Translation((0.75, -0.55, 0.027)) @ Matrix.Rotation(1.2, 4, "Z") @
+                 Matrix.Rotation(math.pi / 2, 4, "Y"))                                               # the candle
+    vki_mon_sheets(k, rng, 8, 0.75, 0.55)
+    vki_home_meta(k, "floor", "furniture", vki_kind="Desk", vki_broken=1, use=[])
+
+
+def vki_mon_bookcase_ransacked(k):
+    k.slot_mats[VKI_TEXTILE] = VKI_LIB_MAT
+    rng = random.Random(1503)
+    x0, x1, yf, sh = vki_lib_case(k, 1.40, shelves=(0.10, 0.56, 1.48), seed=4)   # the third shelf broken out
+    (z0, c0), (z1, c1), (z3, c3) = sh
+    L = x1 - x0 - 0.01; a = math.asin(0.40 / L)                    # it slid down to rest on the shelf below
+    vki_mon_part(k, lambda: vki_home_box(k, -L / 2, L / 2, -0.15, 0.14, -0.02, 0.02, WOOD, bev=0.008),
+                 Matrix.Translation(((x0 + x1) / 2, 0.0, z1 + 0.24)) @ Matrix.Rotation(-a, 4, "Y"))
+    vki_lib_shelf(k, rng, x0 + 0.004, x0 + 0.40, z0, yf, c0 - 0.025, 0.30, fill=0.8, lean=0.5, flat=0.0)
+    vki_lib_stack(k, rng, x1 - 0.30, yf + 0.13, z1, 2, 0.30, 0.24)
+    col, des = vki_lib_pick(rng)
+    vki_lib_lying(k, x0 + 0.40, yf + 0.14, z3, 0.05, 0.22, 0.30, col, des, rz=0.3)
+    vki_lib_stack(k, rng, -0.30, yf - 0.36, 0.0, 3, 0.32, 0.25, rz=0.5)                     # the heap at its foot
+    vki_lib_stack(k, rng, 0.25, yf - 0.30, 0.0, 2, 0.30, 0.24, rz=-0.4)
+    for x, y, rz in ((0.55, -0.62, 0.9), (-0.05, -0.70, -0.5), (-0.62, -0.58, 1.6)):
+        col, des = vki_lib_pick(rng)
+        vki_lib_lying(k, x, y, 0.0, rng.uniform(0.035, 0.06), 0.20, 0.27, col, des, rz=rz)
+    vki_mon_sheets(k, rng, 6, 0.6, 0.20, cy=-0.62)
+    vki_home_meta(k, "wall_floor", "furniture", back="geo", vki_kind="Bookcase", vki_broken=1, use=[],
+                  vki_collider=[[0.0, 0.0, 1.0, 1.40, 0.36, 2.0]],
+                  vki_note="the books heaped before it are walked over")
+
+
+def vki_mon_cot_broken(k):
+    """a plank cot 0.86 x 1.96 (legs 0.36): the foot-right leg snapped -- the bed tipped over the diagonal between
+    the head-right and foot-left legs until that corner's stub met the floor --, the snapped leg lying by it, the straw
+    pallet slid off onto the floor, a blanket rag (CLOTH_B)"""
+    hx, hy, lh, stub = 0.40, 0.94, 0.36, 0.12
+    before = set(k.bm.verts)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            z1 = stub if (sx, sy) == (1, -1) else lh - 0.006            # (tops inside the rails, T5S)
+            vki_home_box(k, sx * hx - 0.03, sx * hx + 0.03, sy * hy - 0.03, sy * hy + 0.03, 0.0, z1, WOOD, bev=0.008)
+    for sx in (-1, 1):
+        vki_home_box(k, sx * hx - 0.025, sx * hx + 0.025, -hy - 0.036, hy + 0.036, lh - 0.08, lh, WOOD, bev=0.008)
+    for sy, top in ((1, 0.62), (-1, 0.50)):
+        vki_home_box(k, -hx - 0.036, hx + 0.036, sy * hy - 0.02, sy * hy + 0.02, 0.10, top, WOOD, bev=0.01)
+    for i in range(6):
+        y = -hy + 0.17 + i * 0.32
+        vki_home_box(k, -hx + 0.02, hx - 0.02, y - 0.10, y + 0.10, lh - 0.004, lh + 0.02, WOOD, bev=0.006)
+    frame = [v for v in k.bm.verts if v not in before]
+    A = Vector((hx, hy, 0.0)); B = Vector((-hx, -hy, 0.0)); C = Vector((hx, -hy, stub))
+    d = (B - A).normalized()
+    dist = (C - A).cross(d).length
+    ang = math.asin(min(1.0, (stub - 0.01) / dist))
+    for sgn in (1, -1):
+        M = Matrix.Translation(A) @ Matrix.Rotation(sgn * ang, 4, d) @ Matrix.Translation(-A)
+        if (M @ C).z < C.z:
+            break
+    bmesh.ops.transform(k.bm, verts=frame, matrix=M)
+    k.bm.normal_update()
+    vki_mon_part(k, lambda: vki_home_box(k, -0.03, 0.03, -0.03, 0.03, 0.0, lh - stub - 0.02, WOOD, bev=0.008),
+                 Matrix.Translation((hx + 0.30, -hy + 0.10, 0.032)) @ Matrix.Rotation(0.7, 4, "Z") @
+                 Matrix.Rotation(math.pi / 2, 4, "Y"))                               # the snapped leg
+    mv = vki_mon_part(k, lambda: vki_home_box(k, -0.38, 0.38, -0.88, 0.88, 0.0, 0.13, VKI_STRAW, bev=0.05, segs=2),
+                      Matrix.Translation((hx + 0.42, 0.10, 0.0)) @ Matrix.Rotation(-0.18, 4, "Z"))
+    k.project(vki_faces_of(mv), VKI_STRAW)
+    vki_mon_part(k, lambda: vki_lnk_box(k, -0.35, 0.35, -0.45, 0.45, 0.0, 0.008, CLOTH_B, bev=0.0),
+                 Matrix.Translation((-hx - 0.30, -0.55, 0.002)) @ Matrix.Rotation(0.4, 4, "Z"))
+    for v in k.bm.verts:
+        k.set_dark([v], 0.15)
+    vki_home_meta(k, "floor", "furniture", vki_kind="Bed", vki_broken=1, use=[],
+                  vki_note="a monk's cell or the dorter; the pallet beside it is walked over")
+
+
+def vki_mon_roof_collapse(k):
+    """a heap 2.2 x 1.8 where the roof came in: 14 rocks (0.10-0.34) mounded higher in the middle, a dozen slates
+    tilted among them (STONE_BLOCK_IN, darkened), two broken rafters lying on the heap with splintered ends; a cold
+    daylight spot from the hole above (6.5 m)"""
+    rng = random.Random(651)
+    for i in range(14):
+        a = rng.uniform(0, 6.28); d = rng.uniform(0.0, 1.0) ** 0.7
+        x, y = math.cos(a) * d * 1.0, math.sin(a) * d * 0.8
+        r = 0.34 - 0.20 * d + rng.uniform(-0.04, 0.04)
+        vki_deb_rock(k, x, y, r, 6510 + i, flat=0.7, mi=VKI_STONE_BLOCK_IN, z=max(0.0, (1 - d) * 0.18 - 0.05), dark=0.12)
+    for i in range(12):
+        a = rng.uniform(0, 6.28); d = rng.uniform(0.2, 1.15)
+        z = 0.02 + 0.30 * max(0.0, 1 - d) + 0.004 * i
+        vs = vki_mon_part(k, lambda z=z: vki_lnk_box(k, -0.16, 0.16, -0.11, 0.11, z, z + 0.022, VKI_STONE_BLOCK_IN, bev=0.004),
+                          Matrix.Translation((math.cos(a) * d, math.sin(a) * d * 0.8, 0.0)) @
+                          Matrix.Rotation(rng.uniform(0, 6.28), 4, "Z") @ Matrix.Rotation(rng.uniform(-0.4, 0.4), 4, "X"))
+        k.set_dark(vs, 0.35)
+    for (x, y, rz, L, tilt, seed) in ((-0.10, 0.10, 0.5, 1.7, -0.22, 661), (0.35, -0.30, -0.9, 1.1, 0.15, 663)):
+        M = Matrix.Translation((x, y, 0.32)) @ Matrix.Rotation(rz, 4, "Z") @ Matrix.Rotation(tilt, 4, "Y")
+        vki_mon_part(k, lambda L=L: vki_lnk_box(k, -L / 2, L / 2, -0.06, 0.06, -0.07, 0.07, WOOD, bev=0.01), M)
+        vki_mon_splinters(k, M @ Vector((L / 2, 0.0, 0.0)), (M.to_3x3() @ Vector((1, 0, 0))).normalized(), 0.12, 0.14, seed)
+    vki_mon_settle(k, centre=False)
+    vki_home_meta(k, "floor", "furniture", vki_kind="RoofCollapse", use=[],
+                  vki_collider=[[0.0, 0.0, 0.30, 2.0, 1.6, 0.6]],
+                  vki_lights=[dict(type="SPOT", role="daylight", pos=[0.0, 0.0, 6.5], aim=[0.0, 0.0, 0.0], cone=38.0,
+                                   blend=0.5, radius=0.3, w_day=1800.0, w_night=120.0, color_day=[.82, .88, 1.0],
+                                   color_night=[.55, .62, .90], shadows=1)],
+                  vki_place_rule="open floor where the roof came in; rot multiples of 90 (the BFS boxes its collider)")
+
+
+def vki_mon_pages(k):
+    k.slot_mats[VKI_TEXTILE] = VKI_LIB_MAT
+    rng = random.Random(671)
+    vki_lib_open_book(k, Matrix.Translation((0.25, 0.05, 0.0005)) @ Matrix.Rotation(-0.4, 4, "Z"),
+                      colour=vki_lib_pick(rng)[0])
+    vki_mon_sheets(k, rng, 12, 0.6, 0.40)
+    vki_home_meta(k, "floor", "dressing", use=[], vki_class="overlay", vki_nav="none",
+                  vki_place_rule="loose debris on open floor; walkable (no collider)")
+
+
 VKI_MON_SPECS = [
     ("SM_VKI_Prop_ChoirStall_300", vki_mon_choirstall, "prop"),
     ("SM_VKI_Prop_Pew_300_Broken", vki_mon_pew_broken, "prop"),
@@ -228,6 +448,13 @@ VKI_MON_SPECS = [
     ("SM_VKI_Prop_FallenBeam", vki_mon_fallen_beam, "prop"),
     ("SM_VKI_Prop_Desk_Scriptorium", vki_mon_desk, "prop"),
     ("SM_VKI_Overlay_GlassShards", vki_mon_glass_shards, "none"),
+    ("SM_VKI_Prop_Altar_300_Stripped", vki_mon_altar_stripped, "prop"),
+    ("SM_VKI_Prop_CandleStand_Pricket_Fallen", vki_mon_candlestand_fallen, "prop"),
+    ("SM_VKI_Prop_Desk_Scriptorium_Fallen", vki_mon_desk_fallen, "prop"),
+    ("SM_VKI_Prop_Bookcase_150_Ransacked", vki_mon_bookcase_ransacked, "prop"),
+    ("SM_VKI_Prop_Cot_Broken", vki_mon_cot_broken, "prop"),
+    ("SM_VKI_Prop_RoofCollapse", vki_mon_roof_collapse, "prop"),
+    ("SM_VKI_Overlay_Pages", vki_mon_pages, "none"),
 ]
 VKI_MON_NAMES = [n for n, _, _ in VKI_MON_SPECS]
 vki_register([(n, fn, {"grime": gr}, "monastery") for n, fn, gr in VKI_MON_SPECS])
