@@ -182,6 +182,317 @@ def hbr_breakwater_end(k):
     for f in fs: f.material_index=ROOF
     _ico(k,(tx,0,zl+2.32),0.09,BRONZE,sub=1)
 
+# ================================================================ ROUND 2: SHIPS (origin at the waterline, bow +X)
+def hbr_y_at(H,t,z):
+    """the hull's inner half width at height z on station t (for decks fitted inside it)"""
+    pts=H["sec"](t,True)
+    for (y0,z0),(y1,z1) in zip(pts[:-1],pts[1:]):
+        if z0<=z<=z1 and z1>z0: return y0+(y1-y0)*(z-z0)/(z1-z0)
+    return pts[-1][0] if z>pts[-1][1] else pts[0][0]
+
+def hbr_deck(k,H,L,z,t0,t1,n=14,mi=PLANKS):
+    """a deck polygon at height z between stations t0 and t1, following the hull's inner skin"""
+    ts=[t0+(t1-t0)*i/n for i in range(n+1)]
+    left=[(-L/2+L*t,-hbr_y_at(H,t,z)+0.01,z) for t in ts]; right=[(-L/2+L*t,hbr_y_at(H,t,z)-0.01,z) for t in ts]
+    vs=[k.bm.verts.new(p) for p in left+right[::-1]]
+    f=k.bm.faces.new(vs); f.material_index=mi; k.bm.normal_update()
+    if f.normal.z<0: f.normal_flip()
+    for l in f.loops: l[k.uv].uv=(l.vert.co.y/TILE[mi],l.vert.co.x/TILE[mi])
+
+def hbr_furled(k,x,y0,y1,z,r=0.3,mi=CLOTH_B,n=4):
+    """a sail furled on its yard: stretched bundles between rope gaskets"""
+    for i in range(n):
+        a=y0+(y1-y0)*(i+0.5)/n; s=abs(y1-y0)/n/0.42
+        _ico(k,(x,a,z-r*0.6),r,mi,(1.0,s,0.9),sub=1,jit=0.02,seed=i)
+    for i in range(1,n): ring(k,(x,y0+(y1-y0)*i/n,z-r*0.6),r*0.85,r*1.1,0.05,BURLAP,n=8,axis="Y")
+
+def hbr_anchor_geo(k,M,s=1.0):
+    """an iron anchor (shank along +Z from the crown at the origin, arms in XZ, a wooden stock at the ring)"""
+    sub=Kit()
+    wat_rod(sub,(0,0,0.0),(0,0,2.0*s),0.06*s,0.05*s,8,IRON)
+    for sx in(-1,1):
+        arc=[(sx*0.75*s*math.sin(a),0,0.75*s*(1-math.cos(a))) for a in [i*math.pi/12 for i in range(5)]]
+        wat_tube(sub,arc,wat_circ(0.055*s,6),IRON)
+        tip=Vector(arc[-1])
+        sub.box(tuple(tip+Vector((sx*0.06*s,0,-0.05*s))),(0.12*s,0.3*s,0.32*s),IRON,rot=(0,sx*0.5,0),bevel=0.01)
+    sub.box((0,0,1.75*s),(0.12*s,1.6*s,0.12*s),WOOD,bevel=0.02)
+    wat_annulus(sub,(0,0,2.12*s),0.09*s,0.14*s,0.04*s,IRON,n=10,axis="Y")
+    merge_kit(k,sub,M)
+
+def hbr_cog(k):
+    """a merchant cog moored in the harbour, 17 m: high clinker sides, a deck with a cargo hatch, castles fore and
+       aft, a 16 m mast with a furled square sail and a crow's nest, shrouds and stays, a stern rudder and tiller,
+       a bowsprit, an anchor at the bow. Origin at the waterline, bow +X"""
+    L=17.0; B2=2.8
+    def bfn(t):
+        if t<=0.55: return B2*(1-0.33*((0.55-t)/0.55)**2)
+        return B2*max(0.0,1-((t-0.55)/0.45)**2)**0.5
+    def kfn(t): return -1.5+1.0*max(0.0,(t-0.78)/0.22)**2+0.6*max(0.0,(0.1-t)/0.1)**2
+    def sfn(t): return 2.1+0.7*abs(2*t-1)**2.5+0.4*t**4
+    H=wat_hull(k,L,22,bfn,kfn,sfn,lambda t:0.0,p=0.35,q=1.6,m=5,th=0.08,bow="point",stern="transom",nin=20)
+    wat_gunwale(k,H,w=0.12,h=0.16,upto=22)
+    zd=1.35; hbr_deck(k,H,L,zd,0.02,0.9)
+    for s in(-1,1):                                                                              # wales
+        pts=[(H["xs"][i],s*(abs(H["outer"][i][-1][0])+0.05),zd+0.1) for i in range(1,21)]
+        pts=[(x,s*(hbr_y_at(H,(x+L/2)/L,zd+0.1)+0.13),z) for (x,_,z) in pts]
+        wat_tube(k,pts,wat_rect(0.1,0.14),WOOD)
+    k.box((-0.9,0,zd+0.12),(3.0,2.0,0.24),WOOD,bevel=0.03)                                     # hatch
+    k.box((-0.9,0,zd+0.25),(2.7,1.7,0.04),PLANKS,bevel=0.005)
+    for (x,y,sz,r) in ((-1.5,-0.35,0.7,0.1),(-0.7,0.4,0.65,-0.2),(-0.6,-0.3,0.6,0.3)):
+        k.box((x,y,zd+0.27+sz/2),(sz,sz,sz),WOOD,rot=(0,0,r),bevel=0.03)
+    for (x,y) in ((1.8,-1.4),(2.5,-1.3),(1.9,1.4)): barrel(k,x,y,zd,0.32,0.85)
+    # aftcastle
+    xa0=-L/2+0.25; xa1=-L/2+4.0; za=zd+2.0; ya=hbr_y_at(H,(xa1+L/2)/L,za)-0.05
+    k.box(((xa0+xa1)/2,0,za-0.06),(xa1-xa0,2*ya,0.12),PLANKS,bevel=0.01)
+    k.box((xa1,0,zd+1.0),(0.12,2*ya,2.0),PLANKS,bevel=0.01)
+    k.box((xa1-0.02,0,zd+0.9),(0.14,0.8,1.8),WOOD,bevel=0.01)                                   # its door
+    for s in(-1,1):
+        k.box(((xa0+xa1)/2,s*(ya-0.06),za+0.45),(xa1-xa0,0.12,0.9),PLANKS,bevel=0.01)
+        for i in range(5): k.box((xa0+0.3+i*(xa1-xa0-0.6)/4,s*(ya-0.06),za+1.0),(0.3,0.16,0.22),PLANKS,bevel=0.01)
+    k.box((xa1-0.06,0,za+0.45),(0.12,2*ya,0.9),PLANKS,bevel=0.01)
+    k.box((xa0+0.06,0,za+0.45),(0.12,2*ya,0.9),PLANKS,bevel=0.01)
+    for i in range(5): k.box((xa1-0.06,-ya+0.4+i*(2*ya-0.8)/4,za+1.0),(0.16,0.3,0.22),PLANKS,bevel=0.01)
+    # forecastle
+    xf0=L/2-4.6; xf1=L/2-2.0; zf=zd+1.6; yf=hbr_y_at(H,(xf0+L/2)/L,zf)-0.05; yf1=hbr_y_at(H,(xf1+L/2)/L,zf)-0.05
+    vs=[k.bm.verts.new(p) for p in ((xf0,-yf,zf),(xf1,-yf1,zf),(xf1,yf1,zf),(xf0,yf,zf))]
+    f=k.bm.faces.new(vs); f.material_index=PLANKS; k.bm.normal_update()
+    if f.normal.z<0: f.normal_flip()
+    k.box((xf0,0,zd+0.8),(0.12,2*yf,1.6),PLANKS,bevel=0.01)
+    k.box((xf0,0,zf+0.4),(0.12,2*yf,0.8),PLANKS,bevel=0.01)
+    for s in(-1,1):
+        wat_seg(k,(xf0,s*(yf-0.06),zf+0.4),(xf1,s*(yf1-0.06),zf+0.4),0.12,0.8,PLANKS,bevel=0.01)
+    # mast, crow's nest, yard and sail
+    xm=0.6; zt=16.0
+    wat_rod(k,(xm,0,zd),(xm,0,zt),0.26,0.14,12,WOOD,caps="top")
+    k.box((xm,0,zd+0.12),(0.7,0.7,0.24),WOOD,bevel=0.04)
+    for z in(3.5,6.0,8.5): k.box((xm,0,z),(0.42,0.42,0.08),IRON,bevel=0.01)
+    lathe(k,[(0.2,12.3),(0.75,12.4),(0.8,12.45),(0.8,13.2),(0.7,13.25)],center=(xm,0,0),segs=12,mi=PLANKS)
+    wat_rod(k,(xm+0.3,-4.6,13.9),(xm+0.3,4.6,13.9),0.11,0.11,8,WOOD,caps="end")
+    hbr_furled(k,xm+0.3,-4.3,4.3,13.9,r=0.42,n=6)
+    for s in(-1,1):                                                                              # shrouds, stays
+        for x in(-0.8,0.2,1.2):
+            yb=hbr_y_at(H,(x+L/2)/L,sfn((x+L/2)/L))+0.15
+            wat_rope(k,[(xm,0,12.0),(x,s*yb,sfn((x+L/2)/L)+0.1)],0.025,WOOD)
+        wat_rope(k,[(xm+0.3,s*4.5,13.9),(xa0+0.3,s*(ya-0.1),za+0.9)],0.02,WOOD)                  # braces
+    wat_rope(k,[(xm,0,15.0),(L/2+2.6,0,4.15)],0.03,WOOD)                                         # forestay
+    wat_rope(k,[(xm,0,15.2),(xa0+0.2,0,za+0.9)],0.03,WOOD)                                       # backstay
+    wat_rod(k,(L/2-0.4,0,sfn(1)-0.1),(L/2+2.8,0,4.2),0.16,0.09,8,WOOD,caps="top")                # bowsprit
+    # rudder + tiller
+    k.box((-L/2-0.18,0,0.4),(0.3,0.14,3.4),WOOD,bevel=0.03)
+    for z in(-0.6,0.6,1.6): k.box((-L/2-0.06,0,z),(0.36,0.18,0.06),IRON,bevel=0.01)
+    wat_seg(k,(-L/2-0.15,0,za-0.3),(-L/2+1.6,0,za-0.25),0.1,0.1,WOOD,bevel=0.02)
+    hbr_anchor_geo(k,Matrix.Translation((L/2-1.8,2.05,1.3))@Matrix.Rotation(-0.25,4,"X")@Matrix.Rotation(math.pi/2,4,"Z")@Matrix.Rotation(math.pi,4,"X"),0.7)
+
+def hbr_fishing_boat(k):
+    """a fishing boat, 7.5 m: a short mast with a furled sail, nets heaped amidships, baskets of fish, oars.
+       Origin at the waterline, bow +X"""
+    L=7.5; B2=1.25
+    def bfn(t):
+        if t<=0.45: return B2*(1-0.45*((0.45-t)/0.45)**2)
+        return B2*max(0.0,1-((t-0.45)/0.55)**2)**0.55
+    def kfn(t): return -0.5+0.6*max(0.0,(t-0.72)/0.28)**2+0.25*max(0.0,(0.15-t)/0.15)**2
+    def sfn(t): return 0.75+0.35*abs(2*t-1)**2.4+0.1*t**4
+    H=wat_hull(k,L,16,bfn,kfn,sfn,lambda t:0.0,p=0.6,q=1.2,m=4,th=0.05,bow="point",stern="transom",nin=14)
+    wat_gunwale(k,H,upto=16)
+    hb,zs,zk=wat_inner_at(H,0.5)
+    k.box((-0.1,0,zk+0.05),(4.4,2*hb*0.55,0.04),PLANKS,bevel=0.005)
+    for t in(0.25,0.62):
+        hb,zs,zk=wat_inner_at(H,t); x=-L/2+L*t
+        k.box((x,0,zs-0.2),(0.3,2*hb+0.02,0.06),WOOD,bevel=0.015)
+    xm=-L/2+L*0.62
+    wat_rod(k,(xm,0,zk),(xm,0,6.2),0.1,0.06,8,WOOD,caps="top")
+    wat_rod(k,(xm+0.12,-2.0,5.6),(xm+0.12,2.0,5.6),0.05,0.05,6,WOOD,caps="end")
+    hbr_furled(k,xm+0.12,-1.85,1.85,5.6,r=0.2,n=3)
+    for s in(-1,1): wat_rope(k,[(xm,0,6.0),(xm-0.6,s*(B2-0.05),sfn(0.55)+0.03)],0.016,WOOD)
+    wat_rope(k,[(xm,0,6.0),(L/2-0.1,0,sfn(1)+0.05)],0.016,WOOD)
+    hb,zs,zk=wat_inner_at(H,0.42)
+    for i,(x,y,s) in enumerate(((-0.6,0.1,1.0),(-0.2,-0.25,0.8),(-0.9,-0.3,0.7))):              # nets heaped
+        _ico(k,(x,y,zk+0.25),0.45*s,NET,(1.4,0.9,0.45),sub=1,jit=0.04,seed=40+i)
+        _ico(k,(x,y,zk+0.2),0.42*s,BURLAP,(1.35,0.85,0.4),sub=1,jit=0.03,seed=50+i)
+    for i,(x,y) in enumerate(((-2.2,0.35),(-2.3,-0.35))): wat_basket(k,Matrix.Translation((x,y,zk+0.08)),seed=i)
+    for s in(-1,1): wat_oar(k,(-2.6,s*0.35,zs-0.1),(1.6,s*0.5,zs-0.05))
+    k.box((-L/2-0.1,0,0.1),(0.16,0.08,1.2),WOOD,bevel=0.02)                                     # rudder
+    wat_seg(k,(-L/2-0.1,0,sfn(0)+0.1),(-L/2+1.0,0,sfn(0)+0.15),0.06,0.06,WOOD,bevel=0.01)
+
+def hbr_gangplank(k):
+    """a cleated gangplank from the quay's edge (origin, z 0) down 0.8 to a ship's deck 4.2 out (-Y)"""
+    a=Vector((0,0.3,0.1)); b=Vector((0,-4.2,-0.75)); d=(b-a); L=d.length; pitch=math.atan2(d.z,-d.y)
+    k.box(tuple((a+b)/2),(0.75,L,0.08),PLANKS,rot=(pitch,0,0),bevel=0.015)
+    n=11
+    for i in range(1,n):
+        p=a+d*(i/n); k.box((p.x,p.y,p.z+0.06),(0.7,0.05,0.04),WOOD,rot=(pitch,0,0),bevel=0.008)
+    for s in(-1,1): k.box((s*0.33,b.y+0.25,b.z-0.02),(0.06,0.5,0.08),WOOD,rot=(pitch,0,0),bevel=0.01)
+
+# ================================================================ ROUND 2: QUAY-SIDE WORKS (on the quay, front -Y)
+def hbr_crane(k):
+    """a wharf crane on the quay's edge: a braced oak post on a stone footing, a jib reaching 3.4 m over the water,
+       a windlass with crank handles, the rope over the jib's sheave down to a hook with a cargo net of sacks"""
+    k.box((0,0.6,0.1),(1.6,1.6,0.2),STONE_BLOCK,bevel=0.04)
+    k.box((0,0.6,-0.3),(1.5,1.5,0.6),STONE_BLOCK,bevel=0)
+    P=Vector((0,0.6,0))
+    k.box(tuple(P+Vector((0,0,3.3))),(0.36,0.36,6.6),WOOD,bevel=0.04)
+    for z in(1.2,3.0,5.0): k.box(tuple(P+Vector((0,0,z))),(0.42,0.42,0.08),IRON,bevel=0.01)
+    for (dx,dy) in ((1,0),(-1,0),(0,1),(0,-1)):
+        wat_seg(k,P+Vector((dx*0.7,dy*0.7,0.2)),P+Vector((dx*0.1,dy*0.1,1.7)),0.14,0.14,WOOD,bevel=0.02)
+    tip=Vector((0,-2.8,6.3))
+    wat_seg(k,P+Vector((0,-0.1,2.6)),tip,0.24,0.24,WOOD,bevel=0.03)                              # jib
+    wat_seg(k,P+Vector((0,0,6.5)),tip+Vector((0,0,0.1)),0.16,0.16,WOOD,bevel=0.02)                # its tie
+    k.box(tuple(P+Vector((0,0,6.65))),(0.5,0.5,0.1),WOOD,bevel=0.02)
+    _cyl(k,tuple(tip+Vector((0,-0.12,-0.05))),0.22,0.22,0.08,12,WOOD,rot=Matrix.Rotation(math.pi/2,4,"Y"))   # sheave
+    for s in(-1,1): k.box(tuple(tip+Vector((s*0.08,-0.1,0))),(0.03,0.4,0.36),IRON,bevel=0)
+    # windlass on the landward side
+    for s in(-1,1):
+        k.box((s*0.65,1.5,0.6),(0.12,0.3,1.2),WOOD,bevel=0.02)
+        wat_seg(k,(s*0.65,1.2,0.05),(s*0.65,1.45,1.1),0.08,0.08,WOOD,bevel=0.01)
+    wat_rod(k,(-0.75,1.5,1.0),(0.75,1.5,1.0),0.16,0.16,10,WOOD,caps="end")
+    ring(k,(0,1.5,1.0),0.16,0.22,0.5,HAY,n=12,axis="X")                                          # rope on the drum
+    for s in(-1,1):
+        wat_seg(k,(s*0.8,1.5,1.0),(s*0.8,1.5,0.62),0.05,0.05,IRON,bevel=0)
+        wat_rod(k,(s*0.8,1.5,0.62),(s*1.05,1.5,0.62),0.025,0.025,6,WOOD)
+    wat_rope(k,[(0,1.5,1.2),(0,0.45,6.2),tip+Vector((0,0.1,0.15))],0.022,HAY)
+    hook=tip+Vector((0,-0.12,-3.4))
+    wat_rope(k,[tip+Vector((0,-0.3,-0.05)),hook+Vector((0,0,0.25))],0.022,HAY)
+    k.box(tuple(hook+Vector((0,0,0.15))),(0.08,0.06,0.2),IRON,bevel=0.01)
+    wat_annulus(k,tuple(hook),0.06,0.1,0.03,IRON,n=10,axis="Y")
+    for i in range(4):                                                                           # the sling
+        a=2*math.pi*i/4+0.4
+        wat_rope(k,[hook,hook+Vector((math.cos(a)*0.45,math.sin(a)*0.45,-0.75))],0.015,HAY)
+    for i,(dx,dy,dz) in enumerate(((0,0,-0.95),(0.25,0.15,-1.0),(-0.2,0.2,-1.0),(0.05,-0.2,-0.75))):
+        _ico(k,tuple(hook+Vector((dx,dy,dz))),0.3,BURLAP,(1,0.85,1.05),sub=1,jit=0.02,seed=60+i)
+    _ico(k,tuple(hook+Vector((0,0,-0.95))),0.6,NET,(1,1,0.8),sub=1,seed=64)
+
+def hbr_cargo_crates(k):
+    """crates stacked two high under a rope cargo net, ready for the crane"""
+    rnd=random.Random(5)
+    for i,(x,y,z,s) in enumerate(((-0.6,0,0,0.85),(0.3,0.05,0,0.85),(-0.15,0.85,0,0.8),(-0.3,0.2,0.85,0.8),(0.45,0.6,0,0.75))):
+        r=rnd.uniform(-0.08,0.08)
+        k.box((x,y,z+s/2),(s,s,s),WOOD,rot=(0,0,r),bevel=0.03)
+        for zz in(z+0.06,z+s-0.06): k.box((x,y,zz),(s+0.02,s+0.02,0.06),PLANKS,rot=(0,0,r),bevel=0.01)
+    sub=Kit(); sub.box((0,0,0),(1.0,1.0,1.0),NET,bevel=0.0)
+    for f in list(sub.bm.faces):
+        if f.normal.z<-0.5: sub.bm.faces.remove(f)
+    merge_kit(k,sub,Matrix.Translation((-0.15,0.42,0.86))@Matrix.Diagonal((1.95,1.85,1.74,1)))
+    wat_annulus(k,(-0.15,0.42,1.78),0.07,0.11,0.04,IRON,n=10,axis="Y")
+
+def hbr_cargo_bales(k):
+    """wool bales, corded, stacked three and two"""
+    rnd=random.Random(9)
+    for i,(x,y,z) in enumerate(((-0.75,0,0),(0,0.02,0),(0.75,0,0),(-0.37,0.05,0.62),(0.37,0.0,0.62))):
+        r=rnd.uniform(-0.06,0.06)
+        k.box((x,y,z+0.3),(0.72,1.05,0.6),BURLAP,rot=(0,0,r),bevel=0.1,segs=2)
+        for dy in(-0.28,0.28): k.box((x,y+dy,z+0.3),(0.74,0.04,0.62),HAY,rot=(0,0,r),bevel=0.01)
+
+def hbr_capstan(k):
+    """a capstan for warping ships in: a waisted drum with whelps on a stone pad, four bars through its head"""
+    k.box((0,0,0.05),(1.3,1.3,0.1),STONE_BLOCK,bevel=0.03)
+    lathe(k,[(0.45,0.1),(0.45,0.2),(0.32,0.3),(0.28,0.6),(0.32,0.85),(0.45,0.9),(0.45,1.08),(0.0,1.12)],segs=12,mi=WOOD)
+    for i in range(8):
+        a=2*math.pi*i/8; k.box((math.cos(a)*0.31,math.sin(a)*0.31,0.58),(0.08,0.08,0.55),WOOD,rot=(0,0,a),bevel=0.01)
+    for i in range(4):
+        a=math.pi*i/4+0.2
+        wat_rod(k,(math.cos(a)*-1.25,math.sin(a)*-1.25,1.0),(math.cos(a)*1.25,math.sin(a)*1.25,1.0),0.045,0.045,6,WOOD,caps="end")
+    ring(k,(0,0,0.45),0.29,0.35,0.22,HAY,n=12,axis="Z")
+
+def hbr_anchor(k):
+    """a spare anchor lying on the quay with its chain"""
+    hbr_anchor_geo(k,Matrix.Translation((0,0,0.08))@Matrix.Rotation(-math.pi/2,4,"Y")@Matrix.Rotation(0.15,4,"Z"),0.85)
+    for i in range(7):
+        x=1.95+i*0.15; wat_annulus(k,(x,0.1*math.sin(i),0.04),0.04,0.07,0.03,IRON,n=8,axis="Y" if i%2 else "Z")
+
+def hbr_rope_coils(k):
+    """three coils of hawser on the quay, one tipped against the others"""
+    for j,(cx,cy,r0,turns,tilt) in enumerate(((0,0,0.42,3,0.0),(0.85,0.15,0.36,3,0.0),(0.4,0.65,0.34,2,0.6))):
+        pts=[]
+        for i in range(turns*14+1):
+            a=2*math.pi*i/14; rr=r0-0.035*(i/14)
+            pts.append(Vector((rr*math.cos(a),rr*math.sin(a),0.04+0.065*(i/14))))
+        R=Matrix.Translation((cx,cy,0.0))@Matrix.Rotation(tilt,4,"X")
+        sub=Kit(); wat_tube(sub,pts,wat_circ(0.035,5),HAY,caps=True,smooth=True,uscale=0.3); merge_kit(k,sub,R)
+
+def hbr_buoy(k):
+    """a mooring buoy, painted, its ring on top and a chain down; origin at the waterline"""
+    lathe(k,[(0.0,-0.55),(0.32,-0.5),(0.45,-0.2),(0.48,0.15),(0.4,0.42),(0.12,0.5),(0.0,0.52)],segs=12,mi=CLOTH_A)
+    lathe(k,[(0.47,-0.02),(0.5,0.0),(0.5,0.12),(0.48,0.14)],segs=12,mi=YELLOW)
+    k.box((0,0,0.56),(0.06,0.06,0.1),IRON,bevel=0.01)
+    wat_annulus(k,(0,0,0.68),0.06,0.1,0.03,IRON,n=10,axis="Y")
+    for i in range(4): wat_annulus(k,(0,0,-0.62-i*0.13),0.035,0.06,0.025,IRON,n=8,axis="Y" if i%2 else "X")
+
+def hbr_tar_cauldron(k):
+    """boiling tar for the caulkers: an iron cauldron on a ring of stones over a fire, a ladle, tar barrels"""
+    for i in range(8):
+        a=2*math.pi*i/8; rock(k,(math.cos(a)*0.62,math.sin(a)*0.62,0.12),(0.32,0.28,0.24),seed=900+i,rot_z=a,tilt=0.15,segs=1)
+    for i in range(5):
+        a=2*math.pi*i/5; wat_rod(k,(math.cos(a)*0.45,math.sin(a)*0.45,0.05),(math.cos(a+2.4)*0.25,math.sin(a+2.4)*0.25,0.12),0.05,0.05,6,COAL)
+    _ico(k,(0,0,0.18),0.32,GLOW,(1,1,0.6),sub=1,jit=0.04,seed=7)
+    lathe(k,[(0.0,0.32),(0.3,0.36),(0.48,0.55),(0.52,0.85),(0.5,0.95),(0.54,1.0)],segs=14,mi=IRON)
+    lathe(k,[(0.49,0.95),(0.0,0.93)],segs=14,mi=COAL)
+    for i in range(3):
+        a=2*math.pi*i/3+0.3; wat_rod(k,(math.cos(a)*0.4,math.sin(a)*0.4,0.36),(math.cos(a)*0.55,math.sin(a)*0.55,0.0),0.03,0.03,5,IRON)
+    wat_rod(k,(0.15,0.1,0.95),(0.85,0.55,1.45),0.02,0.02,5,WOOD); _cyl(k,(0.12,0.08,0.93),0.08,0.06,0.06,8,IRON)
+    for (x,y) in ((1.2,-0.2),(1.3,0.5)): barrel(k,x,y,0,0.3,0.8)
+    lathe(k,[(0.27,0.79),(0.0,0.79)],center=(1.2,-0.2,0),segs=12,mi=COAL)
+    barrel(k,-1.05,0.35,0.3,0.3,0.8,lying=True)
+
+def hbr_hull_stocks(k):
+    """a ship's hull being built (or rebuilt) on stocks: keel blocks, stem and sternpost, ribs to the sheer, the lower
+       strakes planked, shores on both sides, a staging plank on trestles, timber stacked. 9 m, keel 0.8 up"""
+    L=9.0; B2=1.6; zk=0.8
+    def bfn(t):
+        if t<=0.45: return B2*(1-0.4*((0.45-t)/0.45)**2)
+        return B2*max(0.0,1-((t-0.45)/0.55)**2)**0.55
+    def kfn(t): return zk+0.7*max(0.0,(t-0.75)/0.25)**2+0.4*max(0.0,(0.12-t)/0.12)**2
+    def sfn(t): return zk+1.9+0.4*abs(2*t-1)**2.4
+    def sfn_p(t): return zk+0.9+0.25*abs(2*t-1)**2.4                                           # planked up to here
+    wat_hull(k,L,16,bfn,kfn,sfn_p,lambda t:0.0,p=0.55,q=1.2,m=3,th=0.05,bow="point",stern="transom",nin=14)
+    wat_rod(k,(-L/2,0,zk-0.1),(L/2,0,zk-0.1),0.12,0.12,4,WOOD)                                   # keel
+    wat_seg(k,(L/2-0.05,0,zk+0.6),(L/2+0.5,0,sfn(1)+0.4),0.16,0.18,WOOD,bevel=0.02)             # stem
+    k.box((-L/2-0.05,0,(zk+sfn(0))/2),(0.16,0.18,sfn(0)-zk+0.3),WOOD,bevel=0.02)                 # sternpost
+    for i in range(1,12):                                                                        # ribs
+        t=i/12; b=bfn(t); kz=kfn(t); sz=sfn(t); fb=0.3*b/B2; x=-L/2+L*t
+        pts=[]
+        for j in range(7):
+            a=(j/6)*math.pi/2; pts.append((fb+(b-fb)*(math.sin(a)**0.65),kz+(sz-kz)*((1-math.cos(a))**1.2)))
+        row=[(x,-y,z) for (y,z) in reversed(pts[1:])]+[(x,y,z) for (y,z) in pts]
+        wat_tube(k,row,wat_rect(0.09,0.07),WOOD,up=(1,0,0))
+    for s in(-1,1):                                                                              # sheer clamp
+        wat_tube(k,[(-L/2+L*t,s*(bfn(t)+0.02),sfn(t)-0.05) for t in [i/12 for i in range(1,12)]],wat_rect(0.08,0.1),WOOD)
+    for x in(-3.0,-1.0,1.0,3.0):                                                                  # keel blocks
+        for z in(0.15,0.45): k.box((x,0,z),(0.4,0.9 if z<0.3 else 0.7,0.3),WOOD,bevel=0.02)
+    for s in(-1,1):                                                                              # shores
+        for x in(-2.5,0.0,2.5):
+            t=(x+L/2)/L; wat_seg(k,(x,s*(bfn(t)+1.3),0.0),(x,s*(bfn(t)-0.05),zk+1.1),0.12,0.12,WOOD,bevel=0.02)
+    for x in(-2.2,2.2):                                                                          # staging
+        for dx in(-0.35,0.35): wat_seg(k,(x+dx,-2.6,0),(x,-2.6,1.2),0.08,0.08,WOOD,bevel=0.01)
+    k.box((0,-2.6,1.25),(5.2,0.4,0.06),PLANKS,bevel=0.01)
+    for i in range(4): k.box((0,3.0,0.06+0.11*i),(4.5,0.3+0.02*(i%2),0.1),PLANKS,rot=(0,0,0.02*(i-1.5)),bevel=0.01)
+
+def hbr_booth(k):
+    """the harbourmaster's booth: a plank hut with a pent roof, its counter flap propped open as an awning, the
+       ledger and a balance on the counter, a lantern, an anchor painted on its sign"""
+    W,D,H=2.4,1.8,2.4
+    for sx in(-1,1):
+        for sy in(-1,1): k.box((sx*(W/2-0.06),sy*(D/2-0.06),(H+0.25*(-sy))/2),(0.12,0.12,H+0.25*(-sy)),WOOD,bevel=0.02)
+    k.box((0,D/2-0.04,H/2),(W,0.06,H),PLANKS,bevel=0.01)                                           # back
+    for sx in(-1,1):
+        k.box((sx*(W/2-0.03),0,1.05),(0.06,D,2.1),PLANKS,bevel=0.01)
+    k.box((W/2-0.01,-0.2,0.95),(0.04,0.8,1.85),WOOD,bevel=0.01)                                    # side door
+    k.box((0,-D/2+0.03,0.5),(W,0.06,1.0),PLANKS,bevel=0.01)                                        # front below the counter
+    k.box((0,-D/2-0.08,1.03),(W+0.1,0.42,0.06),PLANKS,bevel=0.01)                                  # counter
+    k.box((0,-D/2+0.03,2.35),(W,0.06,0.5),PLANKS,bevel=0.01)                                       # over the hatch
+    flap=Vector((0,-D/2-0.35,2.0))
+    k.box(tuple(flap),(W,0.9,0.05),PLANKS,rot=(-0.45,0,0),bevel=0.01)
+    for sx in(-1,1): wat_seg(k,(sx*(W/2-0.15),-D/2-0.02,1.06),(sx*(W/2-0.15),-D/2-0.72,1.8),0.04,0.04,WOOD,bevel=0)
+    k.box((0,0,2.72),(W+0.4,D+0.5,0.06),ROOF,rot=(0.12,0,0),bevel=0.015)                           # pent roof
+    k.box((0,-D/2-0.12,2.62),(W+0.4,0.08,0.12),WOOD,bevel=0.02)
+    _book(k,-0.5,-D/2-0.08,1.06,0.36,0.26,0.05,CLOTH_A,0.1)
+    _cyl(k,(0.35,-D/2-0.1,1.07),0.05,0.06,0.04,8,BRONZE)
+    k.box((0.35,-D/2-0.1,1.25),(0.02,0.02,0.36),BRONZE,bevel=0)
+    k.box((0.35,-D/2-0.1,1.42),(0.4,0.02,0.02),BRONZE,bevel=0)
+    for s in(-1,1): _cyl(k,(0.35+s*0.19,-D/2-0.1,1.28),0.08,0.08,0.02,8,BRONZE)
+    k.box((0,-D/2-0.05,2.25),(1.0,0.04,0.36),WOOD,bevel=0.01)                                     # sign
+    hbr_anchor_geo(k,Matrix.Translation((0,-D/2-0.09,2.1)),0.12)
+    sub=Kit(); prop_lantern(sub); merge_kit(k,sub,Matrix.Translation((-W/2-0.05,-D/2-0.2,1.9)))
+
 # ================================================================ SPECS
 WS_SPECS=[
     ("SM_VK_Harbour_Bollard",hbr_bollard,dict(wobble=False,grime=False)),
@@ -193,5 +504,18 @@ WS_SPECS=[
     ("SM_VK_Jetty_Landing",hbr_jetty_landing,dict(wobble=False,grime=False)),
     ("SM_VK_Breakwater",hbr_breakwater,dict(wobble=False,grime=False)),
     ("SM_VK_Breakwater_End",hbr_breakwater_end,dict(wobble=False,grime=False)),
+    ("SM_VK_Ship_Cog",hbr_cog,dict(wobble=False,grime=False)),
+    ("SM_VK_Boat_Fishing",hbr_fishing_boat,dict(wobble=False,grime=False)),
+    ("SM_VK_Harbour_Gangplank",hbr_gangplank,dict(wobble=False,grime=False)),
+    ("SM_VK_Harbour_Crane",hbr_crane,dict(wobble=False,grime=True)),
+    ("SM_VK_Cargo_Crates",hbr_cargo_crates,dict(wobble=False,grime=True)),
+    ("SM_VK_Cargo_Bales",hbr_cargo_bales,dict(wobble=False,grime=True)),
+    ("SM_VK_Harbour_Capstan",hbr_capstan,dict(wobble=False,grime=True)),
+    ("SM_VK_Harbour_Anchor",hbr_anchor,dict(wobble=False,grime=False)),
+    ("SM_VK_Harbour_RopeCoils",hbr_rope_coils,dict(wobble=False,grime=False)),
+    ("SM_VK_Harbour_Buoy",hbr_buoy,dict(wobble=False,grime=False)),
+    ("SM_VK_Harbour_TarCauldron",hbr_tar_cauldron,dict(wobble=False,grime=True)),
+    ("SM_VK_Ship_Hull_Stocks",hbr_hull_stocks,dict(wobble=False,grime=True)),
+    ("SM_VK_Harbour_Booth",hbr_booth,dict(wobble=False,grime=True)),
 ]
 EXTRA_SPECS+=WS_SPECS

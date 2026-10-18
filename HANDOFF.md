@@ -1666,6 +1666,20 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     left (likely the harbour light's gallery). **Not done:** the land at a map's edge still ends 1.5 m past the grid
     with no face (the terrace must end inside the clearing); no Unity-side render (the editor rule).
 
+129. 2026-10-18 (the user: harbour "round 2", after the sea mode of 128). More in `vk_mod_harbour`: **`SM_VK_Ship_Cog`**
+    (17 m merchant cog: clinker hull from `wat_hull`, deck fitted to the inner skin (`hbr_deck`/`hbr_y_at`), cargo
+    hatch, castles fore and aft, 16 m mast, crow's nest, furled square sail, shrouds and stays, bowsprit, rudder and
+    tiller, an anchor; 5.2k) and **`SM_VK_Boat_Fishing`** (7.5 m, mast and furled sail, nets, baskets, oars; 3.1k),
+    both with the origin at the waterline (place them at the quay's land -2.1); on the quay (origin on the land, front
+    -Y): **`SM_VK_Harbour_Crane`** (braced post, jib 3.4 m over the water, windlass, a netted load on the hook),
+    **`_Gangplank`** (from the quay edge 4.2 out and 0.8 down to a moored deck), **`_Capstan`**, **`_Anchor`** (lying, with
+    chain), **`_RopeCoils`**, **`_TarCauldron`**, **`_Booth`** (the harbourmaster's), **`SM_VK_Cargo_Crates`** (under a cargo
+    net) and **`_Bales`**, **`SM_VK_Ship_Hull_Stocks`** (a 9 m hull being built: ribs, lower strakes, keel blocks, shores,
+    staging); **`SM_VK_Harbour_Buoy`** at the waterline. Gotcha: `wat_hull` with a pointed bow needs a flat-bottom width
+    of 0 everywhere (the tip's station has none, rows must match). Built in a background Blender (`blender -b`): the
+    shared Blender had another session's unsaved scene open. Exported; prefabs built (VK/Ship, VK/Boat, VK/Harbour,
+    VK/Cargo).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

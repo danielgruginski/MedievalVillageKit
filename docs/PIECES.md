@@ -495,7 +495,7 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VK_Prop_Pen` | 4.07 × 4.33 × 1.52 | 1,046 | 68 |
 | `SM_VK_Prop_WeighBeam` | 4.28 × 1.85 × 4.12 | 2,796 | 68 |
 
-### harbour: 9
+### harbour: 22
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
@@ -508,6 +508,19 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VK_Jetty_Deck` | 3.26 × 3.30 × 4.37 | 1,124 | 68 |
 | `SM_VK_Jetty_End` | 3.53 × 3.30 × 6.61 | 2,886 | 68 |
 | `SM_VK_Jetty_Landing` | 2.10 × 3.96 × 5.05 | 1,300 | 68 |
+| `SM_VK_Boat_Fishing` | 7.72 × 4.00 × 6.70 | 3,138 | 68 |
+| `SM_VK_Cargo_Bales` | 2.25 × 1.13 × 1.24 | 980 | 68 |
+| `SM_VK_Cargo_Crates` | 1.97 × 1.85 × 1.89 | 750 | 68 |
+| `SM_VK_Harbour_Anchor` | 4.84 × 1.35 × 1.44 | 800 | 68 |
+| `SM_VK_Harbour_Booth` | 2.81 × 2.82 × 2.89 | 1,524 | 68 |
+| `SM_VK_Harbour_Buoy` | 1.00 × 1.00 × 1.85 | 572 | 68 |
+| `SM_VK_Harbour_Capstan` | 2.47 × 2.47 × 1.12 | 728 | 68 |
+| `SM_VK_Harbour_Crane` | 2.10 × 5.15 × 7.30 | 1,274 | 68 |
+| `SM_VK_Harbour_Gangplank` | 0.75 × 4.51 × 0.99 | 572 | 68 |
+| `SM_VK_Harbour_RopeCoils` | 1.67 × 1.33 × 0.43 | 1,138 | 68 |
+| `SM_VK_Harbour_TarCauldron` | 2.95 × 1.59 × 1.50 | 1,244 | 68 |
+| `SM_VK_Ship_Cog` | 20.16 × 9.60 × 17.50 | 5,216 | 68 |
+| `SM_VK_Ship_Hull_Stocks` | 9.71 × 6.16 × 3.54 | 2,818 | 68 |
 
 ## Nature (`vk_nature`, rebuilt from `NATURE_SPECS`): 39 pieces
 
