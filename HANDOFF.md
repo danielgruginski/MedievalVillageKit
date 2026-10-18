@@ -1552,6 +1552,29 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     stair down), Stone 4 x 4, linked; `vki_check` 0 errors and no warnings. Not done: no left-hand (clockwise) twin;
     the up stair's darkened top reads as a dark block in the ceiling corner.
 
+123. 2026-10-18 (the user: "do we have a tileset for the interior of a building in a warcamp? ... orcs" -> "full orc
+    interior set"). A new wall family **`Orc`** (class O, H 3.0; text `vki_fam_orc`, after vki_fam_dwarf): rough logs
+    standing side by side with mud in the gaps -- the body's texture, new **`T_VKI_OrcLogs`** (`vki_tex.vki_gen_orclogs`:
+    four logs a 1.5 m tile, round shading and a highlight down each, bark streaks, knots; six logs read as planks) on
+    **`M_VKI_OrcLogs`** (style `OrcLogs`) --, a split-log rail 0.86-1.00 lashed with rope (full depth on Cut walls,
+    proud strips on Full ones; the lashings stay under 0.995 so Cut walls pass T1), a log wall plate 2.84-3.00, wobble
+    0.012, CAP = WoodDark. 21 masters: `Plain_150A/300` Full + Cut, **`Plain_150B_Full`** (a hide stretched on a pole and
+    a skull over it; the B rule's family lists in vki_rooms and Unity's KitRoomLayout now include Orc),
+    `Window_150` (unglazed, split-log jambs, stick bars, a hide rolled up; Cut: the rail notched 4 cm -- jamb stubs
+    broke T1 -- and the window's three bodies on both, so Full = Cut below 0.65), `Door_150` (log frame, a skull on the
+    lintel) and **`DoorWide_300`** (the hall's gate, a skull between two tusks) with new leaves **`Leaf_Orc_Full/_Cut`**,
+    **`Leaf_OrcWide_Full/_Cut_L/_R`** (vki_leaf_tall's planks, dark, iron spikes on the room-side straps), posts
+    Corner (a round log r 0.30 with a rope band) / Mid (a squared log) Full + Cut; registered in VKI_FAMILIES,
+    VKI_H_FULL, VKI_AMP, VKI_POST_PRIO (after Mine), VKI_FAMILY_SLOT_MATS, VKI_WALL_MATS. Furniture in
+    vki_props_orc: **`Prop_Orc_Throne`** (sharpened bark logs, a great skull between tusks, a fur; seats),
+    **`Prop_Orc_Bunk`**, **`Prop_Orc_Table_240`** + **`Prop_Orc_Bench_240`**, **`Prop_Orc_WeaponRack`** (cleavers, an axe,
+    spears, a hide shield), **`Prop_Orc_Trophies`** (wall_hung: men's shields, crossed spears, skulls, a helm),
+    **`Prop_Orc_MeatRack`**, **`Prop_Orc_Cauldron`** (the cook fire, light) and **`Overlay_Orc_Furs`**. Test scene
+    **`VKI_Orc_Hall`** (new text `vki_rooms_orc`: 10 x 6, Night, the gate south, the throne between the war standards,
+    the war table, the cauldron, tables, bunks, racks, torches): `vki_check` 0 errors, 0 warnings; Unity's
+    KitRoomLayout gives the same walls and posts. Not done: the game's `OrcHold_Hall` still uses the generator's
+    Townhouse shell (switch it to the Orc family / the kit room in MedievalSetting's InteriorsMenu).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

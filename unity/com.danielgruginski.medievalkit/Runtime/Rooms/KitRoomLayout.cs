@@ -277,7 +277,7 @@ namespace MedievalKit
             string special = (string)R["special"];
             var specials = R["specials"] as JObject;
             var zones = (JObject)R["zones"];
-            var limeFams = new HashSet<string> { "Timber", "Stone", "Wattle", "Dungeon", "Ancient", "Sewer", "Dwarf" };
+            var limeFams = new HashSet<string> { "Timber", "Stone", "Wattle", "Dungeon", "Ancient", "Sewer", "Dwarf", "Orc" };
 
             foreach (var (ori, nline, nalong) in new[] { ("EW", nr + 1, nc), ("NS", nc + 1, nr) })
                 for (int ln = 0; ln < nline; ln++)

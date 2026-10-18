@@ -834,6 +834,56 @@ def vki_gen_strawbed(S=2048, seed=97, T=1.5, depth=0.03, n_top=900, n_under=1400
     return bc
 
 
+# ------------------------------------------------------------------ orc log walls (OrcLogs, 2026-10-18)
+def vki_gen_orclogs(S=2048, seed=1201, T=1.5, depth=0.09, nb=4, out_prefix="T_VKI_OrcLogs", write=True):
+    """the inside of an orc stockade: nb rough logs standing side by side, bark on (0.30-0.45 m at nb 4, not quite
+    straight), mud packed into the gaps; bark fissures and ridges run up the logs, one or two knots a log; tileable"""
+    rng = np.random.default_rng(seed); px = T / S; fs = T / 1.5
+    x, y = grid(S)
+    w = rng.uniform(0.80, 1.20, nb).astype(f32); w = w / w.sum()
+    edges = np.concatenate([[0.0], np.cumsum(w)]).astype(f32)
+    xw = (x + rng.uniform(0, 1) + (0.012 / T) * fbm(S, 3.0, seed + 1, fmin=1 * fs, fmax=4 * fs, ay=3.0)) % 1
+    bi = np.clip(np.searchsorted(edges, xw, side="right") - 1, 0, nb - 1).astype(np.int32)
+    u = ((xw - edges[bi]) / w[bi]).astype(f32); del xw
+    wm = (w[bi] * T).astype(f32)
+    dedge = (np.minimum(u, 1 - u) * wm).astype(f32)                   # distance to the log's edge, m
+    gh = (0.016 + 0.006 * fbm(S, 2.5, seed + 3, fmin=2 * fs, fmax=20 * fs, ay=2.0)).astype(f32)
+    chink = (1 - smooth(gh, gh + 0.008, dedge)).astype(f32)           # the mud between the logs
+    prof = np.sqrt(np.clip(1 - (2 * u - 1) ** 2, 0, 1)).astype(f32)  # each log's round section
+    rows = np.arange(S)[:, None]; cols = np.arange(S)[None, :]
+    rs = rng.integers(0, S, nb); cs = rng.integers(0, S, nb)
+    F = fbm(S, 1.2, seed + 2, fmin=14 * fs, fmax=320 * fs, ay=12.0)    # bark: thin streaks up the log
+    Fs = F[(rows + rs[bi]) % S, (cols + cs[bi]) % S]; del F
+    fiss = smooth(0.55, 1.5, -Fs).astype(f32); ridge = smooth(0.4, 1.5, Fs).astype(f32); del Fs
+    yy = (np.arange(S)[:, None] / S).astype(f32)
+    knot = np.zeros((S, S), f32)
+    for b in range(nb):
+        for _ in range(rng.integers(1, 3)):
+            uc, vc = rng.uniform(0.3, 0.7), rng.uniform(0, 1); r = rng.uniform(0.018, 0.032) / T
+            cx = (edges[b] + uc * w[b]) % 1
+            dx = (x - cx + 0.5) % 1 - 0.5; dy = (yy - vc + 0.5) % 1 - 0.5
+            d = np.sqrt((dx / 1.0) ** 2 + (dy / 1.8) ** 2) / r
+            knot = np.maximum(knot, (1 - smooth(0.6, 1.0, d)) * (bi == b))
+    del x, yy
+    h = (0.18 + 0.60 * prof ** 0.7 - 0.10 * fiss + 0.04 * ridge + 0.06 * knot).astype(f32)
+    h = (h * (1 - chink) + chink * (0.10 + 0.03 * fbm(S, 2.0, seed + 4, fmin=8 * fs, fmax=80 * fs))).astype(f32)
+    tone = rng.uniform(0.0, 1.0, nb).astype(f32)[bi][..., None]
+    bark = lerp(hx("#4A3B2C"), hx("#655645"), tone)                    # brown to grey-brown logs
+    bark = lerp(bark, hx("#7A6A56"), 0.45 * ridge[..., None])           # the ridges catch the light
+    bark = lerp(bark, hx("#1E160F"), 0.70 * fiss[..., None])            # the fissures go dark
+    bark = lerp(bark, hx("#22180F"), 0.85 * knot[..., None])
+    hl = np.exp(-((u - 0.36) / 0.16) ** 2).astype(f32)                  # a soft highlight down each log (lit from the left)
+    bark = bark * (0.42 + 0.48 * prof[..., None] ** 0.8 + 0.22 * hl[..., None])     # the round section
+    mud = hx("#57483A") * (0.80 + 0.20 * fbm(S, 2.0, seed + 5, fmin=10 * fs, fmax=120 * fs)[..., None])
+    col = (bark * (1 - chink[..., None]) + mud * chink[..., None]).astype(f32); del bark, mud
+    col, _ = paint_form_light(np.clip(col, 0, 1).astype(f32), np.clip(h, 0, 1), depth, T, hig=0.12, log=0.12,
+                              post=0.20, ex=1.2)
+    Rg = np.clip(0.86 + 0.06 * fiss + 0.06 * chink, 0, 1).astype(f32)
+    bc, h1, R1 = down2(np.clip(col, 0, 1).astype(f32)), down2(np.clip(h, 0, 1).astype(f32)), down2(Rg)
+    if write: vki_write_set(out_prefix, bc, h1, R1, depth, T)
+    return bc
+
+
 # ------------------------------------------------------------------ the §4.2 jobs (one per MCP call)
 VKI_TEX_JOBS = {
     "T_VKI_Boards_NS":   lambda: vki_gen_floorboards(seed=611, T=3.0, depth=0.02, nb=12, joints=3, orient="NS", out_prefix="T_VKI_Boards_NS"),
@@ -860,6 +910,7 @@ VKI_TEX_JOBS = {
     "T_VKI_Ash":         lambda: vki_gen_ash(S=1024, seed=631, T=0.75, out_prefix="T_VKI_Ash"),
     "T_VKI_StrawBed":    lambda: vki_gen_strawbed(seed=97, T=1.5, out_prefix="T_VKI_StrawBed"),
     "T_VKI_Textiles":    lambda: vki_gen_textiles_atlas(S=2048, seed=950),          # text vki_textiles
+    "T_VKI_OrcLogs":     lambda: vki_gen_orclogs(seed=1201, T=1.5, nb=4, out_prefix="T_VKI_OrcLogs"),  # orc stockade walls
 }
 
 

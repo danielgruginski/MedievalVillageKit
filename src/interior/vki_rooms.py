@@ -670,7 +670,7 @@ def vki_rooms_layout(name, R=None, P=None):
                 limewash = fam == "Stone" and any(str(R["zones"].get(zmap.get(c_), {}).get("wall", "")).startswith("Plaster")
                                                   for c_ in fa)
                 if kind == "Plain" and n == 1 and ht == "Full" and role != "part" and \
-                        fam in ("Timber", "Stone", "Wattle", "Dungeon", "Ancient", "Sewer", "Dwarf") \
+                        fam in ("Timber", "Stone", "Wattle", "Dungeon", "Ancient", "Sewer", "Dwarf", "Orc") \
                         and k % 2 == 1 and not limewash:
                     mx, my = ((x0 + VKI_IG * 0.5, y0) if ori == "EW" else (x0, y0 + VKI_IG * 0.5))
                     if not any(math.hypot(px - mx, py - my) < 1.3 for px, py in ppts):

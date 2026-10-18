@@ -14,9 +14,9 @@ VKI_ROOT = r"E:\Unity\Projects\GameArtGeneration\MedievalVillageKit"
 VKI_RENDERS = os.path.join(VKI_ROOT, "renders", "interior")
 # load order of the package texts (vki_tex / vki_textiles are generators, executed on demand, not listed)
 VKI_TEXTS = ["vki_fam_timber", "vki_floors", "vki_fam_stone", "vki_fam_board", "vki_fam_wattle", "vki_fam_ashlar",
-             "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_fam_sewer", "vki_fam_water", "vki_fam_dwarf", "vki_props_home", "vki_props_tavern",
+             "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_fam_sewer", "vki_fam_water", "vki_fam_dwarf", "vki_fam_orc", "vki_props_home", "vki_props_tavern",
              "vki_props_smithy", "vki_props_chapel", "vki_props_dungeon", "vki_props_adventure", "vki_props_lair", "vki_props_orc", "vki_props_library", "vki_props_monastery", "vki_props_castle",
-             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_rooms_dwarf", "vki_props_poi", "vki_props_debris", "vki_fam_mine", "vki_rooms_mine", "vki_rooms_castle", "vki_rooms_monastery", "vki_world", "vki_test"]
+             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_rooms_dwarf", "vki_props_poi", "vki_props_debris", "vki_fam_mine", "vki_rooms_mine", "vki_rooms_castle", "vki_rooms_monastery", "vki_rooms_orc", "vki_world", "vki_test"]
 
 
 VKI_CORE_TEXTS = ("vki_fam_timber", "vki_floors", "vki_test")    # a failure here raises; package texts only warn
@@ -51,7 +51,7 @@ VKI_TOWN = "VK_ValleyTown"                     # the valley's level id: the targ
 VKI_IG = 1.5                                   # interior grid
 VKI_T = {"O": 0.50, "P": 0.30}                 # wall thickness by class
 VKI_H_FULL = {"Timber": 3.0, "Stone": 3.0, "Board": 3.0, "Wattle": 2.4, "Ashlar": 4.5, "Dungeon": 3.0, "Bars": 3.0,
-              "Ancient": 3.0, "Cave": 3.0, "Sewer": 3.0, "Dwarf": 3.0, "Mine": 3.0}
+              "Ancient": 3.0, "Cave": 3.0, "Sewer": 3.0, "Dwarf": 3.0, "Mine": 3.0, "Orc": 3.0}
 VKI_H_UPPER = 3.0                              # upper floors use 3.0
 VKI_PROUD = 0.03
 VKI_CAP_HW = {"O": 0.28, "P": 0.18}            # caps, rails, skirtings, oak members
@@ -137,8 +137,14 @@ VKI_FAMILIES = {
                  cut_cap="a hewn cap beam 0.78-1.00 (CAP top)", full_top="a hewn wall plate 2.76-3.00 (CAP top)",
                  posts="Corner / Mid: hewn posts through the lining, end-grain tops", b_variant=None, rake=False,
                  rhythm=True, prio=4, h_fit=3.0, sag=0.0),
+    # orc kit (2026-10-18, text vki_fam_orc): the orcs' log halls in their warcamps -- rough logs standing side by
+    # side (bark on, mud in the gaps), a lashed split-log rail, a log wall plate, raw log posts
+    "Orc": dict(cls="O", H=3.0, wall_a="OrcLogs", cap="WoodDark", base=None,
+                cut_cap="a split-log rail 0.86-1.00 lashed with rope (CAP top)", full_top="a log wall plate 2.84-3.00",
+                posts="Corner: a round log with a rope band; Mid: a squared log", b_variant="a hide stretched on a pole, "
+                "a skull over it", rake=False, rhythm=True, prio=4, h_fit=3.0, sag=0.0),
 }
-VKI_POST_PRIO = ["Cave", "Ancient", "Dwarf", "Dungeon", "Sewer", "Mine", "Stone", "Ashlar", "Timber", "Wattle", "Board",
+VKI_POST_PRIO = ["Cave", "Ancient", "Dwarf", "Dungeon", "Sewer", "Mine", "Orc", "Stone", "Ashlar", "Timber", "Wattle", "Board",
                  "Bars"]  # §2.3
 
 # ---------------------------------------------------------------- §4.1 slots
@@ -601,7 +607,7 @@ def vki_default_meta(piece, k, bbox):
 
 # ---------------------------------------------------------------- §2.6 seam rule (wobble)
 VKI_AMP = {"Timber": .012, "Stone": .020, "Ashlar": .010, "Wattle": .020, "Board": 0.0, "Dungeon": .020, "Bars": 0.0,
-           "Ancient": .020, "Cave": 0.0, "Sewer": .015, "Dwarf": .006, "Mine": 0.0}
+           "Ancient": .020, "Cave": 0.0, "Sewer": .015, "Dwarf": .006, "Mine": 0.0, "Orc": .012}
 VKI_SECOND = {"A": "B", "B": "A"}
 
 
@@ -683,6 +689,7 @@ VKI_MAT_MAP = {
     "M_VKI_AshlarIn": dict(tex="T_VKI_AshlarIn", ph="#C4B8A0", nstr=1.0, spec=0.25),
     "M_VKI_WattleIn": dict(tex="T_VKI_WattleIn", ph="#7A5A3A", nstr=1.1, spec=0.15),
     "M_VKI_BoardsV": dict(tex="T_VKI_BoardsV", ph="#7C4F2E", nstr=1.1, spec=0.15),
+    "M_VKI_OrcLogs": dict(tex="T_VKI_OrcLogs", ph="#4E4032", nstr=1.3, spec=0.12),       # the orc kit's log walls
     "M_VKI_Brick": dict(tex="T_VKI_Brick", ph="#8A4A34", nstr=1.0, spec=0.2),
     # other slots
     "M_VKI_StoneBlockIn": dict(tex="T_VKI_StoneBlockIn", ph="#A39988", nstr=0.8, spec=0.25),
@@ -783,7 +790,8 @@ VKI_SLOT_DEFAULTS = ["M_VKI_Boards_NS", "M_VKI_PlasterCream", "M_VKI_PlasterCrea
 VKI_WALL_MATS = {**{k_: "M_VKI_" + k_ for k_ in VKI_WALL_STYLES},
                  **{k_: "M_VKI_" + k_ for k_ in ("StoneIn", "StoneInWarm", "StoneInCool", "AshlarIn", "WattleIn",
                                                  "BoardsV", "Brick", "DungeonIn", "DungeonInDamp", "DungeonInWarm",
-                                                 "AncientIn", "CaveRock", "CaveRockDamp", "SewerBrick", "DwarfIn")}}
+                                                 "AncientIn", "CaveRock", "CaveRockDamp", "SewerBrick", "DwarfIn",
+                                                 "OrcLogs")}}
 VKI_STYLE_MATS = {
     "floor": {k_: "M_VKI_" + k_ for k_ in ("Boards_NS", "Boards_EW", "BoardsDark_NS", "BoardsDark_EW",
                                            "BoardsPale_NS", "BoardsPale_EW", "Flag", "FlagWarm", "FlagRustic",
@@ -826,6 +834,7 @@ VKI_FAMILY_SLOT_MATS = {
               VKI_STONE_BLOCK_IN: "M_VKI_SewerBlock"},
     "Mine": {VKI_WALL_A: "M_VKI_CaveRock", VKI_WALL_B: "M_VKI_CaveRock", VKI_CAP: "M_VK_Hewn",
              VKI_STONE_BLOCK_IN: "M_VKI_CaveRock"},
+    "Orc": {VKI_WALL_A: "M_VKI_OrcLogs", VKI_WALL_B: "M_VKI_OrcLogs", VKI_CAP: "M_VKI_WoodDark"},
     "Dwarf": {VKI_WALL_A: "M_VKI_DwarfIn", VKI_WALL_B: "M_VKI_DwarfIn", VKI_CAP: "M_VKI_DwarfCap",
               VKI_STONE_BLOCK_IN: "M_VKI_DwarfBlock"},
 }
