@@ -69,6 +69,7 @@ namespace MedievalKit.Editor
                 if (g["gatePiece"] != null) yield return (string)g["gatePiece"];
             }
             if (L["terrain"] != null) foreach (var n in KitVillage.TerrainPieces()) yield return n;   // its tiles and dressing
+            if (L["terrain"]?["sea"] != null) foreach (var n in KitVillage.SeaPieces()) yield return n;   // its quays and water
         }
 
         /// <summary>a layout prop's dressing (KitVillage.Dressings, unless "dress": false)</summary>
@@ -434,6 +435,7 @@ namespace MedievalKit.Editor
                 }
                 Save(v.GroundMesh, $"{mapName}_Ground.asset");
                 Save(v.TerrainMesh, $"{mapName}_Terrain.asset");
+                Save(v.SeaMesh, $"{mapName}_Sea.asset");
                 Save(v.ControlMap, $"{mapName}_GroundControl.asset");
                 Save(v.GroundMaterialInstance, $"{mapName}_Ground.mat");
                 Save(v.GrassMaterialInstance, $"{mapName}_Grass.mat");

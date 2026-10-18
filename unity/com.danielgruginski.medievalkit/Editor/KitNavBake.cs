@@ -62,6 +62,14 @@ namespace MedievalKit.Editor
                         transform = v.transform.localToWorldMatrix * Matrix4x4.Translate(KitVillage.Local(rc.center.x, rc.center.y, (bot + top) / 2f)),
                         size = new Vector3(rc.width, top - bot, rc.height),
                     });
+                // the sea: its bed and its drowned shore, up to just over the water (the quays' tops and water stairs stay)
+                foreach (var rc in v.UnderSea())
+                    src.Add(new NavMeshBuildSource
+                    {
+                        shape = NavMeshBuildSourceShape.ModifierBox, area = 1,
+                        transform = v.transform.localToWorldMatrix * Matrix4x4.Translate(KitVillage.Local(rc.center.x, rc.center.y, (bot + KitVillage.SeaWalkTop) / 2f)),
+                        size = new Vector3(rc.width, KitVillage.SeaWalkTop - bot, rc.height),
+                    });
             }
             var data = NavMeshBuilder.BuildNavMeshData(KitNavMesh.Settings(voxel), src, bounds, Vector3.zero, Quaternion.identity);
             if (data == null) note = "the build failed";

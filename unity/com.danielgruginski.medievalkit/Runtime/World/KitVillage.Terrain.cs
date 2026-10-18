@@ -20,6 +20,10 @@ namespace MedievalKit
     /// space so they share its material (the grass, the roads and the paving painted into its control map carry on over
     /// the tops), with a collider; the level-0 ground stays the ground mesh, flattened towards a cliff's foot and sunk
     /// under the raised cells. Height (pieces, markers, the walk test) stands on the tiers.
+    /// The sea (2026-10-18, harbour round 1: a docks map): sea cells are level 0 and water, the land beside them one level
+    /// up; the ground is lowered to the bed under them (1.5 m below level 0, a beach slope where level-0 land meets them),
+    /// a water plane 0.6 m below level 0 covers them and carries on through the forest margin past the map, and where
+    /// the land beside them carries a quay flag the cliff layer becomes vk_terrain_quay's harbour wall (qy_pick).
     /// </summary>
     public partial class KitVillage
     {
@@ -46,6 +50,26 @@ namespace MedievalKit
         List<(Vector2 step, Vector2 dv)> rampSteps;        // each ramp's step (its middle) and the way it climbs, read once
         bool HasTerrain => tLevel != null;
 
+        // the sea: cells of water at level 0 (vk_terrain's TGrid.water) and the quay flags of the land cells beside them
+        // (TGrid.quay: 1 wall, 2 water stairs, 3 slipway)
+        bool[,] tSea;
+        int[,] tQuay;
+        bool HasSea;
+        float tQuayDress;
+        readonly Dictionary<(int, int), string> quayV = new Dictionary<(int, int), string>();   // grid points with a quay tile: its variant
+        /// <summary>the water plane over the sea cells (null: no sea); the editor saves it beside the ground</summary>
+        public Mesh SeaMesh { get; private set; }
+        /// <summary>the sea's water surface and bed below level 0 (vk_terrain's WATER_Z, BED_Z); the navmesh's Not Walkable
+        /// box over the sea reaches up to SeaWalkTop (the water stairs' landing, 0.35 m below level 0, stays walkable)</summary>
+        public const float SeaWater = -0.6f, SeaBed = -1.5f, SeaWalkTop = -0.45f;
+        const float SeaSink = 0.03f;                       // the ground this far under the quay tiles' own bed
+        static readonly string[] QuayTiles =
+        {
+            "SM_VKT_Quay_Edge_A", "SM_VKT_Quay_Edge_Stair", "SM_VKT_Quay_Edge_Slip", "SM_VKT_Quay_Outer_A", "SM_VKT_Quay_Inner_A", "SM_VKT_Quay_Saddle_A",
+        };
+        const string WaterQuad = "SM_VKT_WaterQuad";
+        static readonly string[] QuayProps = { "SM_VK_Harbour_Bollard", "SM_VK_Harbour_Fender", "SM_VK_Harbour_Ring" };
+
         static readonly string[] DressFace = { "SM_VK_Rock_Boulder_A", "SM_VK_Rock_Boulder_B", "SM_VK_Rock_Boulder_Flat" };
         static readonly string[] DressRubble = { "SM_VK_Rock_Small_A", "SM_VK_Rock_Small_B", "SM_VK_Rock_Pebbles", "SM_VK_Rock_Small_A", "SM_VK_Rock_Cluster" };
         static readonly string[] DressPlants = { "SM_VK_Plant_Fern", "SM_VK_Plant_TallGrass", "SM_VK_Bush_Round", "SM_VK_Plant_Fern", "SM_VK_Plant_TallGrass" };
@@ -69,11 +93,15 @@ namespace MedievalKit
             yield return LipGrass;
         }
 
+        /// <summary>and the pieces a terrain's sea uses: the quay tiles, the water quad, the quay dressing</summary>
+        public static IEnumerable<string> SeaPieces() => QuayTiles.Concat(QuayProps).Append(WaterQuad);
+
         // ------------------------------------------------------------------ the grid
         /// <summary>the layout's terrain as a grid of cell levels, ramps and stairs (before anything stands on the ground)</summary>
         void ParseTerrain()
         {
             tLevel = null; TerrainMesh = null; terrainCollider = null; rampSteps = null;
+            tSea = null; tQuay = null; HasSea = false; SeaMesh = null; quayV.Clear();
             if (!(L["terrain"] is JObject T)) return;
             tO = T["origin"] != null ? V(T["origin"]) : Vector2.zero;
             tW = Mathf.Max(1, Mathf.CeilToInt((W - tO.x) / TT));
@@ -92,6 +120,7 @@ namespace MedievalKit
                     for (int i = 0; i < tW; i++)
                         if (inside(CellMid(i, j))) { tLevel[i, j] = lv; if (stiff) tStiff[i, j] = true; }
             }
+            ParseSea(T);
             foreach (var rp in T["ramps"] as JArray ?? new JArray())
             {
                 var at = V(rp["at"]);
@@ -114,6 +143,108 @@ namespace MedievalKit
                     tWalled[ci, cj] = (bool?)rp["walled"] ?? false;
                 }
             }
+        }
+
+        /// <summary>the terrain's "sea": cells whose middle lies in one of its shapes become sea (level 0, water; after the
+        /// areas, so it cuts into them), and with "quay" (default true) every land cell touching them (8 neighbours) a quay
+        /// wall; then "quays" sets the flag of the land cells in its shapes: "kind" wall / stairs / slip / none</summary>
+        void ParseSea(JObject T)
+        {
+            tSea = new bool[tW, tH]; tQuay = new int[tW, tH];
+            tQuayDress = (float?)T["quayDress"] ?? tDress;
+            int si = 0;
+            var walls = new List<(int, int)>();
+            foreach (var s in T["sea"] as JArray ?? new JArray())
+            {
+                var inside = Shape(s, 71 + si++);
+                if (inside == null) { notes.Add("terrain sea without rect, ellipse or poly"); continue; }
+                bool quay = (bool?)s["quay"] ?? true;
+                for (int j = 0; j < tH; j++)
+                    for (int i = 0; i < tW; i++)
+                        if (inside(CellMid(i, j)))
+                        {
+                            tLevel[i, j] = 0; tSea[i, j] = HasSea = true;
+                            if (quay) for (int dj = -1; dj <= 1; dj++) for (int di = -1; di <= 1; di++) if (In(i + di, j + dj)) walls.Add((i + di, j + dj));
+                        }
+            }
+            foreach (var (i, j) in walls) if (!tSea[i, j]) tQuay[i, j] = 1;
+            int qi = 0;
+            foreach (var q in T["quays"] as JArray ?? new JArray())
+            {
+                var inside = Shape(q, 89 + qi++);
+                if (inside == null) { notes.Add("terrain quay without rect, ellipse or poly"); continue; }
+                string kind = ((string)q["kind"] ?? "wall").ToLowerInvariant();
+                int flag = Array.IndexOf(new[] { "none", "wall", "stairs", "slip" }, kind);
+                if (flag < 0) { notes.Add($"terrain quay kind {kind}: wall, stairs, slip or none"); continue; }
+                for (int j = 0; j < tH; j++)
+                    for (int i = 0; i < tW; i++)
+                        if (!tSea[i, j] && inside(CellMid(i, j))) tQuay[i, j] = flag;
+            }
+        }
+
+        bool SeaAt(int i, int j) => HasSea && tSea[Mathf.Clamp(i, 0, tW - 1), Mathf.Clamp(j, 0, tH - 1)];   // held to the grid: the sea runs on past the map
+
+        /// <summary>in a sea cell (beyond the grid: beside one, the sea carries on through the margin)</summary>
+        bool InSea(Vector2 q) => HasSea && SeaAt(Mathf.FloorToInt((q.x - tO.x) / TT), Mathf.FloorToInt((q.y - tO.y) / TT));
+
+        /// <summary>how far q is from the nearest sea cell (0 inside one; 99 beyond 6 m or with no sea)</summary>
+        float SeaDist(Vector2 q) => HasSea ? CellDist(q, SeaAt) : 99f;
+
+        /// <summary>how far q is from the nearest cell (held to the grid) that passes the test, within two cells (99: none)</summary>
+        float CellDist(Vector2 q, Func<int, int, bool> test)
+        {
+            int ci = Mathf.FloorToInt((q.x - tO.x) / TT), cj = Mathf.FloorToInt((q.y - tO.y) / TT);
+            float best = 99f;
+            for (int dj = -2; dj <= 2; dj++)
+                for (int di = -2; di <= 2; di++)
+                {
+                    int i = ci + di, j = cj + dj;
+                    if (!test(i, j)) continue;
+                    float x0 = tO.x + i * TT, y0 = tO.y + j * TT;
+                    float dx = Mathf.Max(0f, Mathf.Max(x0 - q.x, q.x - (x0 + TT))), dy = Mathf.Max(0f, Mathf.Max(y0 - q.y, q.y - (y0 + TT)));
+                    best = Mathf.Min(best, Mathf.Sqrt(dx * dx + dy * dy));
+                }
+            return best;
+        }
+
+        /// <summary>the ground's height at a ground vertex on or in the sea (false: none of the cells meeting at q is sea).
+        /// Against raised land (a quay's or a cliff's face, which go down to the bed) the bed, a little under the quay tiles'
+        /// own; elsewhere a beach: from the level-0 land's height at the water's edge down to the bed 3 m out</summary>
+        bool SeaGround(Vector2 q, out float z)
+        {
+            z = 0f;
+            if (!HasSea) return false;
+            bool sea = false, raised = false;
+            foreach (var d in new[] { new Vector2(-0.01f, -0.01f), new Vector2(0.01f, -0.01f), new Vector2(0.01f, 0.01f), new Vector2(-0.01f, 0.01f) })
+            {
+                var p = q + d;
+                int i = Mathf.Clamp(Mathf.FloorToInt((p.x - tO.x) / TT), 0, tW - 1), j = Mathf.Clamp(Mathf.FloorToInt((p.y - tO.y) / TT), 0, tH - 1);
+                if (tSea[i, j]) sea = true;
+                else if (tLevel[i, j] > 0 && In(Mathf.FloorToInt((p.x - tO.x) / TT), Mathf.FloorToInt((p.y - tO.y) / TT))) raised = true;
+            }
+            if (!sea) return false;
+            float bed = SeaBed - SeaSink;
+            if (raised) { z = bed; return true; }
+            float shore = CellDist(q, (i, j) => !SeaAt(i, j) && Lv(Mathf.Clamp(i, 0, tW - 1), Mathf.Clamp(j, 0, tH - 1)) == 0);
+            z = Mathf.Lerp(Base(q), bed, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(shore / TT)));
+            return true;
+        }
+
+        /// <summary>the sea cells as rows of rectangles (plan metres): the navmesh bake makes them Not Walkable up to
+        /// <see cref="SeaWalkTop"/> (the bed and the drowned beach; the quays' tops and their water stairs stay walkable)</summary>
+        public List<Rect> UnderSea()
+        {
+            var list = new List<Rect>();
+            if (!HasSea) return list;
+            for (int j = 0; j < tH; j++)
+                for (int i = 0; i < tW; i++)
+                {
+                    if (!tSea[i, j]) continue;
+                    int s = i;
+                    while (i + 1 < tW && tSea[i + 1, j]) i++;
+                    list.Add(Rect.MinMaxRect(tO.x + s * TT, tO.y + j * TT, tO.x + (i + 1) * TT, tO.y + (j + 1) * TT));
+                }
+            return list;
         }
 
         /// <summary>a terrain area's test: {"rect": [x0, y0, x1, y1]}, {"ellipse": {centre, radius, lumps}} or {"poly": [[x, y], ...]}</summary>
@@ -154,22 +285,12 @@ namespace MedievalKit
         /// <summary>the terrain's level at q (0: the ground, or no terrain)</summary>
         int LevelAt(Vector2 q) => HasTerrain && Cell(q, out int i, out int j) ? tLevel[i, j] : 0;
 
-        /// <summary>how near q is to raised ground (1 at a cliff's foot, 0 from 3.5 m out): the ground's relief flattens
-        /// there, so a cliff's toe meets level ground</summary>
+        /// <summary>how near q is to raised ground or the sea (1 at a cliff's foot or the water's edge, 0 from 3.5 m out):
+        /// the ground's relief flattens there, so a cliff's toe meets level ground and a beach runs down from level 0</summary>
         float TerrainNear(Vector2 q)
         {
             if (!HasTerrain) return 0f;
-            int ci = Mathf.FloorToInt((q.x - tO.x) / TT), cj = Mathf.FloorToInt((q.y - tO.y) / TT);
-            float best = 99f;
-            for (int dj = -2; dj <= 2; dj++)
-                for (int di = -2; di <= 2; di++)
-                {
-                    int i = ci + di, j = cj + dj;
-                    if (Lv(i, j) <= 0) continue;
-                    float x0 = tO.x + i * TT, y0 = tO.y + j * TT;
-                    float dx = Mathf.Max(0f, Mathf.Max(x0 - q.x, q.x - (x0 + TT))), dy = Mathf.Max(0f, Mathf.Max(y0 - q.y, q.y - (y0 + TT)));
-                    best = Mathf.Min(best, Mathf.Sqrt(dx * dx + dy * dy));
-                }
+            float best = CellDist(q, (i, j) => Lv(i, j) > 0 || (HasSea && SeaAt(i, j)));
             return best >= 3.5f ? 0f : Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(3.5f, 0.5f, best));
         }
 
@@ -274,6 +395,12 @@ namespace MedievalKit
                     var c = new[] { C(I - 1, J - 1), C(I, J - 1), C(I, J), C(I - 1, J) };
                     int lo = c.Min(x => x.lv), hi = c.Max(x => x.lv);
                     if (hi <= 0) continue;
+                    if (QuayPick(c, lo, hi, out string quay, out int qr))      // a harbour wall instead of the cliff layer
+                    {
+                        recs.Add((I, J, hi, quay, qr, false));
+                        quayV[(I, J)] = quay.Substring(quay.LastIndexOf('_') + 1);
+                        continue;
+                    }
                     bool stiff = c.Any(x => tStiff[x.i, x.j]);
                     if (lo >= 1) recs.Add((I, J, lo, "SM_VKT_Cliff_Full_A", (int)(Hash(I, J, 0) & 3), false));
                     int pc = -1, pr = -1;
@@ -298,10 +425,87 @@ namespace MedievalKit
                     }
                 }
 
+            var tm = Merge(recs, $"{name}_Terrain", out var keys, out int missing);
+            if (missing > 0) notes.Add($"terrain: {missing} tiles had no piece");
+            if (tm == null) notes.Add("terrain: nothing raised");
+            else
+            {
+                TerrainMesh = tm;
+                var go = new GameObject("Terrain");
+                go.transform.SetParent(groundT, false);
+                go.transform.localPosition = Local(-M, -M, 0f);                    // as the ground: the material projects from there
+                go.AddComponent<MeshFilter>().sharedMesh = tm;
+                go.AddComponent<MeshRenderer>().sharedMaterials = keys;
+                terrainCollider = go.AddComponent<MeshCollider>();
+                terrainCollider.sharedMesh = tm;
+                int raised = 0;
+                for (int j = 0; j < tH; j++) for (int i = 0; i < tW; i++) if (tLevel[i, j] > 0) raised++;
+                notes.Add($"terrain: {raised} raised cells, {recs.Count} tiles{(HasSea ? $" ({quayV.Count} quay)" : "")}, {tm.vertexCount} verts");
+            }
+            Sea();
+        }
+
+        /// <summary>vk_terrain_quay's qy_pick: a grid point whose land corners stand one level over its sea corners, a land
+        /// corner carrying a quay flag, takes a Quay tile (the marching-squares case of its land, its quarter turns) on the
+        /// land's layer; an Edge point whose two land cells both carry stairs (or both a slipway) gets the flight (the slip)</summary>
+        bool QuayPick((int lv, int i, int j)[] c, int lo, int hi, out string piece, out int r)
+        {
+            piece = null; r = 0;
+            if (!HasSea || hi != lo + 1) return false;
+            int m = 0;
+            bool anySea = false, flagged = false, stair = true, slip = true;
+            for (int k = 0; k < 4; k++)
+            {
+                var x = c[k];
+                if (tSea[x.i, x.j]) { if (x.lv != lo) return false; anySea = true; continue; }
+                if (x.lv != hi) return false;
+                m |= 1 << k;
+                int f = tQuay[x.i, x.j];
+                flagged |= f != 0; stair &= f == 2; slip &= f == 3;
+            }
+            if (!anySea || m == 0 || !flagged) return false;
+            var (cas, rr) = MS[m];
+            r = rr;
+            string v = cas == EDGE && slip ? "Slip" : cas == EDGE && stair ? "Stair" : "A";
+            piece = $"SM_VKT_Quay_{CaseNames[cas]}_{v}";
+            return true;
+        }
+
+        /// <summary>the sea's water: vk_terrain's water quad (3 x 3 m, 0.6 below its level) on every grid point a sea cell
+        /// meets, held to the grid beyond it, so the water runs on under the forest margin past the map; one mesh in the
+        /// ground's space, with no collider (the navmesh leaves the sea out: <see cref="UnderSea"/>)</summary>
+        void Sea()
+        {
+            if (!HasSea) return;
+            var recs = new List<(int I, int J, int l, string piece, int r, bool stacked)>();
+            int i0 = Mathf.FloorToInt((-M - tO.x) / TT), i1 = Mathf.CeilToInt((W + M - tO.x) / TT);
+            int j0 = Mathf.FloorToInt((-M - tO.y) / TT), j1 = Mathf.CeilToInt((H + M - tO.y) / TT);
+            for (int J = j0; J <= j1; J++)
+                for (int I = i0; I <= i1; I++)
+                    if (SeaAt(I - 1, J - 1) || SeaAt(I, J - 1) || SeaAt(I, J) || SeaAt(I - 1, J)) recs.Add((I, J, 0, WaterQuad, 0, false));
+            var sm = Merge(recs, $"{name}_Sea", out var keys, out int missing);
+            if (sm == null) { notes.Add("sea: no water quad (SM_VKT_WaterQuad)"); return; }
+            SeaMesh = sm;
+            var go = new GameObject("Sea");
+            go.transform.SetParent(groundT, false);
+            go.transform.localPosition = Local(-M, -M, 0f);
+            go.AddComponent<MeshFilter>().sharedMesh = sm;
+            var mr = go.AddComponent<MeshRenderer>();
+            mr.sharedMaterials = keys;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            int cells = 0;
+            for (int j = 0; j < tH; j++) for (int i = 0; i < tW; i++) if (tSea[i, j]) cells++;
+            notes.Add($"sea: {cells} cells, {recs.Count} water quads");
+        }
+
+        /// <summary>tiles (grid point, level, piece, quarter turns, drop the skirt) merged into one mesh in the ground
+        /// object's space: the terrain's pieces take the map's ground material, the others keep their own (null: nothing)</summary>
+        Mesh Merge(List<(int I, int J, int l, string piece, int r, bool stacked)> recs, string meshName, out Material[] materials, out int missing)
+        {
             var verts = new List<Vector3>(); var norms = new List<Vector3>(); var cols = new List<Color>();
             var tris = new Dictionary<Material, List<int>>();
             var cache = new Dictionary<string, (Vector3[] v, Vector3[] n, Color[] col, (int[] t, Material m)[] subs)>();
-            int missing = 0;
+            missing = 0;
             foreach (var rec in recs)
             {
                 if (!cache.TryGetValue(rec.piece, out var src))
@@ -351,25 +555,16 @@ namespace MedievalKit
                     }
                 }
             }
-            if (missing > 0) notes.Add($"terrain: {missing} tiles had no piece");
-            if (verts.Count == 0) { notes.Add("terrain: nothing raised"); return; }
-            var tm = new Mesh { name = $"{name}_Terrain", indexFormat = verts.Count > 65000 ? UnityEngine.Rendering.IndexFormat.UInt32 : UnityEngine.Rendering.IndexFormat.UInt16 };
+            materials = null;
+            if (verts.Count == 0) return null;
+            var tm = new Mesh { name = meshName, indexFormat = verts.Count > 65000 ? UnityEngine.Rendering.IndexFormat.UInt32 : UnityEngine.Rendering.IndexFormat.UInt16 };
             tm.SetVertices(verts); tm.SetNormals(norms); tm.SetColors(cols);
             var keys = tris.Keys.ToList();
             tm.subMeshCount = keys.Count;
             for (int s = 0; s < keys.Count; s++) tm.SetTriangles(tris[keys[s]], s);
             tm.RecalculateBounds();
-            TerrainMesh = tm;
-            var go = new GameObject("Terrain");
-            go.transform.SetParent(groundT, false);
-            go.transform.localPosition = Local(-M, -M, 0f);                    // as the ground: the material projects from there
-            go.AddComponent<MeshFilter>().sharedMesh = tm;
-            go.AddComponent<MeshRenderer>().sharedMaterials = keys.ToArray();
-            terrainCollider = go.AddComponent<MeshCollider>();
-            terrainCollider.sharedMesh = tm;
-            int raised = 0;
-            for (int j = 0; j < tH; j++) for (int i = 0; i < tW; i++) if (tLevel[i, j] > 0) raised++;
-            notes.Add($"terrain: {raised} raised cells, {recs.Count} tiles, {verts.Count} verts");
+            materials = keys.ToArray();
+            return tm;
         }
 
         /// <summary>the cliffs' and ramps' dressing (Build calls it once the buildings, props and trees stand: it keeps out
@@ -379,6 +574,7 @@ namespace MedievalKit
             if (!HasTerrain || TerrainMesh == null) return;
             DressCliffs();
             DressRamps();
+            DressQuays();
         }
 
         /// <summary>may a dressing piece go here: on the level it is meant for (any: -1), off every ramp's tiles, out of
@@ -543,7 +739,9 @@ namespace MedievalKit
                         if (ii >= tW || jj >= tH) continue;
                         int la = tLevel[i, j], lb = tLevel[ii, jj];
                         if (la == lb || tRamp[i, j] != 0 || tRamp[ii, jj] != 0) continue;
+                        if (QuayEdge(i, j, di)) continue;                        // a harbour wall: dressed stone, no rock dressing
                         var (hiI, hiJ, loI, loJ) = la > lb ? (i, j, ii, jj) : (ii, jj, i, j);
+                        bool wet = HasSea && tSea[loI, loJ];                     // a cliff into the sea: nothing at its drowned foot
                         int ox = loI - hiI, oy = loJ - hiJ, tx = Mathf.Abs(oy), ty = Mathf.Abs(ox);
                         float cx = tO.x + 1.5f * (hiI + loI) + 1.5f, cy = tO.y + 1.5f * (hiJ + loJ) + 1.5f;
                         bool Straight(int sg) => Lv(hiI + sg * tx, hiJ + sg * ty) == tLevel[hiI, hiJ] && Lv(loI + sg * tx, loJ + sg * ty) == tLevel[loI, loJ];
@@ -579,7 +777,7 @@ namespace MedievalKit
                                     Put(LipGrass, cx + tx * t, cy + ty * t, lm * Tier, rot + U(-8f, 8f), U(0.8f, 1.2f));
                                 }
                         }
-                        if (rng.NextDouble() < 0.6 * tDress)                     // rubble at the foot
+                        if (rng.NextDouble() < 0.6 * tDress && !wet)             // rubble at the foot
                         {
                             int n = rng.Next(2, 5);
                             for (int k = 0; k < n; k++)
@@ -590,12 +788,65 @@ namespace MedievalKit
                                 if (DressFree(rx, ry, lLo)) Put(nm, rx, ry, zl - 0.05f, U(0f, 360f), nm.EndsWith("Cluster") ? U(0.35f, 0.55f) : U(0.6f, 1.2f));
                             }
                         }
-                        if (rng.NextDouble() < 0.45 * tDress)                    // plants at the foot
+                        if (rng.NextDouble() < 0.45 * tDress && !wet)            // plants at the foot
                         {
                             float t = Along(), off = U(0.5f, 1f);
                             string nm = Pick(DressPlants);
                             float px = cx + tx * t + ox * off, py = cy + ty * t + oy * off;
                             if (DressFree(px, py, lLo)) Put(nm, px, py, zl, U(0f, 360f), nm.EndsWith("Round") ? U(0.45f, 0.65f) : U(0.7f, 1.05f));
+                        }
+                    }
+        }
+
+        /// <summary>the edge between cell (i, j) and its east (di 1) or north (di 0) neighbour ends at a quay tile</summary>
+        bool QuayEdge(int i, int j, int di) =>
+            quayV.Count > 0 && (di == 1 ? quayV.ContainsKey((i + 1, j)) || quayV.ContainsKey((i + 1, j + 1))
+                                        : quayV.ContainsKey((i, j + 1)) || quayV.ContainsKey((i + 1, j + 1)));
+
+        /// <summary>the harbour props along the quay walls (vk_mod_harbour's, on the wall line facing the water at the
+        /// land's height, as qy_demo stands them): on each 3 m of wall between two quay points a bollard on the coping
+        /// (two in five), a fender hung on the face (one in two), a mooring ring (one in five), kept 0.8 m from the run's
+        /// corners and clear of the water stairs' and the slipway's tiles; "quayDress" scales them (default "dress")</summary>
+        void DressQuays()
+        {
+            if (quayV.Count == 0 || tQuayDress <= 0f) return;
+            var rng = new System.Random(((int?)L["seed"] ?? 1) * 43 + 9);
+            for (int j = 0; j < tH; j++)
+                for (int i = 0; i < tW; i++)
+                    foreach (var (di, dj) in new[] { (1, 0), (0, 1) })
+                    {
+                        int ii = i + di, jj = j + dj;
+                        if (ii >= tW || jj >= tH || tSea[i, j] == tSea[ii, jj]) continue;
+                        var (hiI, hiJ, loI, loJ) = tSea[ii, jj] ? (i, j, ii, jj) : (ii, jj, i, j);
+                        if (tLevel[hiI, hiJ] != tLevel[loI, loJ] + 1) continue;
+                        // the wall's two ends, along the edge: (a) its west / south end, (b) its east / north end
+                        var a = di == 1 ? (i + 1, j) : (i, j + 1);
+                        var b = di == 1 ? (i + 1, j + 1) : (i + 1, j + 1);
+                        if (!quayV.TryGetValue(a, out var va) || !quayV.TryGetValue(b, out var vb)) continue;
+                        int ox = loI - hiI, oy = loJ - hiJ;                     // towards the water
+                        var mid = new Vector2(tO.x + 1.5f * (hiI + loI) + 1.5f, tO.y + 1.5f * (hiJ + loJ) + 1.5f);
+                        var along = new Vector2(Mathf.Abs(oy), Mathf.Abs(ox));  // from end a to end b
+                        float lo = va == "A" ? -0.7f : 0.2f, hi = vb == "A" ? 0.7f : -0.2f;   // 1.7 m clear of a flight or a slip
+                        if (hi < lo) continue;
+                        float deg = Mathf.Atan2(oy, ox) * Mathf.Rad2Deg + 90f, z = tLevel[hiI, hiJ] * Tier;
+                        var used = new List<float>();
+                        foreach (var (piece, p) in new[] { (QuayProps[0], 0.4), (QuayProps[1], 0.5), (QuayProps[2], 0.2) })
+                        {
+                            double roll = rng.NextDouble(), u = rng.NextDouble();
+                            if (roll >= p * tQuayDress) continue;
+                            float t = Mathf.Lerp(lo, hi, (float)u);
+                            if (used.Any(x => Mathf.Abs(x - t) < 0.6f)) continue;
+                            var q = mid + along * t;
+                            bool clear = true;
+                            foreach (var (poly, _) in occupied) if (DistToPoly(q, poly) < 0.4f) { clear = false; break; }
+                            if (!clear) continue;
+                            var pf = Prefab(piece);
+                            if (pf == null) continue;
+                            var go = Spawn(pf, propT);
+                            go.transform.localPosition = Local(q.x, q.y, z);
+                            go.transform.localRotation = Turn(deg);
+                            if (piece == QuayProps[0]) KitSolid.Box(go);         // a bollard is bumped into; the others hang on the face
+                            used.Add(t);
                         }
                     }
         }

@@ -416,14 +416,14 @@ piers, decks, steps: `KitSolid.IsSoft`). The navmesh is baked from colliders, so
 | `size`, `margin` | the map in metres (walkable, walled); forest drawn this far beyond it (24) |
 | `relief`, `rim` | the ground's gentle relief (m), how much it rises into the forest (m) |
 | `mounds` | `[{centre, radius: r or [rx, ry], rot, height, top}]`: the ground raised into mounds (barrows, knolls): an ellipse turned `rot` degrees, rising smoothly from its rim to a crown flat over `top` of its radius (0.3); part of the ground mesh, so they take its grass and paint and the walk test and navmesh follow them. A building at a mound's foot levels its pad as usual: it cuts a forecourt into the mound (a barrow's way in: an `Entrance_CaveMouth` set into its flank) |
-| `terrain` | `{origin, areas, ramps, dress}`: ground raised in 1.5 m tiers with cliff sides, from the kit's terrain tiles (`SM_VKT_*`, as the Blender valley's): see **Terrain** below |
+| `terrain` | `{origin, areas, ramps, dress, sea, quays, quayDress}`: ground raised in 1.5 m tiers with cliff sides, from the kit's terrain tiles (`SM_VKT_*`, as the Blender valley's), and the sea with its quays: see **Terrain** and **The sea** below |
 | `clearing` | `{centre, radius: [rx, ry], lumps}`: the lumpy oval the forest surrounds |
 | `roads` | `[{id, width, surface: dirt / cobble, points: [[x, y], ...]}]`: smooth curves through the points; run them past the map's edge for exits |
 | `areas` | `[{id, centre, radius, lumps, surface}]`: a green, a farmyard (lumpy ovals painted cobble or dirt) |
 | `clearings` | instead of `clearing`: several lumpy ovals (glades along a path through woods); walls and forest follow their union |
 | `buildings` | `[{id, structure: "Inn" or house: {cells, stories, seed, shape}, at, face: [x, y] or rot, door: {target, arrive, prompt}}]`: structures are the package's `Generated/Structures` (Inn, Chapel, GuardTower, Stable, Barn, Pigsty, Woodcutter, Smithy, Hovel_*, ...) or any kit piece (a cave mouth, `Entrance_CaveMouth` -- dry, for open ground -- or the valley's `Entrance_SpringCave` with its trickle; a cellar trapdoor in open ground, `Entrance_Trapdoor`, its lid on its +Y side, the way in from -Y: face it at a point south of it to put the lid toward a wall north of it: the piece itself is the door); houses come from the house generator |
 | `gardens` | `[{id, at, rot, beds: [cols, rows], crops: [...], fence, gate: N/E/S/W, gatePiece}]`: crop beds (Crop_Cabbage, Carrot, Pumpkin, Lavender, Wheat) fenced |
-| `props` | `[{piece, at, face or rot, collide}]`: any kit piece by name (`MarketStall_Tinker`, `Prop_Well`, `Grave_Cross`, `Animal_Horse`...) |
+| `props` | `[{piece, at, face or rot, collide, z}]`: any kit piece by name (`MarketStall_Tinker`, `Prop_Well`, `Grave_Cross`, `Animal_Horse`...); `z` stands it at that height instead of the ground's (a jetty over the sea at its quay's, 1.5) |
 | `fences` | `[{piece, points, gate, gateAt: [fractions], gateDoor, gateDoorFlip, along: [{piece, at: [fractions], rot, collide}], closed, offset, flip, collide, smooth}]`: pieces laid along a curve (`Prop_Fence`, `Deco_Hedge`, `Palisade_Straight`, `Palisade_Walk`), each stretched to fit its run; a gate keeps its own width; `gateDoor` puts doors in each gate's frame at its transform (`Goblin_Gate` in a `Palisade_Gate`: closed and breakable, the way in until the game breaks it); `along` stands pieces on the line at fractions of it, turned as its pieces are (a `Palisade_Ladder` on a walkway's line leans on its deck); `closed` makes a ring (a palisade); `offset` shifts the line sideways (left of the way it runs: a walkway behind a wall) |
 | `trees` | `[{piece, at, scale, rot}]`: single trees inside the village |
 | `forest` | `{spacing, edge, wallAt, keepRoad, keepBuilt, stragglers, species: [[piece, weight]], undergrowth: [[piece, weight]], undergrowthSpacing}` |
@@ -511,6 +511,55 @@ south-west corner); each cell has a level (0: the ground; 1 = 1.5 m up, 2 = 3 m,
 - Keep terrain inside the clearing, off mounds and away from the forest's rising rim (the ground there would show
   through the tops), and give every raised area a ramp unless it is meant to be out of reach (the bake lists it as an
   island "on top of things").
+
+**The sea** (`KitVillage.Terrain.cs`, 2026-10-18: a docks map's harbour). Sea cells are **level 0** and water; the
+land beside them stands **one level up (1)**, so a docks map puts its town on a level-1 terrace (`areas`) and cuts the
+sea out of it. Under the sea the ground drops to the bed (1.5 m below level 0); the water plane (`SM_VKT_WaterQuad`,
+`M_VKT_Water`) lies 0.6 m below level 0 (the Blender kit's datum: water 2.1 and bed 3.0 below the quay's land) and runs
+on through the forest margin past the map wherever a sea cell touches the map's edge. Where the level-1 land beside the
+sea carries a quay flag, the cliff layer there is the Blender kit's harbour wall instead (`vk_terrain_quay`'s `qy_pick`:
+`SM_VKT_Quay_Edge_A` / `_Edge_Stair` / `_Edge_Slip` / `_Outer_A` / `_Inner_A` / `_Saddle_A`), merged into the terrain
+mesh like the other tiles (its land and bed take the map's ground, its masonry keeps `M_VKT_Stair`).
+```json
+"terrain": {
+  "areas": [{"rect": [0, 0, 120, 90], "level": 1}],
+  "sea": [
+    {"rect": [0, 0, 120, 30]},
+    {"rect": [60, 30, 72, 39]},
+    {"poly": [[90, 30], [120, 30], [120, 45]], "quay": false}
+  ],
+  "quays": [
+    {"rect": [12, 30, 18, 33], "kind": "stairs"},
+    {"rect": [30, 30, 36, 33], "kind": "slip"},
+    {"rect": [96, 30, 120, 36], "kind": "none"}
+  ],
+  "quayDress": 1.0
+}
+```
+- `sea`: shapes as the areas'; a cell whose middle lies in one becomes sea (after the areas, so it cuts into them).
+  `quay` (true) flags every land cell touching it (8 neighbours) as a quay wall; `false` leaves a natural shore: a cliff
+  layer into the water (dressed on its lip, nothing at its drowned foot) where the land is level 1, a beach where it is
+  level 0 (the ground runs down from the water's edge to the bed 3 m out).
+- `quays`: the flag of the land cells in each shape: `wall`, `stairs`, `slip` or `none`. Water stairs and a slipway
+  sit on a straight stretch of wall between two land cells that both carry the kind: cover two neighbouring cells
+  along the wall (a 6 x 3 m rect), and get one flight down the face (to a landing 0.25 m above the water) or one 2 m
+  slipway running 3 m out into the sea, at the grid point between them. A quay needs exactly one level between land
+  and sea; anywhere else the usual cliffs are laid.
+- `quayDress` (default `dress`): bollards on the coping, fenders and mooring rings on the face along the straight
+  walls (`SM_VK_Harbour_*`, facing the water), clear of corners, stairs, slipways and what stands on the map. The rock
+  dressing keeps off the quays.
+- Jetties, breakwaters and boats are props: `SM_VK_Jetty_Deck` / `_Landing` / `_End` and `SM_VK_Breakwater` / `_End` run
+  along +X from their pivot on the wall line at the land's height, so put them at `"z": 1.5` with `rot` -90 for one
+  running south into the sea from a south-facing quay; a boat floats at the water (`Height` over the sea is the water's
+  surface, -0.6; a rowboat wants `"z": -0.35`). A prop standing in the sea gets mesh colliders (`collide`, default
+  true), so the navmesh walks a jetty's deck and a mole's crest; give a boat `"collide": false`.
+- Walking: the quays' tops, the water stairs down to their landing and the slipway above the water carry navmesh; the
+  sea cells are Not Walkable up to 0.45 m below level 0 (`KitNavBake`, `KitVillage.UnderSea`), and the water has no
+  collider. Trees, scatter and grass keep off the sea and its shore; the bed and the shore are painted dirt.
+- The terrace's other edges: keep the level-1 land inside the clearing (as any terrain), ending in a cliff or a ramp
+  down to the level-0 ground toward the forest; at the map's land edges the tiles stop 1.5 m past the grid with no face.
+- A worked example: `Documentation~/examples/HarbourTest_layout.json` (`vk_terrain_quay`'s `qy_demo` harbour: a quay
+  with stairs and a slipway, a pier head, an island touching the quay at a corner, two notches, a jetty and a mole).
 
 A building's `door` is `{target, arrive, prompt}`: the link takes the building's id, a spawn of that id stands 1.8 m
 out from the door (where one comes back out), and `arrive` names the spawn inside the target (an interior's front

@@ -1640,6 +1640,32 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     map needs a sea mode there (sea cells lowered to their bed, a water plane, `qy_pick`'s rule picking the Quay tiles
     for layers over the sea, no cliff dressing on them, the wall props along the quays).
 
+128. 2026-10-18 (Saltmere session's brief: "add a sea to the Unity kit's outdoor terrain so a docks map can use the new
+    harbour tiles"). **Unity only** (`KitVillage.Terrain.cs`, `KitVillage.cs`, `KitVillage.Grass.cs`, `KitNavBake`,
+    `KitVillageEditor`); docs in `LEVEL_BUILDING.md` ("The sea"). **Convention:** sea cells are level 0 and water, the
+    docks' land a level-1 terrace (the quay tiles' frame: land top 0, water -2.1, bed -3.0 = the sea's -0.6 / -1.5).
+    Layout keys in `terrain`: `sea` (shapes; `quay`, default true, flags every land cell touching them as a wall, as
+    `qy_demo` does), `quays` (shapes with `kind` wall / stairs / slip / none = `TGrid.quay` 1/2/3/0), `quayDress`.
+    `QuayPick` ports `qy_pick` (hi = lo + 1, sea corners at lo, land at hi, a land corner flagged; Edge with both land
+    flags 2 -> `_Stair`, 3 -> `_Slip`) and puts the tile on the land's layer in place of the cliff layer; the tiles merge
+    with the rest (`Merge`, factored out of `Terrain()`). The ground mesh drops to the bed under the sea (`SeaGround`:
+    3 cm under the quay tiles' own bed against raised land; a 3 m beach slope against level-0 land), relief flattens
+    toward the sea (`TerrainNear`). `Sea()` lays `SM_VKT_WaterQuad` on every grid point a sea cell meets, held to the grid
+    beyond it so the water runs through the margin; no collider; saved as `<Map>_Sea.asset`. `Height` over the sea is the
+    water's surface; props take `"z"`; a prop standing in the sea gets mesh colliders (`SeaSurface`: jetty decks and the
+    mole's crest are walked on; decks are "soft" on land). Navmesh: `UnderSea()` rects Not Walkable up to -0.45 (the
+    stairs' landing at -0.35 stays). `DressCliffs` skips edges ending at a quay point and the foot dressing of cliffs
+    into the sea; `DressQuays` puts `SM_VK_Harbour_Bollard` (box collider) / `_Fender` / `_Ring` on the wall lines facing
+    the water, 0.8 m from corners and 1.7 m from stairs and slips. Forest, scatter (1.5 m) and grass (0.8 m) keep off the
+    sea; the control map paints its bed and shore dirt. Maps without `sea` build exactly as before (rng draws unchanged).
+    **Tested** with `Documentation~/examples/HarbourTest_layout.json` (the `qy_demo` grid, its jetty, mole, ladder and
+    rowboat) built by `BuildVillage` in a throwaway scene (deleted after): 25 quay tiles, walk test ok, the stairs'
+    landing, the slipway above water, the jetty's end, the mole's crest and the island all reached from the arrival, no
+    navmesh on the bed or water; imported into Blender: 500k vertical rays over the land found no hole at any tile seam
+    (bar the slipway's own cut) and no ground above the quay tiles' bed. One 5 m2 navmesh island "on top of things" is
+    left (likely the harbour light's gallery). **Not done:** the land at a map's edge still ends 1.5 m past the grid
+    with no face (the terrace must end inside the clearing); no Unity-side render (the editor rule).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

@@ -366,9 +366,11 @@ namespace MedievalKit
             return w > 0f ? Mathf.Lerp(h, 0f, w) : h;
         }
 
-        /// <summary>the ground's height: natural (on the terrain's tiers), levelled to each building's pad near it</summary>
+        /// <summary>the ground's height: natural (on the terrain's tiers), levelled to each building's pad near it; on the
+        /// sea its water's surface (what is put there floats)</summary>
         public float Height(Vector2 q)
         {
+            if (InSea(q)) return SeaWater;
             float h = Base(q);
             if (HasTerrain && LevelAt(q) > 0) return h;                       // a tier is flat
             foreach (var (poly, ph) in pads)
@@ -392,7 +394,8 @@ namespace MedievalKit
                 {
                     var o = new Vector2(Mathf.Min(GW, i * Res), Mathf.Min(GH, j * Res));
                     var q = o - new Vector2(M, M);
-                    verts[j * nx + i] = Local(o.x, o.y, HasTerrain && LevelAt(q) > 0 ? 0f : Height(q));   // (under a tier: hidden)
+                    float z = SeaGround(q, out float sz) ? sz : HasTerrain && LevelAt(q) > 0 ? 0f : Height(q);   // the sea's bed; under a tier: hidden
+                    verts[j * nx + i] = Local(o.x, o.y, z);
                     float shade = Mathf.Lerp(1f, 0.82f, Mathf.InverseLerp(1.0f, 1.25f, Clearing(q)));     // the forest floor in shade
                     cols[j * nx + i] = new Color(shade, 0f, 0f, 0f);
                 }
@@ -461,6 +464,8 @@ namespace MedievalKit
                         float d = (q - dp).magnitude + n;
                         dirt = Mathf.Max(dirt, 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(1.4f, 2.6f, d)));
                     }
+                    if (HasSea)                                                     // the sea's bed and its shore: wet dirt, no grass
+                        dirt = Mathf.Max(dirt, 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.2f, 1.4f, SeaDist(q) + n * 0.6f)));
                     px[j * tw + i] = new Color(dirt, cob, 0f, 0f);
                 }
             var tex = new Texture2D(tw, th, TextureFormat.RGBA32, false, true) { name = $"{name}_GroundControl", wrapMode = TextureWrapMode.Clamp };
@@ -715,17 +720,26 @@ namespace MedievalKit
                 if (Mathf.Abs(scale - 1f) > 1e-3f) go.transform.localScale = Vector3.one * scale;
                 var (box, front) = Measure(go);
                 float deg = Facing(p, at, front);
-                go.transform.localPosition = Local(at.x, at.y, Height(at));
+                go.transform.localPosition = Local(at.x, at.y, (float?)p["z"] ?? Height(at));   // "z": its own height (a jetty over the sea at its quay's)
                 go.transform.localRotation = Turn(deg);
                 if (p["swap"] != null) Swap(go, p);
                 if ((bool?)p["collide"] ?? true)
                 {
                     if (KitSolid.IsTrunk(pf.name)) KitSolid.Trunk(go);       // a tree or a stump as the forest's: its trunk
+                    else if (InSea(at)) SeaSurface(go);                     // a jetty, a mole: walked on over the water
                     else KitSolid.Box(go);                                  // what one bumps into: a signpost's post, not its arms
                 }
                 if ((bool?)p["dress"] ?? true) Dress(go, pf.name);
                 occupied.Add((Corners(box, at, deg), (string)p["piece"]));
             }
+        }
+
+        /// <summary>a prop standing in the sea (a jetty, a breakwater): its own meshes collide, so the navmesh walks its deck
+        /// or crest over the water (no ground under it to walk on, as a pier on land has) and its rails and parapets block</summary>
+        static void SeaSurface(GameObject go)
+        {
+            foreach (var mf in go.GetComponentsInChildren<MeshFilter>())
+                if (mf.sharedMesh != null && mf.GetComponent<Collider>() == null) mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
         }
 
         /// <summary>the pieces a kit piece is only the base of, in its own frame (Unity metres and degrees), with a roof
@@ -907,6 +921,7 @@ namespace MedievalKit
             if (!margin && (q.x < 0.5f || q.y < 0.5f || q.x > W - 0.5f || q.y > H - 0.5f)) return false;
             if (margin && (q.x < -M || q.y < -M || q.x > W + M || q.y > H + M)) return false;
             if (NearCliff(q, 1.6f)) return false;                              // off the terrain's cliff lines and ramps
+            if (SeaDist(q) < 1.5f) return false;                               // and out of the sea, off its shore
             foreach (var rd in roads) if (DistToPolyline(q, rd.pts) < rd.width / 2 + keep) return false;
             foreach (var a in areas) if (Blob(q, a.c, a.r, a.lumps, a.seed) < 1.05f + keep / Mathf.Max(1f, Mathf.Min(a.r.x, a.r.y))) return false;
             foreach (var (poly, _) in occupied) if (DistToPoly(q, poly) < keepBuilt) return false;

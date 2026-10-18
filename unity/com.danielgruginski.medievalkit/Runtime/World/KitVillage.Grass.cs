@@ -64,6 +64,7 @@ namespace MedievalKit
                     if (w <= 0.02f || Rn() > w) continue;
                     if (blocked.Any(b => q.x >= b.min.x && q.y >= b.min.y && q.x <= b.max.x && q.y <= b.max.y && InPoly(q, b.poly))) continue;
                     if (OnStair(q)) continue;                                             // a terrain's flight of stairs
+                    if (SeaDist(q) < 0.8f) continue;                                      // the sea, its quays' coping, its shore
                     var top = transform.TransformPoint(Local(q.x, q.y, 50f));
                     var ray = new Ray(top, -transform.up);                                 // the terrain's tiers first, then the ground
                     RaycastHit hit = default;
