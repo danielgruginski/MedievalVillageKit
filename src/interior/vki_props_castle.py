@@ -14,6 +14,7 @@
 #   Banner_Castle       a 0.80 x 1.70 swallow-tailed banner in the arms (vki_mount_ref "top": rod at H - 0.35)
 #   Chandelier_Ring     an iron ring chandelier 1.16 across, eight candles at 2.60, hung from 4.30 (Ashlar halls)
 #   Display_Arms        a heater shield in the arms over two crossed swords, wall_hung at 1.75-2.65
+#   Stair_Up_Spiral_300 (+ _Tall) / Stair_Down_Spiral_300 / Floor_300_Spiral_Q**: the newel stair pair (below)
 import bpy, bmesh, math, random
 from mathutils import Vector, Matrix
 
@@ -244,6 +245,169 @@ def vki_cas_display_arms(k):
                   vki_mount_zmax=2.66, vki_note="authored at its real height (placer z 0)")
 
 
+# ---------------------------------------------------------------- the newel stair (2026-10-18)
+# Stair_Up_Spiral_300 (+ _Tall for a 4.5 m storey) / Stair_Down_Spiral_300, the stair pair's contract (vki_links):
+# min corner, footprint [0, 3]^2 (2 x 2 cells), the newel at its centre (1.5, 1.5). Stone wedge steps round a DRESS
+# newel, each 22 deg (15 deg tall), lapping 3 deg under the next and 0.06 below it, rising counter-clockwise from
+# the east (the first nosing on the +X radius faces -Y): the entry is the south-east quadrant, open at floor level
+# under the last steps, where the trigger and the arrival are. The steps reach r 1.12 (walls on the west and north
+# sides keep their proud line: 1.5 - 1.12 > 0.285; posts at the corner nodes and at (0, 1.5) stay clear).
+# Up: the steps to the ceiling plane (the top ones darkened), an iron handrail on balusters up to it.
+# Down: the landing (the up stair's last step) flush with the floor in the south-east, ten steps winding down into
+# the dark, a VOID disc at -2.40, a stone kerb and an iron rail round the hole but at the landing. Its floor is
+# Floor_300_Spiral_Q<a><b> (the room's floor with a round hole 1.18, the Q parity of the footprint's min corner,
+# rotation 0), laid by the room under the down stair whatever the stair's rotation (the hole is centred).
+VKI_CAS_SPIRAL = dict(c=(1.5, 1.5), newel=0.13, r_in=0.10, R=1.12, lap=3.0, under=0.06, rail_r=1.06, rail_h=0.90,
+                      kerb=(1.15, 1.21), kerb_h=0.05, hole=1.18, land=(305.0, 338.0), land_r=1.19, dn=10,
+                      void=(-2.40, -2.30), trigger_box=(1.62, 0.35, 2.65, 1.40), spawn=([2.135, -0.75], 180))
+VKI_CAS_SPIRAL_KIND = {False: dict(n=15, H=3.0, deg=22.0), True: dict(n=22, H=4.5, deg=15.0)}
+
+
+def vki_cas_wedge(k, a0, a1, z_top, depth, R, mi, nf=3):
+    """a closed wedge step round the newel centre from a0 to a1 (degrees): its inner chord at r_in (buried in the
+    newel), its outer edge nf facets of the circle R, top z_top, `depth` thick -> its vertices"""
+    S = VKI_CAS_SPIRAL
+    cx, cy = S["c"]
+    P = lambda r, a: (cx + r * math.cos(math.radians(a)), cy + r * math.sin(math.radians(a)))
+    poly = [P(S["r_in"], a0)] + [P(R, a0 + (a1 - a0) * i / nf) for i in range(nf + 1)] + [P(S["r_in"], a1)]
+    vs, fs = vki_prism(k, poly, z_top - depth, z_top, mi, axis="z", bevel=0.0)
+    return vs
+
+
+def vki_cas_spiral_meta(k):
+    S = VKI_CAS_SPIRAL
+    x0, y0, x1, y1 = S["trigger_box"]
+    (sx, sy), sf = S["spawn"]
+    k.meta.update(vki_class="link", vki_len=3.0, vki_depth=3.0, vki_rot_allowed=[0, 90, -90, 180],
+                  vki_nominal="0,0,3.0,3.0", vki_cells=[[0, 0], [1, 0], [0, 1], [1, 1]], vki_facing_min=60,
+                  vki_trigger=[(x0 + x1) / 2, (y0 + y1) / 2, 1.0, x1 - x0, y1 - y0, 2.0],
+                  vki_prompt_local=[(x0 + x1) / 2, (y0 + y1) / 2, 1.40], vki_spawn_local=[sx, sy],
+                  vki_spawn_facing=sf, vki_uv_lock="local",
+                  vki_note="entry: the south-east quadrant (local), keep it open to the room; walls may stand on any "
+                           "other side (the steps keep 1.12 from the centre)")
+
+
+def vki_cas_spiral_up(k, tall=False):
+    """the newel stair up: the newel to the ceiling plane, the steps rising counter-clockwise to it (the top ones
+    darkened under the ceiling), an iron handrail on balusters while it stays under the ceiling"""
+    S = VKI_CAS_SPIRAL; K = VKI_CAS_SPIRAL_KIND[tall]
+    n, H, deg = K["n"], K["H"], K["deg"]
+    rise = H / n
+    cx, cy = S["c"]
+    vki_chp_cyl(k, (cx, cy, (H - 0.01) / 2), S["newel"], S["newel"], H - 0.01, 12, DRESS)        # under the top step
+    vki_chp_cyl(k, (cx, cy, 0.0515), 0.19, 0.19, 0.097, 12, DRESS)                               # its base, 3 mm up
+    for i in range(1, n + 1):
+        z = rise * i
+        vs = vki_cas_wedge(k, deg * (i - 1) - S["lap"], deg * i, z, rise + S["under"], S["R"], VKI_STONE_BLOCK_IN)
+        k.set_dark(vs, 0.6 * vki_smoothstep(H - 0.9, H, z) + 0.05 * (i % 2))
+    tops = []
+    for i in range(2, n + 1):                                                                     # handrail
+        z = rise * i
+        if z + S["rail_h"] > H - 0.03:
+            break
+        a = math.radians(deg * (i - 0.5))
+        x, y = cx + S["rail_r"] * math.cos(a), cy + S["rail_r"] * math.sin(a)
+        vki_dpr_rod(k, (x, y, z - 0.01), (x, y, z + S["rail_h"]), 0.022, IRON)
+        tops.append((x, y, z + S["rail_h"]))
+    for a, b in zip(tops[:-1], tops[1:]):
+        vki_dpr_rod(k, a, b, 0.035, IRON, d=0.03)
+    vki_cas_spiral_meta(k)
+    k.meta.update(vki_link="stair_up", vki_pair="SM_VKI_Stair_Down_Spiral_300", vki_rise=round(rise, 4), vki_risers=n,
+                  vki_floor_under="room floor laid under the whole footprint (no FLOOR faces)", vki_nav="block",
+                  vki_collider=[[0.985, 1.50, H / 2, 1.27, 2.30, H], [2.135, 2.025, H / 2, 1.03, 1.25, H]],
+                  vki_collider_note="the stair and the newel; the south-east quadrant (the entry, under the last "
+                                    "steps) walks")
+
+
+def vki_cas_spiral_up_300(k): vki_cas_spiral_up(k)
+def vki_cas_spiral_up_tall(k): vki_cas_spiral_up(k, tall=True)
+
+
+def vki_cas_spiral_down(k):
+    """the newel stair down: the landing flush with the floor in the south-east (the up stair's last step), ten steps
+    winding down clockwise into the dark, the newel up to a capped post at rail height, a VOID disc under it all, a
+    stone kerb and an iron rail round the hole but at the landing"""
+    S = VKI_CAS_SPIRAL; K = VKI_CAS_SPIRAL_KIND[False]
+    deg, rise = K["deg"], K["H"] / K["n"]
+    cx, cy = S["c"]
+    vki_chp_cyl(k, (cx, cy, (S["void"][1] + 0.92) / 2), S["newel"], S["newel"], 0.92 - S["void"][1], 12, DRESS)
+    vki_chp_cyl(k, (cx, cy, 0.94), 0.17, 0.17, 0.05, 12, DRESS)                                    # the cap
+    vs = vki_cas_wedge(k, S["land"][0], S["land"][1], -0.004, rise + S["under"], S["land_r"], VKI_STONE_BLOCK_IN,
+                       nf=4)
+    k.set_dark(vs, 0.05)
+    for j in range(1, S["dn"] + 1):
+        a1 = 330.0 - deg * j
+        vs = vki_cas_wedge(k, a1 - deg - S["lap"], a1, -rise * j, rise + S["under"], S["R"], VKI_STONE_BLOCK_IN)
+        k.set_dark(vs, 0.05 + 0.55 * (j / S["dn"]) ** 1.5)                    # the first steps read in the light
+    vv = vki_chp_cyl(k, (cx, cy, sum(S["void"]) / 2), S["hole"] - 0.01, S["hole"] - 0.01, S["void"][1] - S["void"][0],
+                     24, VOID)
+    # kerb (DRESS segments) and rail, from the landing's east side round to its west side
+    k0, k1 = S["kerb"]
+    b0, b1 = S["land"][1] + 2.0, S["land"][0] + 360.0 - 2.0
+    nseg = 16
+    P = lambda r, a: (cx + r * math.cos(math.radians(a)), cy + r * math.sin(math.radians(a)))
+    for i in range(nseg):
+        a, b = b0 + (b1 - b0) * i / nseg, b0 + (b1 - b0) * (i + 1) / nseg
+        vki_prism(k, [P(k0, a), P(k1, a), P(k1, b), P(k0, b)], -0.02, S["kerb_h"] + 0.002 * (i % 2), DRESS,
+                  axis="z", bevel=0.0)
+    posts = []
+    npost = 10
+    for i in range(npost + 1):
+        a = b0 + 2.0 + (b1 - b0 - 4.0) * i / npost
+        x, y = P(1.18, a)
+        vki_dpr_rod(k, (x, y, S["kerb_h"] - 0.01), (x, y, 0.95), 0.03, IRON)
+        posts.append((x, y))
+    for i, ((xa, ya), (xb, yb)) in enumerate(zip(posts[:-1], posts[1:])):
+        for z, w in ((0.95, 0.035), (0.50, 0.02)):
+            z += 0.002 * (i % 2)                       # neighbours meet at a post on other planes (T5S)
+            vki_dpr_rod(k, (xa, ya, z), (xb, yb, z), w, IRON, d=w)
+    vki_cas_spiral_meta(k)
+    x0, y0, x1, y1 = 0.33, 0.33, 2.67, 2.67
+    k.meta.update(vki_link="stair_down", vki_pair="SM_VKI_Stair_Up_Spiral_300", vki_rise=rise, vki_nav="block",
+                  vki_floor_under="Floor_300_Spiral_Q<i mod 2><j mod 2> at the footprint's min corner, rotation 0",
+                  vki_collider=[[(x0 + x1) / 2, (1.40 + y1) / 2, 0.5, x1 - x0, y1 - 1.40, 1.0],
+                                [(x0 + 1.62) / 2, (y0 + 1.40) / 2, 0.5, 1.62 - x0, 1.40 - y0, 1.0]],
+                  vki_collider_note="blocked: the hole but its south-east quadrant (the landing, under the trigger)")
+
+
+def vki_cas_spiral_floor(qa, qb):
+    """Floor_300_Spiral_Q<qa><qb>: the 3.0 floor slab with the down stair's round hole (r 1.18, under the kerb):
+    32 rays from the centre to the square (its corners on rays 4, 12, 20, 28), FLOOR world-locked with the Q parity
+    offsets of its min corner, so the room's floor runs up to the kerb"""
+    def fn(k):
+        S = VKI_CAS_SPIRAL
+        cx, cy = S["c"]
+        n = 32
+        bm = k.bm
+        ring = []
+        for i in range(n):
+            a = 2 * math.pi * i / n
+            dx, dy = math.cos(a), math.sin(a)
+            t = 1.5 / max(abs(dx), abs(dy))
+            ring.append(((cx + S["hole"] * dx, cy + S["hole"] * dy), (cx + t * dx, cy + t * dy)))
+        T = [(bm.verts.new((p[0], p[1], 0.0)), bm.verts.new((q[0], q[1], 0.0))) for p, q in ring]
+        B = [(bm.verts.new((p[0], p[1], VKI_FLOOR_Z0)), bm.verts.new((q[0], q[1], VKI_FLOOR_Z0))) for p, q in ring]
+        fs = []
+        for i in range(n):
+            j = (i + 1) % n
+            fs += [bm.faces.new((T[i][0], T[i][1], T[j][1], T[j][0])),          # top
+                   bm.faces.new((B[j][0], B[j][1], B[i][1], B[i][0])),          # bottom
+                   bm.faces.new((T[j][1], T[i][1], B[i][1], B[j][1])),          # outer side
+                   bm.faces.new((T[i][0], T[j][0], B[j][0], B[i][0]))]          # the hole's side
+        bmesh.ops.recalc_face_normals(bm, faces=fs)
+        bm.normal_update()
+        for f in fs:
+            nn = f.normal
+            off = (0.5 * qa, 0.5 * qb) if abs(nn.z) > 0.7 else ((0.5 * qa, 0.0) if abs(nn.y) > 0.7 else (0.5 * qb, 0.0))
+            k.project([f], VKI_FLOOR, offset=off)
+        k.meta.update(vki_class="floor", vki_kind="Q300Spiral", vki_len=3.0, vki_q_parity=[qa, qb],
+                      vki_place_rule="under a Stair_Down_Spiral_300: its footprint's min corner, node (i, j) with "
+                                     "(i mod 2, j mod 2) = (%d, %d), rotation 0" % (qa, qb),
+                      vki_hole_r=S["hole"], vki_footprint="0,0,3.0,3.0")
+    fn.__name__ = "vki_cas_spiral_floor_q%d%d" % (qa, qb)
+    return fn
+
+
 # ---------------------------------------------------------------- specs
 VKI_CAS_SPECS = [
     ("SM_VKI_Prop_Throne_Castle", vki_cas_throne, "prop"),
@@ -254,6 +418,9 @@ VKI_CAS_SPECS = [
     ("SM_VKI_Prop_Banner_Castle", vki_cas_banner, "none"),
     ("SM_VKI_Prop_Chandelier_Ring", vki_cas_chandelier, "none"),
     ("SM_VKI_Prop_Display_Arms", vki_cas_display_arms, "none"),
-]
+    ("SM_VKI_Stair_Up_Spiral_300", vki_cas_spiral_up_300, "prop"),
+    ("SM_VKI_Stair_Up_Spiral_300_Tall", vki_cas_spiral_up_tall, "prop"),
+    ("SM_VKI_Stair_Down_Spiral_300", vki_cas_spiral_down, "prop"),
+] + [("SM_VKI_Floor_300_Spiral_Q%d%d" % (a_, b_), vki_cas_spiral_floor(a_, b_), "floor") for a_ in (0, 1) for b_ in (0, 1)]
 VKI_CAS_NAMES = [n for n, _, _ in VKI_CAS_SPECS]
 vki_register([(n, fn, {"grime": gr}, "castle") for n, fn, gr in VKI_CAS_SPECS])

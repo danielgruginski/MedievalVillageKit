@@ -158,8 +158,25 @@ namespace MedievalKit
         /// Stair_Down / Stair_Up_150x150_Hatch), 3 for the flights (150x450)</summary>
         public static int StairDepth(JToken st) => st.Count() > 5 && (string)st[5] == "Hatch" ? 1 : 3;
 
-        /// <summary>a stair record's piece: SM_VKI_Stair_{kind}_150x450_{var}, or _150x150_Hatch for the trapdoor pair</summary>
-        public static string StairPiece(string kind, string var) => $"SM_VKI_Stair_{kind}_{(var == "Hatch" ? "150x150" : "150x450")}_{var}";
+        /// <summary>a newel stair record (variant "Spiral" / "SpiralTall": Stair_Up / Down_Spiral_300, 2 x 2 cells)</summary>
+        public static bool StairSpiral(JToken st) => st.Count() > 5 && ((string)st[5] ?? "").StartsWith("Spiral");
+
+        /// <summary>the stair record's footprint cell centres, stair-local: a hatch 1 cell, a newel stair 2 x 2, a flight 1 x 3</summary>
+        public static IEnumerable<Vector2> StairLocalCells(JToken st)
+        {
+            if (StairSpiral(st))
+                return new[] { new Vector2(0.75f, 0.75f), new Vector2(2.25f, 0.75f), new Vector2(0.75f, 2.25f), new Vector2(2.25f, 2.25f) };
+            return Enumerable.Range(0, StairDepth(st)).Select(d => new Vector2(0.75f, 0.75f + 1.5f * d));
+        }
+
+        /// <summary>a stair record's piece: SM_VKI_Stair_{kind}_150x450_{var}, _150x150_Hatch for the trapdoor pair, or
+        /// the newel stair SM_VKI_Stair_{kind}_Spiral_300 (variant "SpiralTall": the up stair for a 4.5 m storey, _Tall)</summary>
+        public static string StairPiece(string kind, string var)
+        {
+            if ((var ?? "").StartsWith("Spiral"))
+                return $"SM_VKI_Stair_{kind}_Spiral_300" + (kind == "Up" && var == "SpiralTall" ? "_Tall" : "");
+            return $"SM_VKI_Stair_{kind}_{(var == "Hatch" ? "150x150" : "150x450")}_{var}";
+        }
 
         /// <summary>a down hatch's cell: its floor is Floor_150_Hatch_Q* (the zone's floor with a hole to the curb)</summary>
         public bool HatchDown((int, int) c) =>
@@ -173,9 +190,9 @@ namespace MedievalKit
             for (int si = 0; si < st.Count; si++)
             {
                 var s = st[si];
-                for (int d = 0; d < StairDepth(s); d++)
+                foreach (var lc in StairLocalCells(s))
                 {
-                    var c = Frame((float)s[1], (float)s[2], (float)s[3], 0.75f, 0.75f + IG * d);
+                    var c = Frame((float)s[1], (float)s[2], (float)s[3], lc.x, lc.y);
                     o[(Mathf.FloorToInt(c.x / IG), Mathf.FloorToInt(c.y / IG))] = ((string)s[0], si);
                 }
             }
@@ -360,6 +377,17 @@ namespace MedievalKit
                 foreach (var st in sts)
                 {
                     if (StairDepth(st) == 1) continue;                 // a hatch needs no wall: its rhythm posts stay
+                    if (StairSpiral(st))                                // a newel stair: no rhythm posts round its footprint
+                    {
+                        for (int a = 0; a < 3; a++)
+                            for (int b = 0; b < 3; b++)
+                            {
+                                if (a == 1 && b == 1) continue;
+                                var w = Frame((float)st[1], (float)st[2], (float)st[3], IG * a, IG * b);
+                                stairNodes.Add((Mathf.RoundToInt(w.x / IG), Mathf.RoundToInt(w.y / IG)));
+                            }
+                        continue;
+                    }
                     // the nodes along the stair's walls: local x = 0 (y 0..4.5) and the far end's other corner; the
                     // left-hand twins (variant ...L) have their wall on local x = 1.5
                     bool left = st.Count() > 5 && ((string)st[5] ?? "").EndsWith("L");
@@ -439,6 +467,17 @@ namespace MedievalKit
                 // a down hatch's cell takes the zone's floor with the hole to its curb (Floor_150_Hatch_Q*)
                 foreach (var (i, j) in zmap.Where(c => c.Value == zn && HatchDown(c.Key)).Select(c => c.Key).OrderBy(c => c.Item1).ThenBy(c => c.Item2))
                     floors.Add(new Floor { piece = $"SM_VKI_Floor_150_Hatch_Q{i % 2}{j % 2}", x = IG * i, y = IG * j, zone = zn, floorStyle = floorStyle });
+                // a down newel stair's 2 x 2 cells take one slab with its round hole (Floor_300_Spiral_Q*, rotation 0,
+                // at the footprint's min corner, in the zone of that corner cell)
+                if (R["stairs"] is JArray sts2)
+                    for (int si = 0; si < sts2.Count; si++)
+                    {
+                        if ((string)sts2[si][0] != "Down" || !StairSpiral(sts2[si])) continue;
+                        var fc = stairCells.Where(c => c.Value.Item2 == si).Select(c => c.Key).ToList();
+                        int i = fc.Min(c => c.Item1), j = fc.Min(c => c.Item2);
+                        if (zmap.TryGetValue((i, j), out var zc) && zc == zn)
+                            floors.Add(new Floor { piece = $"SM_VKI_Floor_300_Spiral_Q{i % 2}{j % 2}", x = IG * i, y = IG * j, zone = zn, floorStyle = floorStyle });
+                    }
             }
         }
     }

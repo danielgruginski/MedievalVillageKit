@@ -525,8 +525,23 @@ def vki_rooms_stair_depth(st_):
     return 1 if len(st_) > 5 and st_[5] == "Hatch" else 3
 
 
+def vki_rooms_stair_spiral(st_):
+    """a newel stair record (variant "Spiral" / "SpiralTall": Stair_Up / Down_Spiral_300, 2 x 2 cells)"""
+    return len(st_) > 5 and str(st_[5]).startswith("Spiral")
+
+
+def vki_rooms_stair_local_cells(st_):
+    """the stair record's footprint cell centres, stair-local: a hatch 1 cell, a newel stair 2 x 2, a flight 1 x 3"""
+    if vki_rooms_stair_spiral(st_):
+        return [(0.75, 0.75), (2.25, 0.75), (0.75, 2.25), (2.25, 2.25)]
+    return [(0.75, 0.75 + VKI_IG * d) for d in range(vki_rooms_stair_depth(st_))]
+
+
 def vki_rooms_stair_piece(kind, var):
-    """the stair record's piece: SM_VKI_Stair_<kind>_150x450_<var>, or _150x150_Hatch for the trapdoor pair"""
+    """the stair record's piece: SM_VKI_Stair_<kind>_150x450_<var>, _150x150_Hatch for the trapdoor pair, or the
+    newel stair SM_VKI_Stair_<kind>_Spiral_300 (variant "SpiralTall": the up stair for a 4.5 m storey, _Tall)"""
+    if str(var).startswith("Spiral"):
+        return f"SM_VKI_Stair_{kind}_Spiral_300" + ("_Tall" if kind == "Up" and var == "SpiralTall" else "")
     return f"SM_VKI_Stair_{kind}_{'150x150' if var == 'Hatch' else '150x450'}_{var}"
 
 
@@ -537,8 +552,8 @@ def vki_rooms_stair_cells(R):
     out = {}
     for si, st_ in enumerate(R.get("stairs", [])):
         kind, x, y, rot, lid = st_[:5]
-        for d in range(vki_rooms_stair_depth(st_)):
-            cx, cy = vki_rooms_stair_frame(x, y, rot, 0.75, 0.75 + VKI_IG * d)       # the cell centre
+        for lx, ly in vki_rooms_stair_local_cells(st_):
+            cx, cy = vki_rooms_stair_frame(x, y, rot, lx, ly)                         # the cell centre
             out[(int(math.floor(cx / VKI_IG)), int(math.floor(cy / VKI_IG)))] = (kind, si)
     return out
 
@@ -693,6 +708,11 @@ def vki_rooms_layout(name, R=None, P=None):
         kind, sx, sy, srot, lid = st_[:5]
         if vki_rooms_stair_depth(st_) == 1:
             continue                                     # a hatch needs no wall: its rhythm posts stay
+        if vki_rooms_stair_spiral(st_):                  # a newel stair: no rhythm posts round its footprint
+            for lx, ly in [(a * VKI_IG, b * VKI_IG) for a in range(3) for b in range(3) if (a, b) != (1, 1)]:
+                wx, wy = vki_rooms_stair_frame(sx, sy, srot, lx, ly)
+                stair_nodes.add((int(round(wx / VKI_IG)), int(round(wy / VKI_IG))))
+            continue
         # the nodes along the stair's walls: local x = 0 (y 0..4.5) and y = 4.5 (x 0..1.5), in any rotation; the
         # left-hand twins (variant ...L, vki_dun_mirror_l) have their wall on local x = 1.5
         left = len(st_) > 5 and str(st_[5]).endswith("L")
@@ -760,6 +780,16 @@ def vki_rooms_layout(name, R=None, P=None):
         for (i, j), (kind, si) in sorted(scells.items()):
             if kind == "Down" and zmap.get((i, j)) == zn and vki_rooms_stair_depth(R["stairs"][si]) == 1:
                 floors.append(dict(piece=f"SM_VKI_Floor_150_Hatch_Q{i % 2}{j % 2}", x=VKI_IG * i, y=VKI_IG * j,
+                                   zone=zn, style={"floor": z["floor"]}))
+        # a down newel stair's 2 x 2 cells take one slab with its round hole (Floor_300_Spiral_Q*, rotation 0, at the
+        # footprint's min corner, in the zone of that corner cell)
+        for si, st_ in enumerate(R.get("stairs", [])):
+            if st_[0] != "Down" or not vki_rooms_stair_spiral(st_):
+                continue
+            fc = [c for c, (kd, sj) in scells.items() if sj == si]
+            i, j = min(c[0] for c in fc), min(c[1] for c in fc)
+            if zmap.get((i, j)) == zn:
+                floors.append(dict(piece=f"SM_VKI_Floor_300_Spiral_Q{i % 2}{j % 2}", x=VKI_IG * i, y=VKI_IG * j,
                                    zone=zn, style={"floor": z["floor"]}))
     # ---- doors: cells on both sides (exits: the inside cells)
     doors = []
@@ -2218,7 +2248,8 @@ def vki_check(scene, full=False, t19=True, bfs=True, palette=True):
         fp = [float(t) for t in str(f.get("vki_footprint", "0,0,1.5,1.5")).split(",")]
         mark(f.name, f.location.x + fp[0], f.location.y + fp[1], f.location.x + fp[2], f.location.y + fp[3])
     for o in objs:
-        if (o.get("vki_link") == "stair_down" and o.get("vki_var") != "Hatch") or o.get("vki_covers_floor"):
+        if (o.get("vki_link") == "stair_down" and o.get("vki_var") not in ("Hatch", "Spiral")) or \
+                o.get("vki_covers_floor"):                  # (hatches and newel stairs: their own floor pieces)
             cf = vki_get(o, "vki_covers_floor", None) or [0.0, 0.0, 1.5, 4.5]
             for cf_ in (cf if isinstance(cf[0], (list, tuple)) else [cf]):      # a rect, or a list of them
                 bb = vki_rooms_boxes_of(o, [[(cf_[0] + cf_[2]) / 2, (cf_[1] + cf_[3]) / 2, 0.0, cf_[2] - cf_[0],

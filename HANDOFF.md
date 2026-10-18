@@ -1534,6 +1534,24 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     wall, `d` its width in the plane (the swords' guards first went 0.22 m deep, through the shield). A gold-trimmed
     piece cannot also use the textile atlas (both are the TEXTILE slot): the hangings' rod knobs are BRONZE.
 
+122. 2026-10-18 (the user: "ok, go on" -- the castle's newel stair). In vki_props_castle: **`SM_VKI_Stair_Up_Spiral_300`**
+    (592 tris), **`_Tall`** (900: 22 risers for a 4.5 m storey) and **`SM_VKI_Stair_Down_Spiral_300`** (968), the
+    stair pair's contract (min corner, `vki_link` / `vki_pair` / `vki_trigger` / `vki_spawn_local`), footprint 3 x 3
+    (2 x 2 cells): stone wedge steps (22 deg; 15 tall) round a DRESS newel at the centre, lapping 3 deg / 6 cm under
+    the next, rising counter-clockwise from the east, so the entry is the south-east quadrant -- open at floor level
+    under the last steps, where the trigger and the arrival are; steps within r 1.12 (walls on the other sides keep
+    their proud line). Up: to the ceiling plane, the top steps darkened, an iron handrail while it stays under it.
+    Down: a landing flush with the floor (4 mm under it), ten steps winding down (darkening with depth^1.5 so the first
+    ones read), a VOID disc at -2.40, a DRESS kerb and an iron rail round the hole but at the landing. Its floor is
+    **`SM_VKI_Floor_300_Spiral_Q00..Q11`** (the slab with the round hole 1.18, Q parity of the footprint's min corner,
+    rotation 0; T9 budget kind Q300Spiral 256). Rooms: a stair record's sixth field "Spiral" / "SpiralTall"
+    (`vki_rooms_stair_spiral`, `vki_rooms_stair_local_cells`, `vki_rooms_stair_piece`); its 2 x 2 cells, no rhythm
+    posts round its footprint, the holed floor under a down stair, the floor-coverage check skips it like a hatch --
+    all ported to Unity's `KitRoomLayout` (`StairSpiral`, `StairLocalCells`, `StairPiece`; its floors match Blender's
+    for both test storeys). Scenes **`VKI_Castle_Tower_F0`** (guard room, the stair up) and **`_F1`** (chamber, the
+    stair down), Stone 4 x 4, linked; `vki_check` 0 errors and no warnings. Not done: no left-hand (clockwise) twin;
+    the up stair's darkened top reads as a dark block in the ceiling corner.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
