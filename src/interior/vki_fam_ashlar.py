@@ -255,7 +255,7 @@ def vki_ash_lancettall_full(k): vki_ash_lancet(k, "LancetTall", "Full")
 
 
 # ---------------------------------------------------------------- DoorWide_300 (§3.2 Ashlar, pointed)
-def vki_ash_door(k, height):
+def vki_ash_door(k, height, D=None, arch=False):
     """pointed wide door lancet_pts(0.70, 2.30, 0, 2.20), apex 3.44, with two DRESS orders:
     inner order: jambs x 0.54-0.70 / 2.30-2.46 from y -0.09 (the step) to +0.25, on the threshold; ring between the
       door arch (r 1.36) and r + 0.16 (voussoirs, same depth);
@@ -266,7 +266,7 @@ def vki_ash_door(k, height):
     (x 0-0.70 / 2.30-3.0), bridging the outer order's recess."""
     L = 3.0
     full = height == "Full"
-    D = VKI_ASH_DOOR
+    D = D or VKI_ASH_DOOR
     xL, xR = D["x"]; zs = D["spring"]; sy = D["step_y"]; T2 = k.T / 2; tk = VKI_ASH_TUCK
     r = 0.85 * (xR - xL); cR, cL = xR - r, xL + r; xa = (xL + xR) / 2
     R0, R1, R2 = r, r + D["d1"], r + D["d2"]
@@ -324,6 +324,11 @@ def vki_ash_door(k, height):
         z1 = 1.0
     vki_ash_wobble(k, L, holes, tb)
     k.meta.update(vki_nav="door", vki_nav_open=[xL, xR])
+    if arch:                                                             # an open arch: no leaves, no exit
+        k.meta.update(vki_class="wall", vki_arch=1,
+                      vki_opening={"x0": xL, "x1": xR, "z0": 0.0, "z1": z1, "spring": zs, "pointed": 1},
+                      vki_collider=[[xL / 2, 0.0, 1.1, xL, k.T, 2.2], [(xR + L) / 2, 0.0, 1.1, L - xR, k.T, 2.2]])
+        return
     k.meta.update(vki_class="wall", vki_opening={"x0": xL, "x1": xR, "z0": 0.0, "z1": z1, "spring": zs,
                                                  "pointed": 1},
                   vki_trigger=[1.5, -0.65, 1.0, 1.9, 0.8, 2.0], vki_spawn_local=[1.5, -1.60],
@@ -337,6 +342,145 @@ def vki_ash_door(k, height):
 
 def vki_ash_doorwide_full(k): vki_ash_door(k, "Full")
 def vki_ash_doorwide_cut(k): vki_ash_door(k, "Cut")
+
+
+# ---------------------------------------------------------------- Arch_300 (2026-10-17: cloister walks, nave arcades,
+# a hall's screens passage) -- the wide door's two orders round a wider open pointed arch, no leaves: clear 1.9 m
+# (x 0.55-2.45), spring 2.20, apex 3.67, orders 0.14 / 0.24, body over the outer ring from 4.10
+VKI_ASH_ARCH = dict(x=(0.55, 2.45), spring=2.20, d1=0.14, d2=0.24, step_y=-0.09, thr=0.03, n=4, topz=4.10)
+def vki_ash_arch_full(k): vki_ash_door(k, "Full", VKI_ASH_ARCH, arch=True)
+def vki_ash_arch_cut(k): vki_ash_door(k, "Cut", VKI_ASH_ARCH, arch=True)
+
+
+# ---------------------------------------------------------------- Hearth_300 (2026-10-17: a great hall's or a
+# monastery warming room's fireplace in the 4.5 m wall) -- a hooded fireplace: firebox x 0.48-2.52, 1.55 high, its
+# back 5 cm into the wall (BRICK, sooted); DRESS cheeks x 0.33-0.48 / 2.52-2.67 out to y -0.80; a DRESS lintel
+# 1.55-1.85 (x 0.33-2.67, out to -0.86); a tapered stone hood (AshlarIn) from the lintel (x 0.34-2.66, y -0.83) to 3.40
+# (x 0.70-2.30, y -0.45), a chimney breast on up to the cornice line with a CAP top; the courses and the cornice die
+# into the hood. The Stone hearth's fire (logs, firedogs, embers, flame tongues), no spit or cauldron.
+# Cut: the lower metre -- cheeks, a front lintel course and cheek copings (CAP tops) with the cap course behind, the
+# firebox open from above so the fire shows.
+VKI_ASH_HEARTH = dict(firebox=(0.48, 2.52), mouth=1.55, back_y=-0.20, cheek=(0.33, 0.48), cheek_y=-0.80,
+                      lintel=(1.55, 1.85, 0.335, -0.86), hood=(1.84, 3.40, 0.34, 0.70, -0.83, -0.45), wall_y=-0.24,
+                      slab=(0.33, 2.67, -1.30, -0.80), cut_lintel_y=-0.62)
+# (everything proud of the wall stays within x 0.33-2.67: the nodes' post zones stay plain section, T3)
+VKI_ASH_HEARTH_FIRE = (1.50, -0.50)
+
+
+def vki_ash_hearth(k, height):
+    L = 3.0
+    full = height == "Full"
+    H = VKI_ASH_HEARTH
+    T2 = k.T / 2
+    fx0, fx1 = H["firebox"]; by = H["back_y"]; wy = H["wall_y"]
+    c0, c1 = VKI_ASH_COURSES[0]
+    tb = VKI_ASH_CORNICE[0] if full else c0
+    mt = H["mouth"] if full else c0                       # mouth top (Full 1.55, Cut 0.90)
+    p1 = vki_ash_body(k, 0.0, fx0, VKI_FOOT_Z, tb)       # piers
+    p2 = vki_ash_body(k, fx1, L, VKI_FOOT_Z, tb)
+    rec = k.body_box(fx0, fx1, VKI_FOOT_Z, mt, y0=by)     # the firebox's back, 5 cm into the wall
+    k.bm.normal_update()
+    for f in vki_faces_of(rec):
+        if f.normal.y < -0.7:
+            k.project([f], VKI_BRICK)
+    for vs_, sgn in ((p1, 1), (p2, -1)):                  # the firebox's sides in the piers
+        for f in vki_faces_of(vs_):
+            c = f.calc_center_median()
+            if f.normal.x * sgn > 0.7 and 0.0 <= c.z <= mt and c.y < 0:
+                k.project([f], VKI_BRICK)
+    for v in rec:
+        if abs(v.co.y - by) < 1e-4:
+            k.set_dark([v], 0.56 + 0.34 * vki_smoothstep(0.1, mt, v.co.z))
+    for vs_, xe in ((p1, fx0), (p2, fx1)):
+        for v in vs_:
+            if abs(v.co.x - xe) < 1e-4 and v.co.y < 0.0 and v.co.z <= mt + 1e-4:
+                k.set_dark([v], 0.52 + 0.34 * vki_smoothstep(0.1, mt, v.co.z))
+    ch0, ch1 = H["cheek"]; cy = H["cheek_y"]
+    cz = H["lintel"][0] + 0.05 if full else c0 + VKI_ASH_TUCK
+    for a, b in ((ch0, ch1), (L - ch1, L - ch0)):         # cheeks (DRESS), up into the lintel
+        vs = vki_tim_member(k, a, b, 0.0, cz, y0=cy, y1=wy, mi=DRESS, bev=0.015)
+        for v in vs:
+            if fx0 - 0.02 < v.co.x < fx1 + 0.02:
+                k.set_dark([v], 0.30 * vki_smoothstep(0.2, mt, v.co.z))
+    if full:
+        ab = vki_ash_body(k, fx0, fx1, mt, tb)            # the wall over the mouth
+        for f in vki_faces_of(ab):
+            if f.normal.z < -0.7:
+                k.project([f], VKI_BRICK)
+                k.set_dark(list(f.verts), 0.62)
+        l0, l1, lx, ly = H["lintel"]
+        vs = vki_tim_member(k, lx, L - lx, l0, l1, y0=ly, y1=wy + 0.005, mi=DRESS, bev=0.02)   # (its back 5 mm deeper
+                                                                                   # than the cheeks', T5S)
+        for v in vs:
+            if v.co.z < l0 + 0.03 and fx0 < v.co.x < fx1:
+                k.set_dark([v], 0.45)                     # the mouth's sooted soffit
+        h0, h1, hx0, hx1, hy0, hy1 = H["hood"]
+        vs, fs = vki_sto_hexa(k, [(hx0, hy0, h0), (L - hx0, hy0, h0), (L - hx0, wy, h0), (hx0, wy, h0),
+                                  (hx1, hy1, h1), (L - hx1, hy1, h1), (L - hx1, wy, h1), (hx1, wy, h1)], VKI_WALL_A)
+        k.project(fs, VKI_WALL_A)
+        top = VKI_ASH_CORNICE[1] + VKI_POST_TOP
+        vs2 = list(set(k.box((L / 2, (hy1 + wy) / 2, (h1 + top) / 2), (L - 2 * hx1, wy - hy1, top - h1), VKI_WALL_A,
+                             bevel=0)))
+        k.bm.normal_update()
+        bf = vki_faces_of(vs2)
+        k.project([f for f in bf if f.normal.z < 0.7], VKI_WALL_A)
+        for f in bf:
+            if f.normal.z > 0.7:
+                k.project([f], VKI_CAP)
+        for v in vs + vs2:                                # soot up the hood's front, strongest over the fire
+            k.set_dark([v], 0.34 * (1 - vki_smoothstep(0.3, 1.2, abs(v.co.x - 1.5))) *
+                       (1 - vki_smoothstep(h0 + 0.2, 3.6, v.co.z)))
+        def hood_x(z):                                     # the hood's side at height z
+            return hx0 + (hx1 - hx0) * (z - h0) / (h1 - h0)
+        vki_ash_course(k, 0.0, ch0 + 0.01, c0, c1)       # the first course dies into the cheeks
+        vki_ash_course(k, L - ch0 - 0.01, L, c0, c1)
+        c20, c21 = VKI_ASH_COURSES[1]                      # the second into the hood
+        vki_ash_course(k, 0.0, hood_x(c21) + 0.01, c20, c21)
+        vki_ash_course(k, L - hood_x(c21) - 0.01, L, c20, c21)
+        vki_ash_cornice(k, 0.0, hx1 + 0.01)                # the cornice into the chimney breast
+        vki_ash_cornice(k, L - hx1 - 0.01, L)
+        holes = vki_ash_course_holes(L) + [(ch0, 0.0, L - ch0, 4.6)]
+    else:
+        lx, ly = H["lintel"][2], H["lintel"][3]
+        vs = vki_tim_member(k, lx, L - lx, c0, c1, y0=ly, y1=H["cut_lintel_y"], mi=DRESS, top=VKI_CAP, bev=0.015)
+        for v in vs:
+            if v.co.z < c0 + 0.03 and fx0 < v.co.x < fx1:
+                k.set_dark([v], 0.45)
+        for a, b in ((ch0, ch1), (L - ch1, L - ch0)):     # cheek copings behind the lintel course
+            vki_tim_member(k, a, b, c0, c1, y0=H["cut_lintel_y"], y1=-VKI_ASH_HW + 0.005, mi=DRESS, top=VKI_CAP,
+                           bev=0.015)
+        vki_ash_course(k, 0.0, L, c0, c1)                  # the cap course runs on behind
+        holes = [(ch0, 0.0, L - ch0, c1)]
+    sx0, sx1, sy0, sy1 = H["slab"]                         # hearth slabs and the firebox floor
+    for a, b in ((sx0, 1.10), (1.10, 1.90), (1.90, sx1)):
+        vs = k.box(((a + b) / 2, (sy0 + sy1) / 2, 0.015), (b - a, sy1 - sy0, 0.03), DRESS, bevel=0.012)
+        for v in set(vs):
+            k.set_dark([v], 0.16 + 0.22 * vki_smoothstep(sy0, sy1, v.co.y) * (1 - vki_smoothstep(0.4, 1.2, abs(v.co.x - 1.5))))
+    k.set_dark(k.box((1.5, (sy1 + by) / 2, 0.0125), (fx1 - fx0 - 0.01, by - sy1, 0.035), DRESS, bevel=0.0), 0.38)
+    fcx, fcy = VKI_ASH_HEARTH_FIRE
+    k.set_dark(k.box((fcx, fcy, 0.045), (1.15, 0.46, 0.04), VKI_ASH, bevel=0.018, segs=2), 0.45)   # ash bed
+    for x in (fcx - 0.40, fcx + 0.40):                     # firedogs
+        k.box((x, fcy - 0.22, 0.15), (0.045, 0.045, 0.30), IRON, bevel=0.01)
+        k.box((x, fcy, 0.10), (0.04, 0.42, 0.04), IRON, bevel=0.008)
+        k.box((x, fcy - 0.24, 0.31), (0.07, 0.07, 0.03), IRON, bevel=0.01)
+    vki_sto_logs(k, fcx + 0.02, ((fcy + 0.08, 0.175, 0.07, 0.96, 0.05), (fcy - 0.09, 0.17, 0.065, 0.92, -0.06),
+                                 (fcy - 0.005, 0.29, 0.06, 0.76, 0.12)))
+    vki_sto_embers(k, fcx, fcy, 0.075, 12, 0.46, 0.20, 5501, hmax=0.85)
+    dx = fcx - 1.40
+    for (x, y, h, r, tilt, spin, bow) in VKI_STO_HEARTH_FLAMES:
+        vki_sto_flame(k, (x + dx, y + 0.02, 0.20), h * 1.1, r, tilt, spin, bow)
+    vki_sto_body_finish(k)
+    vki_ash_wobble(k, L, holes, tb)
+    k.meta.update(vki_class="wall", vki_special=1,
+                  vki_lights=[dict(type="POINT", role="hearth", pos=[fcx, -0.58, 0.95], w=480.0,
+                                   color=[1.0, .52, .22], range=9.0, flicker=1, shadows=1, radius=0.45)],
+                  vki_fx=[dict(fx="fire_large", pos=[fcx, fcy, 0.2])],
+                  vki_collider=[[1.5, 0.0, 1.1, 3.0, k.T, 2.2],
+                                [1.5, (sy0 + wy) / 2, 1.1, L - 2 * ch0, wy - sy0, 2.2]])
+
+
+def vki_ash_hearth_full(k): vki_ash_hearth(k, "Full")
+def vki_ash_hearth_cut(k): vki_ash_hearth(k, "Cut")
 
 
 # ---------------------------------------------------------------- Door_150 (2026-10-17, the monastery's side doors)
@@ -504,6 +648,10 @@ VKI_ASH_SPECS = [
     ("SM_VKI_Wall_Ashlar_DoorWide_300_Cut", vki_ash_doorwide_cut),
     ("SM_VKI_Wall_Ashlar_Door_150_Full", vki_ash_door1_full),
     ("SM_VKI_Wall_Ashlar_Door_150_Cut", vki_ash_door1_cut),
+    ("SM_VKI_Wall_Ashlar_Arch_300_Full", vki_ash_arch_full),
+    ("SM_VKI_Wall_Ashlar_Arch_300_Cut", vki_ash_arch_cut),
+    ("SM_VKI_Wall_Ashlar_Hearth_300_Full", vki_ash_hearth_full),
+    ("SM_VKI_Wall_Ashlar_Hearth_300_Cut", vki_ash_hearth_cut),
     ("SM_VKI_Post_Ashlar_Corner_Full", vki_ash_post_corner_full),
     ("SM_VKI_Post_Ashlar_Corner_Cut", vki_ash_post_corner_cut),
     ("SM_VKI_Post_Ashlar_Mid_Full", vki_ash_post_mid_full),

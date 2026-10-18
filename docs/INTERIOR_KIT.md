@@ -91,6 +91,8 @@ Full-height wide doors (2026-10-17) take `Leaf_Wide_Full_L/R` (Stone, the planks
 portal (a lintel at 2.20 and a tympanum under the arch) that takes `Leaf_Plank_Full` / `_Cut` at its socket. For
 abandoned places: `Leaf_Wide160_Full_Broken_L` and `Leaf_Plank_Full_Broken` hang ajar on their lower hinge, sagging,
 the meeting-edge plank gone and the next snapped -- static pieces (`vki_leaf_state` "broken"), placed at the socket.
+`Wall_Ashlar_Arch_300` is an open pointed arch (clear 1.9 m, no leaves, `vki_arch` 1) for cloister walks, nave
+arcades and a hall's screens passage; `Wall_Ashlar_Hearth_300` a hooded great-hall fireplace in the 4.5 m wall.
 
 **Stairs.** `Stair_Up_150x450_RailR` and `Stair_Down_150x450_RailR` share their origin and rotation on the two floors
 (rotation 0/±90, never 180). The up flight rises "through the ceiling"; the down stair is a hole with rails. They are
@@ -304,6 +306,10 @@ Generated from the masters in `VKI_Pieces` (triangles, footprint in 1.5 m cells,
 | `SM_VKI_Post_Ashlar_Mid_Full` | 232 | 1,1 | – |
 | `SM_VKI_Wall_Ashlar_DoorWide_300_Cut` | 492 | 2,1 | – |
 | `SM_VKI_Wall_Ashlar_DoorWide_300_Full` | 1828 | 2,1 | – |
+| `SM_VKI_Wall_Ashlar_Hearth_300_Cut` | 2330 | 2,1 | – |
+| `SM_VKI_Wall_Ashlar_Hearth_300_Full` | 3306 | 2,1 | – |
+| `SM_VKI_Wall_Ashlar_Arch_300_Cut` | 516 | 2,1 | – |
+| `SM_VKI_Wall_Ashlar_Arch_300_Full` | 1808 | 2,1 | – |
 | `SM_VKI_Wall_Ashlar_Door_150_Cut` | 400 | 1,1 | – |
 | `SM_VKI_Wall_Ashlar_Door_150_Full` | 1476 | 1,1 | – |
 | `SM_VKI_Wall_Ashlar_LancetTall_150_Full` | 1388 | 1,1 | – |

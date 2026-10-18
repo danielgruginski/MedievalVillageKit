@@ -1420,6 +1420,22 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     `DoorWide_300_Cut` lists `Leaf_Wide_Cut_L/R` though its leaves are the narrower `Leaf_Wide160_Cut` (the plans use
     Wide160).
 
+116. 2026-10-17 (the user, on the 4.5 m Ashlar wall: "follow your order" -- an open arch and a tall hearth first, the
+    castle's hall tried with the Ashlar walls before any tall Stone set). **`SM_VKI_Wall_Ashlar_Arch_300_Full`** (1,808
+    tris) / `_Cut` (516): `vki_ash_door` now takes a spec and `arch=True` (the wide door rebuilds identical) --
+    `VKI_ASH_ARCH`: clear x 0.55-2.45 (1.9 m), spring 2.20, apex 3.67, orders 0.14 / 0.24, body over the outer ring from
+    4.10; no leaf sockets, no exit trigger (`vki_arch` 1, `vki_nav` "door"). **`SM_VKI_Wall_Ashlar_Hearth_300_Full`**
+    (3,306) / `_Cut` (2,330; `vki_ash_hearth`, special): a hooded fireplace -- firebox x 0.48-2.52, 1.55 high, its back
+    5 cm into the wall (BRICK, sooted); DRESS cheeks to y -0.80 and a lintel 1.55-1.85; a tapered hood (AshlarIn,
+    `vki_sto_hexa`) from x 0.34-2.66 / y -0.83 at 1.84 to x 0.70-2.30 / y -0.45 at 3.40, a chimney breast on to 4.54
+    with a CAP top; the first course dies into the cheeks, the second into the hood, the cornice into the breast; the
+    Stone hearth's fire (logs, firedogs, embers, nine flame tongues 10% taller), no spit or cauldron; a hearth light
+    (480 W) and `fire_large` FX in its metadata. Cut: cheeks, a front lintel course and cheek copings (CAP tops), the cap
+    course behind, the fire open from above. T3 wants everything proud of the wall within x 0.33-2.67 (the posts' node
+    zones); T5S flagged the cheeks' backs and outer faces against the lintel (lintel back 5 mm deeper, ends at 0.335).
+    Test row: scene `WS_vki_doors`, y -7. Blender had Beasts' `hydra.blend` open (that session done, nothing unsaved):
+    switched back with the user's OK; a kit text pushed into it by mistake was removed before.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
