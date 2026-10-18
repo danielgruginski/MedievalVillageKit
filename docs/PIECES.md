@@ -495,11 +495,15 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VK_Prop_Pen` | 4.07 × 4.33 × 1.52 | 1,046 | 68 |
 | `SM_VK_Prop_WeighBeam` | 4.28 × 1.85 × 4.12 | 2,796 | 68 |
 
-### harbour: 22
+### harbour: 26
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
 | `SM_VK_Breakwater` | 3.29 × 7.15 × 4.33 | 1,160 | 68 |
+| `SM_VK_Dock_Chandlery` | 7.58 × 9.30 × 10.90 | 30,270 | 68 |
+| `SM_VK_Dock_CustomsHouse` | 11.70 × 8.70 × 11.75 | 39,624 | 68 |
+| `SM_VK_Dock_FishMarket` | 10.33 × 8.97 × 8.50 | 14,754 | 68 |
+| `SM_VK_Dock_Warehouse` | 8.97 × 11.77 × 10.41 | 35,258 | 68 |
 | `SM_VK_Breakwater_End` | 10.26 × 10.85 × 10.57 | 3,972 | 68 |
 | `SM_VK_Harbour_Bollard` | 0.42 × 0.42 × 0.61 | 224 | 68 |
 | `SM_VK_Harbour_Fender` | 0.32 × 0.25 × 2.44 | 528 | 68 |

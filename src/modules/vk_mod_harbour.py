@@ -493,6 +493,193 @@ def hbr_booth(k):
     hbr_anchor_geo(k,Matrix.Translation((0,-D/2-0.09,2.1)),0.12)
     sub=Kit(); prop_lantern(sub); merge_kit(k,sub,Matrix.Translation((-W/2-0.05,-D/2-0.2,1.9)))
 
+# ================================================================ ROUND 3: DOCK BUILDINGS (single pieces, front -Y)
+# Built from the kit's own walls (wall_stone_* / twn_wall_stoneup_* / twn_wall_stone_shop / timber_frame and their
+# corners) through mkt_put, as the market hall, so they match the houses round them; light roofs of their own on the
+# kit profile (roof_z).
+def hbr_face(k,pts,mi,want,uvs=None):
+    """one polygon facing roughly `want`; uvs: one per point (else projected)"""
+    vs=[k.bm.verts.new(p) for p in pts]; f=k.bm.faces.new(vs); f.material_index=mi; k.bm.normal_update()
+    if f.normal.dot(Vector(want))<0: f.normal_flip()
+    if uvs:
+        m={v:uv for v,uv in zip(vs,uvs)}
+        for l in f.loops: l[k.uv].uv=m[l.vert]
+    else: k.project([f],mi)
+    return f
+
+def hbr_roof_gable(k,A,ov=0.45,gable=STONE):
+    """gabled tile roof over a 2A x 6 m block (wall top at z 0, ridge along X) on the kit's profile (roof_z), the gables
+       overhanging ov with verge boards; gable: the triangle walls' material at x +-A (None: open gables)"""
+    T=TILE[ROOF]; W=TILE[WOOD]; drop=RT*1.2; ts=(0.0,HALF/2,HALF,EAVE); x0,x1=-A-ov,A+ov
+    nx=max(2,int(round((x1-x0)/1.5))); xs=[x0+(x1-x0)*i/nx for i in range(nx+1)]
+    for s in(-1,1):
+        for xa,xb in zip(xs[:-1],xs[1:]):
+            for ta,tb in zip(ts[:-1],ts[1:]):
+                za,zb=roof_z(ta),roof_z(tb)
+                hbr_face(k,((xa,s*ta,za),(xb,s*ta,za),(xb,s*tb,zb),(xa,s*tb,zb)),ROOF,(0,s*0.6,1),
+                         [(xa/T,slope_dist(ta)/T),(xb/T,slope_dist(ta)/T),(xb/T,slope_dist(tb)/T),(xa/T,slope_dist(tb)/T)])
+                hbr_face(k,((xa,s*ta,za-drop),(xb,s*ta,za-drop),(xb,s*tb,zb-drop),(xa,s*tb,zb-drop)),WOOD,(0,0,-1),
+                         [(xa/W,ta/W),(xb/W,ta/W),(xb/W,tb/W),(xa/W,tb/W)])
+            ze=roof_z(EAVE)
+            hbr_face(k,((xa,s*EAVE,ze),(xb,s*EAVE,ze),(xb,s*EAVE,ze-drop),(xa,s*EAVE,ze-drop)),WOOD,(0,s,0))
+        for x,sx in ((x0,-1),(x1,1)):                                     # the slab's ends, verge boards
+            for ta,tb in zip(ts[:-1],ts[1:]):
+                za,zb=roof_z(ta),roof_z(tb)
+                hbr_face(k,((x,s*ta,za),(x,s*tb,zb),(x,s*tb,zb-drop),(x,s*ta,za-drop)),WOOD,(sx,0,0))
+            def_beam(k,(x+sx*0.03,s*(EAVE+0.04),roof_z(EAVE)+0.04),(x+sx*0.03,0,RIDGE+0.06),0.07,0.3,WOOD,bevel=0.02)
+    n=max(1,int(round((x1-x0)/0.75)))
+    for i in range(n):
+        xa=x0+(x1-x0)*i/n; xb=x0+(x1-x0)*(i+1)/n
+        k.box(((xa+xb)/2,0,RIDGE+0.1),(xb-xa+0.04,0.36,0.36),ROOF,rot=(math.pi/4,0,0),bevel=0.1,segs=2)
+    if gable is not None:
+        prof=[(-HALF,0.0)]+[(y,max(0.0,roof_z(abs(y))-drop-0.03)) for y in (-HALF/2,0.0,HALF/2)]+[(HALF,0.0)]
+        for x in(-A,A):
+            for xf,want in ((x+0.25*(1 if x>0 else -1),(1 if x>0 else -1,0,0)),(x-0.25*(1 if x>0 else -1),(-1 if x>0 else 1,0,0))):
+                hbr_face(k,[(xf,y,z) for (y,z) in prof],gable,want)
+
+def hbr_hoist(k,drop=1.7):
+    """a hoist beam out of a gable (origin on the wall line at the wall top, out -Y), its rope and a hanging bale
+       `drop` below the wall top"""
+    k.box((0,-0.95,1.42),(0.2,1.6,0.2),WOOD,bevel=0.04,segs=2)
+    k.box((0,-1.78,1.42),(0.26,0.06,0.26),WOOD,bevel=0.02)
+    def_beam(k,(0,-1.62,1.52),(0,-0.3,1.95),0.035,0.035,IRON,bevel=0)
+    k.box((0,-1.55,1.24),(0.1,0.12,0.18),IRON,bevel=0.015)
+    ring(k,(0,-1.55,1.12),0.04,0.15,0.07,WOOD,n=12,axis="X")
+    wat_rope(k,[(0,-1.7,1.1),(0,-1.7,-drop+0.35)],0.022,HAY)
+    wat_rope(k,[(0,-1.4,1.1),(0,-1.4,0.4)],0.022,HAY)
+    wat_annulus(k,(0,-1.7,-drop+0.3),0.03,0.06,0.025,IRON,n=8,axis="X")
+    k.box((0,-1.7,-drop-0.05),(0.7,0.55,0.55),BURLAP,bevel=0.08,segs=2)
+    for dx in(-0.18,0.18): k.box((dx,-1.7,-drop-0.05),(0.04,0.57,0.57),HAY,bevel=0.01)
+    for s in(-1,1): wat_rope(k,[(0,-1.7,-drop+0.28),(s*0.3,-1.7,-drop+0.22)],0.015,HAY)
+
+def hbr_corners(k,L,D,z,fn):
+    for (x,y,r) in ((-L/2,-D/2,0),(L/2,-D/2,90),(L/2,D/2,180),(-L/2,D/2,-90)): mkt_put(k,fn,x,y,z,r)
+
+def hbr_warehouse(k):
+    """a two-storey stone warehouse, its gable to the quay (-Y): the cart door below, the loading door above with the
+       hoist beam out of the gable and a bale on the rope, small windows; 6 x 9 m, ridge 9.6 m"""
+    L,D=6.0,9.0; top=H1+H2
+    mkt_put(k,wall_stone_door,-1.5,-D/2,0,0); mkt_put(k,wall_stone_window,1.5,-D/2,0,0)
+    mkt_put(k,twn_wall_stoneup_loading,-1.5,-D/2,H1,0); mkt_put(k,lambda sb: twn_wall_stoneup_window(sb,False),1.5,-D/2,H1,0)
+    mkt_put(k,wall_stone_plain,-1.5,D/2,0,180); mkt_put(k,wall_stone_window,1.5,D/2,0,180)
+    mkt_put(k,twn_wall_stoneup,-1.5,D/2,H1,180); mkt_put(k,twn_wall_stoneup_slit,1.5,D/2,H1,180)
+    for sx,r in ((-1,-90),(1,90)):
+        for y,g,u in ((-3.0,wall_stone_plain,twn_wall_stoneup),(0.0,wall_stone_window,twn_wall_stoneup_slit),(3.0,wall_stone_plain,twn_wall_stoneup)):
+            mkt_put(k,g,sx*L/2,y,0,r); mkt_put(k,u,sx*L/2,y,H1,r)
+    hbr_corners(k,L,D,0,corner_stone); hbr_corners(k,L,D,H1,twn_corner_stoneup)
+    mkt_put(k,lambda sb: hbr_roof_gable(sb,D/2),0,0,top,90)
+    mkt_put(k,lambda sb: hbr_hoist(sb,drop=1.9),-1.5,-D/2,top,0)
+    k.box((-1.5,-D/2-0.55,0.06),(2.4,0.7,0.12),STONE_BLOCK,bevel=0.03)                          # the door's stoop
+
+def hbr_fish_market(k):
+    """the covered fish market: an open timber shed on stone pads (9 x 6), a flagged floor, a gabled tile roof, two rows
+       of stone-topped tables with crates and baskets of fish, a hanging balance, a trough, a fish sign on the gable"""
+    A=4.5; zt=3.2
+    k.box((0,0,-0.24),(9.8,6.8,0.72),ASHLAR,bevel=0.04)                                        # floor 0.12
+    for x in(-4.5,-1.5,1.5,4.5):
+        for y in(-3.0,3.0):
+            k.box((x,y,0.22),(0.5,0.5,0.2),STONE_BLOCK,bevel=0.04)
+            k.box((x,y,(0.32+zt)/2),(0.26,0.26,zt-0.32),WOOD,bevel=0.04)
+            for s in(-1,1):
+                if abs(x+s*1.0)<=4.5: def_beam(k,(x,y,zt-0.9),(x+s*0.85,y,zt-0.12),0.12,0.12,WOOD)
+        k.box((x,0,zt-0.08),(0.22,6.4,0.24),WOOD,bevel=0.03)                                      # tie beams
+    for y in(-3.0,3.0): k.box((0,y,zt+0.06),(9.4,0.3,0.3),WOOD,bevel=0.04)                       # wall plates
+    mkt_put(k,lambda sb: hbr_roof_gable(sb,A,ov=0.6,gable=None),0,0,zt+0.2,0)
+    rnd=random.Random(12)
+    for y in(-1.25,1.25):                                                                         # tables
+        for x in(-3.0,0.0,3.0):
+            k.box((x,y,0.9),(2.6,0.9,0.1),STONE_BLOCK,bevel=0.02)
+            for dx in(-1.0,1.0):
+                for dy in(-0.3,0.3): k.box((x+dx,y+dy,0.5),(0.1,0.1,0.75),WOOD,bevel=0.01)
+            for j in range(2):
+                wat_fish_crate(k,Matrix.Translation((x-0.6+1.2*j,y+rnd.uniform(-0.1,0.1),0.95))@Matrix.Rotation(rnd.uniform(-0.2,0.2),4,"Z"),seed=int(x*10+y*3+j),n=3)
+        for x in(-4.0,1.6): wat_basket(k,Matrix.Translation((x,y*1.55,0.12)),fish=x<0,seed=int(x))
+    for i in range(3):                                                                            # loose fish
+        wat_fish(k,Matrix.Translation((-0.3+0.12*i,-1.3,0.99))@Matrix.Rotation(rnd.uniform(0,6.28),4,"Z")@Matrix.Rotation(math.pi/2,4,"X"),0.4)
+    def_beam(k,(1.5,0,zt-0.2),(1.5,0,zt-0.9),0.025,0.025,IRON,bevel=0)                            # the balance
+    k.box((1.5,0,zt-0.92),(0.9,0.05,0.05),IRON,bevel=0)
+    for s in(-1,1):
+        wat_rope(k,[(1.5+s*0.44,0,zt-0.92),(1.5+s*0.44,0,zt-1.45)],0.01,IRON)
+        _cyl(k,(1.5+s*0.44,0,zt-1.47),0.16,0.18,0.04,10,BRONZE)
+    mkt_put(k,prop_trough,-3.6,2.8,0.12,0)
+    for sx in(-1,1): k.box((sx*A,0,zt+(0.2+RIDGE)/2),(0.2,0.2,0.2+RIDGE),WOOD,bevel=0.03)        # gable king posts
+    k.box((A+0.13,0,zt+1.4),(0.06,1.4,0.6),WOOD,bevel=0.02)                                      # the sign
+    wat_fish(k,Matrix.Translation((A+0.2,0,zt+1.4))@Matrix.Rotation(math.pi/2,4,"Z"),1.1)
+
+def hbr_chandlery(k):
+    """the ship chandler's: a stone shop below (its counter down, the shutter up as an awning) with rope, lanterns and
+       a small anchor on the counter, a timber storey above, a gabled roof, an anchor sign on an iron bracket, barrels,
+       a coil and oars outside; 6 x 6 m"""
+    L,D=6.0,6.0; top=H1+H2
+    mkt_put(k,twn_wall_stone_shop,-1.5,-D/2,0,0); mkt_put(k,wall_stone_door,1.5,-D/2,0,0)
+    mkt_put(k,wall_stone_plain,-1.5,D/2,0,180); mkt_put(k,wall_stone_window,1.5,D/2,0,180)
+    for sx,r in ((-1,-90),(1,90)):
+        mkt_put(k,wall_stone_window,sx*L/2,-1.5,0,r); mkt_put(k,wall_stone_plain,sx*L/2,1.5,0,r)
+    W_=lambda sb: timber_frame(sb,True); P_=lambda sb: timber_frame(sb); X_=lambda sb: timber_frame(sb,False,"X")
+    mkt_put(k,W_,-1.5,-D/2,H1,0); mkt_put(k,W_,1.5,-D/2,H1,0)
+    mkt_put(k,P_,-1.5,D/2,H1,180); mkt_put(k,W_,1.5,D/2,H1,180)
+    for sx,r in ((-1,-90),(1,90)): mkt_put(k,X_,sx*L/2,-1.5,H1,r); mkt_put(k,W_,sx*L/2,1.5,H1,r)
+    hbr_corners(k,L,D,0,corner_stone); hbr_corners(k,L,D,H1,mkt_corner_post)
+    mkt_put(k,lambda sb: hbr_roof_gable(sb,L/2,gable=PLASTER),0,0,top,0)
+    yc=-D/2-0.55; zc=TWN_CZ                                                                       # the counter's wares
+    for i,x in enumerate((-2.3,-1.85)): ring(k,(x,yc,zc+0.05+0.06*i),0.06,0.17,0.06,HAY,n=12,axis="Z")
+    ring(k,(-2.05,yc,zc+0.2),0.06,0.16,0.06,HAY,n=12,axis="Z")
+    for x in(-1.3,-1.0):                                                                          # lanterns
+        k.box((x,yc,zc+0.13),(0.13,0.13,0.2),GLOW,bevel=0.01)
+        for z in(zc+0.02,zc+0.25): k.box((x,yc,z),(0.17,0.17,0.04),IRON,bevel=0.01)
+        wat_annulus(k,(x,yc,zc+0.31),0.03,0.05,0.015,IRON,n=8,axis="Y")
+    hbr_anchor_geo(k,Matrix.Translation((-0.65,yc,zc+0.02))@Matrix.Rotation(math.pi/2,4,"Y")@Matrix.Rotation(0.3,4,"X"),0.22)
+    def_beam(k,(0.2,-D/2-0.25,3.5),(0.2,-D/2-1.25,3.5),0.05,0.05,IRON,bevel=0)                   # sign bracket
+    def_beam(k,(0.2,-D/2-0.25,3.0),(0.2,-D/2-0.95,3.48),0.035,0.035,IRON,bevel=0)
+    k.box((0.2,-D/2-0.8,3.05),(0.05,0.8,0.62),WOOD,bevel=0.015)
+    for y in(-D/2-0.5,-D/2-1.1): wat_rope(k,[(0.2,y,3.48),(0.2,y,3.36)],0.012,IRON)
+    hbr_anchor_geo(k,Matrix.Translation((0.23,-D/2-0.8,2.83))@Matrix.Rotation(math.pi/2,4,"Z"),0.2)
+    for (x,y) in ((2.6,-3.6),(2.5,-4.25)): barrel(k,x,y,0,0.32,0.85)
+    for i in range(3):
+        a=i*0.55; ring(k,(-2.5+0.05*i,-D/2-1.5,0.04+0.06*i),0.12,0.32,0.07,HAY,n=14,axis="Z")
+    for x in(0.6,0.85): wat_oar(k,(x,-D/2-0.32,0.0),(x+0.05,-D/2-0.12,2.4))
+
+def hbr_customs_house(k):
+    """the customs house: an open ashlar loggia of three arches on the quay side where goods are declared (a table with
+       the ledger and a balance, bales and crates under declaration), a stone upper storey with windows, the city's
+       banners on iron poles, a hipped tile roof; 9 x 6 m"""
+    A=4.5; D=3.0; GH=MKT_GH; top=GH+H2
+    k.box((0,0,-0.24),(2*A+0.9,2*D+0.9,0.72),ASHLAR,bevel=0.04)
+    mkt_put(k,lambda sb: mkt_arcade(sb,2*A+2*MKT_T,D,(-3.0,0.0,3.0),MKT_HW,True,seed=11),0,0,0,0)
+    k.box((0,-D,GH-0.1),(2*A+0.8,0.8,0.24),STONE_BLOCK,bevel=0.04)                              # string course
+    for x,fn in ((-3.0,wall_stone_window),(0.0,wall_stone_door),(3.0,wall_stone_window)):       # the loggia's back
+        mkt_put(k,fn,x,-0.5,0,0); mkt_put(k,fn if fn is not wall_stone_door else wall_stone_window,x,D,0,180)
+    for sx,r in ((-1,-90),(1,90)):
+        mkt_put(k,wall_stone_plain,sx*A,-1.5,0,r); mkt_put(k,wall_stone_window,sx*A,1.5,0,r)
+    for y0,y1 in ((-0.75,-0.25),(D-0.25,D+0.25)): k.box((0,(y0+y1)/2,(H1+GH)/2),(2*A,y1-y0,GH-H1),STONE,bevel=0)
+    for sx in(-1,1): k.box((sx*A,0,(H1+GH)/2),(0.5,2*D-0.6,GH-H1),STONE,bevel=0)
+    for (x,y,r) in ((A,D,180),(-A,D,-90)): mkt_put(k,corner_stone,x,y,0,r)
+    for (x,y) in ((A,D),(-A,D)): k.box((x-0.0,y,(H1+GH)/2),(0.8,0.8,GH-H1),STONE,bevel=0)
+    k.box((0,-1.6,GH-0.1),(2*A-0.6,1.8,0.2),PLANKS,bevel=0)                                     # loggia ceiling
+    for x in(-1.5,1.5): k.box((x,-1.6,GH-0.32),(0.28,1.9,0.26),WOOD,bevel=0.03)
+    for x in(-3.0,0.0,3.0): mkt_put(k,lambda sb: twn_wall_stoneup_window(sb,True),x,-D,GH,0)
+    mkt_put(k,twn_wall_stoneup,-3.0,D,GH,180); mkt_put(k,twn_wall_stoneup_window,0.0,D,GH,180); mkt_put(k,twn_wall_stoneup,3.0,D,GH,180)
+    for sx,r in ((-1,-90),(1,90)): mkt_put(k,twn_wall_stoneup_window,sx*A,-1.5,GH,r); mkt_put(k,twn_wall_stoneup,sx*A,1.5,GH,r)
+    hbr_corners(k,2*A,2*D,GH,twn_corner_stoneup)
+    mkt_put(k,lambda sb: mkt_roof(sb,A),0,0,top,0)
+    for x in(-1.5,1.5):                                                                           # banners
+        wat_rod(k,(x,-D-0.2,GH+2.3),(x,-D-0.95,GH+2.3),0.03,0.03,6,IRON)
+        k.box((x,-D-0.85,GH+1.45),(0.7,0.03,1.6),CLOTH_A,bevel=0.01)
+        k.box((x,-D-0.87,GH+0.68),(0.7,0.035,0.08),YELLOW,bevel=0.005)
+        _cyl(k,(x,-D-0.88,GH+1.55),0.17,0.17,0.012,12,YELLOW,rot=Matrix.Rotation(math.pi/2,4,"X"))
+    k.box((0,-1.4,0.85),(1.8,0.8,0.08),PLANKS,bevel=0.02)                                        # the officer's table
+    for sx in(-0.8,0.8):
+        for sy in(-1.75,-1.05): k.box((sx,sy,0.47),(0.08,0.08,0.75),WOOD,bevel=0.01)
+    _book(k,-0.4,-1.45,0.89,0.4,0.28,0.06,CLOTH_A,0.15)
+    _cyl(k,(0.45,-1.4,0.91),0.05,0.06,0.04,8,BRONZE); k.box((0.45,-1.4,1.1),(0.02,0.02,0.36),BRONZE,bevel=0)
+    k.box((0.45,-1.4,1.27),(0.4,0.02,0.02),BRONZE,bevel=0)
+    for s in(-1,1): _cyl(k,(0.45+s*0.19,-1.4,1.13),0.08,0.08,0.02,8,BRONZE)
+    _cyl(k,(0,-0.9,0.45),0.22,0.24,0.06,10,WOOD)
+    for i in range(3): k.box((math.cos(i*2.1)*0.15,-0.9+math.sin(i*2.1)*0.15,0.22),(0.05,0.05,0.44),WOOD,bevel=0.01)
+    for i,(x,y) in enumerate(((-3.2,-1.6),(-2.6,-1.3),(3.0,-1.6))):
+        k.box((x,y,0.42),(0.72,1.0,0.6),BURLAP,rot=(0,0,0.2*i),bevel=0.1,segs=2)
+    for (x,y,s) in ((2.4,-1.2,0.7),(2.6,-2.0,0.6)): k.box((x,y,0.12+s/2),(s,s,s),WOOD,bevel=0.03)
+
 # ================================================================ SPECS
 WS_SPECS=[
     ("SM_VK_Harbour_Bollard",hbr_bollard,dict(wobble=False,grime=False)),
@@ -517,5 +704,9 @@ WS_SPECS=[
     ("SM_VK_Harbour_TarCauldron",hbr_tar_cauldron,dict(wobble=False,grime=True)),
     ("SM_VK_Ship_Hull_Stocks",hbr_hull_stocks,dict(wobble=False,grime=True)),
     ("SM_VK_Harbour_Booth",hbr_booth,dict(wobble=False,grime=True)),
+    ("SM_VK_Dock_Warehouse",hbr_warehouse,dict(wobble=False,grime=True)),
+    ("SM_VK_Dock_FishMarket",hbr_fish_market,dict(wobble=False,grime=True)),
+    ("SM_VK_Dock_Chandlery",hbr_chandlery,dict(wobble=False,grime=True)),
+    ("SM_VK_Dock_CustomsHouse",hbr_customs_house,dict(wobble=False,grime=True)),
 ]
 EXTRA_SPECS+=WS_SPECS

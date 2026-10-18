@@ -1700,6 +1700,19 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     Shaders compile with no messages; **not seen rendered** (no Unity renders by the editor rules): look at the test
     scene and tune `M_VKT_Sea`.
 
+131. 2026-10-18 (the user: dock buildings, "this thread is for modelling, another one is building the city"). Round 3 in
+    `vk_mod_harbour`, single pieces built from the kit's own walls through `mkt_put` (they match the houses), front -Y:
+    **`SM_VK_Dock_Warehouse`** (6 x 9, gable to the quay: cart door, the loading door above, a hoist beam out of the
+    gable with a bale on the rope; 35k), **`SM_VK_Dock_FishMarket`** (open timber shed 9 x 6 on stone pads, flagged
+    floor, stone-topped tables with crates of fish, a hanging balance, trough, fish sign; 15k), **`SM_VK_Dock_Chandlery`**
+    (6 x 6: stone shopfront with counter and awning, rope, lanterns and an anchor on the counter, timber storey, anchor
+    sign on a bracket, barrels, coils, oars; 30k) and **`SM_VK_Dock_CustomsHouse`** (9 x 6: a three-arch ashlar loggia on
+    the quay side with the officer's table, ledger and balance, goods under declaration, stone upper storey, the city's
+    banners, hipped roof; 40k). New light gable roof `hbr_roof_gable` (planar on the roof_z profile, verge boards,
+    gable triangles in a wall material or open). The stone walls' grid-cut panels are most of the weight (as in the
+    town's houses). Built in a background Blender (the live one held another session's scene); exported; prefabs built
+    (VK/Dock); not placed (the city session's maps).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
