@@ -1436,6 +1436,19 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     Test row: scene `WS_vki_doors`, y -7. Blender had Beasts' `hydra.blend` open (that session done, nothing unsaved):
     switched back with the user's OK; a kit text pushed into it by mistake was removed before.
 
+117. 2026-10-17 (the user: "proceed" -- the castle's hall tried with the Ashlar walls before any tall Stone set).
+    **`VKI_Castle_Hall`** (new text `vki_rooms_castle`, loaded after `vki_rooms_mine`): the great hall, 10 x 6 cells
+    (15 x 9 m), Ashlar perimeter with pillar corners and side rhythm posts -- the hooded hearth (`S1` =
+    `Wall_Ashlar_Hearth_300_Full`) in the north wall between four tall lancets, lancets in the side walls, the wide exit
+    south; trestle tables with forms down both sides, an open aisle with a rug, pricket candles by the hearth, a weapon
+    rack and an armour stand west, a chest east; FlagWarm floor, Day preset. `vki_check`: 0 errors (palette and R-occ6
+    window warnings only). `SM_VK_Prop_ArmorStand` joins `VKI_REUSE` (wall_floor, hug; code AS). Game shot:
+    `renders/interior/VKI_Castle_Hall/`. **Verdict:** the Ashlar walls carry a castle hall -- no tall Stone set needed
+    for now. **Castle gaps it shows:** the lancets' stained glass reads as a chapel (a plain leaded-glass style for the
+    lancets would fix it), and the hall wants a lord's chair or throne (only the dwarf throne exists), a high table on
+    a dais (the chapel's dais pieces), banners or tapestries on the walls, a chandelier; the towers want a spiral
+    stair.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

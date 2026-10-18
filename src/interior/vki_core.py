@@ -16,7 +16,7 @@ VKI_RENDERS = os.path.join(VKI_ROOT, "renders", "interior")
 VKI_TEXTS = ["vki_fam_timber", "vki_floors", "vki_fam_stone", "vki_fam_board", "vki_fam_wattle", "vki_fam_ashlar",
              "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_fam_sewer", "vki_fam_water", "vki_fam_dwarf", "vki_props_home", "vki_props_tavern",
              "vki_props_smithy", "vki_props_chapel", "vki_props_dungeon", "vki_props_adventure", "vki_props_lair", "vki_props_orc", "vki_props_library",
-             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_rooms_dwarf", "vki_props_poi", "vki_props_debris", "vki_fam_mine", "vki_rooms_mine", "vki_world", "vki_test"]
+             "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_rooms_dwarf", "vki_props_poi", "vki_props_debris", "vki_fam_mine", "vki_rooms_mine", "vki_rooms_castle", "vki_world", "vki_test"]
 
 
 VKI_CORE_TEXTS = ("vki_fam_timber", "vki_floors", "vki_test")    # a failure here raises; package texts only warn
@@ -1238,6 +1238,7 @@ VKI_REUSE = {             # §5.5 exterior props reused indoors (masters stay in
     "SM_VK_Prop_Bellows": dict(fp=(2, 1), mount="floor", note="industry version, nozzle -X; rot 180 west of a forge"),
     "SM_VK_Prop_Anvil": dict(fp=(1, 1), mount="floor"),
     "SM_VK_Prop_WeaponRack": dict(fp=(1, 1), mount="wall_floor", hug=True),
+    "SM_VK_Prop_ArmorStand": dict(fp=(2, 1), mount="wall_floor", hug=True, note="the training yard's; a castle hall"),
     "SM_VK_Prop_Grindstone": dict(fp=(1, 1), mount="wall_floor"),
     "SM_VK_Prop_BarrelStack": dict(fp=(2, 1), mount="wall_floor"),
     "SM_VK_Prop_Sawhorse": dict(fp=(1, 1), mount="floor"),
