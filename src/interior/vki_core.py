@@ -15,7 +15,7 @@ VKI_RENDERS = os.path.join(VKI_ROOT, "renders", "interior")
 # load order of the package texts (vki_tex / vki_textiles are generators, executed on demand, not listed)
 VKI_TEXTS = ["vki_fam_timber", "vki_floors", "vki_fam_stone", "vki_fam_board", "vki_fam_wattle", "vki_fam_ashlar",
              "vki_links", "vki_fam_dungeon", "vki_fam_ancient", "vki_fam_cave", "vki_fam_cavewall", "vki_fam_sewer", "vki_fam_water", "vki_fam_dwarf", "vki_props_home", "vki_props_tavern",
-             "vki_props_smithy", "vki_props_chapel", "vki_props_dungeon", "vki_props_adventure", "vki_props_lair", "vki_props_orc", "vki_props_library", "vki_props_monastery",
+             "vki_props_smithy", "vki_props_chapel", "vki_props_dungeon", "vki_props_adventure", "vki_props_lair", "vki_props_orc", "vki_props_library", "vki_props_monastery", "vki_props_castle",
              "vki_rooms", "vki_rooms_dungeon", "vki_rooms_adventure", "vki_rooms_sewer", "vki_rooms_water", "vki_rooms_dwarf", "vki_props_poi", "vki_props_debris", "vki_fam_mine", "vki_rooms_mine", "vki_rooms_castle", "vki_rooms_monastery", "vki_world", "vki_test"]
 
 
@@ -704,6 +704,7 @@ VKI_MAT_MAP = {
     "M_VKI_Daylight": dict(kind="daylight", col=(.80, .86, .95), strength=0.8),
     "M_VKI_Stained_In": dict(kind="stained", tex="T_VK_Stained", emission=1.8),
     "M_VKI_Stained_Night": dict(kind="stained", tex="T_VK_Stained", emission=0.4),
+    "M_VKI_Leaded_In": dict(kind="stained", tex="T_VK_Leaded", emission=1.0),      # plain glazing (castle)
     "M_VKI_FX_Light": dict(kind="fx", col=(1.0, .93, .78), strength=0.6, alpha=0.15),
     # dungeon kit (docs/DUNGEON_KIT.md): big coursed blocks and worn slabs (vki_tex_dungeon), dressed stone and caps
     # from T_VKI_StoneBlockIn (the caps stay a step paler than the walls so the cutaway outline reads in the dark)
@@ -765,6 +766,7 @@ VKI_MAT_MAP = {
     # cores went peach under AgX)
     "M_VKI_LavaCrust": dict(kind="flat", col=(0.035, 0.026, 0.022), rough=0.9, emit=(1.0, 0.14, 0.01), strength=0.12),
     "M_VKI_BannerRed": dict(kind="flat", col=(0.36, 0.035, 0.03), rough=0.9),               # the clan banners' cloth
+    "M_VKI_BannerBlue": dict(kind="flat", col=(0.03, 0.07, 0.30), rough=0.9),               # the castle's arms
     # points of interest (vki_props_poi): the necromancer's sigil, a pure green emitter
     "M_VKI_RuneGlow": dict(kind="flat", col=(0.0, 0.0, 0.0), rough=1.0, emit=(0.22, 1.0, 0.30), strength=1.0),
     # debris (vki_props_debris): forge slag, glassy black
@@ -799,7 +801,7 @@ VKI_STYLE_MATS = {
     "window": {"Day": "M_VKI_Window_Day", "Window_Day": "M_VKI_Window_Day", "Night": "M_VKI_Window_Night",
                "Window_Night": "M_VKI_Window_Night", "Daylight": "M_VKI_Daylight", "Plain": "M_VK_Window"},
     "stained": {"In": "M_VKI_Stained_In", "Stained_In": "M_VKI_Stained_In", "Night": "M_VKI_Stained_Night",
-                "Stained_Night": "M_VKI_Stained_Night"},
+                "Stained_Night": "M_VKI_Stained_Night", "Leaded": "M_VKI_Leaded_In"},
     "glow": {"GlowIn": "M_VKI_GlowIn", "Glow": "M_VK_Glow"},
     "water": {"Water": "M_VK_Water", "Ale": "M_VKI_Ale", "WaterMurky": "M_VKI_WaterMurky", "Puddle": "M_VKI_Puddle",
               "SewerWater": "M_VKI_SewerWater", "Sludge": "M_VKI_Sludge", "StreamWater": "M_VKI_StreamWater",

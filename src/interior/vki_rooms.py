@@ -1364,6 +1364,8 @@ def vki_rooms_wall_style(L, pc):
         st.update(R["special_style"])
     if pc["kind"] == "Window" and pc["height"] == "Full" and R.get("window_style"):
         st.update(R["window_style"])
+    if pc["kind"] in ("Lancet", "LancetTall") and R.get("lancet_style"):     # e.g. {"stained": "Leaded"}
+        st.update(R["lancet_style"])
     return st
 
 

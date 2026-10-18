@@ -291,6 +291,20 @@ def gen_stained(S=512,seed=92,tile=1.0,depth=0.008):
     rough=np.clip(0.12+0.5*lm,0,1)
     PBR_SETS["T_VK_Stained"]=dict(depth=depth,tile=tile)
     return write_set("T_VK_Stained",col.astype(f32),h,rough,depth,tile,ao_in_albedo=0.15)
+def gen_leaded(S=512,seed=94,tile=1.0,depth=0.008):
+    """plain leaded glazing (2026-10-18, castle halls): the stained set's diamond lattice, pale crown-glass quarries
+    (greenish to straw, a little seedy), each quarry its own shade"""
+    x,y,lead,ia,ib=lattice(S,5)
+    lm=1-smooth(0.035,0.055,lead)
+    pal=np.array([(0.62,0.68,0.60),(0.58,0.64,0.60),(0.66,0.66,0.56),(0.60,0.66,0.64),(0.64,0.68,0.58),(0.56,0.62,0.56)],f32)
+    hsh=(ia*5+ib*11+(ia*ib)%3)%len(pal)
+    glow=0.80+0.25*smooth(0.05,0.3,lead)
+    col=pal[hsh]*glow[...,None]*(0.92+0.10*fbm(S,2.6,seed,fmin=3,fmax=60)[...,None])
+    col=col*(1-lm[...,None])+np.array([0.07,0.07,0.08],f32)*lm[...,None]
+    h=blur(np.clip(0.4+0.2*smooth(0.04,0.3,lead)+0.03*fbm(S,8.0,seed+1,fmin=20,fmax=120)+0.55*lm,0,1),0.6)
+    rough=np.clip(0.10+0.5*lm,0,1)
+    PBR_SETS["T_VK_Leaded"]=dict(depth=depth,tile=tile)
+    return write_set("T_VK_Leaded",col.astype(f32),h,rough,depth,tile,ao_in_albedo=0.15)
 def gen_iron(S=512,seed=93,tile=0.5,depth=0.004):
     rng=np.random.default_rng(seed); x,y=grid(S)
     F1,F2,ID=voronoi(x,y,rng.uniform(0,1,(60,2)))

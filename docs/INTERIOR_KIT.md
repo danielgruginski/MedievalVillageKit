@@ -92,6 +92,8 @@ portal (a lintel at 2.20 and a tympanum under the arch) that takes `Leaf_Plank_F
 abandoned places: `Leaf_Wide160_Full_Broken_L` and `Leaf_Plank_Full_Broken` hang ajar on their lower hinge, sagging,
 the meeting-edge plank gone and the next snapped -- static pieces (`vki_leaf_state` "broken"), placed at the socket.
 A test castle hall from these pieces: scene `VKI_Castle_Hall` (`vki_rooms_castle`).
+Castle furniture and hangings (`vki_props_castle`, 2026-10-18): `Prop_Throne_Castle`, `Prop_Chair_Carved`, `Prop_Table_High_300`, `Prop_Hanging_Estate_240`,
+`Prop_Tapestry_300`, `Prop_Banner_Castle`, `Prop_Chandelier_Ring`, `Prop_Display_Arms`; plain leaded lancets through a room's `lancet_style` (`{"stained": "Leaded"}`).
 The abandoned monastery (`vki_props_monastery`, scene `VKI_Monastery_Church`): `Prop_ChoirStall_300`, `Prop_Pew_300_Broken` / `_Overturned`, `Prop_FallenBeam`,
 `Prop_Desk_Scriptorium`, `Overlay_GlassShards`, and the broken lancets `Wall_Ashlar_Lancet_150_Full_Broken` / `LancetTall_150_Full_Broken`.
 Abandoned twins: `Prop_Altar_300_Stripped`, `Prop_CandleStand_Pricket_Fallen`, `Prop_Desk_Scriptorium_Fallen`, `Prop_Bookcase_150_Ransacked`,

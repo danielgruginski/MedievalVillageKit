@@ -363,6 +363,8 @@ namespace MedievalKit
                 foreach (var kv in ss) st[kv.Key] = (string)kv.Value;
             if (pc.kind == "Window" && pc.height == "Full" && R["window_style"] is JObject ws)
                 foreach (var kv in ws) st[kv.Key] = (string)kv.Value;
+            if ((pc.kind == "Lancet" || pc.kind == "LancetTall") && R["lancet_style"] is JObject ls)   // e.g. leaded glass
+                foreach (var kv in ls) st[kv.Key] = (string)kv.Value;
             return st;
         }
 

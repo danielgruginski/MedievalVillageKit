@@ -1513,6 +1513,27 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     `vki_ash_new(k, build, M)` (a temporary int layer marks the old vertices; moves and drops the new part).
     Wall-hung props are placed in front of their wall (the host search looks ahead of the point), not on its line.
 
+121. 2026-10-18 (the user: "now the castle pieces?" -- the castle hall's gaps). New text **`vki_props_castle`** (after
+    `vki_props_monastery`, package "castle"): **`Prop_Throne_Castle`** (924 tris: dark-oak chair of estate, gilt
+    finials, knobs and roundel, red cushion, footstool; `vki_seats`), **`Prop_Chair_Carved`** (724: the high table's
+    chairs), **`Prop_Table_High_300`** (the trestle table under a white linen cloth falling 0.30 at the front and ends,
+    a red runner from the atlas' `runner` cell; `vki_table_z` on the runner), **`Prop_Hanging_Estate_240`** (the cloth
+    of estate: the atlas' `hanging_heraldic` cell on an iron rod at 2.84, behind the throne), **`Prop_Tapestry_300`**
+    (the spec's P2 piece at last: `tapestry_millefleur`, `vki_mount_ref` top, rod at H - 0.25), **`Prop_Banner_Castle`**
+    (swallow-tailed, per pale red / blue with the chevron and crosses gilt, rod at H - 0.35), **`Prop_Chandelier_Ring`**
+    (eight candles at 2.60, chains to 4.30, one 160 W light, no collider) and **`Prop_Display_Arms`** (heater shield in
+    the arms over two crossed swords). The arms (per pale gules and azure, a chevron and three crosses or) are the
+    hanging cell's, so hanging, banners and shield agree. New materials `M_VKI_BannerBlue` (flat, the clan banners'
+    pattern) and **`M_VKI_Leaded_In`**: plain leaded glazing, `T_VK_Leaded` from `vk_texgen.gen_leaded` (the stained
+    set's lattice, pale crown-glass quarries), style `stained: "Leaded"`. Rooms take **`lancet_style`** (like
+    `window_style`, for Lancet / LancetTall pieces), ported to Unity's `KitRoom.WallStyle` too. `VKI_Castle_Hall`
+    reworked: a dais across the north end with the high table, throne and chairs, the cloth of estate, tapestries in
+    the north corners, the hearth moved to the east wall (NS token "1"), leaded lancets, banners, the chandelier over
+    the aisle; `vki_check` 0 errors (warnings: palette, R-occ3 the chandelier's chain, R-occ6 the candle stands, one
+    plan code). **Gotchas:** `vki_dpr_rod(a, b, w, mi, d)` for a rod lying in a wall's plane: `w` is its depth off the
+    wall, `d` its width in the plane (the swords' guards first went 0.22 m deep, through the shield). A gold-trimmed
+    piece cannot also use the textile atlas (both are the TEXTILE slot): the hangings' rod knobs are BRONZE.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
