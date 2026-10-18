@@ -1619,6 +1619,27 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     time their pieces (Roof_Cupola, the skyline bell tower) are rebuilt. Exported; prefabs built in MedievalSetting
     (VK/MarketHall, VK/Prop); not placed in Saltmere_Market (the other session's map).
 
+127. 2026-10-18 (the user: "we need more tiles for a docks district, and props" -> "Round 1": the harbour tiles).
+    **Sea datum:** the sea is water cells one terrain level below the quay's land: water -2.1, bed -3.0 below the land
+    (the terrain's WATER_Z / BED_Z on the lower level). **Quay tiles** (new text `vk_terrain_quay`, after `vk_terrain` in
+    `TERRAIN_TEXTS`): dual-grid tiles like the cliffs, `SM_VKT_Quay_Edge_A`, `_Edge_Stair` (water stairs along the face to
+    a landing 0.25 above the water), `_Edge_Slip` (a 2 m slipway of setts, 0.45 a metre, running 3 m past the tile into
+    the sea), `_Outer_A`, `_Inner_A`, `_Saddle_A`: the face on the cell edge, coursed (every other course 12 mm proud),
+    jittered coping stones as a kerb +0.08, quoins at convex corners, the land top and the sea bed in M_VK_Terrain (the
+    map's ground), the masonry in M_VKT_Stair (object space, no UVs: survives the terrain merge; the tide band and the
+    wet stone darken by TCol AO). 96-256 tris. `TGrid.quay` (land cells: 1 wall, 2 stairs, 3 slip; stairs/slip go on an
+    Edge vertex whose two land cells both carry the flag); `tk_tiles` asks `qy_pick` first: a quay vertex gives a Water
+    quad at the sea's level and a Quay tile on the land's layer instead of a Shore plus a Cliff layer. `qy_demo()` builds
+    a sample harbour. **Harbour props** (new module `vk_mod_harbour`, prefix `hbr_`, on the wall line facing -Y at the
+    land's height): `SM_VK_Harbour_Bollard`, `_Ring`, `_Fender`, `_Ladder`; `SM_VK_Jetty_Deck` / `_End` / `_Landing` (the
+    river piers' convention, along +X, deck +0.05, piles to -4.0, slimy to the sea's water line; the landing: seven steps
+    to a stage 0.35 above the water); `SM_VK_Breakwater` (3 m mole: paved crest, quay face on the harbour side -Y, parapet
+    and armour rock to the bed on the sea side +Y) and `SM_VK_Breakwater_End` (its round head with the harbour light: a
+    stone tower, railed gallery, open iron lantern with a fire basket). Exported; prefabs built (VKT/Quay, VK/Harbour,
+    VK/Jetty, VK/Breakwater). **Not wired in Unity:** KitVillage's terrain only raises ground and has no water; a docks
+    map needs a sea mode there (sea cells lowered to their bed, a water plane, `qy_pick`'s rule picking the Quay tiles
+    for layers over the sea, no cliff dressing on them, the wall props along the quays).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

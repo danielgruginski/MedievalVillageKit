@@ -495,6 +495,20 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VK_Prop_Pen` | 4.07 × 4.33 × 1.52 | 1,046 | 68 |
 | `SM_VK_Prop_WeighBeam` | 4.28 × 1.85 × 4.12 | 2,796 | 68 |
 
+### harbour: 9
+
+| Piece | Size (m) | Tris | Mats |
+|---|---|---|---|
+| `SM_VK_Breakwater` | 3.29 × 7.15 × 4.33 | 1,160 | 68 |
+| `SM_VK_Breakwater_End` | 10.26 × 10.85 × 10.57 | 3,972 | 68 |
+| `SM_VK_Harbour_Bollard` | 0.42 × 0.42 × 0.61 | 224 | 68 |
+| `SM_VK_Harbour_Fender` | 0.32 × 0.25 × 2.44 | 528 | 68 |
+| `SM_VK_Harbour_Ladder` | 0.48 × 0.58 × 3.55 | 372 | 68 |
+| `SM_VK_Harbour_Ring` | 0.28 × 0.09 × 0.40 | 200 | 68 |
+| `SM_VK_Jetty_Deck` | 3.26 × 3.30 × 4.37 | 1,124 | 68 |
+| `SM_VK_Jetty_End` | 3.53 × 3.30 × 6.61 | 2,886 | 68 |
+| `SM_VK_Jetty_Landing` | 2.10 × 3.96 × 5.05 | 1,300 | 68 |
+
 ## Nature (`vk_nature`, rebuilt from `NATURE_SPECS`): 39 pieces
 
 | Piece | Size (m) | Tris | Mats |
@@ -583,4 +597,15 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VKT_Stair_HalfW_A` | 3.00 × 3.00 × 3.40 | 294 | 2 |
 | `SM_VKT_Stair_Mid_A` | 3.00 × 3.00 × 1.50 | 156 | 2 |
 | `SM_VKT_WaterQuad` | 3.00 × 3.00 × 0.00 | 2 | 2 |
+
+## Quay tiles (`vk_terrain_quay`): 6 pieces
+
+| Piece | Size (m) | Tris | Mats |
+|---|---|---|---|
+| `SM_VKT_Quay_Edge_A` | 3.00 × 3.00 × 3.08 | 96 | 2 |
+| `SM_VKT_Quay_Edge_Slip` | 3.00 × 6.00 × 3.09 | 114 | 2 |
+| `SM_VKT_Quay_Edge_Stair` | 3.00 × 3.00 × 3.08 | 152 | 2 |
+| `SM_VKT_Quay_Inner_A` | 3.00 × 3.00 × 3.09 | 108 | 2 |
+| `SM_VKT_Quay_Outer_A` | 3.00 × 3.00 × 3.09 | 132 | 2 |
+| `SM_VKT_Quay_Saddle_A` | 3.00 × 3.00 × 3.09 | 256 | 2 |
 

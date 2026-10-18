@@ -445,6 +445,7 @@ class TGrid:
         s.level=np.zeros((H,W),np.int32); s.water=np.zeros((H,W),bool)
         s.ground=np.zeros((H,W),np.int32); s.ramp=np.zeros((H,W),np.int32)   # ramp dir 0 none 1N 2E 3S 4W
         s.stair=np.zeros((H,W),bool); s.stiff=np.zeros((H,W),bool); s.wear=np.zeros((H,W),np.int32)
+        s.quay=np.zeros((H,W),np.int32)  # land cells over the sea: 1 quay wall, 2 water stairs, 3 slipway (vk_terrain_quay)
         s.wear_marks=[]      # soft worn-ground patches (x, y, rx, ry, rot, strength) in map metres, painted by tk_ground_ctl
     def cell(s,i,j):
         i=min(max(i,0),s.W-1); j=min(max(j,0),s.H-1); return i,j
@@ -487,6 +488,10 @@ def tk_tiles(G,I0=0,J0=0,I1=None,J1=None):
             land=sum(1<<k for k in range(4) if not c[k][1])
             h=hash32(I,J,0)
             stiff=any(G.stiff[x[3],x[2]] for x in c)
+            qp=globals().get("qy_pick")
+            q=qp(G,c,lo,hi) if (qp is not None and getattr(G,"quay",None) is not None) else None
+            if q:                                  # a harbour wall instead of a shore and a cliff layer
+                yield (I,J,lo,"Water",0,0,"A"); yield (I,J,hi,"Quay",*q); continue
             if land!=15:
                 case,r=SHORE[land]
                 if case==BEDC: r=h&3
