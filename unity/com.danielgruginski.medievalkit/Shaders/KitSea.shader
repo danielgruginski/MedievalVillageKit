@@ -4,7 +4,8 @@
 //     distance calming (VoxelWaterLit's anti-tiling)
 //   - colour by the water's depth over the bed in a few hard bands (shallow -> deep), fresnel to the deep tint
 //   - foam where the scene sits just behind the surface (the quay walls, hulls, piles, the beach): a hard-edged ragged
-//     band plus a thin second line further out, drifting
+//     band plus a thin second line further out, drifting. Depths are true vertical ones (the scene rebuilt in world
+//     space): the kit's sea is shallow (its bed 0.9 m under the water), so the foam's depths stay well under that
 //   - a stepped sun glint (cartoony sparkles), lit by URP's main light (its shadows: ships shade the water) + ambient
 //   - Stencil: pixels a KitWaterMask marked (bit 8: a hull's waterline footprint, KitVillage.SeaMasks) get no water,
 //     so a boat sitting low stays dry inside
@@ -14,7 +15,7 @@ Shader "MedievalKit/KitSea"
     {
         _ShallowColor("Shallow Color", Color) = (0.30, 0.72, 0.74, 1)
         _DeepColor("Deep Color", Color) = (0.06, 0.24, 0.40, 1)
-        _DepthMax("Depth For Deep (m)", Range(0.2, 6)) = 2.2
+        _DepthMax("Depth For Deep (m)", Range(0.2, 6)) = 1.6
         _ColorBands("Colour Bands (0 = smooth)", Range(0, 6)) = 3
         _BaseOpacity("Base Opacity (top-down)", Range(0, 1)) = 0.6
         _FresnelPower("Fresnel Power", Range(0.5, 8)) = 3.0
@@ -32,13 +33,13 @@ Shader "MedievalKit/KitSea"
 
         [Header(Foam)]
         _FoamColor("Foam Color", Color) = (0.95, 0.98, 1.0, 1)
-        _FoamDistance("Foam Band Width (m of depth)", Range(0, 3)) = 0.55
+        _FoamDistance("Foam Band Width (m of depth)", Range(0, 3)) = 0.28
         _FoamStrength("Foam Strength", Range(0, 1)) = 0.9
         _FoamScale("Foam Texture Scale", Float) = 2.2
         _FoamSpeed("Foam Drift Speed", Float) = 0.35
         _FoamHardness("Foam Edge Hardness", Range(0, 1)) = 0.8
-        _FoamLine("Second Line Depth (m)", Range(0, 3)) = 0.9
-        _FoamLineWidth("Second Line Width (m)", Range(0, 0.5)) = 0.08
+        _FoamLine("Second Line Depth (m)", Range(0, 3)) = 0.4
+        _FoamLineWidth("Second Line Width (m)", Range(0, 0.5)) = 0.04
         _FoamMinDepth("Foam Seam Cutoff", Range(0, 0.5)) = 0.03
 
         [Header(Anti tiling)]
@@ -129,10 +130,11 @@ Shader "MedievalKit/KitSea"
                 return s;
             }
 
-            half Band(half x)          // the cartoon: x quantised to _ColorBands steps (0 = smooth)
+            half Band(half x)          // the cartoon: x in _ColorBands soft-edged steps (0 = smooth)
             {
                 if (_ColorBands < 0.5) return x;
-                return floor(saturate(x) * _ColorBands + 0.5) / _ColorBands;
+                half f = saturate(x) * _ColorBands, k = floor(f);
+                return (k + smoothstep(0.42, 0.58, f - k)) / _ColorBands;
             }
 
             half4 Frag(Varyings i, FRONT_FACE_TYPE face : FRONT_FACE_SEMANTIC) : SV_Target
@@ -161,9 +163,11 @@ Shader "MedievalKit/KitSea"
                 float sceneEye = LinearEyeDepth(SampleSceneDepth(ruv), _ZBufferParams);
                 if (sceneEye < waterEye) { ruv = suv; sceneEye = sceneEye0; }
                 half3 refracted = SampleSceneColor(ruv);
-                // the depth of water the view ray crosses, turned vertical (eye distance x the view's slope)
-                float rayDepth = max(0.0, sceneEye - waterEye);
-                float depth = rayDepth * saturate(abs(V.y) + 0.15);
+                // the water's true vertical depth here: the scene point behind the surface (unrefracted, so it holds
+                // still), rebuilt in world space from the depth buffer; nothing behind (past the bed's edge): deep
+                float rawD = SampleSceneDepth(suv);
+                float3 sceneWS = ComputeWorldSpacePosition(suv, rawD, UNITY_MATRIX_I_VP);
+                float depth = (sceneEye0 - waterEye > 80.0) ? 80.0 : max(0.0, i.positionWS.y - sceneWS.y);
 
                 // ---- light ----
                 Light sun = GetMainLight(TransformWorldToShadowCoord(i.positionWS));
