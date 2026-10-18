@@ -1487,6 +1487,32 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     pile of books) and `VKI_Monastery_Dorter` (Stone 6 x 3: broken cots, rags). The cots' tilt barely reads from the
     game camera (their pallets on the floor carry it).
 
+120. 2026-10-18 (the user: "more for the abandoned monastery"). In vki_fam_ashlar: **`SM_VKI_Wall_Ashlar_Ruin_150/300_Full`**
+    + `_Cut` twins (intact 0.35 ends, the middle broken down in steps on the 0.25 course grid -- dressed stone breaks
+    at its beds -- to 1.25-3.75 (300) / 2.0-3.75 (150); one body panel to 1.25 with the ends and steps stacked on it so
+    Full = Cut below 0.65 (T2); the second course passes only under tops of 3.25+; loose blocks on the break, fallen
+    blocks, a length of course and grit on the floor in front, also on the Cut twin; 1,672 / 676 tris);
+    **`SM_VKI_Wall_Ashlar_Arcade_300_Full`** (the cloister's garth side: two pointed openings 1.0 clear, spring 1.90,
+    over a dwarf wall whose sill is the first course, a coupled column, one ring of voussoirs; `vki_cut_to` the plain
+    Cut; 2,360) and **`_Full_Broken`** (the arches fallen: two springers a pier, the colonnettes snapped, voussoirs,
+    the capital and a length of shaft on the floor; 1,788). New material **`M_VKI_AshlarBlock`** (StoneBlockIn x1.30,
+    the AshlarIn mean): the ruins' break tops and loose blocks -- grey StoneBlockIn and brown Dress both read wrong
+    against the pale wall. In vki_props_monastery: **`SM_VKI_Overlay_Overgrowth`** (moss, weed tufts, ground ivy),
+    **`SM_VKI_Overlay_Moss`**, **`SM_VKI_Prop_Ivy_Wall`** / **`_Tall`** (wall_hung, hanging ivy, highest leaf 2.84 / 4.34 =
+    the host's H - 0.16), **`SM_VKI_Prop_Font_Broken`** (the chapel font's stem snapped, the bowl on its side with its
+    mouth to the room, dry), **`SM_VKI_Prop_Statue_Saint`** (2.2 m hooded monk in prayer, for the set) and
+    **`_Toppled`** (on its back in front of the plinth, the head rolled off). Moss = new **`M_VKI_Moss`** (T_VK_Moss
+    tinted dull) on the ASH slot; weeds and ivy are the exterior foliage atlas (`FOLIAGE`, two-sided cards, 2 tris
+    each via `vki_mon_card`) -- the first VKI pieces with open cards, so **T7 / T8 now leave faces on
+    `VKI_CARD_SLOTS` (FOLIAGE, CROPS) alone**. Moss patches use smooth lobed outlines (per-vertex noise read as paper
+    cut-outs) and staggered bottoms (T5S). New scene **`VKI_Monastery_Cloister`** (8 x 4, walk + ApronGrass garth
+    between arcades, the open Arch_300, the fallen arcade; the ruin on the north wall), ivy and moss added to the
+    church and the dorter; all four monastery rooms `vki_check` 0 errors. **Gotcha:** `bmesh.ops.create_icosphere`
+    kills older python BMVert references (their hashes change), so a `before = set(bm.verts)` / `not in before`
+    collection after an icosphere takes in every vertex of the piece (the toppled saint moved its plinth too): use
+    `vki_ash_new(k, build, M)` (a temporary int layer marks the old vertices; moves and drops the new part).
+    Wall-hung props are placed in front of their wall (the host search looks ahead of the point), not on its line.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

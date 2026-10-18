@@ -441,6 +441,266 @@ def vki_mon_pages(k):
                   vki_place_rule="loose debris on open floor; walkable (no collider)")
 
 
+
+# ---------------------------------------------------------------- overgrowth (2026-10-18)
+# Moss: low mounds on the ASH slot mapped to M_VKI_Moss (the exterior moss texture); weeds and ivy: the exterior
+# foliage atlas (FOLIAGE, two-sided cards: card() cells "grass", "daisy", "ivy"); ivy stems WOOD (Dark).
+def vki_mon_moss(k, x, y, rx, ry, seed, i=0, z=0.0, h=0.022, ns=14):
+    """a low moss patch with a smooth lobed outline (three low harmonics, not per-vertex noise: the hard edge of an
+    opaque patch reads as a cut-out when it is spiky), a dome to h; i staggers its flat bottom (0.7 mm a patch) so
+    overlapping patches never share a plane (T5S)"""
+    k.slot_mats[VKI_ASH] = "M_VKI_Moss"
+    rnd = random.Random(seed)
+    hs = [(m, rnd.uniform(0.06, 0.16) / (m * 0.5), rnd.uniform(0, 2 * math.pi)) for m in (2, 3, 5)]
+    rr = [1.0 + sum(a * math.sin(m * 2 * math.pi * j / ns + ph) for m, a, ph in hs) for j in range(ns)]
+    z0 = z + 0.001 + 0.0007 * i
+    bm = k.bm
+    top = bm.verts.new((x, y, z + h))
+    rings = [[bm.verts.new((x + math.cos(2 * math.pi * j / ns) * rx * t * rr[j],
+                            y + math.sin(2 * math.pi * j / ns) * ry * t * rr[j], z + hz)) for j in range(ns)]
+             for t, hz in ((0.6, h * 0.8), (1.0, 0.004))]
+    bot = [bm.verts.new((v.co.x, v.co.y, z0)) for v in rings[-1]]
+    cb = bm.verts.new((x, y, z0))
+    fs = []
+    for j in range(ns):
+        n = (j + 1) % ns
+        fs.append(bm.faces.new((top, rings[0][j], rings[0][n])))
+        fs.append(bm.faces.new((rings[0][j], rings[1][j], rings[1][n], rings[0][n])))
+        fs.append(bm.faces.new((rings[1][j], bot[j], bot[n], rings[1][n])))
+        fs.append(bm.faces.new((cb, bot[n], bot[j])))
+    bmesh.ops.recalc_face_normals(bm, faces=fs)
+    bm.normal_update()
+    for f in fs:
+        f.material_index = VKI_ASH
+        f.smooth = True
+    k.project(fs, VKI_ASH)
+    return [top, cb] + rings[0] + rings[1] + bot
+
+
+def vki_mon_card(k, c, right, up, w, h, cell, flip=False):
+    """a flat foliage card (2 tris; card() is a 3 x 3 grid for bending): FOLIAGE, two-sided on export"""
+    u0, u1, v0, v1 = fol_uv(cell)
+    if flip:
+        u0, u1 = u1, u0
+    C = Vector(c); R = Vector(right).normalized(); U = Vector(up).normalized()
+    q = [(-0.5, -0.5, u0, v0), (0.5, -0.5, u1, v0), (0.5, 0.5, u1, v1), (-0.5, 0.5, u0, v1)]
+    vs = [k.bm.verts.new(C + R * (a * w) + U * (b * h)) for a, b, _, _ in q]
+    f = k.bm.faces.new(vs)
+    f.material_index = FOLIAGE
+    f.smooth = True
+    for l, (_, _, u, v) in zip(f.loops, q):
+        l[k.uv].uv = (u, v)
+    return f
+
+
+def vki_mon_tuft(k, x, y, h, rnd, cell="grass", n=3, z=0.0, lean=(0.30, 0.55)):
+    """a weed tuft: n cards round a vertical axis, each leaning out (so it reads from the game camera above)"""
+    a0 = rnd.uniform(0.0, 2 * math.pi)
+    for i in range(n):
+        a = a0 + 2 * math.pi * i / n + rnd.uniform(-0.3, 0.3)
+        out = Vector((math.cos(a), math.sin(a), 0.0))
+        t = rnd.uniform(*lean)
+        up = out * math.sin(t) + Vector((0.0, 0.0, 1.0)) * math.cos(t)
+        hh = h * rnd.uniform(0.85, 1.1)
+        vki_mon_card(k, Vector((x, y, z - 0.01)) + up * (hh / 2) + out * 0.03, (-math.sin(a), math.cos(a), 0.0), up,
+                     hh * rnd.uniform(0.8, 1.0), hh, cell, flip=rnd.random() < 0.5)
+
+
+def vki_mon_creeper(k, x, y, s, rnd, z=0.0):
+    """ground ivy: an ivy card lying almost flat, its stems trailing out"""
+    a = rnd.uniform(0.0, 2 * math.pi)
+    out = Vector((math.cos(a), math.sin(a), 0.0))
+    up = (out + Vector((0.0, 0.0, 0.22))).normalized()
+    vki_mon_card(k, Vector((x, y, z + 0.035)) + out * (s * 0.35), (-math.sin(a), math.cos(a), 0.0), up, s, s, "ivy",
+                 flip=rnd.random() < 0.5)
+
+
+def vki_mon_overgrowth(k):
+    """1.8 x 1.4 m of floor gone green: three moss patches, weeds standing in them (grass, a few daisies), ground ivy
+    creeping off their edges"""
+    rnd = random.Random(1901)
+    for i, (x, y, rx, ry) in enumerate(((-0.35, 0.10, 0.52, 0.40), (0.42, -0.18, 0.40, 0.30), (0.10, 0.42, 0.30, 0.22))):
+        vki_mon_moss(k, x, y, rx, ry, 1910 + i, i=i)
+    for i, (x, y, h) in enumerate(((-0.45, 0.20, 0.42), (-0.15, -0.10, 0.30), (0.40, -0.15, 0.36), (0.55, 0.05, 0.24),
+                                   (0.05, 0.45, 0.28), (-0.62, -0.18, 0.22), (0.20, 0.15, 0.20))):
+        vki_mon_tuft(k, x, y, h * 1.2, rnd, cell="daisy" if i in (2, 5) else "grass", n=4, z=0.015)
+    for (x, y, sz) in ((-0.70, 0.40, 0.38), (0.68, -0.42, 0.34), (-0.05, -0.45, 0.30), (0.45, 0.45, 0.30)):
+        vki_mon_creeper(k, x, y, sz, rnd)
+    vki_home_meta(k, "floor", "dressing", use=[], vki_class="overlay", vki_nav="none")
+
+
+def vki_mon_moss_patch(k):
+    """moss only (1.2 x 0.9 m): four low patches in the floor's joints and two small tufts -- walkable"""
+    rnd = random.Random(1931)
+    for i, (x, y, rx, ry) in enumerate(((-0.30, 0.05, 0.32, 0.26), (0.25, -0.15, 0.28, 0.22), (0.30, 0.28, 0.20, 0.14),
+                                        (-0.38, -0.32, 0.16, 0.12))):
+        vki_mon_moss(k, x, y, rx, ry, 1940 + i, i=i, h=0.016)
+    vki_mon_tuft(k, -0.32, 0.08, 0.18, rnd, z=0.012)
+    vki_mon_tuft(k, 0.28, -0.12, 0.14, rnd, z=0.012)
+    vki_home_meta(k, "floor", "dressing", use=[], vki_class="overlay", vki_nav="none")
+
+
+def vki_mon_ivy(k, zmax):
+    """ivy hanging down a wall face from under its top (it came in over the broken wall head or through the roof):
+    five stems, the longest to ~0.4 m off the floor, leafy cards along them, thickest at the top, its highest leaf at
+    zmax (wall_hung tops stay 0.14 under the host wall's H, T12); 1.4 m wide, wall_hung (back y 0)"""
+    top = zmax - 0.36
+    rnd = random.Random(int(zmax * 100) + 1951)
+    k.slot_mats[WOOD] = "Dark"
+    for si, (x0, frac) in enumerate(((-0.50, 0.55), (-0.22, 0.85), (0.05, 0.65), (0.30, 0.92), (0.52, 0.45))):
+        L = (top - 0.40) * frac
+        n = max(3, int(L / 0.36))
+        pts = []
+        x = x0
+        for i in range(n + 1):
+            z = top - L * i / n
+            pts.append(Vector((x, -0.025 - 0.02 * math.sin(i * 1.3 + si), z)))
+            x = max(-0.62, min(0.62, x + rnd.uniform(-0.10, 0.10)))
+        for a, b in zip(pts[:-1:2], pts[2::2] + ([pts[-1]] if n % 2 else [])):       # a stem rod every 2 joints
+            vki_dpr_rod(k, a, b, 0.016, WOOD)
+        for i, pnt in enumerate(pts[:-1]):                          # leaves: two cards a joint up top, fewer below
+            f = i / n
+            for j in range(3 if f < 0.25 else 2 if f < 0.7 else 1):
+                sz = rnd.uniform(0.36, 0.50) * (1.0 - 0.35 * f)
+                ang = rnd.uniform(-0.5, 0.5)
+                R = Vector((math.cos(ang), 0.0, math.sin(ang)))
+                U = (Vector((-math.sin(ang), 0.0, math.cos(ang))) + Vector((0.0, -rnd.uniform(0.15, 0.45), 0.0)))
+                c = pnt + Vector((rnd.uniform(-0.10, 0.10), -rnd.uniform(0.05, 0.12), sz * 0.15))
+                c.x = max(-0.70 + sz / 2, min(0.70 - sz / 2, c.x))
+                vki_mon_card(k, c, R, U, sz, sz, "ivy", flip=rnd.random() < 0.5)
+    # a mat of leaves along the top, where it comes over
+    for i in range(10):
+        x = -0.55 + 1.1 * (i % 5) / 4 + rnd.uniform(-0.08, 0.08) + (0.12 if i >= 5 else 0.0)
+        sz = rnd.uniform(0.40, 0.52)
+        c = Vector((max(-0.70 + sz / 2, min(0.70 - sz / 2, x)), -0.10 - 0.04 * (i >= 5), top - 0.08 - 0.22 * (i >= 5)))
+        vki_mon_card(k, c, (1.0, 0.0, rnd.uniform(-0.15, 0.15)), (0.0, -rnd.uniform(0.45, 0.75), 1.0), sz, sz, "ivy",
+                     flip=i % 2 == 0)
+    dz = zmax - max(v.co.z for v in k.bm.verts)
+    for v in k.bm.verts:
+        v.co.y = min(v.co.y, -0.004)                                 # off the wall face
+        v.co.z += dz
+    vki_home_meta(k, "wall_hung", "furniture", back=0.0, use=[], vki_nav="none",
+                  vki_note="top %.2f: on walls %.1f m and up (Timber / Stone 3.0, Ashlar 4.5)" % (zmax, zmax + 0.16))
+
+
+def vki_mon_ivy_wall(k): vki_mon_ivy(k, 2.84)
+def vki_mon_ivy_wall_tall(k): vki_mon_ivy(k, 4.34)
+
+
+# ---------------------------------------------------------------- the font, the saint (2026-10-18)
+def vki_mon_snap(vs, z, rnd, lo=-0.07, hi=0.03):
+    """a jagged break: vertices at/above z (a lathe's top ring) jostled in height"""
+    for v in vs:
+        if v.co.z > z - 1e-4:
+            v.co.z += rnd.uniform(lo, hi)
+
+
+def vki_mon_rest(k, vs, M, sink=0.008):
+    """move vs by M, then drop them so their lowest point is `sink` under the floor"""
+    bmesh.ops.transform(k.bm, verts=vs, matrix=M)
+    dz = -sink - min(v.co.z for v in vs)
+    for v in vs:
+        v.co.z += dz
+    k.bm.normal_update()
+
+
+def vki_mon_font_broken(k):
+    """the chapel's octagonal font (Prop_Font) thrown down: the step and the stem, snapped at ~0.40; the bowl lying
+    on its side in front, dry (grit in it); a piece of the rim and chips about. 1.6 x 1.3 m"""
+    rnd = random.Random(2001)
+    vki_chp_lathe(k, [(0.54, 0.0), (0.54, 0.12)], mis=[DRESS])
+    vki_chp_lathe(k, [(0.43, 0.115), (0.43, 0.20)], mis=[DRESS])
+    rings, bands, bot, top = vki_chp_lathe(k, [(0.20, 0.195), (0.20, 0.42)], mis=[DRESS])
+    vki_mon_snap(rings[-1], 0.42, rnd, -0.06, 0.05)
+    before = set(k.bm.verts)
+    rings, bands, bot, top = vki_chp_lathe(k, [(0.29, 0.0), (0.46, 0.40), (0.46, 0.55), (0.37, 0.55), (0.37, 0.45)],
+                                           mis=[DRESS, DRESS, VKI_STONE_BLOCK_IN, DRESS, VKI_ASH])
+    for v in rings[4]:
+        k.set_dark([v], 0.3)
+    bv = [v for v in k.bm.verts if v not in before]
+    vki_mon_rest(k, bv, Matrix.Translation((0.55, -0.62, 0.0)) @ Matrix.Rotation(0.45, 4, "Z") @
+                 Matrix.Rotation(math.radians(78), 4, "X"))                       # its mouth to the room (-Y)
+    # a piece of the rim (a wedge of the octagon's top band) and chips
+    rim = vki_mon_part(k, lambda: vki_prism(k, [(0.37, 0.0), (0.46, 0.0), (0.46, 0.15), (0.37, 0.15)], -0.16, 0.16,
+                                            DRESS, axis="x"),
+                       Matrix.Translation((-0.62, -0.42, 0.0)) @ Matrix.Rotation(2.2, 4, "Z") @
+                       Matrix.Rotation(0.10, 4, "Y") @ Matrix.Translation((0.0, -0.415, -0.075)))
+    vki_mon_rest(k, rim, Matrix.Identity(4))
+    k.set_dark(rim, 0.1)
+    for i in range(5):
+        sz = rnd.uniform(0.05, 0.09)
+        vs = list(set(k.box((rnd.uniform(-0.65, 0.65), rnd.uniform(-0.95, -0.35), sz * 0.3), (sz, sz * 0.8, sz * 0.6),
+                            DRESS, rot=(rnd.uniform(-0.5, 0.5), rnd.uniform(-0.5, 0.5), rnd.uniform(0, math.pi)),
+                            bevel=0.0, seed=2010 + i)))
+        k.set_dark(vs, 0.15)
+    vki_home_meta(k, "floor", "furniture", use=[], vki_kind="Font", vki_nav="block",
+                  vki_note="the abandoned twin of Prop_Font (chapel): the stem stands at the origin, the bowl lies at -Y")
+
+
+def vki_mon_saint_mats(k):
+    """pale carved stone (CAP -> AncientCap) on the Ashlar block stone (STONE_BLOCK_IN -> AshlarBlock)"""
+    k.slot_mats[VKI_CAP] = "M_VKI_AncientCap"
+    k.slot_mats[VKI_STONE_BLOCK_IN] = "M_VKI_AshlarBlock"
+
+
+def vki_mon_saint_body(k, z0, z_from=None):
+    """the robed saint (pale CAP stone) standing on z0: a habit, hands joined in prayer at the chest, a cord hanging
+    from the girdle; z_from: build the habit from that height up (a statue broken off at the shins)"""
+    prof = [(0.27, z0 - 0.005), (0.25, z0 + 0.40), (0.20, z0 + 0.85), (0.22, z0 + 1.12), (0.245, z0 + 1.28),
+            (0.15, z0 + 1.38), (0.0, z0 + 1.40)]
+    if z_from is not None:
+        prof = [(0.255, z_from)] + [p for p in prof if p[1] > z_from + 0.02]
+    vki_home_lathe(k, prof, c=(0.0, 0.02, 0.0), segs=12, mi=VKI_CAP, sy=0.72)
+    vki_home_hoop(k, (0.0, 0.02, z0 + 0.80), 0.20, 0.222, 0.05, segs=12, mi=VKI_CAP, sy=0.72)        # girdle
+    k.box((0.07, -0.155, z0 + 0.58), (0.03, 0.03, 0.40), VKI_CAP, bevel=0.0, rot=(0.10, 0.0, 0.0))     # the cord
+    for sx in (-1.0, 1.0):
+        vki_adv_rod(k, (sx * 0.23, 0.02, z0 + 1.26), (sx * 0.21, -0.08, z0 + 0.98), 0.12, VKI_CAP)    # upper arm
+        vki_adv_rod(k, (sx * 0.20, -0.08, z0 + 0.99), (sx * 0.05, -0.22, z0 + 1.08), 0.11, VKI_CAP)   # sleeve
+    k.box((0.0, -0.25, z0 + 1.14), (0.08, 0.06, 0.15), VKI_CAP, bevel=0.012, rot=(-0.35, 0.0, 0.0))  # joined hands
+
+
+def vki_mon_saint_head(k, z0):
+    """the face in its hood, over a body standing on z0"""
+    hv = vki_home_ico(k, (0.0, -0.035, z0 + 1.52), 0.105, VKI_CAP, scale=(0.9, 1.0, 1.15), sub=2)      # the face
+    k.project(vki_faces_of(hv), VKI_CAP)
+    cv = vki_home_ico(k, (0.0, 0.045, z0 + 1.57), 0.135, VKI_CAP, scale=(1.05, 1.1, 1.30), sub=2)     # the hood
+    k.project(vki_faces_of(cv), VKI_CAP)
+    vki_home_hoop(k, (0.0, 0.03, z0 + 1.385), 0.10, 0.205, 0.07, segs=12, mi=VKI_CAP, sy=0.80)       # its cowl
+
+
+def vki_mon_saint(k):
+    """a saint 2.2 m tall on a plinth (0.8 m square): a robed, hooded monk in prayer, pale stone (for the set: the
+    abandoned monastery's has fallen, Statue_Saint_Toppled)"""
+    z0 = vki_adv_plinth(k, h=0.40, hw=0.35)
+    vki_mon_saint_body(k, z0)
+    vki_mon_saint_head(k, z0)
+    vki_mon_saint_mats(k)
+    vki_home_meta(k, "floor", "hero", use=[], vki_nav="block",
+                  vki_note="2.2 m tall: stand it by a wall or in a niche (it hides what is behind it)")
+
+
+def vki_mon_saint_toppled(k):
+    """the saint thrown down: the plinth with the habit's hem snapped at the shins; the body lying on its back in
+    front, a little askew; the hooded head broken off and rolled aside; chips"""
+    rnd = random.Random(2031)
+    z0 = vki_adv_plinth(k, h=0.40, hw=0.35)
+    rv, rf = vki_home_lathe(k, [(0.27, z0 - 0.005), (0.258, z0 + 0.20), (0.20, z0 + 0.215), (0.0, z0 + 0.22)],
+                            c=(0.0, 0.02, 0.0), segs=12, mi=VKI_CAP, sy=0.72)
+    vki_mon_snap(rv, z0 + 0.20, rnd, -0.07, 0.03)
+    vki_ash_new(k, lambda: vki_mon_saint_body(k, 0.0, z_from=0.30),
+                Matrix.Translation((0.08, -0.62, 0.0)) @ Matrix.Rotation(math.pi - 0.28, 4, "Z") @
+                Matrix.Rotation(math.radians(-90), 4, "X") @ Matrix.Translation((0.0, 0.0, -0.30)), sink=0.008)
+    vki_ash_new(k, lambda: vki_mon_saint_head(k, 0.0),
+                Matrix.Translation((0.62, -1.50, 0.0)) @ Matrix.Rotation(1.1, 4, "Z") @
+                Matrix.Rotation(1.25, 4, "Y") @ Matrix.Translation((0.0, 0.0, -1.55)), sink=0.004)
+    for i in range(4):
+        c = _ico(k, (rnd.uniform(-0.45, 0.45), rnd.uniform(-0.70, -0.42), 0.025), 0.045, VKI_CAP,
+                 scale=(1, 0.8, 0.6), sub=0, jit=0.01, seed=2040 + i)
+        k.project(vki_faces_of(c), VKI_CAP)
+    vki_mon_saint_mats(k)
+    vki_home_meta(k, "floor", "hero", use=[], vki_nav="block")
+
+
 VKI_MON_SPECS = [
     ("SM_VKI_Prop_ChoirStall_300", vki_mon_choirstall, "prop"),
     ("SM_VKI_Prop_Pew_300_Broken", vki_mon_pew_broken, "prop"),
@@ -455,6 +715,13 @@ VKI_MON_SPECS = [
     ("SM_VKI_Prop_Cot_Broken", vki_mon_cot_broken, "prop"),
     ("SM_VKI_Prop_RoofCollapse", vki_mon_roof_collapse, "prop"),
     ("SM_VKI_Overlay_Pages", vki_mon_pages, "none"),
+    ("SM_VKI_Overlay_Overgrowth", vki_mon_overgrowth, "none"),
+    ("SM_VKI_Overlay_Moss", vki_mon_moss_patch, "none"),
+    ("SM_VKI_Prop_Ivy_Wall", vki_mon_ivy_wall, "none"),
+    ("SM_VKI_Prop_Ivy_Wall_Tall", vki_mon_ivy_wall_tall, "none"),
+    ("SM_VKI_Prop_Font_Broken", vki_mon_font_broken, "prop"),
+    ("SM_VKI_Prop_Statue_Saint", vki_mon_saint, "prop"),
+    ("SM_VKI_Prop_Statue_Saint_Toppled", vki_mon_saint_toppled, "prop"),
 ]
 VKI_MON_NAMES = [n for n, _, _ in VKI_MON_SPECS]
 vki_register([(n, fn, {"grime": gr}, "monastery") for n, fn, gr in VKI_MON_SPECS])

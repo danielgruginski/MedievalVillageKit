@@ -726,6 +726,9 @@ VKI_MAT_MAP = {
     "M_VKI_AncientFlag": dict(tex="T_VKI_AncientFlag", tint=(0.98, 1.00, 0.94), ph="#77756A", nstr=1.1, spec=0.25),
     "M_VKI_AncientCap": dict(tex="T_VKI_StoneBlockIn", tint=(1.44, 1.48, 1.36), ph="#A8A690", nstr=0.8, spec=0.25),
     "M_VKI_AncientBlock": dict(tex="T_VKI_StoneBlockIn", tint=(0.84, 0.88, 0.78), ph="#8A8878", nstr=0.9, spec=0.25),
+    # the ruined Ashlar wall's break and fallen blocks: the block stone brightened to AshlarIn's mean (x1.13 sRGB)
+    "M_VKI_Moss": dict(tex="T_VK_Moss", tint=(0.66, 0.70, 0.52), ph="#4E5E34", nstr=1.0, spec=0.2),  # monastery
+    "M_VKI_AshlarBlock": dict(tex="T_VKI_StoneBlockIn", tint=(1.30, 1.30, 1.27), ph="#A9A08E", nstr=0.8, spec=0.25),
     "M_VKI_CaveRock": dict(tex="T_VKI_CaveRock", ph="#5A5048", nstr=1.3, spec=0.3),
     "M_VKI_CaveRockDamp": dict(tex="T_VKI_CaveRock", tint=(0.82, 0.86, 0.84), ph="#5A5048", nstr=1.3, spec=0.4),
     "M_VKI_CaveCut": dict(tex="T_VKI_CaveTop", tint=(1.58, 1.55, 1.50), ph="#8A8076", nstr=0.6, spec=0.2),

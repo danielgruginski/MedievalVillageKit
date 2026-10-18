@@ -150,6 +150,316 @@ def vki_ash_plain_300_full(k): vki_ash_plain(k, 3.0, "Full")
 def vki_ash_plain_300_cut(k): vki_ash_plain(k, 3.0, "Cut")
 
 
+# ---------------------------------------------------------------- Ruin (150, 300), Full and Cut: the abandoned monastery
+# Intact at both ends (0-0.35 and L-0.35..L: the full section, both courses, the cornice); the middle broken down in
+# steps along the joints (dressed stone parts at its beds, so the break is stepped, not jagged): segments 0.28-0.50
+# wide, tops on the 0.25 course grid, high by the ends and lowest off mid-span (1.25-3.75 on 300, 2.0-3.75 on 150).
+# The body is one panel up to 1.25 with the ends and steps stacked on it, so the Full matches its Cut twin below 0.65
+# (T2). The first course runs the whole length (the break never reaches it); the second passes only under tops of
+# 3.25 and up and stops 2 cm short of each drop (T5S). Loose blocks lie askew on the break, one a third off the room
+# face; fallen blocks, a broken length of course and grit lie on the floor in front (also on the Cut twin, so the
+# floor keeps its debris when the camera cuts the wall). The break's tops and the loose and fallen blocks take
+# M_VKI_AshlarBlock (the block stone brightened to the wall's colour; grey StoneBlockIn and brown Dress both read wrong).
+VKI_ASH_RUIN = dict(e=0.35, lo={1.5: 2.0, 3.0: 1.25}, hi=3.75, gap=(2.70, 3.05))
+
+
+def vki_ash_ruin_top(L):
+    """[(x0, x1, z)] the stepped break between the intact ends (equal neighbours merged)"""
+    R = VKI_ASH_RUIN
+    e, lo, hi = R["e"], R["lo"][L], R["hi"]
+    rnd = random.Random(int(L * 100) + 11)
+    w0, w1 = (0.28, 0.50) if L > 2 else (0.24, 0.32)
+    xs = [e]
+    while L - e - xs[-1] > w0 + w1:
+        xs.append(xs[-1] + rnd.uniform(w0, w1))
+    if L - e - xs[-1] > w1:
+        xs.append((xs[-1] + L - e) / 2)
+    xs.append(L - e)
+    t0 = rnd.uniform(0.35, 0.65)                                          # the lowest point, off the middle
+    segs = []
+    for a, b in zip(xs[:-1], xs[1:]):
+        t = ((a + b) / 2 - e) / (L - 2 * e)
+        d = (t - t0) / (t0 if t < t0 else 1.0 - t0)
+        z = lo + (hi - lo) * abs(d) ** 1.3 + rnd.uniform(-0.25, 0.35)
+        if a < e + 1e-6 or b > L - e - 1e-6:                        # the steps by the ends stay high
+            z = max(z, hi - (0.5 if L > 2 else 1.0))
+        z = min(hi, max(lo, round(z / 0.25) * 0.25))
+        if R["gap"][0] < z < R["gap"][1]:                    # the second course passes under the top or is gone
+            z = 2.50 if z < 2.90 else 3.25
+        if segs and abs(segs[-1][2] - z) < 1e-6:
+            segs[-1] = (segs[-1][0], b, z)
+        else:
+            segs.append((a, b, z))
+    return segs
+
+
+def vki_ash_ruin_floor(k, L):
+    """the debris in front (room side, x clear of the node zones; no jitter: Full = Cut, T2): fallen blocks, a broken
+    length of the course lying on its back, chips, a low heap of grit under the lowest part of the break"""
+    rnd = random.Random(int(L * 100) + 29)
+    x0, x1 = 0.62, L - 0.62
+    n = 2 if L < 2 else 4
+    for i in range(n):
+        x = x0 + (x1 - x0) * (i + rnd.uniform(0.2, 0.8)) / n
+        sx, sz = rnd.uniform(0.36, 0.48), rnd.uniform(0.20, 0.25)
+        vs = list(set(k.box((x, rnd.uniform(-0.85, -0.50), sz * 0.45), (sx, rnd.uniform(0.24, 0.30), sz),
+                            VKI_STONE_BLOCK_IN, rot=(rnd.uniform(-0.15, 0.15), rnd.uniform(-0.25, 0.25),
+                                                     rnd.uniform(-0.6, 0.6)), bevel=0.02, jitter=0.0,
+                            seed=rnd.randint(0, 10 ** 6))))
+        k.set_dark(vs, rnd.uniform(0.06, 0.18))
+    # a broken length of the string course, upside down, one end raised on a chip
+    cv = vki_ash_course(k, -0.20, 0.20, -0.05, 0.05)
+    bmesh.ops.transform(k.bm, verts=cv, matrix=Matrix.Translation((L / 2 + (0.35 if L > 2 else 0.0), -0.95, 0.09)) @
+                        Matrix.Rotation(rnd.uniform(-0.5, 0.5), 4, "Z") @ Matrix.Rotation(0.22, 4, "Y") @
+                        Matrix.Rotation(math.pi + 0.08, 4, "X"))          # face down: its dressed bed shows
+    k.set_dark(cv, 0.12)
+    for i in range(3 if L < 2 else 6):                                                   # chips
+        sz = rnd.uniform(0.07, 0.12)
+        vs = list(set(k.box((rnd.uniform(x0, x1), rnd.uniform(-1.05, -0.35), sz * 0.35), (sz, sz * 0.8, sz * 0.6),
+                            VKI_STONE_BLOCK_IN, rot=(rnd.uniform(-0.5, 0.5), rnd.uniform(-0.5, 0.5),
+                                                     rnd.uniform(0, math.pi)), bevel=0.0,
+                            jitter=0.01, seed=rnd.randint(0, 10 ** 6))))
+        k.set_dark(vs, rnd.uniform(0.1, 0.25))
+    vki_dpr_mound(k, (L / 2 - (0.25 if L > 2 else 0.0), -0.52, 0.0), 0.42 if L > 2 else 0.26, 0.24, 0.10, VKI_ASH,
+                  z0=0.001, nr=2, ns=10, seed=int(L * 10) + 5, wob=0.12, bump=0.2)
+
+
+def vki_ash_ruin(k, L, height):
+    k.slot_mats[VKI_STONE_BLOCK_IN] = "M_VKI_AshlarBlock"
+    if height == "Cut":
+        vki_ash_plain(k, L, "Cut")
+        vki_ash_ruin_floor(k, L)
+        k.meta.update(vki_broken=1)
+        return
+    R = VKI_ASH_RUIN
+    e = R["e"]
+    tb = VKI_ASH_CORNICE[0]
+    segs = vki_ash_ruin_top(L)
+    zs = 1.25                       # one body 0..L up to the lowest possible break (= the Cut twin below 0.65, T2),
+    vki_ash_body(k, 0.0, L, VKI_FOOT_Z, zs)          # the ends and the steps stacked on it (the grid is world-locked)
+    vki_ash_body(k, 0.0, e, zs, tb)
+    vki_ash_body(k, L - e, L, zs, tb)
+    for a, b, z in segs:
+        if z > zs + 1e-6:
+            vki_ash_body(k, a, b, zs, z)
+    vki_ash_course(k, 0.0, L, *VKI_ASH_COURSES[0])
+    # the second course: over each run that stays 3.25 and up (the ends always do), 2 cm short of a drop
+    tops = [(0.0, e, tb)] + segs + [(L - e, L, tb)]
+    run = None
+    for a, b, z in tops + [(L, L, 0.0)]:
+        if z >= 3.2:
+            run = (run[0] if run else a, b)
+            continue
+        if run:
+            r0 = run[0] + (0.02 if run[0] > 1e-6 else 0.0)
+            r1 = run[1] - (0.02 if run[1] < L - 1e-6 else 0.0)
+            vki_ash_course(k, r0, r1, *VKI_ASH_COURSES[1])
+            run = None
+    vki_ash_cornice(k, 0.0, e)
+    vki_ash_cornice(k, L - e, L)
+    # loose blocks on the break (away from the node zones): one sitting askew, one half off the room face
+    rnd = random.Random(int(L * 100) + 17)
+    mids = [sg for sg in segs if 0.62 < (sg[0] + sg[1]) / 2 < L - 0.62 and sg[1] - sg[0] > 0.30]
+    for i, (a, b, z) in enumerate(mids[:1] if L < 2 else mids[1:3]):
+        hang = i == 0
+        vs = list(set(k.box(((a + b) / 2 + rnd.uniform(-0.04, 0.04), -0.21 if hang else rnd.uniform(-0.04, 0.04),
+                             z + 0.11 + (0.0 if hang else 0.005)), (0.34, 0.30, 0.22), VKI_STONE_BLOCK_IN,
+                            rot=(-0.10 if hang else rnd.uniform(-0.06, 0.06), rnd.uniform(-0.06, 0.06),
+                                 rnd.uniform(-0.35, 0.35)), bevel=0.02, jitter=0.008, seed=60 + i)))
+        k.set_dark(vs, 0.10)
+    vki_ash_ruin_floor(k, L)
+    # the wobble fades under each step's top (the lower top where two meet, so shared rows move alike)
+    vki_wobble(k, L, "Ashlar", "A", holes=vki_ash_course_holes(L), pins=(),
+               top_body_fn=lambda x: min(z for a, b, z in tops if a - 1e-6 <= x <= b + 1e-6))
+    k.meta.update(vki_class="wall", vki_broken=1,
+                  vki_broken_note="the break's top is %.2f-%.2f m: it still blocks; debris lies up to 1.1 m in front"
+                  % (min(z for _, _, z in segs), max(z for _, _, z in segs)))
+
+
+def vki_ash_ruin_150_full(k): vki_ash_ruin(k, 1.5, "Full")
+def vki_ash_ruin_150_cut(k): vki_ash_ruin(k, 1.5, "Cut")
+def vki_ash_ruin_300_full(k): vki_ash_ruin(k, 3.0, "Full")
+def vki_ash_ruin_300_cut(k): vki_ash_ruin(k, 3.0, "Cut")
+
+
+# ---------------------------------------------------------------- Arcade_300 (2026-10-18: the cloister's garth side)
+# Two pointed openings (x 0.40-1.40 and 1.60-2.60, clear 1.0, spring 1.90, apex 2.68) over a dwarf wall whose sill is
+# the first string course (0.90-1.00, so it runs on from the plain walls); a coupled column between them (base, two
+# colonnettes r 0.06 one behind the other, capital, abacus), DRESS jambs at the piers (x 0.30-0.40 / 2.60-2.70); one
+# full-depth ring of voussoirs (0.10) round each opening, the two rings meeting over the column; ashlar spandrels to
+# 2.80, then the wall, the second course and the cornice. Cut: the plain Cut wall is the same below the sill
+# (vki_cut_to). Broken: the arches have fallen -- two springer stones left on each pier, the column snapped (its
+# colonnettes at 1.55 / 1.85), the upper wall gone between the piers; the voussoirs, the capital, a length of
+# colonnette and blocks lie on the floor in front.
+VKI_ASH_ARCADE = dict(ops=((0.40, 1.40), (1.60, 2.60)), spring=1.90, ring=0.10, n=4, pier=0.30, sill=0.95, top=2.80,
+                      col=(1.40, 1.60))
+
+
+def vki_ash_arcade_ring(k, x0, x1, keep=None):
+    """the voussoirs of one opening (keep: {side: number of stones from the springing}, None = all); returns the
+    outer-ring points per side (sgn -> points from the springing to the apex) for the spandrel strips"""
+    A = VKI_ASH_ARCADE
+    zs, m = A["spring"], A["n"]
+    T2 = 0.25
+    r = 0.85 * (x1 - x0); cR, cL = x1 - r, x0 + r; xa = (x0 + x1) / 2
+    R0, R1 = r, r + A["ring"]
+    ta1 = math.acos((xa - cR) / R1)
+    angs = [ta1 * j / m for j in range(m)]
+
+    def pt(cx, sgn, R, t):
+        return (cx + sgn * R * math.cos(t), zs + R * math.sin(t))
+
+    def apex(R):
+        return (xa, zs + math.sqrt(R * R - (xa - cR) ** 2))
+    outer = {}
+    for sgn, cx in ((1, cR), (-1, cL)):
+        n_keep = m if keep is None else keep.get(sgn, 0)
+        for j in range(n_keep):
+            last = j == m - 1
+            poly = [pt(cx, sgn, R0, angs[j]), apex(R0) if last else pt(cx, sgn, R0, angs[j + 1]),
+                    apex(R1) if last else pt(cx, sgn, R1, angs[j + 1]), pt(cx, sgn, R1, angs[j])]
+            vki_prism(k, poly if sgn > 0 else poly[::-1], -T2, T2, DRESS, axis="y", bevel=0.012)
+        outer[sgn] = ([pt(cx, sgn, R1, a) for a in angs] + [apex(R1)])[:n_keep + 1]
+    return outer
+
+
+def vki_ash_arcade_strips(k, pts, sgn, Z):
+    """ashlar body over an outer-ring polyline up to Z (or per strip, Z(pa, pb))"""
+    T2 = 0.25
+    for pa, pb in zip(pts[:-1], pts[1:]):
+        z = Z(pa, pb) if callable(Z) else Z
+        poly = [pa, pb, (pb[0], z), (pa[0], z)]
+        vs, fs = vki_prism(k, poly if sgn > 0 else poly[::-1], -T2, T2, VKI_WALL_A, axis="y")
+        for f in fs:
+            if f.normal.y > 0.7:
+                k.project([f], VKI_WALL_B)
+        k.mark_body(vs)
+
+
+def vki_ash_arcade_column(k, snap=None):
+    """the coupled column between the openings: base on the sill, two colonnettes one behind the other (y -+0.11),
+    capital and abacus under the springing; snap = (z_front, z_back): snapped colonnettes, no capital"""
+    A = VKI_ASH_ARCADE
+    zs = A["spring"]
+    x0, x1 = A["col"]
+    xc = (x0 + x1) / 2
+    vki_tim_member(k, x0 - 0.04, x1 + 0.04, 0.975, 1.08, y0=-0.21, y1=0.21, mi=DRESS, bev=0.015)     # base
+    for y, zt in ((-0.11, snap[0] if snap else zs - 0.15), (0.11, snap[1] if snap else zs - 0.15)):
+        vs, fs = vki_home_lathe(k, [(0.06, 1.075), (0.06, zt)], c=(xc, y, 0.0), segs=8, mi=DRESS, smooth=True)
+        if snap:
+            rnd = random.Random(int(zt * 100))
+            for v in vs:
+                if v.co.z > zt - 1e-4:
+                    v.co.z += rnd.uniform(-0.05, 0.03)
+    if not snap:
+        vki_tim_member(k, x0 + 0.01, x1 - 0.01, zs - 0.155, zs - 0.05, y0=-0.20, y1=0.20, mi=DRESS, bev=0.012)  # bell
+        vki_tim_member(k, x0 - 0.03, x1 + 0.03, zs - 0.055, zs, y0=-0.24, y1=0.24, mi=DRESS, bev=0.01)    # abacus
+
+
+def vki_ash_arcade(k, broken=False):
+    A = VKI_ASH_ARCADE
+    L = 3.0
+    zs, P, Z = A["spring"], A["pier"], A["top"]
+    tb = VKI_ASH_CORNICE[0]
+    vki_ash_body(k, 0.0, P, VKI_FOOT_Z, tb)                                   # piers
+    vki_ash_body(k, L - P, L, VKI_FOOT_Z, tb)
+    vki_ash_body(k, P, L - P, VKI_FOOT_Z, A["sill"])                          # dwarf wall (its top inside the sill)
+    vki_ash_course(k, 0.0, L, *VKI_ASH_COURSES[0])                            # the sill
+    for a, b in ((P, A["ops"][0][0]), (A["ops"][1][1], L - P)):               # jambs at the piers
+        vki_tim_member(k, a, b, 0.975, zs, y0=-0.25, y1=0.25, mi=DRESS, bev=0.012)
+    (a0, a1), (b0, b1) = A["ops"]
+    if not broken:
+        for x0, x1 in A["ops"]:
+            outer = vki_ash_arcade_ring(k, x0, x1)
+            for sgn in (1, -1):
+                vki_ash_arcade_strips(k, outer[sgn], sgn, Z)
+        vki_ash_arcade_column(k)
+        vki_ash_body(k, P, L - P, Z, tb)
+        vki_ash_course(k, 0.0, L, *VKI_ASH_COURSES[1])
+        vki_ash_cornice(k, 0.0, L)
+        holes = vki_ash_course_holes(L) + [(P, 0.0, L - P, Z + 0.3)]
+    else:
+        rnd = random.Random(301)
+        for (x0, x1), side in (((a0, a1), -1), ((b0, b1), 1)):               # springers on the piers only
+            outer = vki_ash_arcade_ring(k, x0, x1, keep={side: 2})
+            vki_ash_arcade_strips(k, outer[side], side, lambda pa, pb: max(pa[1], pb[1]) + rnd.uniform(0.12, 0.22))
+        vki_ash_arcade_column(k, snap=(1.55, 1.85))
+        for x0, x1 in ((0.0, P), (L - P, L)):
+            vki_ash_course(k, x0 + (0.0 if x0 == 0.0 else 0.02), x1 - (0.02 if x0 == 0.0 else 0.0),
+                           *VKI_ASH_COURSES[1])
+            vki_ash_cornice(k, x0, x1)
+        vki_ash_arcade_debris(k, rnd)
+        holes = vki_ash_course_holes(L) + [(P, 0.0, L - P, tb)]
+    vki_ash_wobble(k, L, holes, tb)
+    k.slot_mats[VKI_STONE_BLOCK_IN] = "M_VKI_AshlarBlock"
+    k.meta.update(vki_class="wall", vki_cut_to="SM_VKI_Wall_Ashlar_Plain_300_Cut", vki_arcade=1,
+                  vki_openings=[{"x0": x0, "x1": x1, "z0": 1.0, "spring": zs, "pointed": 1} for x0, x1 in A["ops"]],
+                  vki_note="the cloister walk on -Y, the garth (ApronGrass) on +Y; the dwarf wall blocks (see through "
+                           "it, walk through an Arch_300)")
+    if broken:
+        k.meta.update(vki_broken=1, vki_broken_note="the dwarf wall (1.0 m) still blocks; the upper wall is gone "
+                                                    "between the piers; debris lies up to 1.2 m in front")
+
+
+def vki_ash_new(k, build, M, sink=0.006, dark=None):
+    """build() adds geometry; its vertices are moved by M and dropped so their lowest point is `sink` under the floor
+    (dark: their darkening). They are found through a temporary int layer: bmesh.ops.create_icosphere kills older
+    python BMVert references in this Blender (their hashes change), so a 'not in before' set can take in every vertex
+    of the piece"""
+    lay = k.bm.verts.layers.int.new("vki_ash_old")
+    for v in k.bm.verts:
+        v[lay] = 1
+    build()
+    lay = k.bm.verts.layers.int["vki_ash_old"]
+    vs = [v for v in k.bm.verts if not v[lay]]
+    bmesh.ops.transform(k.bm, verts=vs, matrix=M)
+    if sink is not None:
+        dz = -sink - min(v.co.z for v in vs)
+        for v in vs:
+            v.co.z += dz
+    if dark is not None:
+        k.set_dark(vs, dark)
+    k.bm.verts.layers.int.remove(lay)
+    k.bm.normal_update()
+
+
+def vki_ash_arcade_debris(k, rnd):
+    """the fallen arches on the floor in front (x clear of the node zones): voussoirs, the capital, a length of
+    colonnette, blocks and grit"""
+    R0, R1, a, b = 0.85, 0.95, 0.0, 0.32
+    poly = [(R0 * math.cos(a), R0 * math.sin(a)), (R0 * math.cos(b), R0 * math.sin(b)),
+            (R1 * math.cos(b), R1 * math.sin(b)), (R1 * math.cos(a), R1 * math.sin(a))]
+    cx = sum(p[0] for p in poly) / 4; cz = sum(p[1] for p in poly) / 4
+    poly = [(p[0] - cx, p[1] - cz) for p in poly]
+    for i, (x, y, yaw) in enumerate(((0.80, -0.70, 0.4), (1.25, -1.05, -0.9), (1.85, -0.62, 1.7), (2.25, -0.95, 0.2),
+                                     (1.55, -0.40, 2.6))):
+        vki_ash_new(k, lambda: vki_prism(k, poly, -0.25, 0.25, DRESS, axis="y", bevel=0.012),
+                    Matrix.Translation((x, y, 0.0)) @ Matrix.Rotation(yaw, 4, "Z") @     # flat on its soffit
+                    Matrix.Rotation(math.pi / 2 - 0.16 + rnd.uniform(-0.12, 0.12), 4, "Y"),
+                    dark=rnd.uniform(0.05, 0.15))
+
+    def capital():
+        vki_tim_member(k, -0.10, 0.10, -0.05, 0.05, y0=-0.20, y1=0.20, mi=DRESS, bev=0.012)          # bell
+        vki_tim_member(k, -0.13, 0.13, 0.045, 0.10, y0=-0.24, y1=0.24, mi=DRESS, bev=0.01)          # abacus
+    vki_ash_new(k, capital, Matrix.Translation((1.95, -1.15, 0.0)) @ Matrix.Rotation(0.7, 4, "Z") @
+                Matrix.Rotation(1.35, 4, "X"))
+    vki_ash_new(k, lambda: vki_home_lathe(k, [(0.06, -0.28), (0.06, 0.28)], segs=8, mi=DRESS),          # colonnette
+                Matrix.Translation((1.05, -0.55, 0.0)) @ Matrix.Rotation(-0.5, 4, "Z") @
+                Matrix.Rotation(math.pi / 2, 4, "Y"))
+    for i in range(3):
+        sz = rnd.uniform(0.30, 0.42)
+        vs = list(set(k.box((0.85 + 0.65 * i + rnd.uniform(-0.1, 0.1), rnd.uniform(-1.20, -0.95), 0.10),
+                            (sz, 0.26, 0.22), VKI_STONE_BLOCK_IN, rot=(rnd.uniform(-0.12, 0.12),
+                                                                      rnd.uniform(-0.2, 0.2), rnd.uniform(-0.7, 0.7)),
+                            bevel=0.02, seed=310 + i)))
+        k.set_dark(vs, rnd.uniform(0.06, 0.15))
+    vki_dpr_mound(k, (1.50, -0.55, 0.0), 0.62, 0.28, 0.08, VKI_ASH, z0=0.001, nr=2, ns=12, seed=320, wob=0.15, bump=0.25)
+
+
+def vki_ash_arcade_full(k): vki_ash_arcade(k)
+def vki_ash_arcade_full_broken(k): vki_ash_arcade(k, broken=True)
+
+
 # ---------------------------------------------------------------- Lancet_150 / LancetTall_150 (§3.2)
 def vki_ash_surround(k, x0, x1, zs):
     """DRESS surround on face A around the splay edge: n_jamb long-and-short jamb stones a side from the sill to the
@@ -673,6 +983,12 @@ VKI_ASH_SPECS = [
     ("SM_VKI_Wall_Ashlar_Plain_150A_Cut", vki_ash_plain_150a_cut),
     ("SM_VKI_Wall_Ashlar_Plain_300_Full", vki_ash_plain_300_full),
     ("SM_VKI_Wall_Ashlar_Plain_300_Cut", vki_ash_plain_300_cut),
+    ("SM_VKI_Wall_Ashlar_Ruin_150_Full", vki_ash_ruin_150_full),
+    ("SM_VKI_Wall_Ashlar_Ruin_150_Cut", vki_ash_ruin_150_cut),
+    ("SM_VKI_Wall_Ashlar_Ruin_300_Full", vki_ash_ruin_300_full),
+    ("SM_VKI_Wall_Ashlar_Ruin_300_Cut", vki_ash_ruin_300_cut),
+    ("SM_VKI_Wall_Ashlar_Arcade_300_Full", vki_ash_arcade_full),
+    ("SM_VKI_Wall_Ashlar_Arcade_300_Full_Broken", vki_ash_arcade_full_broken),
     ("SM_VKI_Wall_Ashlar_Lancet_150_Full", vki_ash_lancet_full),
     ("SM_VKI_Wall_Ashlar_Lancet_150_Cut", vki_ash_lancet_cut),
     ("SM_VKI_Wall_Ashlar_LancetTall_150_Full", vki_ash_lancettall_full),

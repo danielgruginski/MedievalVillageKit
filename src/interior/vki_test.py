@@ -673,11 +673,17 @@ def vki_t6_uv_continuity(objs, slots=None, tol=1e-4):
 
 
 # ---------------------------------------------------------------- T7 / T8 / T9
+# two-sided alpha cards from the exterior foliage atlas (card(): weeds, ivy): open single faces by design, drawn from
+# both sides (VKX_TWO_SIDED), so T7 / T8 leave faces on these slots alone
+VKI_CARD_SLOTS = (FOLIAGE, CROPS)
+
+
 def vki_t7_closed(o):
     """every edge has exactly 2 faces. Walls (core fix): the end planes x = 0 / x = L are open (VKIKit.finish
     removes the end faces), so an edge with ONE face is allowed there -- both its vertices in the same end plane;
     everywhere else a wall is closed. Dual-grid rock / ground tiles are open at their bottom plane (vki_open_bottom:
-    the bottom faces face down under the floor, never seen). Edges with 3+ faces are always an error."""
+    the bottom faces face down under the floor, never seen). Edges with 3+ faces are always an error. Card faces
+    (VKI_CARD_SLOTS) may have open edges."""
     o = vki_obj(o)
     bm = bmesh.new(); bm.from_mesh(o.data)
     wall = o.get("vki_class") == "wall"
@@ -695,6 +701,9 @@ def vki_t7_closed(o):
         if nf == 1 and ob is not None and all(abs(v.co.z - float(ob)) <= 1e-5 for v in e.verts):
             open_ += 1
             continue
+        if nf == 1 and e.link_faces[0].material_index in VKI_CARD_SLOTS:
+            open_ += 1
+            continue
         bad += 1
     bm.free()
     return [f"T7 {o.name}: {bad} edges without exactly 2 faces (outside the open wall end planes)"] if bad else []
@@ -703,10 +712,11 @@ def vki_t7_closed(o):
 def vki_t8_normals(o):
     o = vki_obj(o)
     bm = bmesh.new(); bm.from_mesh(o.data); bm.normal_update()
-    before = [f.normal.copy() for f in bm.faces]
-    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    fs = [f for f in bm.faces if f.material_index not in VKI_CARD_SLOTS]       # cards: two-sided, either way
+    before = [f.normal.copy() for f in fs]
+    bmesh.ops.recalc_face_normals(bm, faces=fs)
     bm.normal_update()
-    flipped = sum(1 for f, n in zip(bm.faces, before) if f.normal.dot(n) < 0)
+    flipped = sum(1 for f, n in zip(fs, before) if f.normal.dot(n) < 0)
     bm.free()
     return [f"T8 {o.name}: {flipped} flipped faces"] if flipped else []
 

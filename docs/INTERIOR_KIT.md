@@ -98,6 +98,8 @@ Abandoned twins: `Prop_Altar_300_Stripped`, `Prop_CandleStand_Pricket_Fallen`, `
 `Prop_Cot_Broken`, `Prop_RoofCollapse` (with a daylight spot), `Overlay_Pages`; scenes `VKI_Monastery_Scriptorium` and `VKI_Monastery_Dorter`.
 `Wall_Ashlar_Arch_300` is an open pointed arch (clear 1.9 m, no leaves, `vki_arch` 1) for cloister walks, nave
 arcades and a hall's screens passage; `Wall_Ashlar_Hearth_300` a hooded great-hall fireplace in the 4.5 m wall.
+Ruins and the cloister: `Wall_Ashlar_Ruin_150/300_Full` (+ `_Cut`), `Wall_Ashlar_Arcade_300_Full` (+ `_Full_Broken`); overgrowth `Overlay_Overgrowth`, `Overlay_Moss`,
+`Prop_Ivy_Wall` / `_Tall` (wall_hung); `Prop_Font_Broken`, `Prop_Statue_Saint` / `_Toppled`; scene `VKI_Monastery_Cloister`.
 
 **Stairs.** `Stair_Up_150x450_RailR` and `Stair_Down_150x450_RailR` share their origin and rotation on the two floors
 (rotation 0/±90, never 180). The up flight rises "through the ceiling"; the down stair is a hole with rails. They are
@@ -302,7 +304,7 @@ Generated from the masters in `VKI_Pieces` (triangles, footprint in 1.5 m cells,
 | `SM_VKI_Wall_Wattle_Window_150_Cut` | 572 | 1,1 | – |
 | `SM_VKI_Wall_Wattle_Window_150_Full` | 1452 | 1,1 | – |
 
-### Ashlar walls and posts (12)
+### Ashlar walls and posts (18)
 
 | Piece | Tris | Cells | Mount |
 |---|---|---|---|
@@ -323,6 +325,12 @@ Generated from the masters in `VKI_Pieces` (triangles, footprint in 1.5 m cells,
 | `SM_VKI_Wall_Ashlar_Plain_150A_Cut` | 180 | 1,1 | – |
 | `SM_VKI_Wall_Ashlar_Plain_150A_Full` | 588 | 1,1 | – |
 | `SM_VKI_Wall_Ashlar_Plain_300_Cut` | 348 | 2,1 | – |
+| `SM_VKI_Wall_Ashlar_Ruin_150_Cut` | 384 | 1,1 | – |
+| `SM_VKI_Wall_Ashlar_Ruin_150_Full` | 1080 | 1,1 | – |
+| `SM_VKI_Wall_Ashlar_Ruin_300_Cut` | 676 | 2,1 | – |
+| `SM_VKI_Wall_Ashlar_Ruin_300_Full` | 1672 | 2,1 | – |
+| `SM_VKI_Wall_Ashlar_Arcade_300_Full` | 2360 | 2,1 | – |
+| `SM_VKI_Wall_Ashlar_Arcade_300_Full_Broken` | 1788 | 2,1 | – |
 | `SM_VKI_Wall_Ashlar_Plain_300_Full` | 1140 | 2,1 | – |
 
 ### Floors, door leaves, aprons, overlays, FX (25)

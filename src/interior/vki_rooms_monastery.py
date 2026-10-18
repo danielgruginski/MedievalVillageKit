@@ -7,18 +7,23 @@
 #                         pricket stand toppled, a heap where the roof came in (daylight)
 #   VKI_Monastery_Scriptorium  6 x 4 cells (9 x 6 m), Stone: a ransacked bookcase and a half-empty one, the writing
 #                         desk tipped over with its leaves spilled, more leaves and a heap of books
-#   VKI_Monastery_Dorter  6 x 3 cells (9 x 4.5 m), Stone: the monks' dormitory, broken cots, rags
-# Tokens: "S2" / "2" the broken lancet (Wall_Ashlar_Lancet_150_Full_Broken).
+#   VKI_Monastery_Dorter  6 x 3 cells (9 x 4.5 m), Stone: the monks' dormitory, broken cots, rags, ivy, moss
+#   VKI_Monastery_Cloister  8 x 4 cells (12 x 6 m), Ashlar: the walk (north) and the garth (south, grass) between a
+#                         row of arcades -- whole, fallen, an open arch to walk through --, a ruined stretch of the
+#                         north wall with ivy, the font thrown down, the saint toppled, weeds
+# Tokens: "S2" / "2" the broken lancet (Wall_Ashlar_Lancet_150_Full_Broken); in the cloister S1 the arcade, S2 the
+# fallen arcade, S3 the open arch, S4 the ruined wall.
 
-VKI_MONASTERY_SCENES = ["VKI_Monastery_Church", "VKI_Monastery_Scriptorium", "VKI_Monastery_Dorter"]
+VKI_MONASTERY_SCENES = ["VKI_Monastery_Church", "VKI_Monastery_Scriptorium", "VKI_Monastery_Dorter",
+                        "VKI_Monastery_Cloister"]
 
 VKI_PLANS.update({
     "VKI_Monastery_Church": """
       0  1  2  3  4  5  6  7
      +##+##+S2+LT+LT+LL+##+##+
-   5 #.. .. .. AL AL .. .. ..#
+   5 #.. ms .. AL AL .. .. ..#
      +                       +
-   4 #CS .. RC RC .. .. cd CS#
+   4 #CS .. RC RC .. cd .. CS#
      +                       +
    3 #CS .. .. .. FB FB .. CS#
      +                       +
@@ -49,7 +54,9 @@ VKI_ROOMS.update({
                #  boxed the whole diagonal and cut the altar off)
                ("Overlay_GlassShards", 3.75, 8.35, 0, None, None),
                ("Overlay_GlassShards", 0.65, 2.25, 90, None, None),
-               ("Overlay_Debris_Rubble", 7.9, 1.9, 40, None, None)]),
+               ("Overlay_Debris_Rubble", 7.9, 1.9, 40, None, None),
+               ("Ivy_Wall_Tall", 1.6, 8.25, 0, None, "wall_hung"),       # over the roof collapse's corner
+               ("Overlay_Moss", 1.9, 7.9, 0, None, None)]),
 })
 VKI_PLANS.update({
     "VKI_Monastery_Scriptorium": """
@@ -71,8 +78,20 @@ VKI_PLANS.update({
      +                 +
    1 #.. .. .. .. .. ..#
      +                 +
-   0 #.. .. .. ee .. ..#
+   0 #.. .. .. ee .. ms#
      +==+ww+==+ee+==+==+
+""",
+    "VKI_Monastery_Cloister": """
+      0  1  2  3  4  5  6  7
+     +##+##+S4+S4+##+##+##+##+
+   3 #.. .. .. .. .. .. .. ..#
+     +                       +
+   2 #.. .. .. .. .. ms .. ..#
+     +S1+S1+S3+S3+S2+S2+S1+S1+
+   1 #.. fb .. .. .. .. st ..#
+     +                       +
+   0 #.. fb .. og ee .. st ..#
+     +==+==+==+==+ee+==+==+==+
 """,
 })
 
@@ -91,10 +110,27 @@ VKI_ROOMS.update({
         zones={"room": dict(cells="rest", floor="FlagRustic", wall="StoneIn")},
         links=[("front", "exit", "@return")], spawns={"front": (5.25, 1.60, 0)},
         props=[("Cot_Broken", 1.65, 3.1, 0, None, None), ("Cot_Broken", 6.6, 3.1, 0, None, None),
-               ("Overlay_Debris_Rags", 4.3, 1.4, 30, None, None)]),
+               ("Overlay_Debris_Rags", 4.3, 1.4, 30, None, None),
+               ("Ivy_Wall", 4.5, 3.75, 0, None, "wall_hung"), ("Overlay_Moss", 7.6, 1.0, 0, None, None)]),
+})
+VKI_ROOMS.update({
+    "VKI_Monastery_Cloister": dict(
+        building="Monastery", floor=0, preset="Day", family=dict(perimeter="Ashlar", partition="Ashlar"),
+        corners="pillar",
+        specials={"S1": "Wall_Ashlar_Arcade_300_Full", "S2": "Wall_Ashlar_Arcade_300_Full_Broken",
+                  "S3": "Wall_Ashlar_Arch_300_Full", "S4": "Wall_Ashlar_Ruin_300_Full"},
+        zones={"walk": dict(cells=[(0, 7, 2, 3)], floor="FlagRustic", wall="AshlarIn"),
+               "garth": dict(cells="rest", floor="ApronGrass", wall="AshlarIn")},
+        links=[("front", "exit", "@return")], spawns={"front": (6.75, 1.60, 0)},
+        props=[("Font_Broken", 2.25, 1.45, 0, None, None),
+               ("Statue_Saint_Toppled", 9.75, 2.15, 0, None, None),
+               ("Overlay_Overgrowth", 4.6, 1.15, 0, None, None),
+               ("Overlay_Moss", 8.25, 3.9, 0, None, None),
+               ("Ivy_Wall_Tall", 8.25, 5.25, 0, None, "wall_hung")]),
 })
 VKI_ROOMS_CODES.update({"ChoirStall_300": "CS", "Pew_300_Broken": "PW", "Pew_300_Overturned": "PW",
                         "FallenBeam": "FB", "Desk_Scriptorium": "DS", "Overlay_GlassShards": "gs",
                         "Altar_300_Stripped": "AL", "CandleStand_Pricket_Fallen": "cd", "RoofCollapse": "RC",
                         "Desk_Scriptorium_Fallen": "DF", "Bookcase_150_Ransacked": "BR", "Cot_Broken": "CB",
-                        "Overlay_Pages": "pg"})
+                        "Overlay_Pages": "pg", "Overlay_Overgrowth": "og", "Overlay_Moss": "ms",
+                        "Font_Broken": "fb", "Statue_Saint": "SS", "Statue_Saint_Toppled": "st"})
