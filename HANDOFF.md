@@ -1449,6 +1449,25 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     a dais (the chapel's dais pieces), banners or tapestries on the walls, a chandelier; the towers want a spiral
     stair.
 
+118. 2026-10-17 (the user: "monastery set" -- the abandoned monastery's pieces). New text `vki_props_monastery`
+    (after `vki_props_library`): **`SM_VKI_Prop_ChoirStall_300`** (1,372 tris; three seats between shaped arm
+    partitions with carved knobs, a panelled back to 1.60, a pale cresting rail, four pinnacles; wall_floor) -- a first
+    version with a canopy to 2.55 read as a dark wardrobe from the game camera and hid its seats, and the pew's
+    poppyheads on its arms cost 2,476 tris; **`SM_VKI_Prop_Pew_300_Broken`** (1,236: the right end board fallen outward,
+    the seat's right half down to the floor, the back rail snapped, the right post gone, all built from the pew's parts
+    moved by `vki_mon_part` / `vki_mon_about`); **`SM_VKI_Prop_Pew_300_Overturned`** (the pew tipped onto its back, 7 deg
+    askew); **`SM_VKI_Prop_FallenBeam`** (472: a 4.2 m tie-beam, one end on a rubble heap, splintered ends -- wedges
+    in a right-handed frame, their bases staggered, T8 / T5S --, a broken rafter, planks; explicit colliders for the beam
+    and the heap); **`SM_VKI_Prop_Desk_Scriptorium`** (634: a slanted writing desk, manuscript, inkhorn, quill, book,
+    candle 30 W); **`SM_VKI_Overlay_GlassShards`**. In vki_fam_ashlar: **`SM_VKI_Wall_Ashlar_Lancet_150_Full_Broken`** /
+    `LancetTall_..._Broken` (`vki_ash_glass_broken`: a jagged rim of shards round the frame, a quarter of it empty,
+    each shard off its neighbour's plane; `vki_cut_to` the Lancet Cut). Test room **`VKI_Monastery_Church`** (new text
+    `vki_rooms_monastery`): 8 x 6 Ashlar, broken lancets north (`S2`) and west (`2`), choir stalls, pews whole, broken
+    and overturned, the beam across the crossing, shards, rubble; `vki_check` 0 errors. **Gotcha:** the room BFS boxes
+    every collider square to the room (rotations are taken as multiples of 90): a beam turned 32 deg boxed its whole
+    diagonal and cut the altar off -- keep long props near 0 / 90 deg in plans. The altar stays pristine (an
+    abandoned one stripped of its linen and candles would read better).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

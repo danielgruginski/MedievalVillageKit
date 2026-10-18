@@ -92,6 +92,8 @@ portal (a lintel at 2.20 and a tympanum under the arch) that takes `Leaf_Plank_F
 abandoned places: `Leaf_Wide160_Full_Broken_L` and `Leaf_Plank_Full_Broken` hang ajar on their lower hinge, sagging,
 the meeting-edge plank gone and the next snapped -- static pieces (`vki_leaf_state` "broken"), placed at the socket.
 A test castle hall from these pieces: scene `VKI_Castle_Hall` (`vki_rooms_castle`).
+The abandoned monastery (`vki_props_monastery`, scene `VKI_Monastery_Church`): `Prop_ChoirStall_300`, `Prop_Pew_300_Broken` / `_Overturned`, `Prop_FallenBeam`,
+`Prop_Desk_Scriptorium`, `Overlay_GlassShards`, and the broken lancets `Wall_Ashlar_Lancet_150_Full_Broken` / `LancetTall_150_Full_Broken`.
 `Wall_Ashlar_Arch_300` is an open pointed arch (clear 1.9 m, no leaves, `vki_arch` 1) for cloister walks, nave
 arcades and a hall's screens passage; `Wall_Ashlar_Hearth_300` a hooded great-hall fireplace in the 4.5 m wall.
 

@@ -23,7 +23,7 @@
 #   Posts (DRESS): Corner = clustered respond +-0.31: base, core +-0.255 with 4 engaged shafts (r 0.095 on the axes),
 #     flared capital, abacus with a CAP top. Mid (Full only) = shaft respond +-0.12 x +-0.31: one shaft a face.
 # Build (package engineer): g["vki_ws_build"]("wattle", VKI_ASH_NAMES); test: g["vki_test_pieces"](VKI_ASH_NAMES).
-import bpy, bmesh, math, json
+import bpy, bmesh, math, json, random
 from mathutils import Vector, Matrix
 
 VKI_ASH_HW = 0.28                       # courses / cornice front (= CAP_HW, class O)
@@ -185,7 +185,33 @@ def vki_ash_surround(k, x0, x1, zs):
             vs, fs = vki_prism(k, poly if sgn > 0 else poly[::-1], ya, yb, DRESS, axis="y", bevel=S["bev"])
 
 
-def vki_ash_lancet(k, kind, height):
+def vki_ash_glass_broken(k, pts, gy, seed=7):
+    """shattered glass (2026-10-17, the abandoned monastery): only a jagged rim of shards stays in the frame -- the
+    outline resampled every ~0.25 m, each shard 1-3 of its segments plus a point 6-24 cm in toward the middle, a
+    quarter of the stretches empty to the frame; each shard 1.5 mm off its neighbour's plane (never coplanar)"""
+    rnd = random.Random(seed)
+    ring = []
+    for i in range(len(pts)):
+        a, b = Vector(pts[i]), Vector(pts[(i + 1) % len(pts)])
+        n = max(1, int((b - a).length / 0.25))
+        ring += [a + (b - a) * j / n for j in range(n)]
+    c = sum(ring, Vector((0.0, 0.0))) / len(ring)
+    i, m, idx = 0, len(ring), 0
+    while i < m:
+        span = rnd.randint(1, 3)
+        if rnd.random() < 0.25:
+            i += span
+            continue
+        seg = [ring[(i + j) % m] for j in range(min(span, m - i) + 1)]
+        mid = (seg[0] + seg[-1]) / 2
+        q = mid + (c - mid).normalized() * rnd.uniform(0.06, 0.24)
+        y0 = gy - 0.01 + 0.0015 * (idx % 4)
+        vki_prism(k, [(p.x, p.y) for p in seg] + [(q.x, q.y)], y0, y0 + 0.012, STAINED, axis="y")
+        i += span
+        idx += 1
+
+
+def vki_ash_lancet(k, kind, height, broken=False):
     """Full: piers x 0-0.33 / 1.17-1.5, the body under the sill, splayed jamb wedges and one convex solid per arch
     segment (the splay soffit from the face-A arc to the glass arc, then the outer reveal), body over the arch;
     glass, bars, surround, the courses and the cornice. Cut: the lower metre, the cap course in two pieces butting a
@@ -223,7 +249,11 @@ def vki_ash_lancet(k, kind, height):
         vki_ash_body(k, x0, x1, Z, tb)                                     # body over the arch
         # glass: a closed 0.02 plate, 1 cm larger than the glass outline on every side (edges buried in the body)
         gpts, _ = lancet_pts(g0 - 0.01, g1 + 0.01, sill - 0.01, zs, n)
-        vki_prism(k, gpts, gy - 0.01, gy + 0.01, STAINED, axis="y")
+        if broken:
+            vki_ash_glass_broken(k, gpts, gy, seed=7 if kind == "Lancet" else 11)
+            k.meta.update(vki_broken=1, vki_cut_to="SM_VKI_Wall_Ashlar_Lancet_150_Cut")
+        else:
+            vki_prism(k, gpts, gy - 0.01, gy + 0.01, STAINED, axis="y")
         for zb in VKI_ASH_BARS[kind]:                                      # iron saddle bars on the room side
             k.box((0.75, gy - 0.025, zb), (g1 - g0 + 0.03, 0.02, 0.02), IRON, bevel=0)
         vki_ash_surround(k, x0, x1, zs)
@@ -252,6 +282,8 @@ def vki_ash_lancet(k, kind, height):
 def vki_ash_lancet_full(k): vki_ash_lancet(k, "Lancet", "Full")
 def vki_ash_lancet_cut(k): vki_ash_lancet(k, "Lancet", "Cut")
 def vki_ash_lancettall_full(k): vki_ash_lancet(k, "LancetTall", "Full")
+def vki_ash_lancet_full_broken(k): vki_ash_lancet(k, "Lancet", "Full", broken=True)
+def vki_ash_lancettall_full_broken(k): vki_ash_lancet(k, "LancetTall", "Full", broken=True)
 
 
 # ---------------------------------------------------------------- DoorWide_300 (§3.2 Ashlar, pointed)
@@ -644,6 +676,8 @@ VKI_ASH_SPECS = [
     ("SM_VKI_Wall_Ashlar_Lancet_150_Full", vki_ash_lancet_full),
     ("SM_VKI_Wall_Ashlar_Lancet_150_Cut", vki_ash_lancet_cut),
     ("SM_VKI_Wall_Ashlar_LancetTall_150_Full", vki_ash_lancettall_full),
+    ("SM_VKI_Wall_Ashlar_Lancet_150_Full_Broken", vki_ash_lancet_full_broken),
+    ("SM_VKI_Wall_Ashlar_LancetTall_150_Full_Broken", vki_ash_lancettall_full_broken),
     ("SM_VKI_Wall_Ashlar_DoorWide_300_Full", vki_ash_doorwide_full),
     ("SM_VKI_Wall_Ashlar_DoorWide_300_Cut", vki_ash_doorwide_cut),
     ("SM_VKI_Wall_Ashlar_Door_150_Full", vki_ash_door1_full),
