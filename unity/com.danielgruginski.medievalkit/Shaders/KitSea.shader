@@ -6,6 +6,7 @@
 //   - foam where the scene sits just behind the surface (the quay walls, hulls, piles, the beach): a hard-edged ragged
 //     band plus a thin second line further out, drifting. Depths are true vertical ones (the scene rebuilt in world
 //     space): the kit's sea is shallow (its bed 0.9 m under the water), so the foam's depths stay well under that
+//   - cartoon waves: light / shade bands on the wave faces, whitecaps on the crests
 //   - a stepped sun glint (cartoony sparkles), lit by URP's main light (its shadows: ships shade the water) + ambient
 //   - Stencil: pixels a KitWaterMask marked (bit 8: a hull's waterline footprint, KitVillage.SeaMasks) get no water,
 //     so a boat sitting low stays dry inside
@@ -23,9 +24,14 @@ Shader "MedievalKit/KitSea"
         _RippleScale("Ripple Scale", Float) = 0.55
         _RippleSpeed("Ripple Speed", Float) = 1.2
         _RippleNoise("Ripple Irregularity", Range(0, 1)) = 0.6
-        _RippleStrength("Ripple Strength", Range(0, 0.5)) = 0.14
+        _RippleStrength("Ripple Strength", Range(0, 0.5)) = 0.22
         _RefractionStrength("Refraction Strength", Range(0, 0.15)) = 0.03
         _RefractEdgeFade("Refraction Edge Fade (depth)", Range(0.01, 2)) = 0.35
+
+        [Header(Waves)]
+        _WaveShade("Wave Light / Shade Bands", Range(0, 0.4)) = 0.12
+        _CapAmount("Whitecaps", Range(0, 1)) = 0.7
+        _CapThreshold("Whitecap Crest Height", Range(0.5, 1)) = 0.78
 
         [Header(Glint)]
         _SpecStrength("Glint Strength", Range(0, 3)) = 1.2
@@ -33,13 +39,13 @@ Shader "MedievalKit/KitSea"
 
         [Header(Foam)]
         _FoamColor("Foam Color", Color) = (0.95, 0.98, 1.0, 1)
-        _FoamDistance("Foam Band Width (m of depth)", Range(0, 3)) = 0.28
+        _FoamDistance("Foam Band Width (m of depth)", Range(0, 3)) = 0.45
         _FoamStrength("Foam Strength", Range(0, 1)) = 0.9
         _FoamScale("Foam Texture Scale", Float) = 2.2
         _FoamSpeed("Foam Drift Speed", Float) = 0.35
         _FoamHardness("Foam Edge Hardness", Range(0, 1)) = 0.8
-        _FoamLine("Second Line Depth (m)", Range(0, 3)) = 0.4
-        _FoamLineWidth("Second Line Width (m)", Range(0, 0.5)) = 0.04
+        _FoamLine("Second Line Depth (m)", Range(0, 3)) = 0.62
+        _FoamLineWidth("Second Line Width (m)", Range(0, 0.5)) = 0.07
         _FoamMinDepth("Foam Seam Cutoff", Range(0, 0.5)) = 0.03
 
         [Header(Anti tiling)]
@@ -80,6 +86,7 @@ Shader "MedievalKit/KitSea"
                 half _DepthMax, _ColorBands, _BaseOpacity, _FresnelPower;
                 float _RippleScale, _RippleSpeed;
                 half _RippleNoise, _RippleStrength, _RefractionStrength, _RefractEdgeFade;
+                half _WaveShade, _CapAmount, _CapThreshold;
                 half _SpecStrength, _GlintThreshold;
                 half4 _FoamColor;
                 half _FoamDistance, _FoamStrength;
@@ -130,6 +137,21 @@ Shader "MedievalKit/KitSea"
                 return s;
             }
 
+            // the same warped waves' height, 0..1 (crests 1): where the whitecaps break
+            float RippleHeight(float2 p, float t)
+            {
+                float2 warp;
+                warp.x = sin(p.y * 0.7 + t * 0.6) + 0.5 * sin(p.y * 1.9 - t * 1.1);
+                warp.y = sin(p.x * 0.7 - t * 0.5) + 0.5 * sin(p.x * 1.9 + t * 0.9);
+                p += warp * (_RippleNoise * 0.6);
+                float h = 0.50 * sin(dot(normalize(float2( 0.90,  0.44)), p) * 1.00 + t * 1.00)
+                        + 0.31 * sin(dot(normalize(float2(-0.30,  0.95)), p) * 1.63 + t * 1.27)
+                        + 0.21 * sin(dot(normalize(float2( 0.60, -0.80)), p) * 2.41 + t * 0.83)
+                        + 0.13 * sin(dot(normalize(float2(-0.85, -0.53)), p) * 3.77 + t * 1.51)
+                        + 0.10 * sin(dot(normalize(float2( 0.15,  0.99)), p) * 5.13 + t * 1.09);
+                return 0.5 + 0.5 * h / 1.25;
+            }
+
             half Band(half x)          // the cartoon: x in _ColorBands soft-edged steps (0 = smooth)
             {
                 if (_ColorBands < 0.5) return x;
@@ -147,10 +169,14 @@ Shader "MedievalKit/KitSea"
                 float t = _Time.y * _RippleSpeed;
                 float2 slopeFine = RippleField(i.positionWS.xz * _RippleScale, t);
                 float2 slopeCoarse = RippleField(i.positionWS.xz * (_RippleScale * _FarScaleRatio), t);
-                float2 slope = lerp(slopeFine, slopeCoarse, smoothstep(_WaveLodStart, max(_WaveLodStart + 1.0, _WaveLodEnd), viewDist));
+                float lod = smoothstep(_WaveLodStart, max(_WaveLodStart + 1.0, _WaveLodEnd), viewDist);
+                float2 slope = lerp(slopeFine, slopeCoarse, lod);
+                float crest = lerp(RippleHeight(i.positionWS.xz * _RippleScale, t),
+                                   RippleHeight(i.positionWS.xz * (_RippleScale * _FarScaleRatio), t), lod);
                 float2 g = (i.positionWS.xz - float2(0.7, 0.3) * _Time.y) * _GustScale;
                 float gm = 0.5 + 0.5 * sin(g.x * 6.2832 + sin(g.y * 3.7)) * sin(g.y * 6.2832 + sin(g.x * 4.3) + t * 0.15);
-                slope *= lerp(1.0 - _GustAmount, 1.0, gm) / (1.0 + viewDist * _DistanceCalm);
+                float calm = 1.0 / (1.0 + viewDist * _DistanceCalm);
+                slope *= lerp(1.0 - _GustAmount, 1.0, gm) * calm;
                 float up = saturate(geoN.y);
                 float3 N = normalize(geoN + float3(-slope.x, 0, -slope.y) * (_RippleStrength * up));
 
@@ -179,6 +205,9 @@ Shader "MedievalKit/KitSea"
                 half fres = pow(1.0 - saturate(dot(V, geoN)), _FresnelPower);
                 half3 tint = lerp(_ShallowColor.rgb, _DeepColor.rgb, saturate(dk + fres * 0.5));
                 half opacity = saturate(lerp(_BaseOpacity, 1.0, max(fres, dk * 0.6)));
+                // the cartoon waves: the faces turned to the sun a band lighter, the others a band darker
+                float facing = -dot(slope, normalize(sun.direction.xz + 1e-4));
+                tint *= lerp(1.0 - _WaveShade, 1.0 + _WaveShade, smoothstep(-0.03, 0.03, facing) * up);
                 half3 body = lerp(refracted, tint * lighting, opacity);
 
                 // ---- foam: a ragged hard band at the contact, a thin line further out ----
@@ -192,7 +221,10 @@ Shader "MedievalKit/KitSea"
                 float lineD = _FoamLine * (0.85 + 0.3 * foamTex);
                 float line2 = 1.0 - smoothstep(0.0, max(_FoamLineWidth, 1e-3), abs(depth - lineD));
                 line2 *= step(0.35, foamTex);                                     // broken into dashes
-                foam = saturate(max(foam, line2 * 0.85)) * up * _FoamStrength * smoothstep(0.0, _FoamMinDepth, depth);
+                // whitecaps: the crests break into ragged white, stronger in the gusts, fewer far off
+                float cap = smoothstep(_CapThreshold, _CapThreshold + 0.03, crest * lerp(0.9, 1.04, gm) + (foamTex - 0.5) * 0.08);
+                cap *= _CapAmount * step(0.3, foamTex) * lerp(0.4, 1.0, calm);
+                foam = saturate(max(max(foam, line2 * 0.85), cap)) * up * _FoamStrength * smoothstep(0.0, _FoamMinDepth, depth);
                 body = lerp(body, _FoamColor.rgb * lighting, foam);
 
                 // ---- stepped sun glint ----
