@@ -30,7 +30,10 @@
     {"piece": "SM_VK_Breakwater", "at": [37.5, 13.5], "rot": -90, "z": 1.5},
     {"piece": "SM_VK_Breakwater", "at": [37.5, 10.5], "rot": -90, "z": 1.5},
     {"piece": "SM_VK_Breakwater_End", "at": [37.5, 7.5], "rot": -90, "z": 1.5},
-    {"piece": "SM_VK_Prop_Rowboat", "at": [15.5, 6.5], "rot": 80, "z": -0.35, "collide": false}
+    {"piece": "SM_VK_Prop_Rowboat", "at": [15.5, 6.5], "rot": 80, "z": -0.35, "collide": false},
+    {"piece": "SM_VK_Ship_Cog", "at": [25, 4.5], "rot": 0, "z": -0.6, "collide": false},
+    {"piece": "SM_VK_Boat_Fishing", "at": [5, 5], "rot": 70, "z": -0.8, "collide": false},
+    {"piece": "SM_VK_Harbour_Buoy", "at": [19, 9.5], "z": -0.6, "collide": false}
   ],
   "spawns": [{"id": "arrival", "at": [21, 25], "facing": 180}]
 }

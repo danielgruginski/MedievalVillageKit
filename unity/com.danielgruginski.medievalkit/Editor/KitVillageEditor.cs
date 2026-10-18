@@ -413,6 +413,8 @@ namespace MedievalKit.Editor
                 }
                 v.groundMaterial = groundMat != null ? groundMat : AssetDatabase.LoadAssetAtPath<Material>(KitPaths.Materials + "/M_VK_Terrain.mat");
                 v.houseRules = AssetDatabase.LoadAssetAtPath<KitHouseRules>(KitPaths.Generated + "/KitHouseRules.asset");
+                v.seaMaterial = AssetDatabase.LoadAssetAtPath<Material>(KitPaths.Materials + "/M_VKT_Sea.mat");
+                v.waterMaskMaterial = AssetDatabase.LoadAssetAtPath<Material>(KitPaths.Materials + "/M_VKT_WaterMask.mat");
                 v.prefabs = prefabs;
                 // the materials the swaps name (the layout's palette and the entries' own)
                 var swaps = new[] { L["swap"] }.Concat(new[] { "buildings", "props" }.SelectMany(k => (L[k] as JArray ?? new JArray()).Select(e => e["swap"])))
@@ -436,6 +438,7 @@ namespace MedievalKit.Editor
                 Save(v.GroundMesh, $"{mapName}_Ground.asset");
                 Save(v.TerrainMesh, $"{mapName}_Terrain.asset");
                 Save(v.SeaMesh, $"{mapName}_Sea.asset");
+                Save(v.SeaMaskMesh, $"{mapName}_SeaMask.asset");
                 Save(v.ControlMap, $"{mapName}_GroundControl.asset");
                 Save(v.GroundMaterialInstance, $"{mapName}_Ground.mat");
                 Save(v.GrassMaterialInstance, $"{mapName}_Grass.mat");

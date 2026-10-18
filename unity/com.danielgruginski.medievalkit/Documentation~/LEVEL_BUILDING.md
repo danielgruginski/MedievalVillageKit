@@ -736,3 +736,7 @@ stays clean, and destroy it after.
 | `Runtime/World/KitGrass.cs`, `KitVillage.Grass.cs`, `Shaders/KitGrass.shader`, `KitGrassInput.hlsl`, `Runtime/Resources/KitGrassCull.compute` | GPU grass: the clump list, the cull, the blades |
 | `Editor/KitRoomEditor.cs` | `KitRoomTools`: a hand-made room as a scene (`BuildRoomScene`), showcases, walk tests, validation, golden test; the KitRoom inspector |
 | `Editor/KitChainEditor.cs` | `KitChainTools`: bake, sample chain, chain validation |
+
+### The sea's water and moored boats
+
+The sea is drawn with `M_VKT_Sea` (`MedievalKit/KitSea`: depth-banded colour, foam at the quays and hulls, ripples, refraction; it needs URP's Depth and Opaque textures). A boat prop standing in the sea (`SM_VK_Ship_*`, `SM_VK_Boat_*`, `SM_VK_Prop_Rowboat`, `SM_VK_Prop_Barge`) gets its waterline cut out of the water when the level is built (`SeaMasks`), so it can sit as low as its `"z"` puts it (the ships' origin is their waterline: `"z"` = the water's height, about -0.6 under the sea's level, lower to load them) without water inside.

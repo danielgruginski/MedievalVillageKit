@@ -1680,6 +1680,26 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     shared Blender had another session's unsaved scene open. Exported; prefabs built (VK/Ship, VK/Boat, VK/Harbour,
     VK/Cargo).
 
+130. 2026-10-18 (the user: "a cartoony somewhat water shader like the one I have in the voxel game ... foam at the
+    borders", and boats set low must not fill with water: "we need a way to create negative space ... make them in the
+    level"). **Unity only.** New **`Shaders/KitSea.shader`** (`MedievalKit/KitSea`), a port of VoxelRealm's
+    `VoxelWaterLit` to URP's main light: refraction of the opaque scene, the domain-warped five-wave ripple with its
+    distance crossfade, gusts and calming; colour by the water's depth over the bed in hard bands (`_ColorBands`);
+    hard-edged ragged foam where the scene sits just behind the surface (quay walls, hulls, piles, the beach) plus a
+    dashed second line further out; a stepped sun glint; the water takes the main light's shadows. Needs the URP Depth +
+    Opaque textures (on in MedievalSetting's PC_RPAsset, off in Mobile_RPAsset). **Negative space:**
+    `Shaders/KitWaterMask.shader` writes stencil bit 8 (ColorMask 0, ZTest LEqual, queue Transparent-1); KitSea (queue
+    Transparent+1) skips those pixels. `KitVillage.SeaMasks()` (after `Props()`) slices every hull standing in the sea
+    (`IsHull`: `_Ship_`, `_Boat_`, `_Rowboat`, `_Barge`) at the water's actual height where it floats, takes the convex
+    outline of the crossings and fans it into one static mesh (`SeaMask`, saved as `<Map>_SeaMask.asset`), so a boat
+    sits as low as its `"z"` puts it and stays dry inside. Materials `M_VKT_Sea` and `M_VKT_WaterMask` are made by
+    `KitBuilder.BuildMaterials` only when missing (tune `M_VKT_Sea` in the inspector: a rebuild keeps it); the editor sets
+    `KitVillage.seaMaterial` / `waterMaskMaterial`, and `Sea()` puts `seaMaterial` on the water quads (none: their own
+    `M_VK_Water`). The HarbourTest example now moors the cog (at the water), a fishing boat sunk 0.2 lower and a buoy;
+    built to MedievalSetting `Assets/KitTests/HarbourTest.unity` (sea 81 cells, the mask over 3 hulls; not checked in).
+    Shaders compile with no messages; **not seen rendered** (no Unity renders by the editor rules): look at the test
+    scene and tune `M_VKT_Sea`.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

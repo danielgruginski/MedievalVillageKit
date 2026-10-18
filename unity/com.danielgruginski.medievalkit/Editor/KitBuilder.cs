@@ -198,6 +198,8 @@ namespace MedievalKit.Editor
             var shader = Shader.Find(KitPaths.Shader);
             if (shader == null) { Log.AppendLine("ERROR shader " + KitPaths.Shader + " not found"); return; }
             var terrainShader = Shader.Find(KitPaths.TerrainShader);
+            EnsureMaterial("M_VKT_Sea", "MedievalKit/KitSea");               // hand-tuned after: made once, never overwritten
+            EnsureMaterial("M_VKT_WaterMask", "MedievalKit/KitWaterMask");
             if (terrainShader == null) { Log.AppendLine("ERROR shader " + KitPaths.TerrainShader + " not found"); return; }
             var mats = ReadJson(KitPaths.Data + "/materials.json");
             int n = 0;
@@ -459,6 +461,18 @@ namespace MedievalKit.Editor
         }
 
         static readonly Dictionary<string, Material> MatCache = new Dictionary<string, Material>();
+
+        /// <summary>a material on a package shader that the export does not describe (the sea, its hull mask): made with the
+        /// shader's defaults if missing, left alone if present so tuning in the inspector survives a rebuild</summary>
+        static void EnsureMaterial(string name, string shaderName)
+        {
+            string path = $"{KitPaths.Materials}/{name}.mat";
+            if (AssetDatabase.LoadAssetAtPath<Material>(path) != null) return;
+            var sh = Shader.Find(shaderName);
+            if (sh == null) { Log.AppendLine("ERROR shader " + shaderName + " not found"); return; }
+            AssetDatabase.CreateAsset(new Material(sh) { name = name }, path);
+            Log.AppendLine("  made " + name);
+        }
 
         static Material LoadMat(string name)
         {

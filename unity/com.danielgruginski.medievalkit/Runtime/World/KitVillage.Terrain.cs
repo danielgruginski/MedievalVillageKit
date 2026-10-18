@@ -59,6 +59,12 @@ namespace MedievalKit
         readonly Dictionary<(int, int), string> quayV = new Dictionary<(int, int), string>();   // grid points with a quay tile: its variant
         /// <summary>the water plane over the sea cells (null: no sea); the editor saves it beside the ground</summary>
         public Mesh SeaMesh { get; private set; }
+        /// <summary>the moored hulls' waterline footprints (null: none), drawn with waterMaskMaterial so the sea leaves them
+        /// dry; the editor saves it beside the ground</summary>
+        public Mesh SeaMaskMesh { get; private set; }
+        readonly List<(GameObject go, Vector2 at)> seaHulls = new List<(GameObject, Vector2)>();
+        /// <summary>a boat's hull (it is hollow: the water must not fill it): the kit's ships, boats, rowboat and barge</summary>
+        static bool IsHull(string piece) => piece.Contains("_Ship_") || piece.Contains("_Boat_") || piece.EndsWith("_Rowboat") || piece.EndsWith("_Barge");
         /// <summary>the sea's water surface and bed below level 0 (vk_terrain's WATER_Z, BED_Z); the navmesh's Not Walkable
         /// box over the sea reaches up to SeaWalkTop (the water stairs' landing, 0.35 m below level 0, stays walkable)</summary>
         public const float SeaWater = -0.6f, SeaBed = -1.5f, SeaWalkTop = -0.45f;
@@ -101,7 +107,7 @@ namespace MedievalKit
         void ParseTerrain()
         {
             tLevel = null; TerrainMesh = null; terrainCollider = null; rampSteps = null;
-            tSea = null; tQuay = null; HasSea = false; SeaMesh = null; quayV.Clear();
+            tSea = null; tQuay = null; HasSea = false; SeaMesh = null; SeaMaskMesh = null; seaHulls.Clear(); quayV.Clear();
             if (!(L["terrain"] is JObject T)) return;
             tO = T["origin"] != null ? V(T["origin"]) : Vector2.zero;
             tW = Mathf.Max(1, Mathf.CeilToInt((W - tO.x) / TT));
@@ -491,11 +497,81 @@ namespace MedievalKit
             go.transform.localPosition = Local(-M, -M, 0f);
             go.AddComponent<MeshFilter>().sharedMesh = sm;
             var mr = go.AddComponent<MeshRenderer>();
-            mr.sharedMaterials = keys;
+            mr.sharedMaterials = seaMaterial != null ? keys.Select(_ => seaMaterial).ToArray() : keys;
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             int cells = 0;
             for (int j = 0; j < tH; j++) for (int i = 0; i < tW; i++) if (tSea[i, j]) cells++;
             notes.Add($"sea: {cells} cells, {recs.Count} water quads");
+        }
+
+        /// <summary>each hull moored in the sea, sliced at the water's height where it floats: the convex outline of where
+        /// its meshes cross the water plane (a boat's waterline), fanned into one mesh drawn with waterMaskMaterial just
+        /// before the sea, which then draws no water inside (KitSea's stencil test): the boat stays dry however low it sits.
+        /// Static: built once with the level, saved as &lt;Map&gt;_SeaMask.asset</summary>
+        void SeaMasks()
+        {
+            if (!HasSea || seaHulls.Count == 0) return;
+            var verts = new List<Vector3>(); var tris = new List<int>();
+            foreach (var (go, at) in seaHulls)
+            {
+                float wy = propT.TransformPoint(Local(at.x, at.y, Height(at))).y;      // the water's surface, world
+                var pts = new List<Vector2>();
+                foreach (var mf in go.GetComponentsInChildren<MeshFilter>())
+                {
+                    var m = mf.sharedMesh; if (m == null) continue;
+                    var M = mf.transform.localToWorldMatrix; var v = m.vertices; var t = m.triangles;
+                    var w = new Vector3[v.Length];
+                    for (int k = 0; k < v.Length; k++) w[k] = M.MultiplyPoint3x4(v[k]);
+                    for (int k = 0; k + 2 < t.Length; k += 3)
+                        for (int e = 0; e < 3; e++)
+                        {
+                            Vector3 a = w[t[k + e]], b = w[t[k + (e + 1) % 3]];
+                            float da = a.y - wy, db = b.y - wy;
+                            if ((da < 0f) == (db < 0f)) continue;
+                            var p = Vector3.Lerp(a, b, da / (da - db)); pts.Add(new Vector2(p.x, p.z));
+                        }
+                }
+                var hull = ConvexHull(pts);
+                if (hull.Count < 3) { notes.Add($"sea mask: {go.name} does not cross the water"); continue; }
+                var c = Vector2.zero; foreach (var p in hull) c += p; c /= hull.Count;
+                int b0 = verts.Count;
+                verts.Add(groundT.InverseTransformPoint(new Vector3(c.x, wy, c.y)));
+                foreach (var p in hull) verts.Add(groundT.InverseTransformPoint(new Vector3(p.x, wy, p.y)));
+                for (int k = 0; k < hull.Count; k++) { tris.Add(b0); tris.Add(b0 + 1 + (k + 1) % hull.Count); tris.Add(b0 + 1 + k); }
+            }
+            seaHulls.Clear();
+            if (tris.Count == 0) return;
+            var mesh = new Mesh { name = $"{name}_SeaMask" };
+            mesh.SetVertices(verts); mesh.SetTriangles(tris, 0); mesh.RecalculateNormals(); mesh.RecalculateBounds();
+            SeaMaskMesh = mesh;
+            var mgo = new GameObject("SeaMask");
+            mgo.transform.SetParent(groundT, false);
+            mgo.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var mr = mgo.AddComponent<MeshRenderer>();
+            mr.sharedMaterial = waterMaskMaterial;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.receiveShadows = false;
+            if (waterMaskMaterial == null) notes.Add("sea mask: no waterMaskMaterial (M_VKT_WaterMask): the hulls fill with water");
+            notes.Add($"sea mask: {verts.Count} verts over the moored hulls");
+        }
+
+        /// <summary>the convex hull of plan points (Andrew's monotone chain), counter-clockwise</summary>
+        static List<Vector2> ConvexHull(List<Vector2> pts)
+        {
+            var p = pts.Distinct().OrderBy(q => q.x).ThenBy(q => q.y).ToList();
+            if (p.Count < 3) return p;
+            float Cross(Vector2 o, Vector2 a, Vector2 b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+            var h = new List<Vector2>();
+            for (int pass = 0; pass < 2; pass++)
+            {
+                int start = h.Count;
+                foreach (var q in pass == 0 ? p : Enumerable.Reverse(p))
+                {
+                    while (h.Count >= start + 2 && Cross(h[h.Count - 2], h[h.Count - 1], q) <= 0f) h.RemoveAt(h.Count - 1);
+                    h.Add(q);
+                }
+                h.RemoveAt(h.Count - 1);
+            }
+            return h;
         }
 
         /// <summary>tiles (grid point, level, piece, quarter turns, drop the skirt) merged into one mesh in the ground

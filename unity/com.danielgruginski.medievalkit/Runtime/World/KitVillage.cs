@@ -25,6 +25,10 @@ namespace MedievalKit
         [TextArea(8, 40)] public string layout;
         [Tooltip("The kit's terrain material (M_VK_Terrain); Build makes a copy carrying this map's control map.")]
         public Material groundMaterial;
+        [Tooltip("The sea's water (M_VKT_Sea, MedievalKit/KitSea); none: the water quads keep their own material.")]
+        public Material seaMaterial;
+        [Tooltip("A moored hull's waterline footprint, cut out of the sea (M_VKT_WaterMask, MedievalKit/KitWaterMask).")]
+        public Material waterMaskMaterial;
         [Tooltip("For generated houses (Generated/KitHouseRules.asset).")]
         public KitHouseRules houseRules;
         [Tooltip("The pieces the layout names, by prefab name (the editor fills it from the package).")]
@@ -103,6 +107,7 @@ namespace MedievalKit
             Terrain();                       // the terrain tiles over the ground (KitVillage.Terrain.cs)
             Gardens();
             Props();
+            SeaMasks();                      // the moored hulls' negative space in the water (KitVillage.Terrain.cs)
             Fences();
             Trees();
             DressTerrain();                  // the cliffs' and ramps' dressing, clear of what stands there now
@@ -729,6 +734,7 @@ namespace MedievalKit
                     else if (InSea(at)) SeaSurface(go);                     // a jetty, a mole: walked on over the water
                     else KitSolid.Box(go);                                  // what one bumps into: a signpost's post, not its arms
                 }
+                if (InSea(at) && IsHull(pf.name)) seaHulls.Add((go, at));   // its waterline cut out of the sea
                 if ((bool?)p["dress"] ?? true) Dress(go, pf.name);
                 occupied.Add((Corners(box, at, deg), (string)p["piece"]));
             }
