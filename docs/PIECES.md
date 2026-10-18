@@ -12,7 +12,7 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 
 ## Building kit (`SM_VK_*`): 417 pieces
 
-### core (vk_helpers): 127
+### core (vk_helpers): 134
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
@@ -55,13 +55,20 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VK_LowWall_Lychgate` | 3.62 × 2.64 × 3.78 | 2,042 | 52 |
 | `SM_VK_LowWall_Post` | 0.85 × 0.85 × 1.45 | 340 | 52 |
 | `SM_VK_MarketStall` | 4.87 × 2.60 × 3.17 | 3,700 | 52 |
+| `SM_VK_MarketStall_Apothecary` | 4.17 × 2.60 × 3.17 | 4,000 | 68 |
+| `SM_VK_MarketStall_Armourer` | 4.88 × 2.60 × 3.15 | 2,696 | 68 |
 | `SM_VK_MarketStall_Baker` | 5.14 × 2.60 × 3.17 | 4,312 | 52 |
+| `SM_VK_MarketStall_Butcher` | 4.40 × 2.60 × 3.15 | 3,452 | 68 |
 | `SM_VK_MarketStall_Cheese` | 4.87 × 2.60 × 3.17 | 3,852 | 52 |
 | `SM_VK_MarketStall_Draper` | 4.82 × 2.60 × 3.17 | 3,064 | 52 |
 | `SM_VK_MarketStall_Fishmonger` | 4.87 × 2.60 × 3.17 | 4,104 | 52 |
 | `SM_VK_MarketStall_Greengrocer` | 4.87 × 2.60 × 3.17 | 5,336 | 52 |
+| `SM_VK_MarketStall_Jeweller` | 4.39 × 2.60 × 3.16 | 2,928 | 68 |
 | `SM_VK_MarketStall_Potter` | 4.70 × 2.60 × 3.17 | 3,456 | 52 |
+| `SM_VK_MarketStall_Scribe` | 4.35 × 2.60 × 3.15 | 2,996 | 68 |
+| `SM_VK_MarketStall_Spicer` | 4.72 × 2.60 × 3.17 | 3,860 | 68 |
 | `SM_VK_MarketStall_Tinker` | 4.79 × 2.60 × 3.17 | 2,744 | 52 |
+| `SM_VK_MarketStall_Vintner` | 4.40 × 2.60 × 3.15 | 3,188 | 68 |
 | `SM_VK_Porch` | 3.10 × 2.28 × 3.34 | 676 | 52 |
 | `SM_VK_Prop_AleCask` | 1.25 × 1.76 × 1.43 | 1,276 | 52 |
 | `SM_VK_Prop_Anvil` | 0.91 × 0.72 × 1.06 | 208 | 52 |

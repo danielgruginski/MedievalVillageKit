@@ -879,8 +879,11 @@ def corner_plaster(k):
     k.box((-0.22,-0.22,(PL+H1)/2),(0.34,0.34,H1-PL),WOOD,bevel=0.05,segs=2)
     k.box((-0.1,-0.1,H1-0.11),(0.56,0.56,0.22),WOOD,bevel=0.04)
 # ---------------- market stall (2 x 1 cells footprint, front toward -Y)
-STALL_TRADES=("produce","greengrocer","baker","fishmonger","potter","draper","cheese","tinker")
-STALL_SIGN={"produce":YELLOW,"greengrocer":LEAF,"baker":BREAD,"fishmonger":STEEL,"potter":CLAY,"draper":PINK,"cheese":YELLOW,"tinker":IRON}
+# the capital's market (2026-10-18): spicer, butcher, jeweller (and money-changer), armourer, apothecary, vintner, scribe
+STALL_TRADES=("produce","greengrocer","baker","fishmonger","potter","draper","cheese","tinker",
+              "spicer","butcher","jeweller","armourer","apothecary","vintner","scribe")
+STALL_SIGN={"produce":YELLOW,"greengrocer":LEAF,"baker":BREAD,"fishmonger":STEEL,"potter":CLAY,"draper":PINK,"cheese":YELLOW,"tinker":IRON,
+            "spicer":PUMPKIN,"butcher":APPLE,"jeweller":BRONZE,"armourer":STEEL,"apothecary":LEAF,"vintner":CLOTH_B,"scribe":PAPER}
 def _rot_vs(vs,c,ang,axis="Z"):
     R=Matrix.Rotation(ang,4,axis); c=Vector(c)
     for v in vs: v.co=c+R@(v.co-c)
@@ -1039,8 +1042,145 @@ def stall_wares(k,trade,W_,D_):
         _cyl(k,(W_/2+0.55,-0.2,0.7),0.16,0.13,0.2,14,IRON)
         _stall_sack(k,-W_/2-0.45,-0.4,BURLAP)
         return
+    elif trade in ("spicer","butcher","jeweller","armourer","apothecary","vintner","scribe"):
+        stall_wares_capital(k,trade,W_,D_,rnd,z0,shelf,crate,basket)
+        return
     _stall_barrels(k,W_)
     _stall_sack(k,-W_/2-0.45,-0.4)
+def _open_sack(k,x,y,z,r,heap_mi,seed=0):
+    """an open sack with its mouth rolled down over a heaped mound (spices, grain)"""
+    _mat(_cyl(k,(x,y,z+0.11),r,r*0.92,0.22,12,BURLAP),BURLAP)
+    _cyl(k,(x,y,z+0.22),r*1.08,r*1.08,0.05,12,BURLAP)                                           # the rolled mouth
+    vs=bmesh.ops.create_cone(k.bm,cap_ends=True,segments=12,radius1=r*0.95,radius2=0.02,depth=r*0.75)["verts"]
+    rnd=random.Random(seed)
+    for v in vs:
+        if v.co.z>0: v.co+=Vector((rnd.uniform(-.015,.015),rnd.uniform(-.015,.015),0))
+        v.co+=Vector((x,y,z+0.24+r*0.37))
+    _mat(vs,heap_mi)
+def _bottle(k,x,y,z,r,h,mi,cork=HIDE):
+    """a glass bottle (round body, neck, cork)"""
+    _mat(_cyl(k,(x,y,z+h*0.32),r,r,h*0.64,7,mi),mi)
+    _mat(_cyl(k,(x,y,z+h*0.70),r,r*0.35,h*0.14,7,mi),mi)
+    _mat(_cyl(k,(x,y,z+h*0.86),r*0.35,r*0.35,h*0.18,5,mi),mi)
+    _cyl(k,(x,y,z+h*0.98),r*0.38,r*0.38,h*0.07,5,cork)
+def _book(k,x,y,z,w,d,t,cover,ang=0.0):
+    """a closed book lying flat: a cover box and the pale page edges set in from its three open sides"""
+    R=Matrix.Rotation(ang,4,"Z"); c=Vector((x,y,z+t/2))
+    k.box(tuple(c),(w,d,t),cover,bevel=0.004,rot=(0,0,ang))
+    k.box(tuple(c+R@Vector((0.008,0,0))),(w-0.006,d-0.014,t*0.72),PAPER,bevel=0,rot=(0,0,ang))
+def stall_wares_capital(k,trade,W_,D_,rnd,z0,shelf,crate,basket):
+    """the capital's market trades (2026-10-18), on the same stall: counter top z0, back shelf at `shelf`, the space
+    beside it at x +-(W_/2 + 0.5)"""
+    Ry=Matrix.Rotation(math.pi/2,4,"Y")
+    if trade=="spicer":
+        for n_,(x,mi) in enumerate(((-1.25,APPLE),(-0.75,PUMPKIN),(-0.25,YELLOW),(0.25,BREAD),(0.75,LEAF),(1.25,PUMPKIN))):
+            _open_sack(k,x,-0.45,z0,0.2,mi,seed=n_)
+        for n_ in range(9):                                                                     # jars on the shelf
+            x=-1.35+n_*0.34; _cyl(k,(x,0.62,shelf+0.08),0.07,0.07,0.16,10,CLAY); _cyl(k,(x,0.62,shelf+0.17),0.075,0.075,0.03,10,HIDE)
+        k.box((-1.55,-0.15,z0+0.02),(0.04,0.04,0.04),BRONZE,bevel=0)                            # a little scale
+        for x,y in ((W_/2+0.5,-0.25),(W_/2+0.5,0.45)): _open_sack(k,x,y,0.0,0.28,YELLOW if y<0 else APPLE,seed=int(y*10))
+        for n_,x in enumerate((-1.2,-0.7,0.7,1.2)):                                             # garlic and chilli strings
+            for m_ in range(5): _mat(_ico(k,(x,-(D_/2-0.1),2.3-m_*0.08),0.035,PAPER if n_%2==0 else APPLE,scale=(1,1,1.2),sub=1),PAPER if n_%2==0 else APPLE)
+            k.box((x,-(D_/2-0.1),2.45),(0.01,0.01,0.12),BURLAP,bevel=0)
+        _stall_sack(k,-W_/2-0.45,-0.4,BURLAP)
+        return
+    if trade=="butcher":
+        k.box((-1.05,-0.42,z0+0.09),(0.75,0.6,0.18),WOOD,bevel=0.03)                            # the block
+        k.box((-1.05,-0.42,z0+0.25),(0.22,0.012,0.16),STEEL,bevel=0,rot=(0,0.2,0.3))            # a cleaver in it
+        k.box((0.35,-0.45,z0+0.02),(1.9,0.66,0.04),PAPER,bevel=0.01)
+        for n_ in range(6):                                                                     # cuts on the counter
+            x=-0.4+(n_%3)*0.42; y=-0.6+(n_//3)*0.3
+            goods_map(k,_ico(k,(x,y,z0+0.08),0.16,GOODS,scale=(1.2,0.85,0.4),jit=0.01,seed=n_),"meat",ref=(1,0,0))
+        for n_ in range(3): goods_map(k,_cyl(k,(1.05+n_*0.0,-0.45,z0+0.06+n_*0.08),0.16,0.16,0.08,14,GOODS),"sausage",caps=True)
+        for n_,x in enumerate((-1.25,-0.55,0.15,0.85)):                                         # hams and sausages hung
+            if n_%2==0:
+                goods_map(k,_ico(k,(x,-(D_/2-0.1),2.05),1.0,GOODS,scale=(0.12,0.10,0.2)),"ham",ref=(1,0,0))
+            else:
+                for m_ in range(3): goods_map(k,_ico(k,(x-0.08+m_*0.08,-(D_/2-0.1),2.15),1.0,GOODS,scale=(0.04,0.04,0.17)),"sausage")
+            k.box((x,-(D_/2-0.1),2.4),(0.01,0.01,0.12),BURLAP,bevel=0)
+        for n_ in range(4): goods_map(k,_ico(k,(-1.2+n_*0.8,0.62,shelf+0.1),0.15,GOODS,scale=(1,0.8,0.6)),"ham",ref=(1,0,0))
+        _stall_barrels(k,W_)
+        return
+    if trade=="jeweller":
+        k.box((0,-0.45,z0+0.012),(2.9,0.72,0.024),CLOTH_A,bevel=0.005)                          # a cloth over the counter
+        k.box((-1.05,-0.45,z0+0.12),(0.6,0.4,0.2),WOOD,bevel=0.02)                              # the strongbox
+        for xx in (-1.3,-0.8): k.box((xx,-0.45,z0+0.12),(0.03,0.42,0.21),IRON,bevel=0)
+        k.box((-1.05,-0.27,z0+0.36),(0.6,0.03,0.3),WOOD,bevel=0.01,rot=(-0.35,0,0))             # its lid open
+        for n_ in range(10): _cyl(k,(-1.25+(n_%5)*0.1,-0.5+(n_//5)*0.12,z0+0.23),0.035,0.035,0.012,8,YELLOW)   # gold
+        for n_ in range(6):                                                                     # coin stacks
+            h=0.03+0.02*(n_%3); _cyl(k,(-0.45+(n_%3)*0.14,-0.6+(n_//3)*0.16,z0+0.024+h/2),0.035,0.035,h,10,YELLOW)
+        k.box((0.35,-0.48,z0+0.03),(0.5,0.32,0.03),HIDE,bevel=0.005)                            # a tray of rings
+        for n_ in range(6): ring(k,(0.2+(n_%3)*0.15,-0.55+(n_//3)*0.14,z0+0.06),0.02,0.03,0.008,YELLOW,n=10,axis="Z")
+        k.box((1.05,-0.42,z0+0.2),(0.03,0.03,0.4),BRONZE,bevel=0)                               # the balance
+        k.box((1.05,-0.42,z0+0.4),(0.42,0.02,0.02),BRONZE,bevel=0)
+        for sx in (-1,1): _cyl(k,(1.05+sx*0.2,-0.42,z0+0.2),0.08,0.06,0.02,12,BRONZE)
+        for n_ in range(6): _cyl(k,(-1.3+n_*0.52,0.62,shelf+0.08),0.05,0.035,0.16,10,YELLOW if n_%2 else BRONZE)   # goblets
+        k.box((W_/2+0.55,0.1,0.3),(0.75,0.55,0.6),WOOD,bevel=0.03)                              # a locked chest beside
+        for yy in (-0.12,0.32): k.box((W_/2+0.55,yy,0.3),(0.77,0.03,0.62),IRON,bevel=0)
+        return
+    if trade=="armourer":
+        for n_,x in enumerate((-1.2,-0.4,0.4)):                                                 # helmets on stands
+            k.box((x,-0.45,z0+0.15),(0.05,0.05,0.3),WOOD,bevel=0)
+            vs=_ico(k,(x,-0.45,z0+0.36),0.14,STEEL if n_!=1 else IRON,scale=(1,1.1,1.05))
+            for v in vs: v.co.z=max(v.co.z,z0+0.30)
+            _mat(vs,STEEL if n_!=1 else IRON,True)
+        for n_ in range(2): k.box((1.05+n_*0.25,-0.5,z0+0.05),(0.14,0.22,0.1),IRON,bevel=0.02)   # gauntlets
+        for n_ in range(3):                                                                     # shields leant on the front
+            x=-1.0+n_*1.0
+            _cyl(k,(x,-0.98,0.5),0.34,0.34,0.05,14,CLOTH_A if n_%2==0 else CLOTH_B,rot=Matrix.Rotation(math.pi/2-0.25,4,"X"))
+            _cyl(k,(x,-1.01,0.51),0.07,0.06,0.05,10,IRON,rot=Matrix.Rotation(math.pi/2-0.25,4,"X"))
+        k.box((W_/2+0.55,0.0,0.85),(0.04,0.04,1.7),WOOD,bevel=0)                                # a mail shirt on a stand
+        k.box((W_/2+0.55,0.0,1.55),(0.6,0.04,0.04),WOOD,bevel=0)
+        k.box((W_/2+0.55,0.0,1.2),(0.55,0.24,0.7),IRON,bevel=0.06,segs=2)
+        k.box((W_/2+0.55,0.0,1.48),(0.82,0.22,0.14),IRON,bevel=0.05)                            # its shoulders
+        k.box((W_/2+0.55,0.0,0.84),(0.62,0.26,0.08),IRON,bevel=0.03)                            # its hem
+        _cyl(k,(-W_/2-0.5,-0.3,0.35),0.2,0.22,0.7,12,WOOD)                                      # swords in a barrel
+        for n_ in range(4):
+            a=n_*1.57; k.box((-W_/2-0.5+0.06*math.cos(a),-0.3+0.06*math.sin(a),0.95),(0.04,0.012,0.7),STEEL,bevel=0,rot=(0.12*math.cos(a),0.12*math.sin(a),a))
+        for n_ in range(5): _mat(_ico(k,(-1.3+n_*0.65,0.62,shelf+0.1),0.11,STEEL,scale=(1,1.1,0.9)),STEEL)
+        return
+    if trade=="apothecary":
+        cols=(LEAF,PINK,YELLOW,CLOTH_B,LEAF,APPLE)
+        for n_ in range(12):                                                                    # bottles on the counter
+            x=-1.35+(n_%6)*0.17; y=-0.62+(n_//6)*0.2
+            _bottle(k,x,y,z0,0.045,0.2+0.04*(n_%3),cols[n_%6])
+        _cyl(k,(0.15,-0.45,z0+0.06),0.1,0.08,0.12,12,STONE_BLOCK); k.box((0.2,-0.42,z0+0.16),(0.03,0.03,0.2),STONE_BLOCK,bevel=0,rot=(0,0.5,0))
+        t=basket(0.85,-0.45,0.26,0.12)
+        for n_ in range(5): goods_map(k,_cyl(k,(0.7+n_*0.07,-0.45,t+0.04),0.04,0.04,0.38,8,GOODS,rot=Matrix.Rotation(math.pi/2,4,"X")@Matrix.Rotation(0.2*n_,4,"Z")),"herbs",axis=(0,1,0))
+        for n_,x in enumerate((-1.25,-0.85,-0.45,0.45,0.85,1.25)):                              # herb bundles hung
+            goods_map(k,_cyl(k,(x,-(D_/2-0.1),2.2),0.02,0.07,0.32,8,GOODS),"herbs")
+            k.box((x,-(D_/2-0.1),2.42),(0.01,0.01,0.12),BURLAP,bevel=0)
+        for n_ in range(10): _bottle(k,-1.35+n_*0.3,0.62,shelf,0.05,0.24,cols[(n_+2)%6])
+        _book(k,1.3,-0.5,z0,0.26,0.2,0.06,HIDE,0.2)
+        _stall_sack(k,-W_/2-0.45,-0.4,BURLAP)
+        return
+    if trade=="vintner":
+        Rx=Matrix.Rotation(math.pi/2,4,"X")
+        for x in (-0.85,0.85):                                                                  # casks on cradles,
+            for sy in (-0.2,0.2): k.box((x,-0.4+sy,z0+0.06),(0.5,0.06,0.12),WOOD,bevel=0.01)     # heads to the customer
+            _cyl(k,(x,-0.4,z0+0.3),0.24,0.24,0.6,14,WOOD,rot=Rx)
+            for sy in (-0.23,0.23): _cyl(k,(x,-0.4+sy,z0+0.3),0.25,0.25,0.04,14,IRON,rot=Rx)
+            _cyl(k,(x,-0.74,z0+0.2),0.02,0.02,0.1,6,WOOD,rot=Rx)                                 # the tap
+        for n_ in range(3): _cyl(k,(-0.1+n_*0.12,-0.6,z0+0.05),0.04,0.035,0.1,10,CLAY)          # cups
+        _cyl(k,(0.05,-0.35,z0+0.11),0.08,0.1,0.22,12,CLAY)                                      # a jug
+        for n_ in range(10): _bottle(k,-1.35+n_*0.3,0.62,shelf,0.05,0.28,LEAF if n_%2 else CLOTH_B)
+        _stall_barrels(k,W_)
+        return
+    if trade=="scribe":
+        covers=(HIDE,CLOTH_A,CLOTH_B,WOOD,HIDE)
+        for st,x in enumerate((-1.25,-0.85)):                                                   # book stacks
+            for n_ in range(4-st): _book(k,x,-0.45,z0+n_*0.06,0.3,0.22,0.055,covers[(n_+st)%5],0.15*(n_%2))
+        k.box((-0.15,-0.45,z0+0.06),(0.55,0.4,0.03),WOOD,bevel=0.005,rot=(0.25,0,0))           # a writing slope
+        k.box((-0.15,-0.47,z0+0.085),(0.42,0.3,0.004),PAPER,bevel=0,rot=(0.25,0,0))
+        _cyl(k,(0.25,-0.35,z0+0.04),0.04,0.035,0.08,10,CLAY)                                    # the inkpot and quill
+        k.box((0.26,-0.33,z0+0.15),(0.008,0.008,0.22),PAPER,bevel=0,rot=(0.35,0.2,0))
+        for n_ in range(6):                                                                     # scrolls
+            _cyl(k,(0.75+(n_%3)*0.12,-0.6+(n_//3)*0.25,z0+0.04+0.0*(n_%2)),0.04,0.04,0.32,10,PAPER,rot=Ry)
+        k.box((1.3,-0.45,z0+0.05),(0.3,0.22,0.1),BRONZE,bevel=0.01)                             # a seal box
+        for n_ in range(12): _book(k,-1.4+n_*0.24,0.62,shelf,0.2,0.26,0.05,covers[n_%5],0.0)
+        k.box((W_/2+0.55,0.1,0.3),(0.7,0.55,0.6),WOOD,bevel=0.03)
+        for n_ in range(3): _book(k,W_/2+0.55,0.1,0.6+n_*0.055,0.3,0.22,0.05,covers[n_],0.3*n_)
+        return
 def market_stall(k,goods="produce"):
     W_,D_=3.2,1.8
     for sx in(-1,1):

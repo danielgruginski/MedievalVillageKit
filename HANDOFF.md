@@ -1590,6 +1590,17 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     Medieval Kit > Build Interior Rules) rewrites Generated/KitInteriorRules.asset, and its prefab map is cached
     in memory: `Resources.UnloadAsset` the asset (or reload the domain) before building a room with them.
 
+125. 2026-10-18 (the user: "props to the market district ... for the capital?" -> "only the stalls first"). Seven new
+    trades in vk_helpers `STALL_TRADES` (each registers `SM_VK_MarketStall_<Trade>`; goods in `stall_wares_capital`,
+    helpers `_open_sack`, `_bottle`, `_book`): **`_Spicer`** (open sacks with heaped spice, jars, garlic and chilli
+    strings), **`_Butcher`** (block and cleaver, cuts, hams and sausages hung), **`_Jeweller`** (cloth counter, open
+    strongbox, gold coins and stacks, a ring tray, a balance, goblets, a locked chest), **`_Armourer`** (helms on
+    stands, gauntlets, three shields at the front, a hauberk on a stand, swords in a barrel), **`_Apothecary`**
+    (bottles, mortar, herbs in a basket and hung, a book), **`_Vintner`** (two casks on cradles, heads and taps to the
+    customer, cups, jug, bottles) and **`_Scribe`** (book stacks, writing slope, inkpot and quill, scrolls, a seal
+    box). 2.7k-4.0k tris each (the older stalls run 2.7k-5.3k). Exported; prefabs built in MedievalSetting
+    (Generated/Prefabs/VK/MarketStall). Not placed in any map yet.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

@@ -99,7 +99,7 @@ The valley generator (`build_valley_town`) runs these checks and clean-up passes
     (ledges, eroded lips) is sampled from above, and moss covers only about a third of it, toned towards the rock.
 - **Kitchen gardens, roof palette:** crop beds next to houses; roofs chosen per district (Blue for landmarks), ±6 % per-instance brightness jitter.
 
-Landmarks: `build_smithy` (9 m forge stack with glowing hearth, open workshop, point light) and `build_inn` (3 storeys, lit windows, big tankard sign, beer garden). Market stalls: `SM_VK_MarketStall` + `_Greengrocer/_Baker/_Fishmonger/_Potter/_Draper/_Cheese/_Tinker`.
+Landmarks: `build_smithy` (9 m forge stack with glowing hearth, open workshop, point light) and `build_inn` (3 storeys, lit windows, big tankard sign, beer garden). Market stalls: `SM_VK_MarketStall` + `_Greengrocer/_Baker/_Fishmonger/_Potter/_Draper/_Cheese/_Tinker`, and for the capital `_Spicer/_Butcher/_Jeweller/_Armourer/_Apothecary/_Vintner/_Scribe`.
 
 Lighting: `VK_Sun` is the key light (from the south-west). `VK_Fill` is a shadowless fill light (from the north-east, 1.5) so faces on the shadow side stay readable. These lights are only for Blender renders.
 
