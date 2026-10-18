@@ -1585,6 +1585,10 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     local y -2.15. Four rooms in vki_rooms_orc (Night, Orc family): **`VKI_Orc_Barracks`** (8 x 4), **`VKI_Orc_Forge`**
     (6 x 4, the wide gate), **`VKI_Orc_ShamanHut`** (4 x 4), **`VKI_Orc_Pen`** (6 x 4: both cages, the stocks, the
     dungeon's wall chains with a seated skeleton); `vki_check` 0 errors (Night floor-level warnings only).
+    The game's `OrcHold_Hall` now uses the Orc family (MedievalSetting InteriorsMenu.WarlordHall, not checked in).
+    **Gotcha:** new pieces reach KitRoom (the game's interiors) only after `KitRoomTools.BuildRules` (Tools >
+    Medieval Kit > Build Interior Rules) rewrites Generated/KitInteriorRules.asset, and its prefab map is cached
+    in memory: `Resources.UnloadAsset` the asset (or reload the domain) before building a room with them.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
