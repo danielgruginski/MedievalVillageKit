@@ -396,7 +396,7 @@ class Kit:
                 if f.normal.z<-0.6: g*=0.72    # undersides darker (painted AO)
                 l[s.cl]=(g,g*0.98,g*0.95,1)
         me=bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
-        for p in me.polygons: p.use_smooth=p.material_index in (APPLE,PUMPKIN,BREAD,CLOTH_A,CLOTH_B,LEAF) or (p.material_index==GOODS and p.use_smooth)
+        for p in me.polygons: p.use_smooth=p.material_index in (APPLE,PUMPKIN,BREAD,CLOTH_A,CLOTH_B,LEAF) or (p.material_index in (GOODS,BRONZE) and p.use_smooth)
         old=bpy.data.objects.get(name)
         if old: bpy.data.objects.remove(old)
         o=bpy.data.objects.new(name,me); coll.objects.link(o); o.location=loc
@@ -1709,7 +1709,7 @@ def rebuild(n,fn,**kw):
     for f in k.bm.faces:
         if all(l[k.uv].uv.length==0 for l in f.loops): k.project([f],f.material_index)
     o=k.finish(n,P,**kw)
-    for p in o.data.polygons: p.use_smooth=p.material_index in (HAY,APPLE,PUMPKIN,BREAD,CLOTH_A,CLOTH_B,LEAF,BURLAP,FOLIAGE,CROPS) or (p.material_index==GOODS and p.use_smooth)
+    for p in o.data.polygons: p.use_smooth=p.material_index in (HAY,APPLE,PUMPKIN,BREAD,CLOTH_A,CLOTH_B,LEAF,BURLAP,FOLIAGE,CROPS) or (p.material_index in (GOODS,BRONZE) and p.use_smooth)
     o.hide_render=o.hide_viewport=True; return o
 
 def all_specs():
@@ -1754,7 +1754,7 @@ def full_rebuild(names=None):
         for f in k.bm.faces:
             if all(l[k.uv].uv.length==0 for l in f.loops): k.project([f],f.material_index)
         tmp=k.finish("__tmp__",vcol("VK_Pieces"),**kw)
-        for p in tmp.data.polygons: p.use_smooth=p.material_index in (HAY,APPLE,PUMPKIN,BREAD,CLOTH_A,CLOTH_B,LEAF,BURLAP,FOLIAGE,CROPS) or (p.material_index==GOODS and p.use_smooth)
+        for p in tmp.data.polygons: p.use_smooth=p.material_index in (HAY,APPLE,PUMPKIN,BREAD,CLOTH_A,CLOTH_B,LEAF,BURLAP,FOLIAGE,CROPS) or (p.material_index in (GOODS,BRONZE) and p.use_smooth)
         base=bpy.data.objects.get(n)
         if base is None:
             tmp.name=n; tmp.data.name=n; tmp.hide_render=tmp.hide_viewport=True; continue

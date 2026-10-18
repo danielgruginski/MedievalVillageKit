@@ -484,6 +484,17 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VK_TownWall_Straight` | 3.45 × 2.82 × 9.45 | 2,308 | 52 |
 | `SM_VK_TownWall_Tower_Round` | 7.16 × 7.14 × 13.97 | 9,271 | 52 |
 
+### market: 6
+
+| Piece | Size (m) | Tris | Mats |
+|---|---|---|---|
+| `SM_VK_MarketHall` | 11.70 × 8.70 × 15.80 | 19,430 | 68 |
+| `SM_VK_Prop_CrierStand` | 2.04 × 2.93 × 2.81 | 1,244 | 68 |
+| `SM_VK_Prop_Hurdle` | 2.00 × 0.07 × 1.52 | 104 | 68 |
+| `SM_VK_Prop_Monument` | 3.40 × 3.40 × 6.01 | 2,088 | 68 |
+| `SM_VK_Prop_Pen` | 4.07 × 4.33 × 1.52 | 1,046 | 68 |
+| `SM_VK_Prop_WeighBeam` | 4.28 × 1.85 × 4.12 | 2,796 | 68 |
+
 ## Nature (`vk_nature`, rebuilt from `NATURE_SPECS`): 39 pieces
 
 | Piece | Size (m) | Tris | Mats |

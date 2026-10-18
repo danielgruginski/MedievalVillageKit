@@ -1601,6 +1601,24 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     box). 2.7k-4.0k tris each (the older stalls run 2.7k-5.3k). Exported; prefabs built in MedievalSetting
     (Generated/Prefabs/VK/MarketStall). Not placed in any map yet.
 
+126. 2026-10-18 (the user: "rest of the market"). New module **`vk_mod_market`** (prefix `mkt_`, last in `KIT_MODULES`;
+    borrows `twn_arch_*` and `def_beam`). **`SM_VK_MarketHall`** (Saltmere's covered market, one piece: an open ashlar
+    arcade, 3 round arches a long side and 2 an end, plain unbevelled voussoirs, a flagged floor 0.12 up, planked
+    ceiling on beams, two lanterns; the kit's own `timber_frame` walls above at z 3.8 so it matches the houses; one
+    light hipped roof `mkt_roof` on the kit profile `roof_z` (planar between the ridge, wall-line and eave rows, ~1.2k
+    tris instead of ~16k for Roof_Hip x2 + Roof_Mid) and a clock lantern with a bell `mkt_lantern`; wall lines 9 x 6,
+    15.8 m, 19.4k tris -- the timber walls are 11k of it), **`SM_VK_Prop_Monument`** (3 steps, ashlar pedestal, four
+    bronze plaques and a laurel, a smooth bronze crowned king with his sword point down; 2.1k),
+    **`SM_VK_Prop_WeighBeam`** (the tron: gallows frame under a tile hood, 1.9 m balance with chained pans, a wool sack
+    against iron weights, the weigher's bench and ledger, sacks; 2.8k), **`SM_VK_Prop_Hurdle`** (one 2 m wattle
+    hurdle), **`SM_VK_Prop_Pen`** (4 x 3 m hurdle pen, gate swung open, straw, trough, tally board; put
+    SM_VK_Animal_Sheep / _Pig in it) and **`SM_VK_Prop_CrierStand`** (1.1 m platform, back steps, rails, the city's
+    cloth over the front rail, hand bell, proclamation). Already in the kit and not remade: Pillory, Stocks, HitchRail,
+    Bunting_6/9, Festoon, Cart (a hand cart), Stage, MarketCross, Fountain, NoticeBoard. Shared change: the rebuild's
+    smoothing rule keeps smooth-flagged **BRONZE** faces smooth (like GOODS), so `bell()`'s bells turn smooth the next
+    time their pieces (Roof_Cupola, the skyline bell tower) are rebuilt. Exported; prefabs built in MedievalSetting
+    (VK/MarketHall, VK/Prop); not placed in Saltmere_Market (the other session's map).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
