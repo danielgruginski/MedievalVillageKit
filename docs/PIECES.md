@@ -545,8 +545,8 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Prop_CiderPress` | 2.24 × 1.60 × 2.27 | 2,520 | 7 |
 | `SM_VK_Prop_ClayPit` | 3.70 × 3.60 × 1.69 | 1,484 | 9 |
 | `SM_VK_Prop_ClothRack` | 3.40 × 1.67 × 3.22 | 1,012 | 6 |
-| `SM_VK_Prop_CoalPile` | 1.31 × 0.99 × 0.57 | 564 | 2 |
-| `SM_VK_Prop_Crates` | 2.50 × 1.76 × 1.50 | 880 | 2 |
+| `SM_VK_Prop_CoalPile` | 2.00 × 1.51 × 1.36 | 2,956 | 4 |
+| `SM_VK_Prop_Crates` | 2.51 × 1.75 × 1.49 | 2,288 | 3 |
 | `SM_VK_Prop_Creels` | 2.02 × 1.52 × 0.67 | 2,234 | 8 |
 | `SM_VK_Prop_CrierStand` | 2.04 × 2.93 × 2.81 | 1,244 | 7 |
 | `SM_VK_Prop_Dovecote` | 4.80 × 5.12 × 9.95 | 5,202 | 12 |
@@ -561,7 +561,7 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Prop_FlowerBox_Daisy` | 1.45 × 0.54 × 0.90 | 288 | 3 |
 | `SM_VK_Prop_Forge` | 2.47 × 1.20 × 2.80 | 620 | 6 |
 | `SM_VK_Prop_Fountain` | 5.80 × 5.80 × 2.88 | 5,192 | 4 |
-| `SM_VK_Prop_GardenBed` | 2.80 × 1.60 × 0.47 | 416 | 3 |
+| `SM_VK_Prop_GardenBed` | 2.84 × 1.62 × 1.17 | 1,448 | 7 |
 | `SM_VK_Prop_GranaryStep` | 1.17 × 1.24 × 1.47 | 360 | 2 |
 | `SM_VK_Prop_Grindstone` | 0.95 × 0.84 × 1.32 | 224 | 4 |
 | `SM_VK_Prop_HandPump` | 1.39 × 1.95 × 2.17 | 870 | 4 |
@@ -610,7 +610,7 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Prop_ShopGoods_Produce` | 1.97 × 0.59 × 0.36 | 2,032 | 5 |
 | `SM_VK_Prop_ShopGoods_Tools` | 1.85 × 0.49 × 0.45 | 1,620 | 5 |
 | `SM_VK_Prop_Sign` | 0.14 × 1.18 × 1.00 | 276 | 3 |
-| `SM_VK_Prop_Signpost` | 1.96 × 1.88 × 2.80 | 223 | 2 |
+| `SM_VK_Prop_Signpost` | 1.96 × 1.92 × 3.03 | 1,424 | 4 |
 | `SM_VK_Prop_Skep` | 0.66 × 0.66 × 0.50 | 296 | 3 |
 | `SM_VK_Prop_SmithSign` | 0.12 × 1.07 × 1.18 | 384 | 2 |
 | `SM_VK_Prop_SpinningWheel` | 1.08 × 0.52 × 1.41 | 856 | 2 |
@@ -634,7 +634,7 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Prop_WeighBeam` | 4.31 × 1.85 × 4.12 | 2,796 | 10 |
 | `SM_VK_Prop_Well` | 3.39 × 2.65 × 4.05 | 5,856 | 5 |
 | `SM_VK_Prop_Wheelbarrow` | 2.20 × 0.73 × 0.84 | 780 | 4 |
-| `SM_VK_Prop_Woodpile` | 3.70 × 1.30 × 1.52 | 896 | 4 |
+| `SM_VK_Prop_Woodpile` | 3.70 × 1.30 × 1.50 | 3,396 | 5 |
 
 ### <a id="building-quarry"></a>Quarry: 4
 

@@ -608,11 +608,11 @@ def fro_ceiling_cell(k,H=3.0):
 # ---------------------------------------------------------------- granary props
 def fro_staddle(k):
     prof=[(0.20,-0.6),(0.19,0.0),(0.155,0.2),(0.13,0.44),(0.35,0.5),(0.36,0.58),(0.30,0.645)]
-    fs=lathe(k,prof,(0,0,0),segs=12,mi=ROCK,cap_top=True)
+    fs=lathe(k,prof,(0,0,0),segs=12,mi=STONE_BLOCK,cap_top=True)                     # dressed stone (2026-10-20; was the noisy ROCK)
     rnd=random.Random(3)
     for v in {v for f in fs for v in f.verts}:
         if v.co.z>0.02: v.co+=Vector((rnd.uniform(-1,1)*0.012,rnd.uniform(-1,1)*0.012,rnd.uniform(-1,1)*0.008))
-    k.bm.normal_update(); k.project(fs,ROCK)
+    k.bm.normal_update(); k.project(fs,STONE_BLOCK)
 
 def fro_tree_nursery(k):
     """Crop_TreeNursery: one 3x3 cell of soil ridges with 4 rows of young trees (forester's sapling beds).

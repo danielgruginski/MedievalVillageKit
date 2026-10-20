@@ -1777,6 +1777,20 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     (republish `renders/catalogue_page.html`, the same page without a document skeleton, with the sheets as files).
     `INTERIOR_KIT.md` §6 (the interior's first 146 pieces, generated then) now points to PIECES.md.
 
+136. 2026-10-20 (the user: "improving old props"). Close-ups of the props that looked weak in the catalogue's sheets:
+    the clay pit, mortar tub, hoist beam, banker and the water props (trough, fountain) hold up close (their sheet
+    thumbnails were too small); six were redone in their builders. `prop_garden_bed` (1,448 tris): a raised bed
+    (`soil_bed` 2.8 x 1.6, three ridges) with a row each of cabbages, carrot tops and onions, the crop fields'
+    helpers (was 18 flat green blobs). `coal_pile` (2,956): a low `ind_heap` core heaped with 110 `ind_chunks` lumps,
+    more round its foot, a plank bin behind and a shovel stuck in (was loose faceted balls and a floating board).
+    `prop_woodpile` (3,396): firewood billets (`con_log`: bark and end grain) stacked end-on in five settling rows on
+    bearers under the old lean-to (was 7-sided cylinders, some in BREAD). `prop_crates` (2,288): PLANKS bodies, WOOD
+    rims, corner battens and a diagonal brace per side; the second barrel moved (their hoops overlapped). `fro_staddle`:
+    STONE_BLOCK instead of the noisy ROCK. `prop_signpost` (1,424): solid wedge points (the tips were single faces,
+    invisible from behind), pale painted letter strokes, iron brackets, a pyramid cap and fieldstones at its foot.
+    vk_zfight clean (the garden bed's only hits are its frame bottoms 35 cm underground, as on the crop beds).
+    Saved, exported, prefabs rebuilt, catalogue regenerated and the page republished.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

@@ -1510,15 +1510,24 @@ def prop_bench(k):
     k.box((0,0.2,0.85),(1.8,0.07,0.28),WOOD,rot=(-0.2,0,0),bevel=0.02)
     for sx in(-0.7,0.7): k.box((sx,0.22,0.65),(0.08,0.07,0.4),WOOD,bevel=0.02)
 def prop_crates(k):
+    """a stack of crates (2026-10-20 redo: board bodies with corner battens and a diagonal brace on each side, rims
+    top and bottom) and two barrels"""
     rnd=random.Random(6)
     for (x,y,z,s) in((0,0,0,0.8),(0.85,0.1,0,0.75),(0.4,0.05,0.8,0.7),(-0.1,0.85,0,0.7)):
-        r=rnd.uniform(-.2,.2)
-        k.box((x,y,z+s/2),(s,s,s),WOOD,rot=(0,0,r),bevel=0.04)
-        for dz in(0.07,s-0.07): k.box((x,y,z+dz),(s+0.04,s+0.04,0.1),WOOD,rot=(0,0,r),bevel=0.02)
-    for i,(x,y) in enumerate(((1.4,0.9),(1.6,0.2))):
+        r=rnd.uniform(-.2,.2); R=Matrix.Translation((x,y,z))@Matrix.Rotation(r,4,"Z"); sub=Kit()
+        sub.box((0,0,s/2),(s-0.03,s-0.03,s-0.02),PLANKS,bevel=0.01)                     # the boards
+        for dz in(0.06,s-0.06): sub.box((0,0,dz),(s+0.02,s+0.02,0.09),WOOD,bevel=0.015)  # rims
+        for sx in(-1,1):
+            for sy in(-1,1): sub.box((sx*(s/2-0.025),sy*(s/2-0.025),s/2),(0.07,0.07,s-0.2),WOOD,bevel=0.012)  # corner battens
+        L=math.hypot(s-0.22,s-0.2)
+        for a in range(4):                                                              # a brace across each side
+            Ra=Matrix.Rotation(a*math.pi/2,4,"Z"); tilt=math.atan2(s-0.2,s-0.22)*(1 if a%2 else -1)
+            b=Kit(); b.box((0,0,0),(L,0.03,0.08),WOOD,bevel=0.01)
+            merge_kit(sub,b,Ra@Matrix.Translation((0,-(s/2-0.0),s/2))@Matrix.Rotation(tilt,4,"Y"))
+        merge_kit(k,sub,R)
+    for i,(x,y) in enumerate(((1.4,0.9),(1.62,0.1))):      # apart: their hoops met
         for zz,(r0,r1) in((0.25,(0.34,0.4)),(0.75,(0.4,0.34))): _cyl(k,(x,y,zz),r0,r1,0.5,12,WOOD)
         for zz in(0.12,0.88): _cyl(k,(x,y,zz),0.39,0.39,0.06,12,IRON)
-
 def road_strip(coll,name,pts,w=3.2):
     bm=bmesh.new(); prev=None
     L=[]
@@ -1566,18 +1575,25 @@ def street(coll,x0,x1,yroad,seed,side_gap=9.5):
 gardens=[]
 
 def prop_garden_bed(k):
-    rnd=random.Random(3)
-    k.box((0,0,0.1),(2.8,1.6,0.2),WOOD,bevel=0.03)
-    soil=tex_mat("M_VK_Soil",None,1.0,flat=(0.20,0.13,0.08))
-    k.box((0,0,0.2),(2.6,1.4,0.06),SOIL,bevel=0)
-    for row in range(3):
-        for i in range(6):
-            x=-1.05+i*0.42+rnd.uniform(-.04,.04); y=-0.45+row*0.45
-            vs=bmesh.ops.create_icosphere(k.bm,subdivisions=1,radius=0.17)["verts"]
-            for v in vs:
-                d=v.co.normalized(); v.co=Vector((v.co.x,v.co.y,v.co.z*0.75))*(1+0.18*noise.noise(d*3+Vector((x,y,0))))+Vector((x,y,0.33))
-            for f in {f for v in vs for f in v.link_faces}: f.material_index=LEAF
-
+    """a cottage's kitchen-garden bed (2026-10-20 redo of the flat green blobs): a raised timber frame (bed_frame,
+    boards sunk below the base) of soil ridges, a row each of cabbages, carrot tops and onions"""
+    rnd=random.Random(3); L=CROPBED_LIFT
+    w,d=soil_bed(k,2.8,1.6,rows=3,ridge_h=0.1)
+    ys=[-d/2+(i+0.5)*d/3 for i in range(3)]
+    for j in range(5):                                                                  # cabbages
+        x=-w/2+(j+0.5)*w/5+rnd.uniform(-0.04,0.04); y=ys[0]
+        goods_map(k,_ico(k,(x,y,0.27+L),0.16,LEAF,(1,1,0.85),sub=1,jit=0.02,seed=40+j),"cabbage",ref=(math.cos(j),math.sin(j),0))
+        for a in range(4):
+            aa=a*1.57+rnd.uniform(-0.3,0.3)
+            card(k,(x+math.cos(aa)*0.14,y+math.sin(aa)*0.14,0.22+L),(math.cos(aa+1.57),math.sin(aa+1.57),0),(math.cos(aa)*0.8,math.sin(aa)*0.8,0.6),0.26,0.26,"ivy",flip=a%2==0)
+    for j in range(9):                                                                  # carrot tops
+        x=-w/2+(j+0.5)*w/9+rnd.uniform(-0.04,0.04); hh=rnd.uniform(0.28,0.4)
+        for a in (0.0,1.2,2.3):
+            aa=a+rnd.uniform(-0.3,0.3)
+            card(k,(x,ys[1]+rnd.uniform(-0.04,0.04),0.12+L+hh/2-0.02),(math.cos(aa),math.sin(aa),0),(rnd.uniform(-0.1,0.1),rnd.uniform(-0.1,0.1),1),0.34*rnd.uniform(0.85,1.15),hh,"leafy",flip=rnd.random()<0.5)
+    for j in range(8):                                                                  # onions
+        x=-w/2+(j+0.5)*w/8+rnd.uniform(-0.03,0.03)
+        onion(k,(x,ys[2]+rnd.uniform(-0.03,0.03),CROPBED_RAISE+0.08+0.03),rnd.uniform(0.05,0.065),rnd)
 def _ico(k,c,r,mi,scale=(1,1,1),sub=2,jit=0.0,seed=0):
     rnd=random.Random(seed)
     vs=bmesh.ops.create_icosphere(k.bm,subdivisions=sub,radius=r)["verts"]
@@ -1635,16 +1651,26 @@ def prop_haystack(k):
         _cyl(k,(0,0,1.25+i*0.45),1.36-i*0.32,1.36-i*0.32,0.06,16,WOOD)
     _cyl(k,(0,0,3.2),0.05,0.05,0.9,6,WOOD)
 def prop_woodpile(k):
+    """firewood under a lean-to (2026-10-20 redo: billets with bark and end grain, con_log, stacked end-on,
+    a chopping block with its axe)"""
     rnd=random.Random(5)
-    for row in range(4):
-        for i in range(7-row):
-            x=-1.1+i*0.34+row*0.17; z=0.17+row*0.3
-            _cyl(k,(x,0,z),0.16,0.16,1.0,7,BREAD if (i+row)%3==0 else WOOD,rot=Matrix.Rotation(math.pi/2,4,"X"))
-    for sx in(-1.35,1.35): k.box((sx,0,0.6),(0.12,0.12,1.3),WOOD,bevel=0.03)
-    k.box((0,0,1.35),(3.0,1.3,0.08),ROOF,rot=(0.12,0,0),bevel=0.02)
     for sx in(-1.35,1.35):
         for sy in(-0.5,0.5): k.box((sx,sy,0.7),(0.1,0.1,1.35),WOOD,bevel=0.02)
-    _cyl(k,(1.9,0.3,0.25),0.3,0.32,0.5,10,WOOD); k.box((1.95,0.3,0.7),(0.05,0.05,0.5),WOOD,rot=(0,0.3,0),bevel=0)
+    k.box((0,0,1.35),(3.0,1.3,0.08),ROOF,rot=(0.12,0,0),bevel=0.02)
+    for sy in(-0.25,0.25): k.box((0,sy,0.05),(2.6,0.1,0.1),WOOD,bevel=0.02)                   # bearers
+    base=0.1                                                                              # bottom of the row
+    for row in range(5):
+        x=-1.22+(0.05 if row%2 else 0.0); top=base
+        while True:
+            r_=rnd.uniform(0.09,0.12)
+            if x+2*r_>1.25: break
+            x+=r_; y0=-0.5+rnd.uniform(-0.03,0.03); y1=0.5+rnd.uniform(-0.03,0.03)
+            con_log(k,(x,y0,base+r_),(x,y1,base+r_+rnd.uniform(-0.01,0.01)),r_,seed=row*40+int(x*100),segs=6,taper=0.97)
+            x+=r_+0.006; top=max(top,base+2*r_)
+        base=top-0.045                                                                    # the next row settles in
+        if base>1.0: break
+    con_log(k,(1.9,0.3,0.0),(1.9,0.3,0.48),0.3,seed=5,segs=10,taper=1.0)                 # the chopping block
+    k.box((1.95,0.3,0.72),(0.05,0.05,0.5),WOOD,rot=(0,0.3,0),bevel=0)
     k.box((2.0,0.3,0.92),(0.05,0.22,0.12),STEEL,bevel=0)
 def prop_noticeboard(k):
     for sx in(-0.8,0.8): k.box((sx,0,1.1),(0.14,0.14,2.2),WOOD,bevel=0.04)
@@ -1654,13 +1680,29 @@ def prop_noticeboard(k):
         k.box((-0.5+i*0.25+rnd.uniform(-.05,.05),-0.05,1.5+rnd.uniform(-.25,.25)),(0.22,0.02,0.3),PAPER,rot=(0,rnd.uniform(-.2,.2),0),bevel=0)
     for sx in(-1,1): k.box((sx*0.5,0,2.35),(1.2,0.9,0.07),ROOF,rot=(0,sx*0.45,0),bevel=0.02)
 def prop_signpost(k):
+    """a crossroads signpost (2026-10-20: solid pointed arms, iron brackets, a cap and a heap of stones at its foot)"""
     k.box((0,0,1.4),(0.16,0.16,2.8),WOOD,bevel=0.04)
-    k.box((0,0,0.1),(0.4,0.4,0.2),STONE,bevel=0.05)
+    k.box((0,0,2.83),(0.22,0.22,0.06),WOOD,bevel=0.015)                                   # cap board
+    v=[k.bm.verts.new(p) for p in ((-0.11,-0.11,2.86),(0.11,-0.11,2.86),(0.11,0.11,2.86),(-0.11,0.11,2.86),(0,0,3.0))]
+    for f_ in((v[0],v[1],v[4]),(v[1],v[2],v[4]),(v[2],v[3],v[4]),(v[3],v[0],v[4])): f=k.bm.faces.new(f_); f.material_index=WOOD
     for i,(a,z) in enumerate(((0.3,2.4),(2.2,2.05),(4.0,1.7))):
         R=Matrix.Rotation(a,4,"Z")
         sub=Kit(); sub.box((0.55,0,0),(0.95,0.06,0.24),WOOD,bevel=0.03)
-        v=[sub.bm.verts.new(p) for p in ((1.02,-0.03,-0.12),(1.02,-0.03,0.12),(1.2,-0.03,0))]; f=sub.bm.faces.new(v); f.material_index=WOOD
+        P=[(1.02,-0.03,-0.12),(1.02,-0.03,0.12),(1.2,-0.03,0.0),(1.02,0.03,-0.12),(1.02,0.03,0.12),(1.2,0.03,0.0)]
+        vs=[sub.bm.verts.new(p) for p in P]                                               # the point: a wedge
+        for f_ in((0,2,1),(3,4,5),(0,3,5,2),(2,5,4,1),(1,4,3,0)):
+            f=sub.bm.faces.new([vs[j] for j in f_]); f.material_index=WOOD
+        x0=0.2; rl=random.Random(i)
+        while x0<0.92:                                                                      # painted letters: pale strokes
+            w_=rl.uniform(0.03,0.07)
+            for s in(-1,1): sub.box((x0+w_/2,s*0.0315,rl.uniform(-0.01,0.01)),(w_,0.004,rl.choice((0.07,0.05,0.09))),PAPER,bevel=0)
+            x0+=w_+rl.uniform(0.02,0.04)
+        sub.box((0.1,0,0),(0.08,0.2,0.3),IRON,bevel=0.01)                                  # bracket round the post
         merge_kit(k,sub,Matrix.Translation((0,0,z))@R)
+    rnd=random.Random(7)
+    for j in range(9):                                                                     # stones at the foot
+        a=j*2.4; d=rnd.uniform(0.14,0.3)
+        rock(k,(math.cos(a)*d,math.sin(a)*d,0.04),(0.16,0.13,0.11),seed=70+j,mi=FIELDSTONE,segs=1)
 def prop_anvil(k):
     _cyl(k,(0,0,0.3),0.32,0.36,0.6,10,WOOD)
     k.box((0,0,0.72),(0.35,0.22,0.24),STEEL,bevel=0.03)
@@ -2331,11 +2373,17 @@ def smith_toolwall(k):
     for x in (-0.55,0.55):
         ring(k,(x,-0.12,1.28),0.06,0.09,0.03,IRON,n=14,axis="Y")
 def coal_pile(k):
-    rnd=random.Random(8)
-    for i in range(26):
-        a=rnd.uniform(0,6.28); d=rnd.uniform(0,0.55)
-        _mat(_ico(k,(math.cos(a)*d,math.sin(a)*d,0.05+0.3*(1-d/0.6)*rnd.uniform(0.5,1)),rnd.uniform(0.09,0.16),COAL,sub=1,jit=0.02,seed=i),COAL,False)
-    k.box((0.75,0.1,0.25),(0.05,0.5,0.5),WOOD,rot=(0,0.3,0),bevel=0.01)
+    """a coal heap (2026-10-20 redo of the loose faceted balls): a lumpy mound against a plank bin, loose lumps round
+    its foot and a shovel stuck in it"""
+    ind_heap(k,(0,0.05,0),0.7,0.54,0.42,COAL,seed=8,sub=2,rough=0.3,jit=0.04)         # a low core ...
+    ind_chunks(k,(0,0.05,0),0.74,0.58,0.5,110,[COAL],seed=9,size=(0.07,0.13))         # ... heaped with lumps
+    ind_chunks(k,(0,0.05,0),1.0,0.8,0.08,14,[COAL],seed=10,size=(0.04,0.09))           # and round its foot
+    for sx in(-0.95,0.95): k.box((sx,0.72,0.42),(0.1,0.1,0.9),WOOD,bevel=0.02)             # the bin: two posts,
+    for i in range(3): k.box((0,0.78,0.14+i*0.25),(2.0,0.05,0.23),PLANKS,rot=(0,0,0),bevel=0.01)   # boards behind
+    k.box((0.98,0.3,0.1),(0.05,0.8,0.22),PLANKS,bevel=0.01)                                # and a low side board
+    ind_beam(k,(0.32,-0.3,0.4),(0.55,-0.62,1.25),0.04,0.04,WOOD,bevel=0.008)              # the shovel
+    k.box((0.56,-0.63,1.28),(0.16,0.035,0.035),WOOD,rot=(0,0,-0.95),bevel=0.008)
+    k.box((0.3,-0.27,0.3),(0.24,0.03,0.28),STEEL,rot=(0.35,0,-0.95),bevel=0.01)
 def smith_sign(k):
     """wall bracket (wall at y=0, arm to -Y) with a hanging iron anvil and crossed hammers"""
     k.box((0,-0.05,0),(0.12,0.1,0.5),IRON,bevel=0.01)
