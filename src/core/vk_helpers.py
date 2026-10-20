@@ -435,7 +435,7 @@ def window_frame(k,x0,x1,z0,z1,depth_y=-0.02,sill=True,shutters=True,face=-0.25)
     w=x1-x0; h=z1-z0
     k.quad([(x0,depth_y,z0),(x1,depth_y,z0),(x1,depth_y,z1),(x0,depth_y,z1)],WINDOW,uvs=[(0,0),(w,0),(w,h),(0,h)])
     for sx in (x0-0.07,x1+0.07): k.box((sx,face-0.02,(z0+z1)/2),(0.16,0.3,h+0.1),WOOD,bevel=0.03)
-    k.box(((x0+x1)/2,face-0.05,z1+0.12),(w+0.5,0.36,0.24),WOOD,bevel=0.04)
+    k.box(((x0+x1)/2,face-0.05,z1+0.11),(w+0.5,0.36,0.24),WOOD,bevel=0.04)          # head: 1 cm into the opening, off the wall's plane
     k.box(((x0+x1)/2,depth_y-0.03,(z0+z1)/2),(0.07,0.06,h),WOOD,bevel=0.01)
     k.box(((x0+x1)/2,depth_y-0.03,z0+h*0.55),(w,0.06,0.07),WOOD,bevel=0.01)
     if sill: k.box(((x0+x1)/2,face-0.1,z0-0.06),(w+0.36,0.46,0.14),STONE,bevel=0.03)
@@ -454,8 +454,8 @@ def wall_stone_door(k):
     stone_panel(k,-1.5,-hw,0,H1); stone_panel(k,hw,1.5,0,H1); stone_panel(k,-hw,hw,top,H1)
     z=spring
     while z<top-0.01:
-        dz=0.08; c=math.sqrt(max(0,hw*hw-(z+dz/2-spring)**2))
-        for s in(-1,1): stone_panel(k,min(s*c,s*hw),max(s*c,s*hw),z,z+dz)
+        dz=0.08; zt=min(z+dz,top); c=math.sqrt(max(0,hw*hw-((z+zt)/2-spring)**2))   # the last strip stops at the panel
+        for s in(-1,1): stone_panel(k,min(s*c,s*hw),max(s*c,s*hw),z,zt)
         z+=dz
     plinth(k,-1.5,-hw-0.02); plinth(k,hw+0.02,1.5); batter(k)
     # voussoirs: chunky arch stones
@@ -876,7 +876,7 @@ def plaster_ground(k,kind="."):
         k.box((0,-0.5,0.1),(1.5,0.55,0.2),STONE,bevel=0.05,segs=2,jitter=0.02,seed=5)
 def corner_plaster(k):
     k.box((-0.05,-0.05,PL/2),(0.8,0.8,PL),STONE,bevel=0.05,segs=2,jitter=0.02,seed=2)
-    k.box((-0.22,-0.22,(PL+H1)/2),(0.34,0.34,H1-PL),WOOD,bevel=0.05,segs=2)
+    k.box((-0.22,-0.22,(PL+H1-0.02)/2),(0.34,0.34,H1-PL-0.02),WOOD,bevel=0.05,segs=2)    # under the cap's top
     k.box((-0.1,-0.1,H1-0.11),(0.56,0.56,0.22),WOOD,bevel=0.04)
 # ---------------- market stall (2 x 1 cells footprint, front toward -Y)
 # the capital's market (2026-10-18): spicer, butcher, jeweller (and money-changer), armourer, apothecary, vintner, scribe
@@ -1188,7 +1188,7 @@ def market_stall(k,goods="produce"):
             h=2.6 if sy<0 else 3.0
             k.box((sx*(W_/2-0.1),sy*(D_/2-0.1),h/2),(0.2,0.2,h),WOOD,bevel=0.05,segs=2)
     # counter
-    k.box((0,-0.35,0.95),(W_,1.0,0.14),WOOD,bevel=0.04)
+    k.box((0,-0.35,0.95),(W_-0.02,1.0,0.14),WOOD,bevel=0.04)                      # inside the posts' faces
     for i in range(6): k.box((-W_/2+0.27+i*0.53,-0.84,0.47),(0.5,0.08,0.9),WOOD,bevel=0.02)
     k.box((0,-0.35,0.12),(W_-0.2,0.9,0.1),WOOD,bevel=0.02)
     # back shelf & crossbeams
@@ -1599,9 +1599,9 @@ def prop_stool(k):
     for i in range(3):
         a=i*2.094; k.box((math.cos(a)*0.14,math.sin(a)*0.14,0.24),(0.07,0.07,0.5),WOOD,rot=(math.sin(a)*0.2,-math.cos(a)*0.2,0),bevel=0.01)
 def prop_trough(k):
-    k.box((0,0,0.1),(2.0,0.8,0.2),WOOD,bevel=0.03)
+    k.box((0,0,0.1),(1.96,0.76,0.2),WOOD,bevel=0.03)                               # inside the boards
     for sy in(-1,1): k.box((0,sy*0.36,0.4),(2.0,0.1,0.6),WOOD,bevel=0.03)
-    for sx in(-1,1): k.box((sx*0.96,0,0.4),(0.1,0.8,0.6),WOOD,bevel=0.03)
+    for sx in(-1,1): k.box((sx*0.96,0,0.4),(0.1,0.62,0.6),WOOD,bevel=0.03)          # between the sides
     k.quad([(-0.9,-0.3,0.55),(0.9,-0.3,0.55),(0.9,0.3,0.55),(-0.9,0.3,0.55)],WATER,uvs=[(0,0),(1.8,0),(1.8,0.6),(0,0.6)])
     for sx in(-0.7,0.7): k.box((sx,0,0.4),(0.08,0.9,0.66),IRON,bevel=0)
 def prop_haybale(k):

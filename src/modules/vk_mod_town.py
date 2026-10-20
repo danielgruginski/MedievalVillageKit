@@ -191,7 +191,7 @@ def twn_wall_stoneup_loading(k):
     twn_hole(k,-1.5,1.5,0,H2,-hw,hw,0,z1)
     twn_belt(k,x0=-1.5,x1=-hw-0.02,n=2,seed=5); twn_belt(k,x0=hw+0.02,x1=1.5,n=2,seed=6)
     k.box((0,-0.2,0.08),(1.6,0.4,0.16),WOOD,bevel=0.03)                                  # sill beam
-    k.box((0,-0.3,z1+0.13),(1.75,0.3,0.26),WOOD,bevel=0.04,segs=2)                          # lintel beam
+    k.box((0,-0.3,z1+0.12),(1.75,0.3,0.26),WOOD,bevel=0.04,segs=2)                          # lintel beam (1 cm down)
     rock(k,(0,-0.3,z1+0.45),(1.9,0.24,0.3),seed=91,tilt=0.02)
     twn_jambs(k,-hw,hw,0.18,z1,gap=0.02,seed=7,long_=0.34,short_=0.22)
     # interior darkness + floor + a sack
@@ -393,7 +393,7 @@ def twn_wall_stone_shop(k):
     plinth(k); batter(k)
     twn_skirt(k)
     k.box((0,-0.2,z0-0.06),(2*hw+0.14,0.44,0.14),STONE_BLOCK,bevel=0.03)                     # stone sill
-    k.box((0,-0.28,z1+0.125),(2.6,0.34,0.26),WOOD,bevel=0.04,segs=2)                          # lintel
+    k.box((0,-0.28,z1+0.115),(2.6,0.34,0.26),WOOD,bevel=0.04,segs=2)                          # lintel (1 cm down)
     twn_jack_arch(k,0,z1+0.26,1.0,n=7,h=0.34,seed=5)
     for s in(-1,1):
         for j,(zc,w) in enumerate(((z0+0.22,0.34),(z0+0.66,0.26),(z0+1.08,0.34))):
@@ -415,7 +415,7 @@ def twn_wall_plaster_shop(k):
         twn_panel(k,*((-1.5,-hw) if s<0 else (hw,1.5)),z0,H1-0.2,-0.24,0.2,mi=PLASTER)
         brace(k,s*1.12,z1-0.3,s*0.8,z1+0.02,w=0.12,y=-0.3)
     twn_panel(k,-hw,hw,z1+0.25,H1-0.2,-0.24,0.2,mi=PLASTER)
-    k.box((0,-0.3,z1+0.125),(2.6,0.3,0.26),WOOD,bevel=0.04,segs=2)                           # lintel
+    k.box((0,-0.3,z1+0.115),(2.6,0.3,0.26),WOOD,bevel=0.04,segs=2)                           # lintel (1 cm down)
     pegs(k,(-1.25,1.25),(1.2,2.2),y=-0.37)
     twn_shop_inside(k,hw,z0,z1,-0.24,seed=2)
     twn_counter(k,hw)

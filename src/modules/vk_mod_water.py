@@ -280,7 +280,7 @@ def wat_hull(k,L,N,bfn,kfn,sfn,ffn,p=0.75,q=0.9,m=4,th=0.05,bow="point",stern="t
     bmesh.ops.remove_doubles(k.bm,verts=[v for row in Vo for v in row],dist=0.002)
     return dict(xs=xs,ts=ts,sec=sec,outer=outer,inner=inner)
 
-def wat_gunwale(k,H,mi=SHUTTER,w=0.07,h=0.1,drop=0.05,out=0.035,upto=None,start=0):
+def wat_gunwale(k,H,mi=SHUTTER,w=0.07,h=0.1,drop=0.06,out=0.035,upto=None,start=0):
     """rubbing strake along the outer sheer (SHUTTER slot, recolourable)"""
     xs=H["xs"]; n=len(xs)-1 if upto is None else upto
     c=0.022
@@ -855,7 +855,7 @@ def wat_creels(k):
 def wat_fish_crate(k,M,seed=0,n=6):
     sub=Kit(); rnd=random.Random(seed)
     W,D,H=0.8,0.55,0.3
-    sub.box((0,0,0.03),(W,D,0.06),PLANKS,bevel=0)
+    sub.box((0,0,0.03),(W-0.1,D-0.1,0.06),PLANKS,bevel=0)                          # between the boards
     for s in(-1,1):
         sub.box((0,s*(D/2-0.025),H/2),(W,0.05,H),PLANKS,bevel=0.012)
         sub.box((s*(W/2-0.025),0,H/2),(0.05,D-0.1,H),PLANKS,bevel=0.012)

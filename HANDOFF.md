@@ -1730,6 +1730,19 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     counter, `prop_trough`'s and `wat_fish_crate`'s bevelled corners, `wat_gunwale`. All 45 rebuilt, exported, prefabs
     rebuilt. **Maps already built with quay tiles must be rebuilt** (the terrain mesh is merged and saved per map).
 
+133. 2026-10-19 (the user: "fix those too": the kit's older overlaps 132 left). Fixed in shared code:
+    `window_frame`'s head beam (flush with the wall over the opening: every window piece; now 1 cm into the opening),
+    `wall_stone_door`'s arch strips (the last overlapped the panel above), `corner_plaster`'s post (top flush with its
+    cap), the base `market_stall` counter (flush with the posts: all 15 stalls), `prop_trough` (base and end boards
+    flush with the sides), `wat_fish_crate`'s base (fish piles, the fish market), `wat_gunwale` (strake top level with
+    the rim: drop 0.05 -> 0.06; rowboat, barge, fishing boat, cog) and the town's lintels (loading door, stone and
+    plaster shops). Rebuilt every exterior spec in a background Blender and compared mesh hashes: 43 changed, among
+    them `SM_VK_Chimney_Gable_H24/H58` and `SM_VK_TownWall_Tower_Round`, which were stale in the .blend (older than
+    the code's z-fight batches of HANDOFF 98) and are now in step. All 43 exported and their prefabs rebuilt; vk_zfight
+    clean on the base pieces. Left: contacts at the wall pieces' 3 m ends (the neighbour or a corner covers them) and the
+    same joints inside the one-piece buildings (timber walls meeting at a corner, shutters at a joint; 4-100 cm2,
+    undersides). See-through caps not re-baked (stale entries are made in play; the next player build bakes).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
