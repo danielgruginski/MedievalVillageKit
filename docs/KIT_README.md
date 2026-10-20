@@ -59,6 +59,10 @@ g["tk_test_T1"](); g["tk_test_T3"](40); g["tk_test_T3r"](40)   # terrain seam te
 exec(bpy.data.texts["vk_render"].as_string()); shot("name",(x,y,z),(tx,ty,tz),lens=35)   # render to renders/wip
 ```
 
+The piece catalogue (`docs/PIECES.md`, contact sheets and the browsable `docs/catalogue/index.html`) is generated
+from the exported package: run `blender -b blender/medievalDiorama.blend --python tools/render_thumbs.py` (about
+6 minutes for every piece; `force` re-renders, or name pieces), then `py tools/pieces_catalogue.py`.
+
 To place a building on terrain, call its builder with `origin=(x, y, rot_z_radians)`, then raise the new objects by `level*1.5`. `TownPlacer.build()` in `vk_town_map` does this for you and checks the footprint.
 
 The valley generator (`build_valley_town`) runs these checks and clean-up passes:

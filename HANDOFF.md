@@ -1764,6 +1764,19 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     (the live one held another session's scene); preview scene `Herbs_Ch23_Preview` in the .blend. Exported, Unity Build
     Materials + Build Prefabs (the eight only). Not placed in MedievalSetting (no gather spots or items yet).
 
+135. 2026-10-20 (the user picked "the fresh piece catalogue" from my improvement list). `docs/PIECES.md` had been
+    generated 2026-09-23 and patched by hand (it said 483 masters and 55 slots). Now generated from the package's
+    `Data/pieces.json`: `tools/render_thumbs.py` (background Blender; one ortho thumbnail per piece from the
+    front-left, transparent, to `renders/thumbs/`, 6 minutes for all) and `tools/pieces_catalogue.py` (plain `py` +
+    Pillow: `PIECES.md` by kit and category with size, tris and material count; contact sheets
+    `docs/catalogue/sheets/<kit>_<category>.jpg`, 8 across; `docs/catalogue/index.html` from the template
+    `docs/catalogue/page.html` with search, kit and category filters, heaviest-first order and a detail panel with
+    the prefab path). 1,405 pieces in 99 categories (building 464, nature 61, terrain 33, interior 847); the 37
+    map-unique `U_*` meshes are counted, not listed. Kits are told apart by the FBX folder (VK, VKT, VKI) and the
+    nature collection. Published as a private Artifact for browsing: https://claude.ai/artifact/BJojc6Wwk3Tua8hf9zzar4
+    (republish `renders/catalogue_page.html`, the same page without a document skeleton, with the sheets as files).
+    `INTERIOR_KIT.md` §6 (the interior's first 146 pieces, generated then) now points to PIECES.md.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

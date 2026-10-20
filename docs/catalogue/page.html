@@ -1,0 +1,207 @@
+<title>Medieval Village Kit Pieces</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!-- Template: tools/pieces_catalogue.py puts the pieces' data in place of the marker below and writes index.html. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a mason's pattern book. Sticky tool strip, then kit > category sections of picture tiles on stone-grey
+   plates (the contact sheets' own ground); a detail panel slides in from the side (from the bottom on phones). */
+:root {
+  --bg: #eceee7; --panel: #f7f8f3; --ink: #1d221e; --muted: #5a645c; --line: #cdd3c8;
+  --accent: #3d6a4a; --accent-ink: #f4f7f1; --plate: #3a3e3c; --heavy: #9a4f26;
+  --display: "Alegreya SC", "Palatino Linotype", Palatino, Georgia, serif;
+  --body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151917; --panel: #1d221f; --ink: #e2e7df; --muted: #98a299; --line: #2e3530;
+  --accent: #8cc097; --accent-ink: #102015; --plate: #3a3e3c; --heavy: #e3986a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151917; --panel: #1d221f; --ink: #e2e7df; --muted: #98a299; --line: #2e3530;
+  --accent: #8cc097; --accent-ink: #102015; --plate: #3a3e3c; --heavy: #e3986a; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px }
+header.top { padding-block: 28px 8px; display: grid; gap: 6px; max-width: 72rem }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(1.7rem, 4vw, 2.5rem); margin: 0; line-height: 1.1; text-wrap: balance; letter-spacing: .01em }
+.lede { margin: 0; color: var(--muted); max-width: 65ch }
+.counts { display: flex; flex-wrap: wrap; gap: 6px 18px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums }
+.counts b { color: var(--ink); font-weight: 500 }
+.tools { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--line);
+  display: grid; gap: 8px }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+input[type=search], select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; min-width: 0 }
+input[type=search] { flex: 1 1 16rem }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; flex-wrap: wrap }
+.seg button { font: inherit; font-size: 14px; border: 0; background: var(--panel); color: var(--ink); padding: 7px 12px; cursor: pointer; border-right: 1px solid var(--line) }
+.seg button:last-child { border-right: 0 }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink) }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 6.2rem; overflow-y: auto }
+.chip { font: inherit; font-size: 13px; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; padding: 2px 10px; cursor: pointer }
+.chip span { color: var(--muted); font-family: var(--mono); font-size: 11.5px; margin-left: 4px }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink) }
+.chip[aria-pressed="true"] span { color: inherit }
+button:focus-visible, input:focus-visible, select:focus-visible, .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.status { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums }
+main { display: grid; gap: 28px; padding-top: 18px }
+section h2 { font-family: var(--display); font-weight: 500; font-size: 1.25rem; margin: 0 0 10px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap }
+section h2 small { font-family: var(--body); font-size: 13px; color: var(--muted); font-weight: 400 }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px }
+.tile { display: grid; gap: 4px; align-content: start; text-align: left; font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; min-width: 0 }
+.thumb { width: 128px; height: 128px; max-width: 100%; border-radius: 4px; background-color: var(--plate); background-repeat: no-repeat; position: relative }
+.tile:hover .thumb { box-shadow: 0 0 0 2px var(--accent) }
+.tile .nm { font-size: 13px; line-height: 1.25; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden }
+.tile .mt { font-family: var(--mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; gap: 8px; flex-wrap: wrap }
+.heavy { color: var(--heavy) }
+.badge { position: absolute; top: 5px; left: 5px; font-family: var(--mono); font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+  background: var(--heavy); color: var(--panel); padding: 1px 5px; border-radius: 3px }
+.empty { color: var(--muted); padding: 30px 0 }
+aside.detail { position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 100%); background: var(--panel); border-left: 1px solid var(--line); z-index: 10;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) calc(18px + env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) 18px;
+  overflow-y: auto; display: grid; gap: 12px; align-content: start; box-shadow: -8px 0 30px rgba(0,0,0,.18) }
+.detail .big { width: 160px; height: 160px; border-radius: 4px; background-color: var(--plate); background-repeat: no-repeat }
+.detail h3 { font-family: var(--mono); font-weight: 500; font-size: 14px; margin: 0; overflow-wrap: anywhere }
+.detail dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 14px }
+.detail dt { color: var(--muted) }
+.detail dd { margin: 0; min-width: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums }
+.detail code { font-family: var(--mono); font-size: 12px }
+.detail ul { margin: 0; padding-left: 18px; font-family: var(--mono); font-size: 12px }
+.dhead { display: flex; justify-content: space-between; gap: 10px; align-items: start }
+.btn { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 6px; padding: 4px 10px; cursor: pointer; white-space: nowrap }
+.copyrow { display: flex; gap: 8px; align-items: start }
+.copyrow code { flex: 1; min-width: 0; overflow-wrap: anywhere }
+@media (max-width: 640px) {
+  aside.detail { top: auto; width: 100%; max-height: 72%; border-left: 0; border-top: 1px solid var(--line);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)) }
+  .thumb { width: 100%; height: auto; aspect-ratio: 1 }
+}
+@media (prefers-reduced-motion: no-preference) { aside.detail { animation: slide .16s ease-out } @keyframes slide { from { transform: translateX(24px); opacity: .6 } } }
+</style>
+
+<header class="top">
+  <h1>Medieval Village Kit Pieces</h1>
+  <p class="lede">Every piece the Unity package exports, with its size, triangle count and materials. Pick a piece for its prefab path.</p>
+  <div class="counts" id="counts"></div>
+</header>
+<div class="tools">
+  <div class="row">
+    <input type="search" id="q" placeholder="Search names, e.g. quay, stall, herb" aria-label="Search pieces">
+    <div class="seg" id="kits" role="group" aria-label="Kit"></div>
+    <select id="sort" aria-label="Order">
+      <option value="name">By category</option>
+      <option value="tris">Heaviest first</option>
+      <option value="size">Largest first</option>
+    </select>
+  </div>
+  <div class="chips" id="cats" role="group" aria-label="Category"></div>
+  <div class="status" id="status" aria-live="polite"></div>
+</div>
+<main id="out"></main>
+<aside class="detail" id="detail" hidden aria-label="Piece details"></aside>
+
+<script>
+const DATA = /*CATALOGUE_DATA*/null;
+const M = DATA.meta, P = DATA.pieces, HEAVY = 10000;
+const KIT = Object.fromEntries(M.kits.map(k => [k.key, k]));
+const state = { kit: "all", cat: null, q: "", sort: "name" };
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString("en-US");
+const short = n => n.replace(/^SM_VK[IT]?_/, "");
+const size = s => s.map(v => v.toFixed(v < 10 ? 2 : 1)).join(" × ");
+
+function sprite(el, p, scale) {
+  const w = M.cell * scale, h = (M.cell + M.label) * scale;
+  el.style.backgroundSize = (M.cols * w) + "px auto";
+  el.style.backgroundPosition = `-${(p.i % M.cols) * w}px -${Math.floor(p.i / M.cols) * h}px`;
+  el.dataset.src = "sheets/" + p.sh;
+}
+const io = "IntersectionObserver" in window ? new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.style.backgroundImage = `url("${e.target.dataset.src}")`; io.unobserve(e.target) }
+}), { rootMargin: "800px 0px" }) : null;
+function lazy(el) { io ? io.observe(el) : (el.style.backgroundImage = `url("${el.dataset.src}")`) }
+
+function counts() {
+  const by = k => P.filter(p => p.k === k).length;
+  $("counts").innerHTML = `<span><b>${fmt(M.total)}</b> pieces</span>` +
+    M.kits.map(k => `<span>${k.title} <b>${fmt(by(k.key))}</b></span>`).join("") +
+    `<span>exported data of ${M.date}</span>`;
+}
+function kits() {
+  const opts = [{ key: "all", title: "All" }, ...M.kits];
+  $("kits").innerHTML = opts.map(k => `<button type="button" data-k="${k.key}" aria-pressed="${state.kit === k.key}">${k.title}</button>`).join("");
+}
+function chips(list) {
+  if (state.kit === "all") { $("cats").innerHTML = ""; $("cats").hidden = true; return }
+  $("cats").hidden = false;
+  const c = {}; P.filter(p => p.k === state.kit).forEach(p => c[p.c] = (c[p.c] || 0) + 1);
+  $("cats").innerHTML = Object.keys(c).sort().map(k =>
+    `<button type="button" class="chip" data-c="${k}" aria-pressed="${state.cat === k}">${k}<span>${c[k]}</span></button>`).join("");
+}
+function tile(p) {
+  const b = document.createElement("button"); b.type = "button"; b.className = "tile"; b.dataset.n = p.n;
+  b.innerHTML = `<div class="thumb">${p.t >= HEAVY ? '<span class="badge">heavy</span>' : ""}</div>
+    <div class="nm">${short(p.n)}</div><div class="mt"><span>${size(p.s)}</span><span class="${p.t >= HEAVY ? "heavy" : ""}">${fmt(p.t)} tris</span></div>`;
+  const th = b.firstElementChild; sprite(th, p, 0.8); lazy(th); return b;
+}
+function render() {
+  const q = state.q.trim().toLowerCase();
+  let list = P.filter(p => (state.kit === "all" || p.k === state.kit) && (!state.cat || p.c === state.cat) &&
+    (!q || p.n.toLowerCase().includes(q) || p.c.toLowerCase().includes(q) || (p.vk || "").toLowerCase().includes(q)));
+  const out = $("out"); out.innerHTML = "";
+  $("status").textContent = `${fmt(list.length)} of ${fmt(M.total)} pieces shown` + (q ? ` for “${state.q.trim()}”` : "");
+  if (!list.length) { out.innerHTML = `<p class="empty">No piece matches. Try a shorter word, or pick All.</p>`; return }
+  if (state.sort !== "name") {
+    const key = state.sort === "tris" ? p => p.t : p => p.s[0] * p.s[1] * Math.max(p.s[2], 0.05);
+    list = list.slice().sort((a, b) => key(b) - key(a));
+    const sec = document.createElement("section"), g = document.createElement("div"); g.className = "grid";
+    list.slice(0, 400).forEach(p => g.appendChild(tile(p))); sec.appendChild(g); out.appendChild(sec);
+    if (list.length > 400) $("status").textContent += " (the first 400 in this order)";
+    return;
+  }
+  const groups = new Map();
+  M.kits.forEach(k => list.filter(p => p.k === k.key).sort((a, b) => a.c.localeCompare(b.c) || a.n.localeCompare(b.n))
+    .forEach(p => { const g = p.k + "/" + p.c; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(p) }));
+  for (const [g, ps] of groups) {
+    const sec = document.createElement("section"); const [k, c] = g.split("/");
+    const tris = ps.reduce((s, p) => s + p.t, 0);
+    sec.innerHTML = `<h2>${c}<small>${KIT[k].title} · ${ps.length} pieces · ${fmt(Math.round(tris / ps.length))} tris on average</small></h2>`;
+    const grid = document.createElement("div"); grid.className = "grid"; ps.forEach(p => grid.appendChild(tile(p)));
+    sec.appendChild(grid); out.appendChild(sec);
+  }
+}
+function copyBtn(text) { return `<button type="button" class="btn" data-copy="${text}">Copy</button>` }
+function show(n) {
+  const p = P.find(x => x.n === n), d = $("detail"); if (!p) return;
+  const prefab = "Packages/com.danielgruginski.medievalkit/" + p.f.replace("Art/Models/", "Generated/Prefabs/").replace(/\.fbx$/, ".prefab");
+  d.innerHTML = `<div class="dhead"><div class="big"></div><button type="button" class="btn" id="close">Close</button></div>
+    <div class="copyrow"><h3>${p.n}</h3>${copyBtn(p.n)}</div>
+    <dl>
+      <dt>Kit</dt><dd>${KIT[p.k].title} · ${p.c}${p.vk ? " · " + p.vk : ""}</dd>
+      <dt>Size</dt><dd>${size(p.s)} m <span style="color:var(--muted)">(x across, y deep, z up)</span></dd>
+      <dt>Triangles</dt><dd class="${p.t >= HEAVY ? "heavy" : ""}">${fmt(p.t)}${p.t >= HEAVY ? " (heavy: no LODs yet)" : ""}</dd>
+      <dt>Materials</dt><dd><ul>${p.m.map(m => `<li>${m}</li>`).join("") || "<li>none</li>"}</ul></dd>
+    </dl>
+    <div><div style="color:var(--muted);font-size:13px">Prefab</div><div class="copyrow"><code>${prefab}</code>${copyBtn(prefab)}</div></div>
+    <div><div style="color:var(--muted);font-size:13px">Model</div><code>${p.f}</code></div>`;
+  const big = d.querySelector(".big"); sprite(big, p, 1); big.style.backgroundImage = `url("${big.dataset.src}")`;
+  d.hidden = false; $("close").focus();
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.dataset.k) { state.kit = t.dataset.k; state.cat = null; kits(); chips(); render(); try { history.replaceState(null, "", state.kit === "all" ? "#" : "#" + state.kit) } catch (_) {} }
+  else if (t.dataset.c) { state.cat = state.cat === t.dataset.c ? null : t.dataset.c; chips(); render() }
+  else if (t.classList.contains("tile")) show(t.dataset.n);
+  else if (t.id === "close") $("detail").hidden = true;
+  else if (t.dataset.copy !== undefined) {
+    const done = () => { t.textContent = "Copied"; setTimeout(() => t.textContent = "Copy", 1200) };
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents(t.previousElementSibling); const s = getSelection(); s.removeAllRanges(); s.addRange(r) };
+    try { navigator.clipboard.writeText(t.dataset.copy).then(done, fallback) } catch (_) { fallback() }
+  }
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("detail").hidden = true });
+let qt; $("q").addEventListener("input", e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value; render() }, 120) });
+$("sort").addEventListener("change", e => { state.sort = e.target.value; render() });
+const h = location.hash.slice(1); if (KIT[h]) state.kit = h;
+counts(); kits(); chips(); render();
+</script>

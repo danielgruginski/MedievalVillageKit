@@ -228,6 +228,9 @@ a `vki_*` text starts with `vki_` / `VKI_` (tested by T18). Never call the exter
 
 ## 6. Pieces
 
+The full, current list with pictures is generated in [PIECES.md](PIECES.md#interior-kit-sm_vki_-847); the groups below
+were generated at the first build (146 pieces) and are not kept up to date.
+
 Generated from the masters in `VKI_Pieces` (triangles, footprint in 1.5 m cells, mount).
 
 ### Timber walls and posts (core) (17)
