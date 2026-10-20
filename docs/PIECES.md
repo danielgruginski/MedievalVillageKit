@@ -1547,7 +1547,7 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 | `SM_VKI_Prop_Bookcase_150_Ransacked` | 1.44 × 1.03 × 2.00 | 628 | 4 |
 | `SM_VKI_Prop_Bookcase_150_Sparse` | 1.43 × 0.38 × 2.00 | 1,028 | 5 |
 | `SM_VKI_Prop_Books_Pile` | 1.01 × 0.60 × 0.29 | 132 | 1 |
-| `SM_VKI_Prop_Boulder` | 1.34 × 1.35 × 1.22 | 180 | 1 |
+| `SM_VKI_Prop_Boulder` | 1.40 × 1.39 × 1.25 | 420 | 1 |
 | `SM_VKI_Prop_Boulders` | 1.34 × 0.99 × 0.70 | 240 | 1 |
 | `SM_VKI_Prop_Brazier` | 0.69 × 0.70 × 1.27 | 1,454 | 3 |
 | `SM_VKI_Prop_Brazier_Dwarf` | 0.58 × 0.58 × 1.42 | 864 | 4 |
@@ -1574,14 +1574,14 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 | `SM_VKI_Prop_Chest_Treasure` | 0.94 × 1.20 × 1.08 | 908 | 5 |
 | `SM_VKI_Prop_ChoirStall_300` | 3.01 × 0.80 × 1.90 | 1,372 | 2 |
 | `SM_VKI_Prop_CoalBin_150` | 1.20 × 0.89 × 0.85 | 1,476 | 4 |
-| `SM_VKI_Prop_Cocoon` | 0.55 × 0.54 × 1.71 | 500 | 1 |
+| `SM_VKI_Prop_Cocoon` | 0.63 × 0.65 × 1.72 | 996 | 1 |
 | `SM_VKI_Prop_Coffin` | 1.95 × 0.64 × 0.54 | 208 | 2 |
 | `SM_VKI_Prop_Column_Ancient` | 0.74 × 0.74 × 3.02 | 378 | 2 |
 | `SM_VKI_Prop_Column_Broken` | 0.72 × 0.72 × 1.31 | 198 | 2 |
 | `SM_VKI_Prop_Column_Fallen` | 2.80 × 0.78 × 0.55 | 224 | 2 |
 | `SM_VKI_Prop_Cot_Broken` | 2.54 × 2.13 × 0.84 | 780 | 3 |
 | `SM_VKI_Prop_Crate` | 0.75 × 0.75 × 0.74 | 452 | 3 |
-| `SM_VKI_Prop_Crystals` | 0.76 × 0.50 × 1.10 | 160 | 2 |
+| `SM_VKI_Prop_Crystals` | 0.77 × 0.65 × 1.10 | 262 | 2 |
 | `SM_VKI_Prop_Desk_Merchant` | 1.49 × 0.75 × 1.24 | 764 | 5 |
 | `SM_VKI_Prop_Desk_Scriptorium` | 1.00 × 0.65 × 1.52 | 634 | 6 |
 | `SM_VKI_Prop_Desk_Scriptorium_Fallen` | 1.77 × 1.62 × 0.87 | 592 | 7 |
@@ -1613,7 +1613,7 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 | `SM_VKI_Prop_Lectern` | 0.58 × 0.48 × 1.27 | 396 | 4 |
 | `SM_VKI_Prop_Lever_Wall` | 0.18 × 0.42 × 0.59 | 124 | 3 |
 | `SM_VKI_Prop_LogBasket` | 0.80 × 0.60 × 0.56 | 880 | 4 |
-| `SM_VKI_Prop_LootPile` | 1.06 × 0.98 × 0.93 | 944 | 6 |
+| `SM_VKI_Prop_LootPile` | 1.31 × 1.10 × 0.94 | 3,524 | 6 |
 | `SM_VKI_Prop_Mine_Barricade` | 2.72 × 0.23 × 1.38 | 96 | 3 |
 | `SM_VKI_Prop_Mine_Bench` | 1.80 × 0.80 × 0.98 | 884 | 7 |
 | `SM_VKI_Prop_Mine_Cart` | 0.74 × 1.33 × 0.70 | 400 | 3 |

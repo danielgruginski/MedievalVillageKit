@@ -1791,6 +1791,19 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     vk_zfight clean (the garden bed's only hits are its frame bottoms 35 cm underground, as on the crop beds).
     Saved, exported, prefabs rebuilt, catalogue regenerated and the page republished.
 
+137. 2026-10-20 (the user: "any old prop that needs improvement"). Scanned the rest of the sheets (animals, piles, deco,
+    signs, emblems, tents, graves, all interior props) and checked suspects close up: the coal and hide piles hold up;
+    four interior props were redone (vki_rebuild, vki_test_pieces clean). `vki_adv_lootpile` (3,524 tris, hero budget
+    6,000): 120 coins (6-sided `vki_adv_coin(segs=)`) half sunk over the gold mound at every tilt, 16 spilled round its
+    foot and three short stacks (each one solid: coins laid flat on flat would z-fight); it read as a smooth yellow
+    dome. `vki_cav_crystals` (262): eleven faceted six-sided prisms with six-faced points (`vki_cav_crystal`, flat
+    shaded) instead of seven cones, small ones round the base. `vki_lair_cocoon` (996): a lathe body with a head,
+    shoulders and hips under the silk, jittered, seven wraps at uneven tilts, strands to the wall and the floor, darker
+    toward the floor (was a smooth spindle). `vki_adv_boulder` (420): noise-displaced, flat-faceted, darker in its
+    hollows; still round enough to roll. The farm animals (`SM_VK_Animal_*`) are to move to the Beasts pack (the user,
+    2026-10-20): make them there first, swap the game's placements (Hamlet 9, Saltmere_Farms 7, ShepherdDowns 2,
+    Greywall 1, KitSeeThroughCaps), then take them out of the kit (vk_mod_humble's farmsteads, Hovel_Cruck/Hip).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

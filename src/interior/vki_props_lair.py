@@ -241,21 +241,33 @@ def vki_lair_eggsacs(k):
 
 def vki_lair_cocoon(k):
     """a victim wrapped in silk (1.7 m), leaning back against the wall (wall_floor, back at local y ~0.3): a lumpy
-    wrapped body, bands of thicker silk, strands to the wall"""
+    wrapped body with a head, shoulders and hips under the silk (2026-10-20: it was a smooth spindle), wraps at uneven
+    tilts, strands to the wall and the floor; the silk dirtier toward the floor"""
     before = set(k.bm.verts)
-    v = vki_home_ico(k, (0.0, 0.0, 0.85), 0.26, VKI_WAX, scale=(0.95, 0.85, 3.3), sub=2, jit=0.02, seed=3)
-    k.project(vki_faces_of(v), VKI_WAX)
-    for i, z in enumerate((0.35, 0.70, 1.05, 1.40)):
-        r = 0.26 * (1.0 - ((z - 0.85) / 0.86) ** 2) ** 0.5 * 0.95 + 0.012
-        vki_home_hoop(k, (0.0, 0.0, z), r - 0.02, r, 0.05, segs=12, mi=VKI_WAX, sx=0.95, sy=0.85,
-                      rot=Matrix.Rotation(0.15 * (i % 2 - 0.5), 3, "Y"))
+    prof = [(0.0, 0.0), (0.09, 0.02), (0.12, 0.16), (0.15, 0.46), (0.20, 0.76), (0.22, 0.96), (0.19, 1.10),
+            (0.25, 1.30), (0.23, 1.42), (0.12, 1.50), (0.15, 1.60), (0.11, 1.70), (0.0, 1.74)]
+    v, f = vki_home_lathe(k, prof, c=(0.0, 0.0, 0.0), segs=12, mi=VKI_WAX, sy=0.82)
+    rnd = random.Random(3)
+    for vv in v:
+        if 0.03 < vv.co.z < 1.72: vv.co += Vector((rnd.uniform(-1, 1) * 0.018, rnd.uniform(-1, 1) * 0.015, rnd.uniform(-1, 1) * 0.01))
+    k.bm.normal_update(); k.project(f, VKI_WAX)
+    def pr(z):
+        for (r0, z0), (r1, z1) in zip(prof, prof[1:]):
+            if z0 <= z <= z1: return r0 + (r1 - r0) * (z - z0) / (z1 - z0)
+        return 0.0
+    for i, (z, tilt) in enumerate(((0.28, 0.25), (0.55, -0.2), (0.86, 0.3), (1.05, -0.35), (1.25, 0.15), (1.38, -0.25), (1.56, 0.3))):
+        r = pr(z) + 0.012
+        vki_home_hoop(k, (0.0, 0.0, z), r - 0.02, r, 0.045, segs=12, mi=VKI_WAX, sx=1.0, sy=0.82,
+                      rot=Matrix.Rotation(tilt, 3, "Y" if i % 2 else "X"))
     body = [vv for vv in k.bm.verts if vv not in before]
     bmesh.ops.transform(k.bm, verts=body, matrix=Matrix.Translation((0.0, 0.05, 0.0)) @ Matrix.Rotation(math.radians(-10), 4, "X"))
     for (x, z) in ((-0.15, 1.5), (0.18, 1.2), (0.0, 0.5)):
         vki_dpr_rod(k, (x, 0.05, z), (x * 1.6, 0.32, z + 0.1), 0.012, VKI_WAX, d=0.005)
-    k.set_dark(body, 0.05)
+    for (x, y) in ((-0.3, -0.15), (0.32, -0.05)):                       # strands to the floor
+        vki_dpr_rod(k, (x * 0.4, 0.0, 0.25), (x, y, 0.0), 0.01, VKI_WAX, d=0.004)
+    for vv in body:
+        k.set_dark([vv], 0.05 + 0.3 * vki_smoothstep(0.6, 0.0, vv.co.z))
     vki_home_meta(k, "wall_floor", "furniture", back="geo", use=[], vki_nav="block", vki_wall_anchor=1)
-
 
 # ---------------------------------------------------------------- rats
 def vki_lair_burrow(k):

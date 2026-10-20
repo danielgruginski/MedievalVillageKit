@@ -848,24 +848,38 @@ def vki_cav_stalagmites(k):
     vki_home_meta(k, "floor", "furniture", use=[], vki_nav="block")
 
 
+def vki_cav_crystal(k, base, d, h, r, rnd):
+    """one crystal: a six-sided prism from base along d, its sides a little uneven, ending in a six-faced point (the
+    last fifth of h); flat shaded so every face catches the light differently"""
+    B = Vector(base); d = Vector(d).normalized()
+    a = d.cross(Vector((0, 0, 1)) if abs(d.z) < 0.95 else Vector((1, 0, 0))).normalized(); b = d.cross(a)
+    rot = rnd.uniform(0, 1.05); rs = [r * rnd.uniform(0.85, 1.1) for _ in range(6)]
+    ring = lambda c, f: [k.bm.verts.new(c + (a * math.cos(rot + i * math.pi / 3) + b * math.sin(rot + i * math.pi / 3)) * rs[i] * f) for i in range(6)]
+    r0 = ring(B - d * 0.04, 1.0); r1 = ring(B + d * h * 0.8, 0.92); tip = k.bm.verts.new(B + d * h)
+    fs = [k.bm.faces.new((r0[i], r0[(i + 1) % 6], r1[(i + 1) % 6], r1[i])) for i in range(6)]
+    fs += [k.bm.faces.new((r1[i], r1[(i + 1) % 6], tip)) for i in range(6)]
+    fs.append(k.bm.faces.new(r0[::-1]))
+    for f in fs: f.material_index = MUSH_GLOW; f.smooth = False
+    k.bm.normal_update(); k.project(fs, MUSH_GLOW)
+
+
 def vki_cav_crystals(k):
-    """a cluster of seven glowing crystals (hexagonal, 0.3-0.9 m, MUSH_GLOW cyan) on a rock base; cold light"""
+    """a cluster of glowing crystals (2026-10-20: faceted six-sided prisms with pointed tips, 0.2-0.9 m, MUSH_GLOW cyan;
+    they were plain cones) leaning out of a rock base, small ones round its edge; cold light"""
     base = vki_home_ico(k, (0.0, 0.0, 0.06), 0.34, VKI_STONE_BLOCK_IN, scale=(1.0, 0.85, 0.40), sub=1, jit=0.03, seed=2,
                         smooth=False)
     k.project(vki_faces_of(base), VKI_STONE_BLOCK_IN)
     rnd = random.Random(6)
     for i, (x, y, h, r) in enumerate(((0.0, 0.0, 0.90, 0.09), (0.16, 0.05, 0.60, 0.07), (-0.14, 0.08, 0.66, 0.07),
                                       (0.06, -0.14, 0.48, 0.06), (-0.10, -0.12, 0.38, 0.05), (0.22, -0.10, 0.34, 0.05),
-                                      (-0.22, -0.02, 0.30, 0.05))):
+                                      (-0.22, -0.02, 0.30, 0.05), (0.28, 0.10, 0.22, 0.04), (-0.26, 0.14, 0.20, 0.035),
+                                      (0.10, 0.20, 0.26, 0.04), (-0.04, -0.24, 0.18, 0.035))):
         d = Vector((x * 2.2 + rnd.uniform(-0.1, 0.1), y * 2.2 + rnd.uniform(-0.1, 0.1), 1.0)).normalized()
-        rot = d.to_track_quat("Z", "Y").to_matrix().to_4x4()
-        c = Vector((x, y, 0.10)) + d * (h / 2)
-        _cyl(k, tuple(c), r, 0.008, h, 6, MUSH_GLOW, rot=rot)
+        vki_cav_crystal(k, (x, y, 0.10 if i < 7 else 0.06), d, h, r, rnd)
     vki_cav_rock_mats(k)
     vki_home_meta(k, "floor", "furniture", use=[], vki_nav="block",
                   vki_lights=[dict(type="POINT", role="crystal", pos=[0.0, -0.25, 0.75], w=100.0, color=VKI_CAV_CRYSTAL_COL,
                                    range=6.0, flicker=0, shadows=0, radius=0.10)])
-
 
 def vki_cav_mushrooms(k):
     """seven glowing cave mushrooms (pale stems, glowing cyan caps 0.06-0.16) in a clump; a faint cold light"""

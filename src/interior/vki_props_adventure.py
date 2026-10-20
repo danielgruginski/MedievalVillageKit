@@ -36,8 +36,8 @@ def vki_adv_box(k, x0, x1, y0, y1, z0, z1, mi, bev=0.0, dark=0.0):
     return vs
 
 
-def vki_adv_coin(k, c, rx=0.0, ry=0.0):
-    return _cyl(k, c, 0.03, 0.03, 0.007, 8, VKI_DPR_GOLD,
+def vki_adv_coin(k, c, rx=0.0, ry=0.0, segs=8):
+    return _cyl(k, c, 0.03, 0.03, 0.007, segs, VKI_DPR_GOLD,
                 rot=Matrix.Rotation(rx, 4, "X") @ Matrix.Rotation(ry, 4, "Y"))
 
 
@@ -124,12 +124,21 @@ def vki_adv_lever(k):
 
 
 def vki_adv_boulder(k):
-    """the rolling boulder: a faceted rock 1.3 m across (dark dressed-stone texture), resting, with a few chips"""
-    vs = vki_home_ico(k, (0.0, 0.0, 0.62), 0.66, VKI_STONE_BLOCK_IN, scale=(1.0, 0.96, 0.93), sub=2, jit=0.05, seed=5,
+    """the rolling boulder: a rough rock 1.3 m across (dark dressed-stone texture), lumpy and flat-faceted (noise on a
+    finer sphere, 2026-10-20: it was a clean faceted ball), darker in its hollows and underneath, resting, with chips"""
+    vs = vki_home_ico(k, (0.0, 0.0, 0.62), 0.66, VKI_STONE_BLOCK_IN, scale=(1.0, 0.96, 0.93), sub=3, jit=0.012, seed=5,
                       rest=0.0, smooth=False)
+    C = Vector((0.0, 0.0, 0.62)); hollow = {}
+    for v in vs:
+        d = v.co - C; n = d.normalized()
+        f = 0.15 * noise.noise(n * 1.4 + Vector((5.0, 1.0, 2.0))) + 0.05 * noise.noise(n * 3.6)
+        v.co = C + d * (1.0 + f); hollow[v] = f
+    lo = min(v.co.z for v in vs)
+    for v in vs: v.co.z -= lo                                          # rest on the floor again
+    k.bm.normal_update()
     k.project(vki_faces_of(vs), VKI_STONE_BLOCK_IN)
     for v in vs:
-        k.set_dark([v], 0.05 + 0.3 * vki_smoothstep(0.5, 0.0, v.co.z))
+        k.set_dark([v], 0.05 + 0.3 * vki_smoothstep(0.5, 0.0, v.co.z) + 0.3 * vki_smoothstep(0.0, -0.1, hollow[v]))
     rnd = random.Random(8)
     for i in range(5):
         a = rnd.uniform(0, 6.3); d = rnd.uniform(0.6, 0.72)
@@ -139,7 +148,6 @@ def vki_adv_boulder(k):
     vki_dpr_block_mats(k)
     vki_home_meta(k, "floor", "furniture", use=[], vki_nav="block",
                   vki_trap={"kind": "rolling_boulder", "radius": 0.65})
-
 
 def vki_adv_chest_iron(k):
     vki_dpr_chest(k, False)
@@ -166,15 +174,21 @@ def vki_adv_urns(k):
 
 
 def vki_adv_lootpile(k):
-    """a heap of gold (M_VKI_Gold on VKI_DPR_GOLD) 1.1 x 0.9 x 0.32 with coins on it, a crown, a goblet, two gems, a round shield leaning on
-    it and a sword stuck in it"""
+    """a heap of gold (M_VKI_Gold on VKI_DPR_GOLD) 1.1 x 0.9 x 0.32, its surface covered in coins tipped every way
+    (2026-10-20: the bare mound read as a smooth yellow dome), coins and three short stacks spilled round its foot, a
+    crown, a goblet, two gems, a round shield leaning on it and a sword stuck in it"""
     vki_dpr_mound(k, (0.0, 0.0, 0.0), 0.55, 0.45, 0.32, VKI_DPR_GOLD, z0=0.001, nr=3, ns=16, seed=21, wob=0.12, bump=0.2)
     hz = lambda x, y: 0.32 * max(0.0, 1 - (x / 0.55) ** 2 - (y / 0.45) ** 2) ** 0.7
     rnd = random.Random(22)
-    for i in range(8):
-        a = rnd.uniform(0, 6.3); d = rnd.uniform(0.1, 0.5)
-        x, y = math.cos(a) * d * 0.55 / 0.5, math.sin(a) * d * 0.45 / 0.5
-        vki_adv_coin(k, (x, y, hz(x, y) + 0.002), rnd.uniform(-0.4, 0.4), rnd.uniform(-0.4, 0.4))
+    for i in range(120):                                              # the coin skin: sunflower spread, half sunk
+        t = math.sqrt((i + 0.5) / 120) * 0.97; a = i * 2.39996 + rnd.uniform(-0.2, 0.2)
+        x, y = math.cos(a) * t * 0.55, math.sin(a) * t * 0.45
+        vki_adv_coin(k, (x, y, hz(x, y) - 0.004), rnd.uniform(-0.6, 0.6), rnd.uniform(-0.6, 0.6), segs=6)
+    for i in range(16):                                               # spilled round the foot
+        a = rnd.uniform(0, 6.3); d = rnd.uniform(1.02, 1.3)
+        vki_adv_coin(k, (math.cos(a) * 0.55 * d, math.sin(a) * 0.45 * d, 0.0045), rnd.uniform(-0.1, 0.1), rnd.uniform(-0.1, 0.1), segs=6)
+    for (x, y, n) in ((0.52, -0.38, 5), (0.62, -0.22, 3), (-0.56, -0.36, 4)):   # short stacks (one solid each: coins
+        _cyl(k, (x, y, 0.001 + n * 0.0035), 0.03, 0.03, n * 0.007, 8, VKI_DPR_GOLD)   # laid flat on flat would z-fight)
     # crown on the top
     cx, cy = -0.08, 0.02
     cz = hz(cx, cy) + 0.02
@@ -210,7 +224,6 @@ def vki_adv_lootpile(k):
     k.slot_mats[WOOD] = "Dark"
     vki_dpr_gold_mats(k)
     vki_home_meta(k, "floor", "hero", use=[[0.0, -0.95, 0]], vki_nav="block", vki_loot=1)
-
 
 def vki_adv_coins(k):
     """twelve loose coins over ~0.8 x 0.6 m, some lying on others"""
