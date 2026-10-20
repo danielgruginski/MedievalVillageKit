@@ -1132,7 +1132,7 @@ def stall_wares_capital(k,trade,W_,D_,rnd,z0,shelf,crate,basket):
         k.box((W_/2+0.55,0.0,0.85),(0.04,0.04,1.7),WOOD,bevel=0)                                # a mail shirt on a stand
         k.box((W_/2+0.55,0.0,1.55),(0.6,0.04,0.04),WOOD,bevel=0)
         k.box((W_/2+0.55,0.0,1.2),(0.55,0.24,0.7),IRON,bevel=0.06,segs=2)
-        k.box((W_/2+0.55,0.0,1.48),(0.82,0.22,0.14),IRON,bevel=0.05)                            # its shoulders
+        k.box((W_/2+0.55,0.0,1.515),(0.82,0.22,0.14),IRON,bevel=0.05)                           # its shoulders
         k.box((W_/2+0.55,0.0,0.84),(0.62,0.26,0.08),IRON,bevel=0.03)                            # its hem
         _cyl(k,(-W_/2-0.5,-0.3,0.35),0.2,0.22,0.7,12,WOOD)                                      # swords in a barrel
         for n_ in range(4):
@@ -1175,7 +1175,7 @@ def stall_wares_capital(k,trade,W_,D_,rnd,z0,shelf,crate,basket):
         _cyl(k,(0.25,-0.35,z0+0.04),0.04,0.035,0.08,10,CLAY)                                    # the inkpot and quill
         k.box((0.26,-0.33,z0+0.15),(0.008,0.008,0.22),PAPER,bevel=0,rot=(0.35,0.2,0))
         for n_ in range(6):                                                                     # scrolls
-            _cyl(k,(0.75+(n_%3)*0.12,-0.6+(n_//3)*0.25,z0+0.04+0.0*(n_%2)),0.04,0.04,0.32,10,PAPER,rot=Ry)
+            _cyl(k,(0.86+0.03*(n_%2),-0.66+(n_%3)*0.085+(n_//3)*0.042,z0+0.041+(n_//3)*0.074),0.04,0.04,0.32,10,PAPER,rot=Ry)   # side by side
         k.box((1.3,-0.45,z0+0.05),(0.3,0.22,0.1),BRONZE,bevel=0.01)                             # a seal box
         for n_ in range(12): _book(k,-1.4+n_*0.24,0.62,shelf,0.2,0.26,0.05,covers[n_%5],0.0)
         k.box((W_/2+0.55,0.1,0.3),(0.7,0.55,0.6),WOOD,bevel=0.03)

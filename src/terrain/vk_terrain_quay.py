@@ -83,20 +83,21 @@ def qy_tile(land,cut=None):
         for k,(z0,z1) in enumerate(zip(QY_COURSES[:-1],QY_COURSES[1:])):  # the face, course by course
             o=QY_RELIEF*(k%2)
             qy_poly(tb,(P(s0,-o,z0),P(1.5,-o,z0),P(1.5,-o,z1),P(s0,-o,z1)),out)
-            if k>0:                                                     # the ledge on the joint above
-                ob=QY_RELIEF*((k-1)%2)
-                qy_poly(tb,(P(s0,-ob,z0),P(1.5,-ob,z0),P(1.5,-o,z0),P(s0,-o,z0)),(0,0,1) if o>ob else (0,0,-1))
+            if k>0:                                                     # the ledge on the joint above (at a concave
+                ob=QY_RELIEF*((k-1)%2)                                  # corner the y-line's starts past the x-line's)
+                sl=s0+(QY_RELIEF if (wq in concave and d.x==0) else 0.0)
+                qy_poly(tb,(P(sl,-ob,z0),P(1.5,-ob,z0),P(1.5,-o,z0),P(sl,-o,z0)),(0,0,1) if o>ob else (0,0,-1))
         n=max(1,int(round((1.5-a)/0.75)))
         for i in range(n):                                               # coping stones
             c0=a+(1.5-a)*i/n; c1=a+(1.5-a)*(i+1)/n; m=P((c0+c1)/2,0,0)
             qy_box(tb,P(c0,-QY_OV,QY_CB),P(c1,QY_CD,QY_COP+qy_jit(m[0],m[1])))
     for j,q in enumerate(convex):                                        # corner stone and quoins
         sx,sy=QY_QUAD[q]
-        qy_box(tb,(-QY_OV*sx,-QY_OV*sy,QY_CB),(QY_CD*sx,QY_CD*sy,QY_COP+0.006+qy_jit(sx,sy,1)))
+        qy_box(tb,(-QY_OV*sx,-QY_OV*sy,QY_CB),(QY_CD*sx,QY_CD*sy,QY_COP+0.006+0.012*j))         # a saddle's second higher
         zo=-0.27*j                                                       # a second corner (a saddle) on other courses
         for i,(z0,z1) in enumerate(((QY_CB,-0.75),(-0.75,-1.3),(-1.3,-1.85),(-1.85,-2.4))):
             lx,ly=(0.55,0.32) if i%2==0 else (0.32,0.55)
-            qy_box(tb,(-0.025*sx,-0.025*sy,max(z0+zo,QY_CB)+0.01),(lx*sx,ly*sy,z1+zo-0.01))
+            qy_box(tb,(-0.025*sx,-0.025*sy,min(z0+zo,QY_CB)-0.01),(lx*sx,ly*sy,z1+zo+0.01))   # 1 cm short of the next
     for q in land:                                                       # the land tops (the map's ground)
         sx,sy=QY_QUAD[q]; x0,x1=sorted((0.0,1.5*sx)); y0,y1=sorted((0.0,1.5*sy))
         spans=[(x0,x1)]

@@ -1713,6 +1713,23 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     town's houses). Built in a background Blender (the live one held another session's scene); exported; prefabs built
     (VK/Dock); not placed (the city session's maps).
 
+132. 2026-10-19 (the user: "many of the new tiles have ZFighting problems, can you test them and fix those?"). New
+    **`tools/vk_zfight.py`** (background Blender): same-facing faces of a piece in one plane (within 2 mm) that overlap
+    and that a camera can see (rays escape from 2 mm off the overlap), per piece, plus qy_demo's assembled chunk for
+    tile-to-tile overlaps; writes renders/zfight.json. Run over the 45 pieces of HANDOFF 125-131 and fixed: **quay
+    tiles** (convex corners' quoins reached 1 cm into each other instead of stopping 1 cm short -- every quoin joint
+    z-fought, in every assembled harbour; the course ledges of two walls overlapped at an inner corner; a saddle's two
+    corner stones shared a top), **arch voussoirs** (`mkt_voussoirs`, market hall + customs house: their faces lay in
+    the wall's planes and in each other's; every other stone now less proud, both faces off the wall, 12 mm lip under
+    the crown), the **gable roof's** verge boards (crossed at the apex), the cog's castle rails and deck, the
+    breakwater head's crest ring (on the drum) and parapet copings, the booth's walls (flush with the posts), the
+    crier stand's skirts and cloth trim, the jetty's mid waling (flush with the braces), the pen's trough, the weigh
+    beam's caps and ridge board, the hull-on-stocks trestles, the scribe's scrolls (coaxial) and the armourer's
+    hauberk shoulders. Left (the kit's own, from before, 4-40 cm2 and mostly undersides): `wall_stone_window`'s
+    lintel over its frame, the timber walls' plaster under their beams, shutter leaves meeting, the base stall's
+    counter, `prop_trough`'s and `wat_fish_crate`'s bevelled corners, `wat_gunwale`. All 45 rebuilt, exported, prefabs
+    rebuilt. **Maps already built with quay tiles must be rebuilt** (the terrain mesh is merged and saved per map).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

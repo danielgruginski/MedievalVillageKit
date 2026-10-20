@@ -31,11 +31,13 @@ def mkt_ridge_beam(k,a,b,s=0.28,mi=ROOF):
 def mkt_voussoirs(k,cx,hw,sp,y0,y1,n=9,th=0.26,out=0.06,seed=0):
     """plain arch stones round a semicircular head (centre cx), protruding 'out' in front of y0: unbevelled, 12 tris a
        stone (the town agent's bevelled twn_voussoirs cost 44), the keystone a little proud"""
-    rnd=random.Random(seed); r=hw+th/2; L=math.pi*r/n
+    rnd=random.Random(seed); r=hw+th/2-0.012; L=math.pi*r/n       # (a lip under the soffit: off the crown's plane)
     for i in range(n):
         a=math.pi*(i+0.5)/n; ks=(i==n//2); h=th*(1.25 if ks else 1.0)+rnd.uniform(-0.02,0.02)
-        k.box((cx+math.cos(a)*r,(y0+y1)/2-out/2,sp+math.sin(a)*r+(h-th)/2*math.sin(a)),
-              (L*(1.08 if ks else 0.95),(y1-y0)+out,h),STONE_BLOCK,rot=(0,-(a-math.pi/2),0),bevel=0)
+        fo=out*(1.0 if i%2==0 else 0.7); bi=0.02 if i%2==0 else 0.012     # every other stone less proud, both faces
+        ya,yb=y0-fo,y1+bi                                                  # off the wall's planes: no shared faces
+        k.box((cx+math.cos(a)*r,(ya+yb)/2,sp+math.sin(a)*r+(h-th)/2*math.sin(a)),
+              (L*(1.08 if ks else 0.95),yb-ya,h),STONE_BLOCK,rot=(0,-(a-math.pi/2),0),bevel=0)
 
 def mkt_arcade(k,L,d,centres,hw,ends=True,seed=0):
     """open arcade along x (-L/2..L/2) on the wall line y=-d: ashlar piers, round arches with voussoirs, imposts and
@@ -246,13 +248,13 @@ def mkt_weigh_beam(k):
         def_beam(k,(x,0,2.2),(x*0.6,0,2.87),0.12,0.12,WOOD)
     k.box((0,0,2.98),(3.4,0.24,0.24),WOOD,bevel=0.03)
     for x in(-1.5,1.5): k.box((x,0,3.29),(0.1,0.1,0.38),WOOD,bevel=0.02)
-    k.box((0,0,3.47),(3.8,0.1,0.1),WOOD,bevel=0.02)
+    k.box((0,0,3.47),(3.86,0.1,0.1),WOOD,bevel=0.02)
     for s in(-1,1): k.box((0,s*0.26,3.3),(3.8,0.62,0.06),ROOF,rot=(-s*0.6,0,0),bevel=0.015)
     k.box((0,0,2.72),(0.04,0.04,0.28),IRON,bevel=0)
     ring(k,(0,0,2.55),0.03,0.06,0.03,IRON,n=8,axis="Y")
     R=Matrix.Rotation(math.radians(5),4,"Y"); piv=Vector((0,0,2.47))                            # the +x end is down
     sub=Kit(); sub.box((0,0,0),(1.9,0.09,0.14),WOOD,bevel=0.02); sub.box((0,0,0.06),(0.14,0.12,0.22),IRON,bevel=0.01)
-    for s in(-1,1): sub.box((s*0.9,0,0),(0.1,0.12,0.18),IRON,bevel=0.01)
+    for s in(-1,1): sub.box((s*0.92,0,0),(0.1,0.12,0.18),IRON,bevel=0.01)
     merge_kit(k,sub,Matrix.Translation(piv)@R)
     for s in(-1,1):
         end=piv+R.to_3x3()@Vector((s*0.88,0,-0.08)); pan=Vector((end.x,0,end.z-1.45))
@@ -301,7 +303,7 @@ def mkt_pen(k):
         _ico(k,(rnd.uniform(-1.5,1.5),rnd.uniform(-1.0,1.0),0.04),rnd.uniform(0.25,0.4),HAY,scale=(1.3,1,0.3),sub=1,
              jit=0.03,seed=30+i)
     tx,ty=-1.1,1.05                                                                               # trough
-    k.box((tx,ty,0.08),(1.3,0.5,0.08),WOOD,bevel=0.02)
+    k.box((tx,ty,0.08),(1.18,0.38,0.08),WOOD,bevel=0.02)
     for s in(-1,1):
         k.box((tx,ty+s*0.22,0.2),(1.3,0.06,0.32),WOOD,bevel=0.015)
         k.box((tx+s*0.62,ty,0.2),(0.06,0.38,0.32),WOOD,bevel=0.015)
@@ -318,8 +320,8 @@ def mkt_crier_stand(k):
     k.box((0,0,Z-0.05),(1.7,1.7,0.1),PLANKS,bevel=0.02)
     for sx in(-1,1):
         for sy in(-1,1): k.box((sx*p,sy*p,(Z+1.0-0.6)/2),(0.12,0.12,Z+1.6),WOOD,bevel=0.02)        # posts, -0.6..2.1
-    k.box((0,-p-0.07,Z-0.2),(1.7,0.04,0.3),PLANKS,bevel=0.01)                                     # skirt boards
-    for sx in(-1,1): k.box((sx*(p+0.07),0,Z-0.2),(0.04,1.7,0.3),PLANKS,bevel=0.01)
+    k.box((0,-p-0.07,Z-0.2),(1.66,0.04,0.3),PLANKS,bevel=0.01)                                     # skirt boards
+    for sx in(-1,1): k.box((sx*(p+0.07),0.05,Z-0.2),(0.04,1.56,0.3),PLANKS,bevel=0.01)          # clear of the front's
     for sx in(-1,1):
         def_beam(k,(sx*p,-p+0.08,0.25),(sx*p,p-0.08,Z-0.2),0.08,0.08,WOOD)                         # side braces
     for z in(Z+0.98,Z+0.5):
@@ -331,7 +333,7 @@ def mkt_crier_stand(k):
     for sx in(-1,1): def_beam(k,(sx*0.43,1.95,0.0),(sx*0.43,p+0.05,Z-0.1),0.06,0.18,WOOD)
     k.box((0,-p-0.06,Z+1.01),(1.12,0.2,0.04),CLOTH_A,bevel=0.01)                                  # the city's cloth,
     k.box((0,-p-0.16,Z+0.38),(1.1,0.03,1.26),CLOTH_A,bevel=0.005)                                 # over the front rail
-    k.box((0,-p-0.165,Z-0.2),(1.1,0.035,0.1),YELLOW,bevel=0.005)
+    k.box((0,-p-0.165,Z-0.205),(1.13,0.035,0.1),YELLOW,bevel=0.005)
     _cyl(k,(0,-p-0.185,Z+0.5),0.17,0.17,0.012,12,YELLOW,rot=Matrix.Rotation(math.pi/2,4,"X"))
     k.box((p+0.2,-p,Z+0.96),(0.38,0.04,0.04),IRON,bevel=0)                                        # bell arm + bell
     _cyl(k,(p+0.33,-p,Z+0.8),0.11,0.05,0.16,8,BRONZE); _cyl(k,(p+0.33,-p,Z+0.93),0.02,0.02,0.1,6,WOOD)

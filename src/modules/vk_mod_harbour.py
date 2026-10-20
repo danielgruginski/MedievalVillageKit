@@ -62,7 +62,7 @@ def hbr_bent(k,x,seed=0,top=0.35):
     for (za,zb) in ((-2.0,-0.5),(-3.2,-2.0)):
         wat_seg(k,(x-0.2,-1.3,za),(x-0.2,1.3,zb),0.1,0.18,WOOD if za>-2.5 else BARK_MOSSY,bevel=0.02)
         wat_seg(k,(x+0.2,-1.3,zb),(x+0.2,1.3,za),0.1,0.18,WOOD if za>-2.5 else BARK_MOSSY,bevel=0.02)
-    k.box((x,0,-2.0),(0.5,2.9,0.16),BARK_MOSSY,bevel=0.02)                                        # mid-tier waling
+    k.box((x,0,-2.0),(0.44,2.9,0.16),BARK_MOSSY,bevel=0.02)                                        # mid-tier waling
 
 def hbr_jetty_deck(k,seed=1):
     wat_deck_planks(k,-1.5,1.5,seed=seed)
@@ -141,7 +141,7 @@ def hbr_breakwater_end(k):
     cx=3.0; R=3.0; n=20
     lathe(k,[(R,HBR_BED),(R,0.0)],center=(cx,0,0),segs=n,mi=ASHLAR)                                # drum
     lathe(k,[(R+0.02,HBR_BED),(R+0.02,-1.7)],center=(cx,0,0),segs=n,mi=ROCK_MOSSY)
-    _cyl(k,(cx,0,-0.108),R,R,0.24,n,STONE_BLOCK)                                                  # its crest, 12 mm
+    _cyl(k,(cx,0,-0.108),R+0.03,R+0.03,0.24,n,STONE_BLOCK)                                                  # its crest, 12 mm
     rnd=random.Random(8)
     for i in range(12):                                                                           # armour rock,
         a=math.radians(-60+150*i/11)                                                              # the sea side
@@ -152,7 +152,7 @@ def hbr_breakwater_end(k):
         a0=math.radians(-80+226*i/14); a1=math.radians(-80+226*(i+1)/14); am=(a0+a1)/2           # the sea side, to the mole's
         L=2*(R-0.3)*math.sin((a1-a0)/2)
         k.box((cx+math.cos(am)*(R-0.3),math.sin(am)*(R-0.3),0.45),(0.6,L+0.02,0.9),ASHLAR,rot=(0,0,am),bevel=0)
-        k.box((cx+math.cos(am)*(R-0.3),math.sin(am)*(R-0.3),0.97),(0.72,L+0.04,0.14),STONE_BLOCK,rot=(0,0,am),bevel=0.03)
+        k.box((cx+math.cos(am)*(R-0.3),math.sin(am)*(R-0.3),0.97+0.012*(i%2)),(0.72,L+0.04,0.14),STONE_BLOCK,rot=(0,0,am),bevel=0.03)
     # the light tower
     tx=cx+0.6; Rt=1.15; H=4.6
     lathe(k,[(Rt+0.12,0.0),(Rt+0.12,0.35),(Rt,0.45),(Rt*0.92,H)],center=(tx,0,0),segs=14,mi=ASHLAR)
@@ -243,11 +243,11 @@ def hbr_cog(k):
     for (x,y) in ((1.8,-1.4),(2.5,-1.3),(1.9,1.4)): barrel(k,x,y,zd,0.32,0.85)
     # aftcastle
     xa0=-L/2+0.25; xa1=-L/2+4.0; za=zd+2.0; ya=hbr_y_at(H,(xa1+L/2)/L,za)-0.05
-    k.box(((xa0+xa1)/2,0,za-0.06),(xa1-xa0,2*ya,0.12),PLANKS,bevel=0.01)
+    k.box(((xa0+xa1)/2,0,za-0.06),(xa1-xa0,2*ya-0.02,0.12),PLANKS,bevel=0.01)
     k.box((xa1,0,zd+1.0),(0.12,2*ya,2.0),PLANKS,bevel=0.01)
     k.box((xa1-0.02,0,zd+0.9),(0.14,0.8,1.8),WOOD,bevel=0.01)                                   # its door
-    for s in(-1,1):
-        k.box(((xa0+xa1)/2,s*(ya-0.06),za+0.45),(xa1-xa0,0.12,0.9),PLANKS,bevel=0.01)
+    for s in(-1,1):                                                   # side rails between the end rails
+        k.box(((xa0+xa1)/2,s*(ya-0.06),za+0.45),(xa1-xa0-0.24,0.12,0.9),PLANKS,bevel=0.01)
         for i in range(5): k.box((xa0+0.3+i*(xa1-xa0-0.6)/4,s*(ya-0.06),za+1.0),(0.3,0.16,0.22),PLANKS,bevel=0.01)
     k.box((xa1-0.06,0,za+0.45),(0.12,2*ya,0.9),PLANKS,bevel=0.01)
     k.box((xa0+0.06,0,za+0.45),(0.12,2*ya,0.9),PLANKS,bevel=0.01)
@@ -260,7 +260,7 @@ def hbr_cog(k):
     k.box((xf0,0,zd+0.8),(0.12,2*yf,1.6),PLANKS,bevel=0.01)
     k.box((xf0,0,zf+0.4),(0.12,2*yf,0.8),PLANKS,bevel=0.01)
     for s in(-1,1):
-        wat_seg(k,(xf0,s*(yf-0.06),zf+0.4),(xf1,s*(yf1-0.06),zf+0.4),0.12,0.8,PLANKS,bevel=0.01)
+        wat_seg(k,(xf0+0.07,s*(yf-0.06),zf+0.39),(xf1,s*(yf1-0.06),zf+0.39),0.12,0.78,PLANKS,bevel=0.01)
     # mast, crow's nest, yard and sail
     xm=0.6; zt=16.0
     wat_rod(k,(xm,0,zd),(xm,0,zt),0.26,0.14,12,WOOD,caps="top")
@@ -462,7 +462,7 @@ def hbr_hull_stocks(k):
         for x in(-2.5,0.0,2.5):
             t=(x+L/2)/L; wat_seg(k,(x,s*(bfn(t)+1.3),0.0),(x,s*(bfn(t)-0.05),zk+1.1),0.12,0.12,WOOD,bevel=0.02)
     for x in(-2.2,2.2):                                                                          # staging
-        for dx in(-0.35,0.35): wat_seg(k,(x+dx,-2.6,0),(x,-2.6,1.2),0.08,0.08,WOOD,bevel=0.01)
+        for dx in(-0.35,0.35): wat_seg(k,(x+dx,-2.6+dx*0.15,0),(x,-2.6+dx*0.15,1.2),0.08,0.08,WOOD,bevel=0.01)
     k.box((0,-2.6,1.25),(5.2,0.4,0.06),PLANKS,bevel=0.01)
     for i in range(4): k.box((0,3.0,0.06+0.11*i),(4.5,0.3+0.02*(i%2),0.1),PLANKS,rot=(0,0,0.02*(i-1.5)),bevel=0.01)
 
@@ -472,13 +472,13 @@ def hbr_booth(k):
     W,D,H=2.4,1.8,2.4
     for sx in(-1,1):
         for sy in(-1,1): k.box((sx*(W/2-0.06),sy*(D/2-0.06),(H+0.25*(-sy))/2),(0.12,0.12,H+0.25*(-sy)),WOOD,bevel=0.02)
-    k.box((0,D/2-0.04,H/2),(W,0.06,H),PLANKS,bevel=0.01)                                           # back
-    for sx in(-1,1):
-        k.box((sx*(W/2-0.03),0,1.05),(0.06,D,2.1),PLANKS,bevel=0.01)
-    k.box((W/2-0.01,-0.2,0.95),(0.04,0.8,1.85),WOOD,bevel=0.01)                                    # side door
-    k.box((0,-D/2+0.03,0.5),(W,0.06,1.0),PLANKS,bevel=0.01)                                        # front below the counter
+    k.box((0,D/2-0.09,H/2),(W-0.24,0.05,H),PLANKS,bevel=0.01)                                      # back (walls between
+    for sx in(-1,1):                                                                              # the posts, off
+        k.box((sx*(W/2-0.09),0,1.05),(0.05,D-0.24,2.1),PLANKS,bevel=0.01)                         # their faces)
+    k.box((W/2-0.045,-0.2,0.95),(0.04,0.8,1.85),WOOD,bevel=0.01)                                   # side door
+    k.box((0,-D/2+0.09,0.5),(W-0.24,0.05,1.0),PLANKS,bevel=0.01)                                   # front below the counter
     k.box((0,-D/2-0.08,1.03),(W+0.1,0.42,0.06),PLANKS,bevel=0.01)                                  # counter
-    k.box((0,-D/2+0.03,2.35),(W,0.06,0.5),PLANKS,bevel=0.01)                                       # over the hatch
+    k.box((0,-D/2+0.09,2.35),(W-0.24,0.05,0.5),PLANKS,bevel=0.01)                                  # over the hatch
     flap=Vector((0,-D/2-0.35,2.0))
     k.box(tuple(flap),(W,0.9,0.05),PLANKS,rot=(-0.45,0,0),bevel=0.01)
     for sx in(-1,1): wat_seg(k,(sx*(W/2-0.15),-D/2-0.02,1.06),(sx*(W/2-0.15),-D/2-0.72,1.8),0.04,0.04,WOOD,bevel=0)
@@ -526,7 +526,8 @@ def hbr_roof_gable(k,A,ov=0.45,gable=STONE):
             for ta,tb in zip(ts[:-1],ts[1:]):
                 za,zb=roof_z(ta),roof_z(tb)
                 hbr_face(k,((x,s*ta,za),(x,s*tb,zb),(x,s*tb,zb-drop),(x,s*ta,za-drop)),WOOD,(sx,0,0))
-            def_beam(k,(x+sx*0.03,s*(EAVE+0.04),roof_z(EAVE)+0.04),(x+sx*0.03,0,RIDGE+0.06),0.07,0.3,WOOD,bevel=0.02)
+            xv=x+sx*(0.03+(0.012 if s>0 else 0.0))                         # the two boards cross at the apex: apart
+            def_beam(k,(xv,s*(EAVE+0.04),roof_z(EAVE)+0.04),(xv,0,RIDGE+0.06),0.07,0.3,WOOD,bevel=0.02)
     n=max(1,int(round((x1-x0)/0.75)))
     for i in range(n):
         xa=x0+(x1-x0)*i/n; xb=x0+(x1-x0)*(i+1)/n
