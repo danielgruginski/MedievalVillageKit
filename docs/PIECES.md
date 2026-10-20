@@ -4,8 +4,9 @@ Generated from the .blend on 2026-09-23 (`docs/PIECES.md`). Dimensions are the m
 Every piece is a hidden master; the maps place instances that share its mesh.
 Total: 483 masters (the crop rows updated 2026-10-14: raised beds, + `SM_VK_Crop_Bed`). 2026-10-16/17: + onion and turnip fields, + yarrow, wild
 cotton and goblin herb (each herb its own material slot), + iron, coal and silver ore nodes (two slots each) and their
-worked-out twins, + ghostpipe and fireweed, + the stone node and its twin
-(`kit_mats()` returns 68).
+worked-out twins, + ghostpipe and fireweed, + the stone node and its twin. 2026-10-19: + the eight chapter 2 and 3
+herbs on two shared sheets (`T_VK_HerbsCh2` / `T_VK_HerbsCh3`, slots `HERBS_CH2` / `HERBS_CH3`)
+(`kit_mats()` returns 70).
 
 The interior kit's 146 pieces (`SM_VKI_*`, added 2026-09-26) are listed in [INTERIOR_KIT.md §6](INTERIOR_KIT.md#6-pieces).
 The Mats column below predates two material slots added since: `kit_mats()` now returns 55 slots.
@@ -545,11 +546,19 @@ The Mats column below predates two material slots added since: `kit_mats()` now 
 | `SM_VK_Ore_Iron_Spent` | 2.03 × 1.60 × 1.06 | 620 | 2 |
 | `SM_VK_Ore_Silver` | 2.07 × 1.46 × 1.19 | 1,200 | 2 |
 | `SM_VK_Ore_Silver_Spent` | 2.06 × 1.37 × 0.98 | 620 | 2 |
+| `SM_VK_Plant_Angelica` | 1.26 × 1.21 × 1.89 | 396 | 1 |
+| `SM_VK_Plant_Arnica` | 0.68 × 0.63 × 0.59 | 678 | 1 |
+| `SM_VK_Plant_Edelweiss` | 0.50 × 0.51 × 0.31 | 1,014 | 1 |
 | `SM_VK_Plant_Fern` | 1.22 × 1.25 × 1.29 | 144 | 1 |
+| `SM_VK_Plant_Feverfew` | 0.76 × 0.78 × 0.64 | 1,430 | 1 |
 | `SM_VK_Plant_Fireweed` | 0.56 × 0.60 × 1.28 | 1,132 | 1 |
 | `SM_VK_Plant_Ghostpipe` | 0.72 × 0.58 × 0.34 | 1,700 | 1 |
 | `SM_VK_Plant_Cotton` | 1.15 × 0.86 × 0.92 | 900 | 1 |
 | `SM_VK_Plant_GoblinHerb` | 1.27 × 1.23 × 0.43 | 1,540 | 1 |
+| `SM_VK_Plant_Houseleek` | 0.49 × 0.55 × 0.30 | 2,428 | 1 |
+| `SM_VK_Plant_Monkshood` | 0.69 × 0.68 × 1.29 | 472 | 1 |
+| `SM_VK_Plant_Roseroot` | 0.43 × 0.46 × 0.52 | 1,758 | 1 |
+| `SM_VK_Plant_Samphire` | 0.89 × 0.89 × 0.37 | 396 | 1 |
 | `SM_VK_Plant_Reeds` | 2.29 × 2.27 × 1.86 | 160 | 1 |
 | `SM_VK_Plant_TallGrass` | 1.69 × 1.95 × 1.06 | 160 | 1 |
 | `SM_VK_Plant_Wildflowers` | 2.06 × 2.13 × 0.75 | 192 | 1 |

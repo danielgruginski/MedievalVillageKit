@@ -696,3 +696,187 @@ def paint_fireweed(seed=371,S=512,name="T_VK_Fireweed"):
     save_leaf_atlas(P,name)                                       # _BCA (alpha, dilated) and _N
     write_map(name+"_H",blur(P.h,0.8),True)
     return name
+# ---- the chapter 2 and 3 herbs (2026-10-19): two shared sheets, 1024 each in 2x2 cells of 512 (cells numbered across,
+# top row first; vk_nature.hb_cell maps them). Each cell is painted on its own 512 painter like the small sheets above.
+# T_VK_HerbsCh2: samphire, angelica, monkshood, feverfew. T_VK_HerbsCh3: houseleek, edelweiss, roseroot, arnica.
+# Most cells: the left half a leaf (base at the bottom), the top right a flower head, the bottom right a stalk.
+def _herb_sheet(name,cells,seed):
+    P=Painter(1024)
+    for i,fn in enumerate(cells):
+        Q=Painter(512); fn(Q,np.random.default_rng(seed+i)); ox=(i%2)*512; oy=(i//2)*512
+        P.img[oy:oy+512,ox:ox+512]=Q.img; P.a[oy:oy+512,ox:ox+512]=Q.a; P.h[oy:oy+512,ox:ox+512]=Q.h
+    save_leaf_atlas(P,name)                                       # _BCA (alpha, dilated) and _N
+    write_map(name+"_H",blur(P.h,0.8),True)
+    return name
+def _mix(a,b,t): return tuple(np.array(a,f32)*(1-t)+np.array(b,f32)*t)
+def _tint_rows(Q,B,y_top,y_end,mul,pw=1.2):
+    """tint what is painted in B toward colour*mul: fully at row y_top, fading out by y_end (a leaf's red tip)"""
+    x0,y0,x1,y1=(int(v) for v in B); ys=np.arange(y0,y1,dtype=f32)
+    t=(np.clip((y_end-ys)/(y_end-y_top),0,1)**pw)[:,None,None]; reg=Q.img[y0:y1,x0:x1]
+    reg[:]=np.clip(reg*(1-t)+reg*np.array(mul,f32)[None,None,:]*t,0,1)
+def _fuzz(Q,B,rng,n,col,r=(1.2,2.2)):
+    """woolly speckle: tiny pale dots on what is already painted"""
+    for j in range(n):
+        x=rng.uniform(B[0]+3,B[2]-3); y=rng.uniform(B[1]+3,B[3]-3)
+        if Q.a[int(y),int(x)]>0.95: Q.disc(B,x,y,rng.uniform(*r),tuple(np.array(col,f32)*rng.uniform(0.92,1.05)),0.6,hl=False)
+def _stalk(Q,B,c0,c1,ribs=0,rib=None):
+    x=(B[0]+B[2])/2; w=(B[2]-B[0])*0.62
+    Q.seg(B,x,B[3]-4,x,B[1]+4,w,c0,0.45,col2=c1)
+    for j in range(ribs):
+        xx=x-w*0.4+j*w*0.8/max(1,ribs-1); Q.seg(B,xx,B[3]-6,xx,B[1]+6,2.0,rib,0.4)
+def _jointed(Q,B,rng,x,y,ang,L,w,col,tip,depth=0,seg=24,maxd=2,pb=0.85):
+    """a jointed succulent stem (samphire): fleshy segments with dark joints, branches in pairs that turn upward"""
+    n=max(2,int(L/seg)); joints=[]
+    for i in range(n):
+        ang+=(-math.pi/2-ang)*0.35+rng.uniform(-0.05,0.05)
+        nx=x+math.cos(ang)*seg; ny=y+math.sin(ang)*seg
+        if not Q.inside(B,nx,ny,w*0.6+3): break
+        t=(i+1)/n; cw=w*(1-0.3*i/n); c=_mix(col,tip,t**1.6)
+        Q.seg(B,x,y,nx,ny,cw*1.06,c,0.55)
+        if i: Q.seg(B,x-math.sin(ang)*cw*0.42,y+math.cos(ang)*cw*0.42,x+math.sin(ang)*cw*0.42,y-math.cos(ang)*cw*0.42,1.6,tuple(np.array(c)*0.62),0.4)
+        joints.append((nx,ny,ang,cw)); x,y=nx,ny
+    if depth<maxd:
+        for i,(jx,jy,ja,cw) in enumerate(joints[:-1]):
+            if i%2==(depth%2) and rng.random()<(pb if depth==0 else 0.5):
+                for sd in (-1,1):
+                    _jointed(Q,B,rng,jx,jy,ja+sd*rng.uniform(0.75,1.05),L*rng.uniform(0.38,0.5)*(1-0.4*i/max(1,len(joints))),cw*0.72,col,tip,depth+1,seg*0.82,maxd,pb)
+def _cell_samphire(Q,rng):
+    S=Q.S; h=S//2
+    g=(0.40,0.62,0.20); tip=(0.58,0.76,0.32)
+    _jointed(Q,(4,4,h-4,S-4),rng,h/2,S-6,-math.pi/2,S-30,20,g,tip,maxd=1,pb=0.7)        # tall, green (branched once)
+    _jointed(Q,(h+4,4,S-4,h-4),rng,h+h/2,h-6,-math.pi/2,h-26,16,(0.46,0.50,0.20),(0.70,0.24,0.20))   # short, reddening
+    _jointed(Q,(h+4,h+4,S-4,S-4),rng,h+h/2,S-6,-math.pi/2,h-26,16,g,tip)               # short, green
+def _cell_angelica(Q,rng):
+    S=Q.S; h=S//2; BL=(4,4,h-4,S-4); x=h/2
+    pal=[(0.28,0.48,0.18),(0.33,0.53,0.21),(0.25,0.44,0.16)]
+    Q.seg(BL,x,S-6,x,40,8,(0.42,0.32,0.30),0.45,col2=(0.36,0.52,0.24))                   # the stalk, purple at its foot
+    def leaflet(px,py,a,L): Q.leaf(BL,px,py,a,L,L*0.38,np.array(pal[rng.integers(0,3)],f32)*rng.uniform(0.92,1.06),kind=1,minL=12,soft=0.15)
+    for t in (0.22,0.46,0.68):                                                           # three pairs of pinnae
+        y=S-6-(S-46)*t; Lp=h*0.46*(1-0.35*t)
+        for sd in (-1,1):
+            a=-math.pi/2+sd*rng.uniform(0.95,1.15); ex=x+math.cos(a)*Lp; ey=y+math.sin(a)*Lp
+            Q.seg(BL,x,y,ex,ey,3.5,(0.36,0.50,0.24),0.4)
+            for f in (0.35,0.7):
+                for s2 in (-1,1): leaflet(x+math.cos(a)*Lp*f,y+math.sin(a)*Lp*f,a+s2*0.75,Lp*0.56)
+            leaflet(ex,ey,a,Lp*0.6)
+    for a in (-math.pi/2,-math.pi/2-0.7,-math.pi/2+0.7): leaflet(x,60,a,h*0.38)           # the end group
+    BF=(h+4,4,S-4,h-4); fx,fy=h+h/2,h/2                                                  # the umbel: a ball of umbellets
+    Q.disc(BF,fx,fy,h*0.30,(0.48,0.56,0.34),0.45,hl=False)                              # (the gaps; the umbellets make the outline)
+    for i in range(30):
+        rr=h*0.36*math.sqrt((i+0.5)/30); aa=i*2.39996; ux=fx+math.cos(aa)*rr; uy=fy+math.sin(aa)*rr
+        sh=0.82+0.18*(1-rr/(h*0.36))
+        for j in range(34):
+            r2=h*0.075*math.sqrt(rng.random()); a2=rng.uniform(0,6.28)
+            c=np.array(_mix((0.88,0.92,0.70),(0.66,0.78,0.46),rng.random()*0.6),f32)*sh*rng.uniform(0.94,1.04)
+            Q.flower(BF,ux+math.cos(a2)*r2,uy+math.sin(a2)*r2,rng.uniform(4.5,6.5),5,tuple(c),(0.70,0.76,0.40),rot=rng.uniform(0,6.28),inner=0.3,sharp=0.5,h=0.75)
+    _stalk(Q,(h+4,h+4,S-4,S-4),(0.46,0.30,0.32),(0.40,0.52,0.28),ribs=5,rib=(0.30,0.36,0.20))
+def _cell_monkshood(Q,rng):
+    S=Q.S; h=S//2; BL=(4,4,h-4,h-4); x0=h/2; y0=h-16                                      # the leaf: five deep lobes, cut again
+    dk=[(0.15,0.33,0.13),(0.18,0.37,0.15),(0.13,0.30,0.12)]
+    Q.seg(BL,x0,h-6,x0,y0,6,(0.24,0.36,0.16),0.45)
+    for a,L in ((-90,0.80),(-130,0.70),(-50,0.70),(-168,0.50),(-12,0.50)):
+        a=math.radians(a+rng.uniform(-4,4)); L*=h*1.1; c=np.array(dk[rng.integers(0,3)],f32)
+        Q.leaf(BL,x0,y0,a,L,L*0.085,c,kind=2,fit=True,minL=10,soft=0.2)
+        for f,s2 in ((0.42,-1),(0.42,1),(0.65,-1),(0.65,1)):
+            Q.leaf(BL,x0+math.cos(a)*L*f,y0+math.sin(a)*L*f,a+s2*rng.uniform(0.5,0.7),L*0.40*(1.1-f),L*0.045,c*rng.uniform(0.95,1.08),kind=2,fit=True,minL=6,soft=0.2)
+        Q.seg(BL,x0,y0,x0+math.cos(a)*L*0.85,y0+math.sin(a)*L*0.85,2.2,(0.30,0.46,0.24),0.45)
+    _stalk(Q,(4,h+4,h-4,S-4),(0.20,0.34,0.16),(0.26,0.42,0.20),ribs=3,rib=(0.16,0.28,0.12))
+    BF=(h+4,4,S-4,S-4); cx=h+h/2                                                         # the spike: hooded flowers
+    Q.seg(BF,cx,S-6,cx,14,6,(0.20,0.30,0.16),0.45)
+    hood=[(0.30,0.22,0.66),(0.26,0.20,0.60),(0.34,0.26,0.72)]
+    for i in range(30):
+        t=i/29; y=S-34-t*(S-60); w=h*0.30*(1-t)**0.8+6; fx=cx+rng.uniform(-w,w); r=h*0.13*(1-0.55*t)+4
+        if t>0.82: Q.leaf(BF,fx,y+r*0.5,-math.pi/2,r*1.4,r*0.45,(0.22,0.16,0.44),kind=2,fit=False); continue   # buds
+        Q.seg(BF,cx,y+r*0.6,fx,y+r*0.2,2.5,(0.20,0.30,0.16),0.4)
+        c=np.array(hood[rng.integers(0,3)],f32)*rng.uniform(0.92,1.08)
+        Q.leaf(BF,fx,y+r*0.45,-math.pi/2+rng.uniform(-0.2,0.2),r*1.75,r*0.62,c,kind=2,fit=False)     # the helmet
+        Q.disc(BF,fx,y+r*0.32,r*0.26,(0.10,0.06,0.22),0.3,hl=False)                                  # its mouth
+        for sd in (-1,1): Q.disc(BF,fx+sd*r*0.38,y+r*0.58,r*0.24,tuple(c*0.8),0.55,hl=False)         # the side petals
+        Q.leaf(BF,fx,y-r*0.2,-math.pi/2,r*1.0,r*0.30,tuple(np.clip(c*1.35,0,1)),kind=2,fit=False)    # the helmet's lit crown
+def _cell_feverfew(Q,rng):
+    S=Q.S; h=S//2; BL=(4,4,h-4,S-4); x=h/2
+    yg=[(0.44,0.60,0.20),(0.48,0.64,0.22),(0.40,0.56,0.18)]
+    pts=[(x+5*math.sin(t*2.0),S-6-(S-30)*t) for t in np.linspace(0,1,20)]
+    for i in range(3,len(pts)-1,3):                                                      # lobes in pairs, toothed
+        t=i/(len(pts)-1); (xa,ya),(xb,yb)=pts[i-1],pts[i]; a=math.atan2(yb-ya,xb-xa)
+        Lp=h*0.46*(0.45+0.55*math.sin(math.pi*min(1.0,0.2+t*0.85)))
+        for sd in (-1,1): Q.leaf(BL,xb,yb,a+sd*rng.uniform(0.85,1.05),Lp,Lp*0.40,np.array(yg[rng.integers(0,3)],f32)*rng.uniform(0.95,1.05),kind=1,minL=10,soft=0.15)
+    Q.leaf(BL,pts[-4][0],pts[-4][1],-math.pi/2,h*0.30,h*0.11,np.array(yg[0],f32),kind=1,minL=10,soft=0.15)
+    Q.poly(BL,pts[:-3],6,2.5,(0.54,0.64,0.30),0.5)                                       # the midrib over them
+    BF=(h+4,4,S-4,h-4); fx,fy=h+h/2,h/2                                                  # the head: a loose bunch of daisies
+    Q.disc(BF,fx,fy,h*0.24,(0.36,0.46,0.20),0.4,hl=False)                              # (the gaps; the daisies make the outline)
+    for i in range(13):
+        rr=h*0.29*math.sqrt((i+0.3)/13) if i else 0.0; aa=i*2.39996+rng.uniform(-0.2,0.2)
+        Q.flower(BF,fx+math.cos(aa)*rr,fy+math.sin(aa)*rr,h*rng.uniform(0.12,0.145),14,tuple(np.array((0.98,0.98,0.95),f32)*rng.uniform(0.93,1.02)),
+                 (0.96,0.78,0.14),rot=rng.uniform(0,6.28),inner=0.40,sharp=0.45,h=0.7)
+    _stalk(Q,(h+4,h+4,S-4,S-4),(0.40,0.54,0.20),(0.48,0.62,0.26),ribs=3,rib=(0.34,0.46,0.16))
+def paint_herbs_ch2(seed=381,name="T_VK_HerbsCh2"):
+    return _herb_sheet(name,(_cell_samphire,_cell_angelica,_cell_monkshood,_cell_feverfew),seed)
+def _cell_houseleek(Q,rng):
+    S=Q.S; h=S//2; BL=(4,4,h-4,S-4); x=h/2
+    Q.seg(BL,x,S-6,x,S-60,h*0.36,(0.50,0.64,0.36),0.45)                                  # its pale foot
+    Q.leaf(BL,x,S-66,-math.pi/2,S-78,h*0.46,(0.46,0.62,0.32),kind=3,fit=False,soft=0.35)  # broad, fleshy, pointed
+    Q.seg(BL,x,S-8,x,60,5,(0.56,0.70,0.40),0.5,col2=(0.50,0.62,0.34))                    # a pale keel
+    _tint_rows(Q,BL,30,S*0.36,(1.7,0.6,0.8),pw=1.6)                                      # the red-purple tip
+    for j in range(70):                                                                  # fine hairs along the edges
+        t=rng.uniform(0.13,0.92); y=S-66-(S-78)*t; w=h*0.46*(1-t)**0.8-2
+        if y<8 or y>S-6: continue
+        for sd in (-1,1): Q.seg(BL,x+sd*w,y,x+sd*(w+5),y-3,1.2,(0.80,0.78,0.70),0.5)
+    BF=(h+4,4,S-4,h-4); fx,fy=h+h/2,h/2                                                  # the head: pink stars
+    Q.disc(BF,fx,fy,h*0.22,(0.62,0.40,0.42),0.4,hl=False)                              # (the gaps; the stars make the outline)
+    for i in range(11):
+        rr=h*0.27*math.sqrt((i+0.3)/11) if i else 0.0; aa=i*2.39996
+        Q.flower(BF,fx+math.cos(aa)*rr,fy+math.sin(aa)*rr,h*rng.uniform(0.14,0.17),12,tuple(np.array((0.88,0.44,0.60),f32)*rng.uniform(0.92,1.06)),
+                 (0.55,0.15,0.32),rot=rng.uniform(0,6.28),inner=0.32,sharp=1.3,h=0.7)
+    BS=(h+4,h+4,S-4,S-4)                                                                 # the stalk: thick, scaly, reddish
+    _stalk(Q,BS,(0.52,0.36,0.30),(0.48,0.52,0.32))
+    for j in range(9):
+        y=S-20-j*(h-40)/8; sd=1 if j%2 else -1
+        Q.leaf(BS,h+h/2+sd*10,y,-math.pi/2+sd*0.35,40,13,(0.56,0.52,0.32),kind=3,fit=True,minL=10)
+def _cell_edelweiss(Q,rng):
+    S=Q.S; h=S//2; BL=(4,4,h-4,S-4); x=h/2
+    Q.seg(BL,x,S-6,x,S-40,h*0.08,(0.64,0.70,0.60),0.45)
+    Q.leaf(BL,x,S-40,-math.pi/2,S-56,h*0.24,(0.68,0.74,0.64),kind=0,fit=False,soft=0.6)  # narrow, silver-green, felty
+    _fuzz(Q,BL,rng,500,(0.76,0.81,0.73),(0.8,1.4))
+    BF=(h+4,4,S-4,h-4); fx,fy=h+h/2,h/2                                                  # the star: felty white bracts
+    nb=9; a0=rng.uniform(0,6.28)
+    for i in range(nb):
+        a=a0+i*2*math.pi/nb+rng.uniform(-0.12,0.12); L=h*rng.uniform(0.36,0.42)
+        Q.leaf(BF,fx,fy,a,L,L*0.30,tuple(np.array((0.95,0.96,0.93),f32)*rng.uniform(0.96,1.03)),kind=0,fit=False,soft=0.8)
+    _fuzz(Q,BF,rng,400,(0.98,0.98,0.96),(0.8,1.4))
+    Q.disc(BF,fx,fy,h*0.15,(0.78,0.76,0.60),0.5,hl=False)
+    for i in range(7):                                                                   # the little flower heads in the middle
+        a=i*2*math.pi/6 if i else 0.0; rr=h*0.075 if i else 0.0
+        hx=fx+math.cos(a)*rr; hy=fy+math.sin(a)*rr; Q.disc(BF,hx,hy,h*0.045,(0.86,0.82,0.58),0.6,hl=False)
+        for j in range(8): Q.disc(BF,hx+rng.uniform(-6,6),hy+rng.uniform(-6,6),1.4,(0.66,0.56,0.30),0.6,hl=False)
+    BS=(h+4,h+4,S-4,S-4); _stalk(Q,BS,(0.60,0.66,0.54),(0.68,0.74,0.62)); _fuzz(Q,BS,rng,250,(0.76,0.81,0.73),(0.8,1.4))
+def _cell_roseroot(Q,rng):
+    S=Q.S; h=S//2; BL=(4,4,h-4,S-4); x=h/2
+    Q.seg(BL,x,S-6,x,S-60,h*0.10,(0.46,0.58,0.48),0.45)
+    Q.leaf(BL,x,60,math.pi/2,S-110,h*0.42,(0.40,0.58,0.50),kind=0,fit=False,soft=0.4)   # fleshy, blue-green, widest near the tip (painted tip-down)
+    _tint_rows(Q,BL,40,170,(1.6,0.75,0.75))                                              # the reddish rim at the tip
+    Q.seg(BL,x,S-10,x,60,3,(0.58,0.70,0.60),0.5)
+    BF=(h+4,4,S-4,h-4); fx,fy=h+h/2,h/2                                                  # the head: a dense flat bunch of yellow stars
+    Q.disc(BF,fx,fy,h*0.26,(0.66,0.58,0.22),0.45,hl=False)                              # (the gaps; the flowers make the outline)
+    for i in range(70):
+        rr=h*0.34*math.sqrt(rng.random()); aa=rng.uniform(0,6.28); sh=0.86+0.14*(1-rr/(h*0.34))
+        if rng.random()<0.12: Q.disc(BF,fx+math.cos(aa)*rr,fy+math.sin(aa)*rr,rng.uniform(4,6),(0.88,0.50,0.14),0.6,hl=False); continue
+        Q.flower(BF,fx+math.cos(aa)*rr,fy+math.sin(aa)*rr,rng.uniform(13,17),4,tuple(np.array((0.98,0.84,0.26),f32)*sh*rng.uniform(0.94,1.04)),
+                 (0.86,0.52,0.12),rot=rng.uniform(0,6.28),inner=0.28,sharp=0.7,h=0.7)
+    _stalk(Q,(h+4,h+4,S-4,S-4),(0.52,0.36,0.30),(0.46,0.60,0.50),ribs=3,rib=(0.38,0.48,0.40))
+def _cell_arnica(Q,rng):
+    S=Q.S; h=S//2; BL=(4,4,h-4,S-4); x=h/2; L=S-80; W=h*0.40
+    Q.seg(BL,x,S-6,x,S-64,h*0.10,(0.32,0.48,0.20),0.45)
+    Q.leaf(BL,x,S-60,-math.pi/2,L,W,(0.33,0.53,0.19),kind=0,fit=False,soft=0.25)
+    for sd in (-1,1):                                                                    # its arching parallel veins
+        for f in (0.45,0.8):
+            pts=[(x+sd*W*f*math.sin(math.pi*t)**0.7*(1-0.3*t)*0.8,S-60-L*t) for t in np.linspace(0.04,0.9,14)]
+            Q.poly(BL,pts,2.6,1.4,(0.44,0.62,0.28),0.5)
+    BF=(h+4,4,S-4,h-4); fx,fy=h+h/2,h/2                                                  # the head: a ragged orange-yellow daisy
+    Q.flower(BF,fx,fy,h*0.45,13,(0.99,0.70,0.10),(0.92,0.52,0.06),rot=rng.uniform(0,1),inner=0.34,sharp=0.35,h=0.6,ragged=0.14)
+    for j in range(160):
+        rr=h*0.14*math.sqrt(rng.random()); aa=rng.uniform(0,6.28)
+        Q.disc(BF,fx+math.cos(aa)*rr,fy+math.sin(aa)*rr,rng.uniform(1.8,3.0),tuple(np.array((0.80,0.42,0.04),f32)*rng.uniform(0.9,1.15)),0.7,hl=False)
+    BS=(h+4,h+4,S-4,S-4); _stalk(Q,BS,(0.32,0.48,0.20),(0.40,0.56,0.24)); _fuzz(Q,BS,rng,300,(0.62,0.72,0.50),(1.0,1.6))
+def paint_herbs_ch3(seed=391,name="T_VK_HerbsCh3"):
+    return _herb_sheet(name,(_cell_houseleek,_cell_edelweiss,_cell_roseroot,_cell_arnica),seed)

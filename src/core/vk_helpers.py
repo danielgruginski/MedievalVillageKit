@@ -110,6 +110,15 @@ def fireweed_material():
     if painted: m=leaf_material("M_VK_Fireweed","T_VK_Fireweed"); m["vk_wg"]="leaf"
     else: m=tex_mat("M_VK_Fireweed",None,0.6,flat=(0.30,0.46,0.18)); m["vk_wg"]="flat"
     return m
+def herb_sheet_material(name,tex,flat):
+    """a shared herb sheet (T_VK_HerbsCh2 / T_VK_HerbsCh3: four herbs each; vk_leafgen.paint_herbs_ch2/_ch3) on the
+    leaves' shader; a flat green stand-in until the sheet is painted. Built once (kit_mats runs for every piece)."""
+    m=bpy.data.materials.get(name)
+    painted=tex+"_BCA" in bpy.data.images and tex+"_H" in bpy.data.images
+    if m is not None and m.get("vk_wg")==("leaf" if painted else "flat"): return m
+    if painted: m=leaf_material(name,tex); m["vk_wg"]="leaf"
+    else: m=tex_mat(name,None,0.6,flat=flat); m["vk_wg"]="flat"
+    return m
 def fresh_stone_material():
     """fresh-split rock (the stone node's fracture faces and hewn blocks): the kit's rock texture, paler and warmer, as a
     face just broken out of weathered grey stone"""
@@ -143,8 +152,9 @@ def kit_mats():
             tex_mat("M_VK_StoneDressed","T_VK_StoneBlock",tint=DRESS_TINT), hewn_material(), wild_garlic_material(), yarrow_material(), cotton_material(), goblin_herb_material(),
             ore_material("iron"), ore_material("coal"), ore_material("silver"),
             ore_material("iron",True), ore_material("coal",True), ore_material("silver",True), ghostpipe_material(),
-            fireweed_material(), fresh_stone_material()]
-STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS,DRESS,HEWN,WILD_GARLIC,YARROW,COTTON,GOBLIN_HERB,ORE_IRON,ORE_COAL,ORE_SILVER,ORE_IRON_CHUNK,ORE_COAL_CHUNK,ORE_SILVER_CHUNK,GHOSTPIPE,FIREWEED,STONE_FRESH=range(68)
+            fireweed_material(), fresh_stone_material(),
+            herb_sheet_material("M_VK_HerbsCh2","T_VK_HerbsCh2",(0.34,0.52,0.22)), herb_sheet_material("M_VK_HerbsCh3","T_VK_HerbsCh3",(0.44,0.58,0.40))]
+STONE,PLASTER,WOOD,ROOF,WINDOW,IRON,PINK,YELLOW,LEAF,GLOW,SHUTTER,CLOTH_A,CLOTH_B,APPLE,PUMPKIN,BREAD,HAY,PAPER,WATER,BRONZE,STAINED,STEEL,THATCH,PLANKS,ASHLAR,BURLAP,SOIL,VOID,ROCK,CLAY,CLOCK,FOLIAGE,CROPS,BARK_OAK,BARK_BIRCH,BARK_PINE,LEAVES,MOSS,ROCK_MOSSY,BARK_MOSSY,ENDGRAIN,MUSH_RED,MUSH_BROWN,MUSH_STEM,MUSH_GLOW,STONE_BLOCK,FIELDSTONE,WATTLE,HIDE,PIGSKIN,COAL,NET,GOODS,DRESS,HEWN,WILD_GARLIC,YARROW,COTTON,GOBLIN_HERB,ORE_IRON,ORE_COAL,ORE_SILVER,ORE_IRON_CHUNK,ORE_COAL_CHUNK,ORE_SILVER_CHUNK,GHOSTPIPE,FIREWEED,STONE_FRESH,HERBS_CH2,HERBS_CH3=range(70)
 # ---- goods atlas (T_VK_Goods, painted by vk_goods; keep the cell order in sync with vk_goods.GOODS_CELLS) ----
 GOODS_CELLS=("cabbage","pumpkin","carrot","apple","bread","cheese","fish","fish_smoked",
              "hide","fur","meat","ham","sausage","turnip","herbs","pomace")

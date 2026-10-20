@@ -143,7 +143,7 @@ def _upstream(nt, node, seen=None):
 # thatch, the void fill of openings, water, moss) stay two-sided, as do the interior kits' materials (M_VKI_*: room
 # walls are sheets facing the room) and anything not of the kit. Found by tools/cull_render_check.py (every piece from
 # four sides at the game's pitch, off vs on) and cull_render_ids.py (which material lost surface).
-VKX_TWO_SIDED = {"M_VK_Leaves", "M_VK_Foliage", "M_VK_Crops", "M_VK_WildGarlic", "M_VK_Yarrow", "M_VK_Cotton", "M_VK_GoblinHerb", "M_VK_Fireweed", "M_VK_Leaf", "M_VK_Window",
+VKX_TWO_SIDED = {"M_VK_Leaves", "M_VK_Foliage", "M_VK_Crops", "M_VK_WildGarlic", "M_VK_Yarrow", "M_VK_Cotton", "M_VK_GoblinHerb", "M_VK_Fireweed", "M_VK_HerbsCh2", "M_VK_HerbsCh3", "M_VK_Leaf", "M_VK_Window",
                  "M_VK_Stained", "M_VK_Clock", "M_VK_Net", "M_VK_Void", "M_VK_Water", "M_VK_Moss", "M_VK_Thatch",
                  "M_VK_Paper", "M_VK_Burlap", "M_VK_Hay", "M_VK_Goods"}
 VKX_TWO_SIDED_PREFIXES = ("M_VK_Cloth", "M_VK_Flower", "M_VK_Mush")

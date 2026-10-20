@@ -1743,6 +1743,27 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     same joints inside the one-piece buildings (timber walls meeting at a corner, shutters at a joint; 4-100 cm2,
     undersides). See-through caps not re-baked (stale entries are made in play; the next player build bakes).
 
+134. 2026-10-19 (the user: "more herbs that will be the ones used in chapters 2 and 3"; the user picked all eight).
+    Nature specs (vk_nature, seeds 137-151), about twice life size like the others, `{"bark_ao":None}`:
+    chapter 2 -- **samphire** `SM_VK_Plant_Samphire` (396 tris, 0.9 x 0.9 x 0.37 m: 40 jointed fleshy sprigs on crossed
+    cards, a few reddening; the salt marsh), **angelica** `SM_VK_Plant_Angelica` (396 tris, 1.9 m: big compound leaves,
+    purple-footed stems, green-white globe umbels on three crossed cards; monastery garden), **monkshood**
+    `SM_VK_Plant_Monkshood` (472 tris, 1.3 m: deeply cut dark leaves, violet hooded flower spikes), **feverfew**
+    `SM_VK_Plant_Feverfew` (1,430 tris, 0.64 m: lobed yellow-green leaves, bunches of white daisies; farmlands);
+    chapter 3 -- **houseleek** `SM_VK_Plant_Houseleek` (2,428 tris, 0.55 x 0.3 m: 9 rosettes + 4 offsets of fleshy
+    red-tipped leaves (`hl_rosette`), two stalks of pink stars), **edelweiss** `SM_VK_Plant_Edelweiss` (1,014 tris,
+    0.31 m: silver felty leaves, white felty stars), **roseroot** `SM_VK_Plant_Roseroot` (1,758 tris, 0.52 m: stems clad
+    in fleshy blue-green leaves, flat yellow heads), **arnica** `SM_VK_Plant_Arnica` (678 tris, 0.59 m: flat ribbed
+    rosettes, ragged orange-yellow daisies turned outward). Two shared 1024 sheets instead of one 512 sheet each:
+    `T_VK_HerbsCh2` / `T_VK_HerbsCh3` (`vk_leafgen.paint_herbs_ch2` / `_ch3`; each cell painted on its own 512 painter,
+    cells across, top row first; the painter lives outside the kit namespace: exec `vk_tex` then `vk_leafgen` into one
+    dict). `vk_nature.hb_cell` maps a cell-local region into the sheet; helpers `hb_strip`, `hb_cards`, `hb_ball`,
+    `hb_head` (ya_head with its own region/slot and a facing), `hb_palm` (ct_leaf likewise). Slots 68 `HERBS_CH2`, 69
+    `HERBS_CH3` (`herb_sheet_material`, two-sided); `kit_mats()` returns 70. Heads painted over a small backdrop disc
+    only: a full-size dark disc showed as a rim round every head. Built, painted and saved from a background Blender
+    (the live one held another session's scene); preview scene `Herbs_Ch23_Preview` in the .blend. Exported, Unity Build
+    Materials + Build Prefabs (the eight only). Not placed in MedievalSetting (no gather spots or items yet).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

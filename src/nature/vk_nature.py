@@ -986,6 +986,232 @@ def make_fireweed(k,seed,stems=8,R=0.2):
             q=a1+m*math.pi/3; s_=Vector((math.cos(q),math.sin(q),0.0))*w/2
             wg_grid(k,[[foot-s_,foot+s_],[top-s_,top+s_]],FW_UV["spike"],lambda p,qq=q: Vector((-math.sin(qq),math.cos(qq),0.4)).normalized(),aofn,mi=FIREWEED)
     k.wind_fn=lambda p: min(1.0,max(0.0,p.z/1.1))
+# ---- the chapter 2 and 3 herbs (2026-10-19, MedievalSetting's herbs for Saltmere's lands and the mountains): eight
+# herbs on two shared sheets, T_VK_HerbsCh2 (samphire, angelica, monkshood, feverfew) and T_VK_HerbsCh3 (houseleek,
+# edelweiss, roseroot, arnica), 1024 each in 2x2 cells of 512 (vk_leafgen.paint_herbs_ch2/_ch3), materials HERBS_CH2 /
+# HERBS_CH3 (the leaves' shader). About twice life size, like the others, so they read from the colony camera.
+def hb_cell(cell,r):
+    """a 512 cell's region r=(u0,u1,v0,v1) (cell-local uvs, v up) in its 2x2 sheet's uvs (cells across, top row first)"""
+    cx=cell%2; cy=cell//2; u0,u1,v0,v1=r
+    return ((cx+u0)/2,(cx+u1)/2,(1-cy+v0)/2,(1-cy+v1)/2)
+_HL=(0.004,0.496,0.004,0.996); _HTR=(0.504,0.996,0.504,0.996); _HBR=(0.504,0.996,0.004,0.496)   # left half, top right, bottom right
+_HTL=(0.004,0.496,0.504,0.996); _HBL=(0.004,0.496,0.004,0.496); _HR=(0.504,0.996,0.004,0.996)   # top left, bottom left, right half
+def hb_uvs(cell,**rs): return {n:hb_cell(cell,r) for n,r in rs.items()}
+SA_UV=hb_uvs(0,tall=_HL,red=_HTR,short=_HBR); AN_UV=hb_uvs(1,leaf=_HL,umbel=_HTR,stalk=_HBR)
+MK_UV=hb_uvs(2,leaf=_HTL,stalk=_HBL,spike=_HR); FF_UV=hb_uvs(3,leaf=_HL,head=_HTR,stalk=_HBR)
+HL_UV=hb_uvs(0,leaf=_HL,head=_HTR,stalk=_HBR); EW_UV=hb_uvs(1,leaf=_HL,head=_HTR,stalk=_HBR)
+RR_UV=hb_uvs(2,leaf=_HL,head=_HTR,stalk=_HBR); AR_UV=hb_uvs(3,leaf=_HL,head=_HTR,stalk=_HBR)
+def hb_strip(k,pts,w,uvr,mi,aofn=None):
+    """a stalk through pts: two crossed strips"""
+    pts=[Vector(p) for p in pts]
+    for a in (0.0,math.pi/2):
+        s=Vector((math.cos(a),math.sin(a),0.0))*w/2
+        wg_grid(k,[[p-s,p+s] for p in pts],uvr,lambda p: UP,aofn,mi=mi)
+def hb_cards(k,foot,top,w,uvr,mi,rng,aofn=None,n=3):
+    """n crossed upright cards from foot to top (a spike, a sprig), the sheet's region on each"""
+    F=Vector(foot); T=Vector(top); a1=rng.uniform(0,math.pi)
+    for m in range(n):
+        q=a1+m*math.pi/n; s=Vector((math.cos(q),math.sin(q),0.0))*w/2
+        wg_grid(k,[[F-s,F+s],[(F+T)/2-s,(F+T)/2+s],[T-s,T+s]],uvr,lambda p,qq=q: Vector((-math.sin(qq),math.cos(qq),0.4)).normalized(),
+                aofn,flip=rng.random()<0.5,mi=mi)
+def hb_ball(k,c,r,uvr,mi,rng,aofn=None):
+    """a round head (angelica's umbel): three crossed square cards round c, so it reads as a ball from any side"""
+    C=Vector(c); rot=rng.uniform(0,6.28)
+    axes=[Vector((math.cos(rot),math.sin(rot),0.0)),Vector((-math.sin(rot),math.cos(rot),0.0)),UP.copy()]
+    for i in range(3):
+        a=axes[i]; b=axes[(i+1)%3]
+        wg_grid(k,[[C-a*r-b*r,C+a*r-b*r],[C-a*r+b*r,C+a*r+b*r]],uvr,(lambda p,cc=C.copy(): (p-cc).normalized()*0.5+UP*0.5),aofn,mi=mi)
+def hb_head(k,top,r,uvr,mi,rng,aofn=None,face=None,tilt=0.12,dome=(0.10,-0.06),n=10):
+    """a flower head facing `face` (default up, tipped a little at random): a shallow dome (centre + two rings), the
+    sheet's round head mapped on it (ya_head with its own region and slot)"""
+    T=Vector(top); u0,u1,v0,v1=uvr; uc=(u0+u1)/2; vc=(v0+v1)/2; ur=(u1-u0)/2; vr=(v1-v0)/2
+    f=(Vector(face) if face is not None else UP)+Vector((rng.uniform(-tilt,tilt),rng.uniform(-tilt,tilt),0.0)); f.normalize()
+    up=lambda p,ff=f.copy(): ff; rot=rng.uniform(0,6.28)
+    ctr=k.bm.verts.new(T+f*r*(dome[0]+0.06)); k.nfn[ctr]=up
+    if aofn: k.vinfo[ctr]=aofn
+    a_=f.cross(Vector((1,0,0)) if abs(f.x)<0.9 else Vector((0,1,0))).normalized(); b_=f.cross(a_)
+    rings=[]
+    for rf,dz in ((0.55,dome[0]),(1.0,dome[1])):
+        ring=[]
+        for i in range(n):
+            th=rot+2*math.pi*i/n; rr=r*rf*rng.uniform(0.92,1.06)
+            v=k.bm.verts.new(T+(a_*math.cos(th)+b_*math.sin(th))*rr+f*r*dz); k.nfn[v]=up
+            if aofn: k.vinfo[v]=aofn
+            ring.append((v,th,rf*0.98))
+        rings.append(ring)
+    def uv(th,rf): return (uc+math.cos(th-rot)*rf*ur,vc+math.sin(th-rot)*rf*vr)
+    for i in range(n):
+        j=(i+1)%n; (va,ta,fa),(vb,tb,fb)=rings[0][i],rings[0][j]
+        fc=k.bm.faces.new((ctr,va,vb)); fc.material_index=mi; fc.smooth=True
+        for l,q in zip(fc.loops,((uc,vc),uv(ta,fa),uv(ta+2*math.pi/n,fb))): l[k.uv].uv=q
+        (wa,sa,ga),(wb,sb,gb)=rings[1][i],rings[1][j]
+        fc=k.bm.faces.new((va,wa,wb,vb)); fc.material_index=mi; fc.smooth=True
+        for l,q in zip(fc.loops,(uv(ta,fa),uv(sa,ga),uv(sa+2*math.pi/n,gb),uv(ta+2*math.pi/n,fb))): l[k.uv].uv=q
+def hb_palm(k,at,out,size,uvr,mi,rng,nfn,aofn,e=(5,30)):
+    """a broad leaf on a short stalk from `at`, held out along `out`, tilted up a little and cupped (ct_leaf with its own
+    region and slot); the sheet's leaf on it with its stalk end at `at`"""
+    d=Vector((out.x,out.y,0.0)).normalized(); el=math.radians(rng.uniform(*e))
+    d=(d*math.cos(el)+UP*math.sin(el)).normalized(); s=d.cross(UP).normalized(); n=s.cross(d).normalized()
+    if n.z<0: n=-n
+    P=[[Vector(at)+d*size*(j/2)+s*size*(i/2-0.5)+n*(0.10*size*(i!=1)+0.08*size*(j==2)) for i in range(3)] for j in range(3)]
+    wg_grid(k,P,uvr,nfn,aofn,flip=rng.random()<0.5,mi=mi)
+def _hb_crowns(rng,n,R):
+    """crown points spread over a disc of radius R, the first in the middle"""
+    out=[]
+    for i in range(n):
+        a=i*GOLD+rng.uniform(-0.3,0.3); d=R*math.sqrt((i+0.5)/n)*rng.uniform(0.75,1.0) if i else 0.0
+        out.append(Vector((math.cos(a)*d,math.sin(a)*d,-0.01)))
+    return out
+def make_samphire(k,seed,n=40,R=0.4):
+    """a patch of samphire (glasswort) about 0.9 m across: 40 jointed fleshy sprigs 0.15-0.44 m tall on crossed cards,
+    lower toward the edge, a few reddening -- the salt marsh's herb"""
+    rng=random.Random(seed); nfn,aofn=plant_fns(center=Vector((0,0,0)),H=0.4,ao_lo=0.62,radw=0.3)
+    for i in range(n):
+        a=i*GOLD+rng.uniform(-0.3,0.3); d=R*math.sqrt((i+0.5)/n)*rng.uniform(0.8,1.0)
+        c=Vector((math.cos(a)*d,math.sin(a)*d,-0.02)); r_=rng.random()
+        kind="tall" if r_<0.55 else ("short" if r_<0.85 else "red")
+        H=(rng.uniform(0.32,0.44) if kind=="tall" else rng.uniform(0.18,0.26))*(1.0-0.25*d/R)
+        top=c+Vector((rng.uniform(-0.04,0.04),rng.uniform(-0.04,0.04),H))
+        hb_cards(k,c,top,H*(0.49 if kind=="tall" else 0.98),SA_UV[kind],HERBS_CH2,rng,aofn,n=3 if kind=="tall" else 2)
+    k.wind_fn=lambda p: min(1.0,max(0.0,p.z/0.45))*0.4
+def make_angelica(k,seed,stems=4):
+    """a clump of angelica about 1.4 m across and 1.2-1.9 m tall: big compound leaves round the foot (0.5-0.7 m), 3-4
+    stout purple-footed stems with a leaf or two up them, each topped by a green-white globe umbel (0.26-0.32 m across)
+    and a smaller one or two on side shoots -- the monastery garden's herb"""
+    rng=random.Random(seed); nfn,aofn=plant_fns(center=Vector((0,0,0)),H=1.7,ao_lo=0.62,radw=0.45)
+    for j in range(8):                                            # the leaves round the foot
+        az=j*2*math.pi/8+rng.uniform(-0.25,0.25); L=rng.uniform(0.5,0.7)
+        base=Vector((math.cos(az),math.sin(az),0.0))*0.06+Vector((0,0,-0.01))
+        wg_leaf(k,base,az,L,L*0.62,rng,nfn,aofn,rows=5,uvr=AN_UV["leaf"],mi=HERBS_CH2,e0r=(45,62),e1r=(-12,10))
+    for i in range(stems):
+        a=i*2*math.pi/stems+rng.uniform(-0.4,0.4); o=Vector((math.cos(a),math.sin(a),0.0))
+        base=o*rng.uniform(0.03,0.09); H=rng.uniform(1.6,1.9) if i==0 else rng.uniform(1.2,1.55)
+        top=base+o*rng.uniform(0.08,0.2)+Vector((0,0,H)); mid=base+(top-base)*0.5+o*0.03
+        hb_strip(k,[base,mid,top],0.05,AN_UV["stalk"],HERBS_CH2,aofn)
+        hb_ball(k,top+Vector((0,0,0.08)),rng.uniform(0.13,0.16),AN_UV["umbel"],HERBS_CH2,rng,aofn)
+        for m in range(rng.randint(1,2)):                         # side shoots with smaller umbels
+            t=rng.uniform(0.55,0.75); p=base+(top-base)*t; ba=a+rng.choice((-1,1))*rng.uniform(0.6,1.3)
+            end=p+Vector((math.cos(ba),math.sin(ba),0.0))*rng.uniform(0.18,0.26)+Vector((0,0,rng.uniform(0.2,0.3)))
+            hb_strip(k,[p,(p+end)/2+Vector((0,0,0.03)),end],0.028,AN_UV["stalk"],HERBS_CH2,aofn)
+            hb_ball(k,end+Vector((0,0,0.05)),rng.uniform(0.07,0.09),AN_UV["umbel"],HERBS_CH2,rng,aofn)
+        for m in range(rng.randint(1,2)):                         # a leaf up the stem
+            p=base+(top-base)*rng.uniform(0.25,0.5)
+            wg_leaf(k,p,a+rng.uniform(-2.5,2.5),rng.uniform(0.28,0.38),0.2,rng,nfn,aofn,rows=4,uvr=AN_UV["leaf"],mi=HERBS_CH2,e0r=(25,45),e1r=(-15,5))
+    k.wind_fn=lambda p: min(1.0,max(0.0,p.z/1.7))
+def make_monkshood(k,seed,stems=6,R=0.14):
+    """a clump of monkshood about 0.8 m across and 1.0-1.3 m tall: deeply cut dark leaves round the foot and up the
+    stems, each stem topped by a spike (0.4-0.5 m) of deep violet hooded flowers -- the poison"""
+    rng=random.Random(seed); nfn,aofn=plant_fns(center=Vector((0,0,0)),H=1.15,ao_lo=0.6,radw=0.4)
+    for i in range(7):                                            # the leaves round the foot
+        a=i*GOLD+rng.uniform(-0.3,0.3); o=Vector((math.cos(a),math.sin(a),0.0))
+        hb_palm(k,o*R*0.6+Vector((0,0,rng.uniform(0.08,0.2))),o,rng.uniform(0.24,0.3),MK_UV["leaf"],HERBS_CH2,rng,nfn,aofn)
+    for i,c in enumerate(_hb_crowns(rng,stems,R)):
+        H=rng.uniform(1.0,1.3); lean=Vector((c.x,c.y,0.0))*0.5+Vector((rng.uniform(-0.04,0.04),rng.uniform(-0.04,0.04),0.0))
+        top=c+lean+Vector((0,0,H)); sp=rng.uniform(0.4,0.5); foot=c+(top-c)*(1-sp/H)
+        hb_strip(k,[c,(c+foot)/2,foot],0.022,MK_UV["stalk"],HERBS_CH2,aofn)
+        n=rng.randint(5,7); a0=rng.uniform(0,6.28)
+        for j in range(n):                                        # leaves up the stem, smaller higher up
+            t=0.12+0.75*j/n; az=a0+j*GOLD
+            hb_palm(k,c+(foot-c)*t,Vector((math.cos(az),math.sin(az),0.0)),rng.uniform(0.17,0.22)*(1.1-0.45*t),MK_UV["leaf"],HERBS_CH2,rng,nfn,aofn)
+        hb_cards(k,foot-Vector((0,0,0.03)),top,sp*0.49,MK_UV["spike"],HERBS_CH2,rng,aofn)
+    k.wind_fn=lambda p: min(1.0,max(0.0,p.z/1.15))
+def make_feverfew(k,seed,R=0.24,crowns=8,stalks=11):
+    """a bushy clump of feverfew about 0.8 m across and 0.45-0.65 m tall: lobed yellow-green leaves round the foot and
+    up the stalks, each stalk topped by a bunch of small white daisies with yellow eyes (0.16-0.22 m across) -- the
+    farmlands' fever herb"""
+    rng=random.Random(seed); nfn,aofn=plant_fns(center=Vector((0,0,0)),H=0.6,ao_lo=0.66,radw=0.5)
+    cr=_hb_crowns(rng,crowns,R)
+    for c in cr:
+        out=math.atan2(c.y,c.x) if c.length>0.05 else rng.uniform(0,6.28)
+        for j in range(rng.randint(3,4)):
+            az=out+rng.uniform(-1.4,1.4) if c.length>0.05 else j*2*math.pi/4+rng.uniform(-0.3,0.3); L=rng.uniform(0.18,0.26)
+            wg_leaf(k,c,az,L,L*0.6,rng,nfn,aofn,rows=4,uvr=FF_UV["leaf"],mi=HERBS_CH2,e0r=(40,60),e1r=(-10,15))
+    for i in range(stalks):
+        c=cr[i%len(cr)]+Vector((rng.uniform(-0.04,0.04),rng.uniform(-0.04,0.04),0.0))
+        H=rng.uniform(0.45,0.65); lean=Vector((c.x,c.y,0.0))*0.5+Vector((rng.uniform(-0.06,0.06),rng.uniform(-0.06,0.06),0.0))
+        mid=c+lean*0.4+Vector((0,0,H*0.5)); top=c+lean+Vector((0,0,H))
+        hb_strip(k,[c,mid,top],0.016,FF_UV["stalk"],HERBS_CH2,aofn)
+        for j in range(3):
+            p=c+(top-c)*rng.uniform(0.15,0.7); L=rng.uniform(0.10,0.15)
+            wg_leaf(k,p,rng.uniform(0,6.28),L,L*0.6,rng,nfn,aofn,rows=3,uvr=FF_UV["leaf"],mi=HERBS_CH2,e0r=(30,50),e1r=(0,20))
+        hb_head(k,top,rng.uniform(0.08,0.11),FF_UV["head"],HERBS_CH2,rng,aofn,tilt=0.25)
+        if rng.random()<0.4:                                      # a side shoot with a second, smaller bunch
+            p=c+(top-c)*0.6; o=Vector((lean.x,lean.y,0.0)); o=Quaternion(UP,rng.choice((-1,1))*rng.uniform(0.8,1.5))@(o.normalized() if o.length>1e-3 else Vector((1,0,0)))
+            end=p+o*rng.uniform(0.1,0.15)+Vector((0,0,rng.uniform(0.1,0.16)))
+            hb_strip(k,[p,(p+end)/2,end],0.012,FF_UV["stalk"],HERBS_CH2,aofn)
+            hb_head(k,end,rng.uniform(0.06,0.08),FF_UV["head"],HERBS_CH2,rng,aofn,face=(o*0.4+UP),tilt=0.15)
+    k.wind_fn=lambda p: min(1.0,max(0.0,p.z/0.6))
+def hl_rosette(k,c,r,rng):
+    """one houseleek rosette: fleshy pointed leaves in a tight spiral, the outer ones spread low, the inner ones closing
+    up over the heart"""
+    C=Vector(c); nfn,aofn=plant_fns(center=C,H=r*0.9,ao_lo=0.55,radw=0.7); n=int(14+r*110)
+    for i in range(n):
+        t=i/(n-1); az=i*GOLD; L=r*(1.05-0.6*t); e=18+62*t**0.8               # t: 0 the outermost leaf, 1 the heart
+        base=C+Vector((math.cos(az),math.sin(az),0.0))*r*0.08*(1-t)+Vector((0,0,r*0.12*t))
+        wg_leaf(k,base,az,L,L*rng.uniform(0.62,0.72),rng,nfn,aofn,rows=2,uvr=HL_UV["leaf"],mi=HERBS_CH3,e0r=(e,e+6),e1r=(e+12,e+22))
+def make_houseleek(k,seed,R=0.2,n=9):
+    """a mat of houseleek about 0.6 m across: 9 rosettes (0.14-0.3 m across) of fleshy red-tipped leaves, small offsets
+    round some of them, and two thick stalks (0.22-0.3 m) of pink stars -- the mountains' fire ward"""
+    rng=random.Random(seed); _,aofn=plant_fns(center=Vector((0,0,0)),H=0.3,ao_lo=0.6,radw=0.4); big=[]
+    for i,c in enumerate(_hb_crowns(rng,n,R)):
+        r=rng.uniform(0.10,0.15)*(1-0.35*c.length/R); hl_rosette(k,c,r,rng); big.append((c,r))
+    for c,r in rng.sample(big,4):                                 # offsets on short runners
+        a=rng.uniform(0,6.28); hl_rosette(k,c+Vector((math.cos(a),math.sin(a),0.0))*r*1.25,r*rng.uniform(0.4,0.55),rng)
+    for c,r in sorted(big,key=lambda b:-b[1])[:2]:                # the flower stalks rise from the biggest
+        top=c+Vector((rng.uniform(-0.03,0.03),rng.uniform(-0.03,0.03),rng.uniform(0.22,0.3)))
+        hb_strip(k,[c+Vector((0,0,r*0.3)),(c+top)/2,top],0.035,HL_UV["stalk"],HERBS_CH3,aofn)
+        hb_head(k,top,rng.uniform(0.06,0.075),HL_UV["head"],HERBS_CH3,rng,aofn,tilt=0.15,dome=(0.24,0.0))
+    k.wind_fn=lambda p: 0.0
+def make_edelweiss(k,seed,crowns=8,R=0.16):
+    """a tuft of edelweiss about 0.45 m across and 0.2-0.32 m tall: narrow grey felty leaves, and stalks each topped by
+    a white felty star (0.16-0.2 m across) -- the high meadows' flower"""
+    rng=random.Random(seed); nfn,aofn=plant_fns(center=Vector((0,0,0)),H=0.3,ao_lo=0.66,radw=0.5)
+    for c in _hb_crowns(rng,crowns,R):
+        out=math.atan2(c.y,c.x) if c.length>0.05 else rng.uniform(0,6.28)
+        for j in range(rng.randint(5,7)):
+            az=out+rng.uniform(-1.6,1.6) if c.length>0.05 else j*2*math.pi/6+rng.uniform(-0.3,0.3); L=rng.uniform(0.10,0.15)
+            wg_leaf(k,c,az,L,L*0.42,rng,nfn,aofn,rows=3,uvr=EW_UV["leaf"],mi=HERBS_CH3,e0r=(50,72),e1r=(5,30))
+        for m in range(1 if rng.random()<0.6 else 2):
+            H=rng.uniform(0.18,0.3); lean=Vector((c.x,c.y,0.0))*0.4+Vector((rng.uniform(-0.04,0.04),rng.uniform(-0.04,0.04),0.0))
+            top=c+lean+Vector((0,0,H)); hb_strip(k,[c,c+lean*0.4+Vector((0,0,H*0.5)),top],0.014,EW_UV["stalk"],HERBS_CH3,aofn)
+            for q in range(2):
+                L=rng.uniform(0.05,0.07); wg_leaf(k,c+(top-c)*rng.uniform(0.3,0.6),rng.uniform(0,6.28),L,L*0.42,rng,nfn,aofn,rows=2,uvr=EW_UV["leaf"],mi=HERBS_CH3,e0r=(40,60),e1r=(20,40))
+            hb_head(k,top,rng.uniform(0.08,0.1),EW_UV["head"],HERBS_CH3,rng,aofn,face=(lean*1.2+UP),tilt=0.15,dome=(0.05,-0.02))
+    k.wind_fn=lambda p: min(1.0,max(0.0,p.z/0.3))*0.5
+def make_roseroot(k,seed,stems=9,R=0.12):
+    """a clump of roseroot about 0.5 m across and 0.35-0.5 m tall: thick stems clad in small fleshy blue-green leaves,
+    each topped by a flat bunch of yellow flowers (0.14-0.18 m across) -- the cliffs' herb"""
+    rng=random.Random(seed); nfn,aofn=plant_fns(center=Vector((0,0,0)),H=0.45,ao_lo=0.6,radw=0.5)
+    for c in _hb_crowns(rng,stems,R):
+        H=rng.uniform(0.35,0.5); lean=Vector((c.x,c.y,0.0))*0.9+Vector((rng.uniform(-0.04,0.04),rng.uniform(-0.04,0.04),0.0))
+        top=c+lean+Vector((0,0,H)); mid=c+lean*0.35+Vector((0,0,H*0.5))
+        hb_strip(k,[c,mid,top],0.028,RR_UV["stalk"],HERBS_CH3,aofn)
+        n=rng.randint(18,22); a0=rng.uniform(0,6.28)
+        for j in range(n):                                        # leaves spiralling all the way up, overlapping
+            t=0.08+0.88*j/n; p=c+(mid-c)*(t/0.5) if t<0.5 else mid+(top-mid)*((t-0.5)/0.5); L=rng.uniform(0.085,0.115)*(1.05-0.3*t)
+            wg_leaf(k,p,a0+j*GOLD,L,L*0.6,rng,nfn,aofn,rows=2,uvr=RR_UV["leaf"],mi=HERBS_CH3,e0r=(35,55),e1r=(40,62))
+        hb_head(k,top+Vector((0,0,0.01)),rng.uniform(0.07,0.09),RR_UV["head"],HERBS_CH3,rng,aofn,tilt=0.15,dome=(0.16,-0.04))
+    k.wind_fn=lambda p: min(1.0,max(0.0,p.z/0.45))*0.5
+def make_arnica(k,seed,crowns=6,R=0.2):
+    """a patch of arnica about 0.7 m across: flat rosettes of broad ribbed leaves on the ground, stalks 0.4-0.6 m tall
+    with a pair of small leaves halfway, each topped by a ragged orange-yellow daisy (0.16-0.2 m across) turned
+    outward -- the mountain meadows' wound herb"""
+    rng=random.Random(seed); nfn,aofn=plant_fns(center=Vector((0,0,0)),H=0.55,ao_lo=0.66,radw=0.5)
+    for i,c in enumerate(_hb_crowns(rng,crowns,R)):
+        a0=rng.uniform(0,6.28)
+        for j in range(5 if i==0 else 4):                         # the rosette, lying out flat
+            L=rng.uniform(0.17,0.24); wg_leaf(k,c,a0+j*2*math.pi/(5 if i==0 else 4)+rng.uniform(-0.3,0.3),L,L*0.5,rng,nfn,aofn,rows=3,
+                                               uvr=AR_UV["leaf"],mi=HERBS_CH3,e0r=(15,28),e1r=(-12,2))
+        for m in range(1 if rng.random()<0.6 else 2):
+            o=Vector((c.x,c.y,0.0)); o=o.normalized() if o.length>0.05 else Vector((math.cos(a0),math.sin(a0),0.0))
+            o=Quaternion(UP,rng.uniform(-0.6,0.6))@o; H=rng.uniform(0.4,0.6)
+            top=c+o*rng.uniform(0.06,0.12)+Vector((0,0,H)); mid=c+o*0.02+Vector((0,0,H*0.5))
+            hb_strip(k,[c,mid,top],0.016,AR_UV["stalk"],HERBS_CH3,aofn)
+            p=c+(top-c)*0.45; az=math.atan2(o.y,o.x)+math.pi/2
+            for sd in (0,math.pi):                                # a pair of small leaves
+                L=rng.uniform(0.07,0.09); wg_leaf(k,p,az+sd,L,L*0.45,rng,nfn,aofn,rows=2,uvr=AR_UV["leaf"],mi=HERBS_CH3,e0r=(30,45),e1r=(10,25))
+            hb_head(k,top,rng.uniform(0.08,0.1),AR_UV["head"],HERBS_CH3,rng,aofn,face=(o*0.55+UP),tilt=0.12,dome=(0.06,-0.03))
+    k.wind_fn=lambda p: min(1.0,max(0.0,p.z/0.55))
 def make_mushrooms(k,seed,kind="red"):
     rng=random.Random(seed)
     n={"red":4,"brown":6,"glow":7}[kind]
@@ -1447,6 +1673,15 @@ NATURE_SPECS=[
  ("SM_VK_Plant_GoblinHerb",lambda k: make_goblin_herb(k,131),{"bark_ao":None}),
  ("SM_VK_Plant_Ghostpipe",lambda k: make_ghostpipe(k,133),{"bark_ao":None}),
  ("SM_VK_Plant_Fireweed",lambda k: make_fireweed(k,135),{"bark_ao":None}),
+ # the chapter 2 and 3 herbs (2026-10-19): T_VK_HerbsCh2 / T_VK_HerbsCh3
+ ("SM_VK_Plant_Samphire",lambda k: make_samphire(k,137),{"bark_ao":None}),
+ ("SM_VK_Plant_Angelica",lambda k: make_angelica(k,139),{"bark_ao":None}),
+ ("SM_VK_Plant_Monkshood",lambda k: make_monkshood(k,141),{"bark_ao":None}),
+ ("SM_VK_Plant_Feverfew",lambda k: make_feverfew(k,143),{"bark_ao":None}),
+ ("SM_VK_Plant_Houseleek",lambda k: make_houseleek(k,145),{"bark_ao":None}),
+ ("SM_VK_Plant_Edelweiss",lambda k: make_edelweiss(k,147),{"bark_ao":None}),
+ ("SM_VK_Plant_Roseroot",lambda k: make_roseroot(k,149),{"bark_ao":None}),
+ ("SM_VK_Plant_Arnica",lambda k: make_arnica(k,151),{"bark_ao":None}),
  ("SM_VK_Mushrooms_Red",lambda k: make_mushrooms(k,121,"red"),{"bark_ao":None}),
  ("SM_VK_Mushrooms_Brown",lambda k: make_mushrooms(k,123,"brown"),{"bark_ao":None}),
  ("SM_VK_Mushrooms_Glow",lambda k: make_mushrooms(k,125,"glow"),{"bark_ao":None}),
