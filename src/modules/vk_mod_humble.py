@@ -3,7 +3,7 @@
 # Early-game housing for the Village Kit:
 #   * wattle-and-daub wall family (wall top HUM_HW = 2.4, outer timber face y = -0.16)
 #   * cruck thatch gable, thatch smoke vent, low thatch lean-to
-#   * livestock (cow, sheep, pig, goat, draft horse, chickens) + hay rack + wattle coop
+#   * hay rack + wattle coop (the livestock placeholders were removed 2026-10-21; the game has animated ones)
 #   * builders: build_hovel, build_longhouse, build_pigsty, build_sheepfold
 # Executed after vk_helpers in the same namespace: every kit name is available.
 # =============================================================================
@@ -535,235 +535,10 @@ def hum_leanto_thatch_low(k):
     hum_thatch_sheet(k, -1.62, 1.62, 0.22, -2.9, lambda y: z_raft(y) + 0.1, th=0.32, seed=3.0)
 
 
-# ----------------------------------------------------------------- livestock (face +X, origin at the feet)
-def hum_leg(k, top, knee, foot, r_top, r_knee, r_foot, mi=HIDE, lower=None, hoof=COAL, hoof_r=None, hoof_h=0.09, segs=8):
-    lower = mi if lower is None else lower
-    top = Vector(top); knee = Vector(knee); foot = Vector(foot)
-    hum_rod(k, top, knee, r_top, r_knee, segs, mi)
-    _ico(k, knee, r_knee * 1.05, mi if lower == mi else lower, sub=1)
-    hum_rod(k, knee, foot + Vector((0, 0, hoof_h * 0.6)), r_knee, r_foot, segs, lower)
-    if hoof is not None:
-        hr = hoof_r or r_foot * 1.12
-        _cyl(k, (foot.x, foot.y, hoof_h / 2), hr, hr * 0.9, hoof_h, segs, hoof)
-
-
-def hum_animal_cow(k):
-    """chunky Holstein cow: black and white patches, black head with a white blaze, pink muzzle and udder,
-    cream horns, red collar with a bronze bell"""
-    def bmat(n):
-        if n.z < -0.72: return HUM_FUR
-        v = noise.noise(Vector((n.x * 1.6 + 4.3, n.y * 1.6 + 1.1, n.z * 1.6 + 7.7)))
-        return COAL if v > 0.1 else HUM_FUR
-
-    def bwarp(p):
-        u = p.x / 0.94
-        if p.z > 0: p.z -= 0.07 * (1 - u * u)                          # sway back
-        if p.z > 0 and u < -0.4: p.z += 0.09 * (-u - 0.4) / 0.6         # hip bones
-        if p.z < 0: p.z *= 1.0 + 0.14 * (1 - u * u)                    # round belly
-        return p
-    hum_sq(k, (0, 0, 1.06), (0.92, 0.45, 0.45), e=0.86, nu=14, nv=9, mat=bmat, warp=bwarp)
-    hum_sq(k, (0.8, 0, 1.14), (0.3, 0.3, 0.34), e=0.85, nu=10, nv=6,
-           mat=lambda n: HUM_FUR if n.z < -0.3 else COAL)                                                  # neck/shoulder
-    hum_sq(k, (0.92, 0, 0.84), (0.15, 0.13, 0.2), e=0.9, nu=6, nv=4, mi=HUM_FUR)                           # dewlap
-    hc = Vector((1.16, 0, 1.2)); a = 0.62; d = Vector((math.cos(a), 0, -math.sin(a)))
-    R = Matrix.Rotation(a, 3, "Y")
-    hum_sq(k, hc, (0.31, 0.22, 0.23), e=0.75, nu=12, nv=7, rot=R,
-           mat=lambda n: HUM_FUR if (n.z > 0.3 and abs(n.y) < 0.42) else COAL)
-    mz = hc + d * 0.28
-    hum_sq(k, mz, (0.13, 0.2, 0.16), e=0.8, nu=8, nv=5, mi=PIGSKIN, rot=R)
-    for s in (-1, 1):
-        _ico(k, mz + d * 0.1 + Vector((0.0, s * 0.08, 0.04)), 0.032, VOID, (1, 1, 0.7), sub=1)
-        hum_eye(k, hc + Vector((0.02, s * 0.185, 0.09)), 0.042, out=(0.45, s, 0.15), mi=VOID, white=1.4)
-        # horns: out sideways, tips curling forward and up
-        pts = [hc + Vector(p) for p in ((-0.13, s * 0.12, 0.15), (-0.12, s * 0.32, 0.17), (-0.05, s * 0.46, 0.24), (0.05, s * 0.5, 0.35))]
-        hum_tube(k, pts, [0.075, 0.058, 0.04, 0.014], segs=6, mi=HUM_FUR)
-        _ico(k, pts[-1], 0.02, COAL, sub=1)
-        # ears, below the horns, pink inside
-        hum_sq(k, hc + Vector((-0.12, s * 0.31, 0.05)), (0.08, 0.14, 0.045), e=0.9, nu=8, nv=5, mi=COAL,
-               rot=Matrix.Rotation(-s * 0.3, 3, "X"))
-        hum_sq(k, hc + Vector((-0.1, s * 0.33, 0.052)), (0.05, 0.1, 0.02), e=0.9, nu=6, nv=4, mi=PIGSKIN,
-               rot=Matrix.Rotation(-s * 0.3, 3, "X"))
-    for i, (x, y) in enumerate(((0.0, 0), (-0.05, 0.07), (-0.04, -0.07))):
-        _ico(k, hc + Vector((x - 0.1, y, 0.22)), 0.075, COAL, sub=1, jit=0.012, seed=i)       # forelock
-    # legs
-    for s in (-1, 1):
-        hum_leg(k, (0.58, s * 0.25, 0.95), (0.6, s * 0.25, 0.48), (0.6, s * 0.25, 0.0), 0.14, 0.1, 0.09, mi=HUM_FUR)
-        hum_leg(k, (-0.6, s * 0.25, 1.0), (-0.7, s * 0.25, 0.5), (-0.62, s * 0.25, 0.0), 0.16, 0.105, 0.09, mi=HUM_FUR)
-    # udder
-    hum_sq(k, (-0.42, 0, 0.66), (0.21, 0.18, 0.14), e=0.9, nu=10, nv=6, mi=PIGSKIN)
-    for sx in (-1, 1):
-        for sy in (-1, 1): hum_rod(k, (-0.42 + sx * 0.08, sy * 0.07, 0.57), (-0.42 + sx * 0.08, sy * 0.07, 0.48), 0.027, 0.02, 5, PIGSKIN)
-    # tail with tuft
-    hum_tube(k, [(-0.92, 0, 1.34), (-1.0, 0, 1.2), (-1.02, 0.01, 0.92), (-1.0, 0.03, 0.68)], 0.035, segs=6, mi=HUM_FUR)
-    _ico(k, (-1.0, 0.03, 0.6), 0.08, COAL, (0.8, 0.8, 1.5), sub=2, jit=0.012, seed=2)
-    # red collar and bronze bell
-    col = [(0.9 + 0.07 * math.sin(a_), 0.315 * math.cos(a_), 1.1 + 0.35 * math.sin(a_)) for a_ in [2 * math.pi * i / 11 for i in range(12)]]
-    hum_tube(k, col, 0.045, segs=6, mi=CLOTH_A)
-    lathe(k, [(0.03, 0.0), (0.07, -0.03), (0.078, -0.12), (0.115, -0.21), (0.0, -0.21)], center=(0.85, 0, 0.77), segs=8, mi=BRONZE)
-
-
-def hum_animal_sheep(k):
-    """fluffy cream fleece, black face and legs"""
-    def wool(n):
-        return 1.0 + 0.075 * noise.noise(Vector((n.x * 3.4 + 2, n.y * 3.4 + 5, n.z * 3.4 + 1))) + 0.04 * math.sin(8 * n.x + 2) * math.sin(7 * n.y + 1)
-    hum_sq(k, (0, 0, 0.66), (0.56, 0.4, 0.35), e=0.85, nu=16, nv=10, mi=CLOTH_B, disp=wool)
-    hc = Vector((0.6, 0, 0.84)); a = 0.5; d = Vector((math.cos(a), 0, -math.sin(a))); R = Matrix.Rotation(a, 3, "Y")
-    hum_sq(k, hc, (0.2, 0.13, 0.14), e=0.8, nu=10, nv=6, mi=COAL, rot=R)
-    _ico(k, hc + Vector((-0.07, 0, 0.12)), 0.13, CLOTH_B, (1.0, 1.1, 0.75), sub=2, jit=0.015, seed=3)       # wool cap
-    for s in (-1, 1):
-        hum_sq(k, hc + Vector((-0.06, s * 0.17, 0.05)), (0.05, 0.12, 0.035), e=0.9, nu=8, nv=5, mi=COAL,
-               rot=Matrix.Rotation(s * 0.45, 3, "X"))
-        hum_eye(k, hc + Vector((0.05, s * 0.11, 0.05)), 0.03, out=(0.3, s, 0.1), mi=HUM_FUR, hl=False)
-        _ico(k, hc + Vector((0.07, s * 0.13, 0.05)), 0.016, VOID, sub=1)
-        for x in (0.3, -0.3):
-            hum_leg(k, (x, s * 0.17, 0.5), (x + 0.01, s * 0.17, 0.24), (x, s * 0.17, 0.0), 0.05, 0.042, 0.038, mi=COAL, hoof=COAL, hoof_h=0.06)
-    _ico(k, (-0.58, 0, 0.72), 0.1, CLOTH_B, (0.8, 0.9, 1.1), sub=2, jit=0.01, seed=6)
-
-
-def hum_animal_pig(k):
-    """round pink pig with muddy socks, flappy ears and a curly tail"""
-    def pmat(n):
-        v = noise.noise(Vector((n.x * 2.6 + 1, n.y * 2.6 + 3, n.z * 2.6)))
-        return SOIL if (n.z < -0.3 and v > 0.05) or (n.z < -0.75) else PIGSKIN
-
-    def pwarp(p):
-        u = p.x / 0.62
-        f = 1.0 + 0.06 * u
-        p.y *= f; p.z *= f
-        return p
-    hum_sq(k, (0, 0, 0.48), (0.62, 0.37, 0.35), e=0.85, nu=16, nv=10, mat=pmat, warp=pwarp)
-    hc = Vector((0.58, 0, 0.52))
-    hum_sq(k, hc, (0.24, 0.27, 0.26), e=0.9, nu=12, nv=8, mi=PIGSKIN)
-    _cyl(k, (0.82, 0, 0.47), 0.13, 0.12, 0.16, 12, PIGSKIN, rot=Matrix.Rotation(math.pi / 2, 4, "Y"))
-    for s in (-1, 1):
-        _ico(k, (0.9, s * 0.045, 0.47), 0.03, VOID, (0.6, 1, 1.3), sub=1)
-        hum_eye(k, (0.74, s * 0.15, 0.62), 0.035, out=(0.5, s, 0.1))
-        k.box((0.64, s * 0.18, 0.76), (0.16, 0.18, 0.035), PIGSKIN, rot=(s * 0.5, -0.9, 0), bevel=0.015)
-        for x in (0.32, -0.34):
-            hum_leg(k, (x, s * 0.2, 0.35), (x, s * 0.2, 0.18), (x, s * 0.2, 0.0), 0.085, 0.07, 0.065, mi=PIGSKIN, lower=SOIL, hoof=COAL, hoof_h=0.05)
-    pts = []
-    for i in range(14):
-        t = i / 13
-        pts.append((-0.62 - 0.12 * t, 0.055 * math.cos(2 * math.pi * 1.6 * t), 0.62 + 0.055 * math.sin(2 * math.pi * 1.6 * t) + 0.05 * t))
-    hum_tube(k, pts, 0.022, segs=5, mi=PIGSKIN)
-
-
-def hum_animal_goat(k):
-    """brown goat with a black dorsal stripe, dark legs, swept-back horns, beard and amber eyes"""
-    def gmat(n):
-        if n.z > 0.72 and abs(n.y) < 0.35: return COAL
-        if n.z < -0.6: return HUM_FUR
-        return HIDE
-    hum_sq(k, (0, 0, 0.64), (0.46, 0.23, 0.25), e=0.72, nu=14, nv=9, mat=gmat)
-    hum_sq(k, (0.4, 0, 0.84), (0.13, 0.12, 0.22), e=0.85, nu=10, nv=6, mi=HIDE, rot=Matrix.Rotation(0.55, 3, "Y"))
-    hc = Vector((0.58, 0, 1.03)); a = 0.75; d = Vector((math.cos(a), 0, -math.sin(a))); R = Matrix.Rotation(a, 3, "Y")
-    hum_sq(k, hc, (0.19, 0.1, 0.1), e=0.8, nu=10, nv=6, mi=HIDE, rot=R)
-    hum_sq(k, hc + d * 0.17, (0.07, 0.08, 0.07), e=0.9, nu=8, nv=5, mi=HUM_FUR, rot=R)
-    hum_sq(k, hc + d * 0.06 + Vector((0.0, 0, -0.13)), (0.035, 0.035, 0.08), e=0.9, nu=6, nv=4, mi=HUM_FUR,
-           rot=Matrix.Rotation(-0.25, 3, "Y"))                                                            # beard tuft
-    for s in (-1, 1):
-        pts = [hc + Vector(p) for p in ((-0.04, s * 0.05, 0.08), (-0.06, s * 0.07, 0.19), (-0.13, s * 0.1, 0.27), (-0.23, s * 0.12, 0.28), (-0.29, s * 0.13, 0.22))]
-        hum_tube(k, pts, [0.035, 0.03, 0.025, 0.017, 0.008], segs=6, mi=COAL)
-        hum_sq(k, hc + Vector((-0.07, s * 0.14, 0.04)), (0.04, 0.1, 0.03), e=0.9, nu=8, nv=5, mi=HIDE, rot=Matrix.Rotation(-s * 0.2, 3, "X"))
-        _ico(k, hc + Vector((0.0, s * 0.095, 0.04)), 0.03, YELLOW, sub=1)
-        _ico(k, hc + Vector((0.012, s * 0.115, 0.04)), 0.014, COAL, (1, 0.6, 1.3), sub=1)
-        for x in (0.26, -0.28):
-            hum_leg(k, (x, s * 0.12, 0.52), (x + 0.01, s * 0.12, 0.26), (x, s * 0.12, 0.0), 0.05, 0.04, 0.035, mi=HIDE, lower=COAL, hoof=COAL, hoof_h=0.05)
-    hum_rod(k, (-0.44, 0, 0.74), (-0.52, 0, 0.86), 0.04, 0.02, 6, HIDE)
-
-
-def hum_animal_horse(k):
-    """draft horse: buckskin body with black points (mane, tail, lower legs), white blaze,
-    white feathered fetlocks, dark leather collar"""
-    def bwarp(p):
-        u = p.x / 0.92
-        if p.z > 0: p.z -= 0.06 * (1 - u * u)                  # saddle dip
-        if p.z > 0 and u < -0.45: p.z += 0.06 * (-u - 0.45) / 0.55
-        f = 1.0 + 0.08 * max(0.0, u)                             # deep chest
-        p.y *= f
-        if p.z < 0: p.z *= f
-        return p
-    hum_sq(k, (0, 0, 1.28), (0.95, 0.43, 0.47), e=0.82, nu=14, nv=9, mi=HIDE, warp=bwarp)
-    # thick arched neck as a tapered tube (withers -> poll)
-    npts = [Vector(p) for p in ((0.5, 0, 1.5), (0.78, 0, 1.84), (0.98, 0, 2.06), (1.14, 0, 2.22))]
-    nr = [0.36, 0.3, 0.25, 0.2]
-    hum_tube(k, npts, nr, segs=10, mi=HIDE)
-    hc = Vector((1.33, 0, 2.1)); a = 1.08; d = Vector((math.cos(a), 0, -math.sin(a))); R = Matrix.Rotation(a, 3, "Y")
-
-    def hmat(n): return HUM_FUR if (n.z > 0.5 and abs(n.y) < 0.38) else HIDE
-    hum_sq(k, hc, (0.37, 0.17, 0.2), e=0.75, nu=12, nv=7, mat=hmat, rot=R)
-    mz = hc + d * 0.31
-    hum_sq(k, mz, (0.15, 0.165, 0.16), e=0.8, nu=8, nv=5, mi=HUM_FUR, rot=R)
-    for s in (-1, 1):
-        _ico(k, mz + d * 0.1 + Vector((0.07, s * 0.08, 0.0)), 0.034, VOID, (1, 1, 0.7), sub=1)
-        hum_eye(k, hc + Vector((-0.08, s * 0.17, 0.08)), 0.04, out=(0.3, s, 0.1), mi=VOID, white=1.3)
-        hum_rod(k, hc + Vector((-0.24, s * 0.08, 0.2)), hc + Vector((-0.24, s * 0.12, 0.42)), 0.065, 0.012, 6, HIDE)
-        for (x0, xk, xf) in ((0.6, 0.63, 0.63), (-0.62, -0.74, -0.66)):
-            hum_leg(k, (x0, s * 0.24, 1.1), (xk, s * 0.24, 0.52), (xf, s * 0.24, 0.0), 0.2, 0.135, 0.12, mi=HIDE, lower=COAL, hoof=COAL, hoof_r=0.15, hoof_h=0.1, segs=7)
-            _cyl(k, (xf, s * 0.24, 0.21), 0.2, 0.13, 0.24, 9, HUM_FUR)
-            for i in range(3):
-                aa = 2 * math.pi * i / 3 + 0.4
-                _ico(k, (xf + math.cos(aa) * 0.13, s * 0.24 + math.sin(aa) * 0.13, 0.14), 0.075, HUM_FUR, (1, 1, 0.8), sub=1)
-    # mane along the crest, forelock, tail
-    up = Vector((-0.74, 0, 0.67))
-    mane = [npts[i] + up * nr[i] * 0.88 for i in range(4)] + [hc + Vector((-0.12, 0, 0.3))]
-    hum_tube(k, mane, [0.1, 0.13, 0.13, 0.12, 0.09], segs=8, mi=COAL, lump=0.3, seed=1.0)
-    for i in range(3):
-        p = (mane[i] + mane[i + 1]) / 2
-        _ico(k, p + Vector((0.03, 0.09 * (-1) ** i, -0.1)), 0.09, COAL, (1.0, 0.6, 1.4), sub=1, jit=0.01, seed=i)
-    _ico(k, hc + Vector((-0.02, 0, 0.26)), 0.1, COAL, (1.5, 0.8, 0.6), sub=1)
-    hum_tube(k, [(-0.92, 0, 1.6), (-1.08, 0, 1.46), (-1.16, 0, 1.14), (-1.14, 0, 0.8), (-1.08, 0, 0.56)],
-             [0.1, 0.13, 0.15, 0.14, 0.05], segs=8, mi=COAL, lump=0.25, seed=2.0)
-    # padded draft collar around the neck base, bronze hames knobs
-    ax = Vector((0.74, 0, 0.67)).normalized(); w = Vector((0.67, 0, -0.74)); C = Vector((0.72, 0, 1.76))
-    col = [C + Vector((0, math.cos(a_) * 0.36, 0)) + w * math.sin(a_) * 0.4 for a_ in [2 * math.pi * i / 14 for i in range(15)]]
-    hum_tube(k, col, 0.09, segs=6, mi=WOOD)
-    for s in (-1, 1): hum_rod(k, C + Vector((0, s * 0.4, 0)) - w * 0.18, C + Vector((0, s * 0.38, 0)) - w * 0.46, 0.035, 0.02, 5, BRONZE)
-
-
-def hum_hen(k, c, rot, col, seed=0, rooster=False, peck=False):
-    sub = Kit(); s = 1.3 if rooster else 1.0
-    hum_sq(sub, (0, 0, 0.25 * s), (0.17 * s, 0.125 * s, 0.13 * s), e=0.9, nu=8, nv=5, mi=col,
-           warp=lambda p: Vector((p.x, p.y, p.z + (0.35 * max(0.0, -p.x)) * (1 if p.z > 0 else 0.4))))
-    tail = COAL if rooster else col
-    hum_sq(sub, (-0.16 * s, 0, 0.37 * s), (0.045 * s, 0.06 * s, 0.1 * s), e=0.9, nu=6, nv=4, mi=tail, rot=Matrix.Rotation(-0.5, 3, "Y"))
-    if rooster:
-        for i, yy in enumerate((-0.025, 0.0, 0.025)):
-            pts = [(-0.17 * s, yy, 0.4 * s), (-0.24 * s, yy, 0.49 * s), (-0.31 * s, yy, 0.45 * s), (-0.33 * s, yy, 0.35 * s)]
-            hum_tube(sub, pts, [0.02, 0.018, 0.013, 0.004], segs=4, mi=COAL if i != 1 else LEAF)
-    hp = Vector((0.2 * s, 0, 0.3 * s)) if peck else Vector((0.14 * s, 0, 0.44 * s))
-    neck = Vector((0.1 * s, 0, 0.33 * s))
-    hum_sq(sub, (neck + hp) / 2, (0.055 * s, 0.055 * s, 0.07 * s), e=0.9, nu=6, nv=4, mi=col,
-           rot=Matrix.Rotation(-0.6 if peck else 0.3, 3, "Y"))
-    hum_sq(sub, hp, (0.07 * s, 0.06 * s, 0.07 * s), e=0.9, nu=6, nv=4, mi=col)
-    fwd = Vector((0.6, 0, -0.8)).normalized() if peck else Vector((1, 0, 0))
-    up = Vector((0.8, 0, 0.6)).normalized() if peck else Vector((0, 0, 1))
-    hum_rod(sub, hp + fwd * 0.055 * s, hp + fwd * 0.11 * s, 0.022 * s, 0.004, 4, YELLOW)
-    for i in range(1 if not rooster else 2):
-        _ico(sub, hp + up * 0.07 * s + fwd * (0.0 - 0.035 * i) * s, (0.034 if not rooster else 0.038) * s, APPLE, (1.2, 0.8, 1.0), sub=1)
-    _ico(sub, hp + fwd * 0.05 * s - up * 0.05 * s, 0.02 * s, APPLE, (1, 0.7, 1.4), sub=1)
-    for sy in (-1, 1):
-        sub.box(hp + Vector((0.025 * s, sy * 0.055 * s, 0.015 * s)), (0.022 * s, 0.012, 0.022 * s), COAL, bevel=0.0)
-        hum_sq(sub, (-0.02 * s, sy * 0.11 * s, 0.27 * s), (0.1 * s, 0.03 * s, 0.07 * s), e=0.9, nu=6, nv=4, mi=col,
-               rot=Matrix.Rotation(-0.25, 3, "Y"))
-        hum_rod(sub, (0.0, sy * 0.045, 0.15 * s), (0.01, sy * 0.05, 0.0), 0.012 * s, 0.01, 3, YELLOW)
-        sub.box((0.04, sy * 0.05, 0.008), (0.08, 0.05, 0.016), YELLOW, bevel=0.0)
-    merge_kit(k, sub, Matrix.Translation(c) @ Matrix.Rotation(rot, 4, "Z"))
-
-
-def hum_animal_chickens(k):
-    """four hens, a rooster and a feed dish (fits 2.0 x 1.6)"""
-    rnd = random.Random(12)
-    spots = [(-0.7, -0.5, 0.4, HUM_FUR, False, True), (0.35, -0.7, 2.2, BREAD, False, False), (0.8, 0.25, 3.6, HUM_FUR, False, True),
-             (-0.75, 0.45, 5.0, BREAD, False, False), (0.15, 0.1, 0.9, PUMPKIN, True, False)]
-    for i, (x, y, r_, col, roo, peck) in enumerate(spots):
-        hum_hen(k, (x, y, 0), r_, col, seed=i, rooster=roo, peck=peck)
-    _cyl(k, (-0.3, -0.05, 0.04), 0.2, 0.24, 0.08, 10, WOOD)
-    _cyl(k, (-0.3, -0.05, 0.085), 0.19, 0.19, 0.01, 10, HAY)
-    for i in range(3):
-        a_ = rnd.uniform(0, 6.28); rr = rnd.uniform(0.25, 0.55)
-        _ico(k, (-0.3 + math.cos(a_) * rr, -0.05 + math.sin(a_) * rr, 0.01), 0.025, HAY, (1, 1, 0.4), sub=1)
-
+# ----------------------------------------------------------------- livestock: none (2026-10-21)
+# The static SM_VK_Animal_* placeholders (cow, sheep, pig, goat, draft horse, chickens) were removed: the game places
+# rigged, animated farm animals from the Beasts repo in the pens and yards instead, and the builders below leave
+# them empty (each removed animal's random draw stays, so the rest of its yard keeps its place).
 
 # ----------------------------------------------------------------- animal props
 def hum_prop_hayrack(k):
@@ -952,7 +727,7 @@ def build_hovel(coll, origin, seed=0, variant="cruck"):
     else:
         P("SM_VK_Prop_Woodpile", -4.45, 0.35, 0, 90, HUM_STYLE)
     P("SM_VK_Prop_ChickenCoop_Wattle", -5.5, -2.55, 0, -90)
-    P("SM_VK_Animal_Chickens", -4.5, -4.75, 0, r.uniform(0, 360))
+    r.uniform(0, 360)  # was SM_VK_Animal_Chickens (removed 2026-10-21): the draw keeps the rest in place
     P("SM_VK_Prop_GardenBed", -0.9, -5.0, 0, 0)
     P("SM_VK_Prop_Bench", 1.35, -3.62, 0, 0)
     P("SM_VK_Prop_Planter", 2.65, -3.5, 0, 0)
@@ -962,7 +737,7 @@ def build_hovel(coll, origin, seed=0, variant="cruck"):
 
 
 def build_longhouse(coll, origin, seed=0):
-    """Longhouse (T1, 8 beds + 4 livestock): 5x2 thatch 'loaf' on 2.4 m daub walls, vents in bays 1 and 3.
+    """Longhouse (T1, 8 beds + a byre and paddock for 4 animals, left empty): 5x2 thatch 'loaf' on 2.4 m daub walls, vents in bays 1 and 3.
     People end L (cruck gable, door at y +1.5), byre end R (plank gable, byre door at y -1.5).
     Lot 8x3 cells: x -10.5..13.5, y -6..3; fenced paddock x 7.5..13.5, y -6..3 in front of the byre door,
     gate on the far side (x 13.5)."""
@@ -978,14 +753,14 @@ def build_longhouse(coll, origin, seed=0):
     P("SM_VK_Prop_HayRack", 10.6, 1.75, 0, 0)
     P("SM_VK_Prop_Trough", 12.75, -3.9, 0, 90)
     P("SM_VK_Prop_HayBale", 8.7, -5.05, 0, 12)
-    P("SM_VK_Animal_Cow", 9.9, -2.7, 0, 195 + r.uniform(-12, 12))
-    P("SM_VK_Animal_Horse", 11.9, -0.3, 0, 250 + r.uniform(-10, 10))
-    P("SM_VK_Animal_Sheep", 10.9, -4.9, 0, 20 + r.uniform(-20, 20))
-    P("SM_VK_Animal_Sheep", 12.4, -1.9, 0, 205 + r.uniform(-20, 20))
+    r.uniform(-12, 12)  # was SM_VK_Animal_Cow (removed 2026-10-21): the draw keeps the rest in place
+    r.uniform(-10, 10)  # was SM_VK_Animal_Horse (removed 2026-10-21): the draw keeps the rest in place
+    r.uniform(-20, 20)  # was SM_VK_Animal_Sheep (removed 2026-10-21): the draw keeps the rest in place
+    r.uniform(-20, 20)  # was SM_VK_Animal_Sheep (removed 2026-10-21): the draw keeps the rest in place
     # people end: yard x -10.5..-7.5, front strip y -6..-3
     P("SM_VK_Prop_Bench", -8.05, -0.4, 0, -90)
     P("SM_VK_Prop_ChickenCoop_Wattle", -9.35, -2.6, 0, 180)
-    P("SM_VK_Animal_Chickens", -9.3, -4.9, 0, r.uniform(0, 360))
+    r.uniform(0, 360)  # was SM_VK_Animal_Chickens (removed 2026-10-21): the draw keeps the rest in place
     P("SM_VK_Prop_GardenBed", -4.5, -5.0, 0, 0)
     P("SM_VK_Prop_Woodpile", 1.5, -4.95, 0, 0, HUM_STYLE)
     P("SM_VK_Deco_Bush", -8.9, 2.3, 0, r.uniform(0, 360))
@@ -995,7 +770,7 @@ def build_longhouse(coll, origin, seed=0):
 
 def build_pigsty(coll, origin, seed=0):
     """Pig sty (3x3 lot, x/y -4.5..4.5): 6x6 m yard in low dry-stone walls with a gate in front (-Y),
-    wattle back wall carrying two thatch lean-tos (shelter over the back half), mud wallow, trough, 3 pigs"""
+    wattle back wall carrying two thatch lean-tos (shelter over the back half), mud wallow, trough (no pigs since 2026-10-21: the game places animated ones)"""
     r = random.Random(seed); parts = []
 
     def P(nm, x, y, z=0.0, rot=0.0, sty=None): o = place_v(coll, nm, x, y, z, rot, origin, sty or {}); parts.append(o); return o
@@ -1008,9 +783,9 @@ def build_pigsty(coll, origin, seed=0):
     for (x, y) in ((-3.0, 3.0), (3.0, 3.0), (-3.0, -3.0), (3.0, -3.0), (0.0, -3.0), (-3.0, 0.0), (3.0, 0.0)):
         P("SM_VK_LowWall_Post", x, y, 0, 0)
     P("SM_VK_Deco_MudWallow", 0.3, -0.9, 0, r.uniform(-15, 15))
-    P("SM_VK_Animal_Pig", -0.5, -1.2, 0, 20 + r.uniform(-20, 20))
-    P("SM_VK_Animal_Pig", 1.3, -0.3, 0, 150 + r.uniform(-20, 20))
-    P("SM_VK_Animal_Pig", -1.0, 1.7, 0, 260 + r.uniform(-20, 20))
+    r.uniform(-20, 20)  # was SM_VK_Animal_Pig (removed 2026-10-21): the draw keeps the rest in place
+    r.uniform(-20, 20)  # was SM_VK_Animal_Pig (removed 2026-10-21): the draw keeps the rest in place
+    r.uniform(-20, 20)  # was SM_VK_Animal_Pig (removed 2026-10-21): the draw keeps the rest in place
     P("SM_VK_Prop_Trough", -1.55, -2.05, 0, 0)
     P("SM_VK_Prop_Sacks", 3.9, -2.2, 0, 30)
     P("SM_VK_Prop_HayBale", 3.9, 1.9, 0, 80)
@@ -1020,7 +795,7 @@ def build_pigsty(coll, origin, seed=0):
 
 def build_sheepfold(coll, origin, seed=0):
     """Sheepfold (3x3 lot, x/y -4.5..4.5): fenced pen with a wattle back wall (daub side into the pen) carrying
-    two thatch lean-to shelters, hay rack, trough, five sheep and a goat; gate in the front fence (-Y)"""
+    two thatch lean-to shelters, hay rack, trough (no sheep since 2026-10-21); gate in the front fence (-Y)"""
     r = random.Random(seed); parts = []
 
     def P(nm, x, y, z=0.0, rot=0.0, sty=None): o = place_v(coll, nm, x, y, z, rot, origin, sty or {}); parts.append(o); return o
@@ -1034,8 +809,8 @@ def build_sheepfold(coll, origin, seed=0):
     P("SM_VK_Prop_HayRack", -3.0, 2.65, 0, 0)
     P("SM_VK_Prop_Trough", 2.2, -3.3, 0, 0)
     for i, (x, y) in enumerate(((-1.8, -1.2), (0.4, -0.2), (1.6, -2.0), (-0.6, 1.4), (2.4, 2.3))):
-        P("SM_VK_Animal_Sheep", x, y, 0, r.uniform(0, 360))
-    P("SM_VK_Animal_Goat", -3.1, -2.8, 0, r.uniform(0, 360))
+        r.uniform(0, 360)  # was SM_VK_Animal_Sheep (removed 2026-10-21): the draw keeps the rest in place
+    r.uniform(0, 360)  # was SM_VK_Animal_Goat (removed 2026-10-21): the draw keeps the rest in place
     P("SM_VK_Prop_HayBale", 3.3, 1.2, 0, 10)
     return parts
 
@@ -1055,12 +830,6 @@ WS_SPECS = [
     ("SM_VK_RoofThatch_Gable_Cruck", hum_roof_thatch_cruck, _hum_nw),
     ("SM_VK_RoofThatch_Vent", hum_roof_thatch_vent, _hum_nw),
     ("SM_VK_LeanTo_Thatch_Low", hum_leanto_thatch_low, _hum_ng),
-    ("SM_VK_Animal_Cow", hum_animal_cow, _hum_ng),
-    ("SM_VK_Animal_Sheep", hum_animal_sheep, _hum_ng),
-    ("SM_VK_Animal_Pig", hum_animal_pig, _hum_ng),
-    ("SM_VK_Animal_Goat", hum_animal_goat, _hum_ng),
-    ("SM_VK_Animal_Horse", hum_animal_horse, _hum_ng),
-    ("SM_VK_Animal_Chickens", hum_animal_chickens, _hum_nw),
     ("SM_VK_Prop_HayRack", hum_prop_hayrack, _hum_ng),
     ("SM_VK_Prop_ChickenCoop_Wattle", hum_prop_coop_wattle, _hum_ng),
     ("SM_VK_Deco_MudWallow", hum_deco_mudwallow, _hum_ng),

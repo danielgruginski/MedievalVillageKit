@@ -1804,6 +1804,22 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     2026-10-20): make them there first, swap the game's placements (Hamlet 9, Saltmere_Farms 7, ShepherdDowns 2,
     Greywall 1, KitSeeThroughCaps), then take them out of the kit (vk_mod_humble's farmsteads, Hovel_Cruck/Hip).
 
+138. 2026-10-21 (the user: "place those on the game and remove the placeholder animal props"). The six farm animals
+    (`SM_VK_Animal_Cow/Sheep/Pig/Goat/Horse/Chickens`) are out of the kit: the game uses Beasts' rigged, animated ones
+    (Beasts repo, farm_*.py; MedievalSetting `Assets/Game/Farm/Animal_*.prefab`, looping idle/graze/call/sleep in place).
+    `vk_mod_humble`: the livestock section (`hum_leg`, `hum_hen`, six `hum_animal_*`) and their six WS_SPECS rows are
+    gone; the hovel, longhouse, pigsty and sheepfold builders leave their pens and yards empty, each removed animal's
+    `r.uniform` draw kept so the bushes and weeds stay where they were. In the open medievalDiorama.blend: text pushed,
+    the 6 masters + 40 placed copies (VK_ValleyTown, VKX_Structures, VKX_Catalog_Exterior) deleted, NOT saved by me.
+    Package (unversioned): the animal placements dropped from Data/Structures (Hovel_Cruck/Hip/LeanTo, Longhouse, Pigsty,
+    Sheepfold), Data/Levels (VK_ValleyTown, Structures_Showcase, Catalog_KitExterior) and Data/pieces.json; the six
+    structure prefabs and three level scenes in Generated had the nested instances stripped (exactly what Build
+    Structures would give, without re-applying three weeks of builder changes to all 45); the fbx + piece prefabs
+    moved out of the package. KitSolid's soft "Animal_Chickens" stays (the game's hen flock has that name). The game's
+    layouts place the animals that stood in the pens (Tools~ `*_layout.py` + JSON, with "z" = the old floor height).
+    Catalogue regenerated (1399 pieces). Stale: two baked caps in the game's KitSeeThroughCaps.asset
+    (SM_VK_Animal_Horse/Cow...Cap), dropped at the next caps bake.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

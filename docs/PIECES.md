@@ -1,6 +1,6 @@
 # Kit pieces
 
-Generated on 2026-10-20 by `tools/pieces_catalogue.py` from the Unity package's `Data/pieces.json` (what was last
+Generated on 2026-10-21 by `tools/pieces_catalogue.py` from the Unity package's `Data/pieces.json` (what was last
 exported), with a thumbnail per piece from `tools/render_thumbs.py`. Do not edit by hand: re-export, then run both.
 Browse it with pictures in [catalogue/index.html](catalogue/index.html) (open the file in a browser).
 
@@ -8,26 +8,13 @@ Size is the piece's bounding box in metres in Blender's axes (x across, y deep, 
 the exported triangle count. Mats is the number of materials on the piece. Prefabs are at
 `Packages/com.danielgruginski.medievalkit/Generated/Prefabs/<kit>/<category>/<name>.prefab`.
 
-**1405 pieces**: Building kit 464, Nature 61, Terrain tiles 33, Interior kit 847. Not listed: 37 meshes unique to one map (`U_VKV_*` valley chunks, paving and water; `U_VARI_*`).
+**1399 pieces**: Building kit 458, Nature 61, Terrain tiles 33, Interior kit 847. Not listed: 37 meshes unique to one map (`U_VKV_*` valley chunks, paving and water; `U_VARI_*`).
 
-## Building kit (`SM_VK_*`): 464
+## Building kit (`SM_VK_*`): 458
 
 Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules`).
 
-[Animal](#building-animal) 6 · [Awning](#building-awning) 1 · [Balcony](#building-balcony) 1 · [Banner](#building-banner) 3 · [BellTower](#building-belltower) 1 · [Boat](#building-boat) 1 · [BreadOven](#building-breadoven) 1 · [Breakwater](#building-breakwater) 2 · [Bridge](#building-bridge) 7 · [BuildSite](#building-buildsite) 1 · [Cargo](#building-cargo) 2 · [Ceiling](#building-ceiling) 1 · [Chapel](#building-chapel) 4 · [Chimney](#building-chimney) 5 · [Corner](#building-corner) 14 · [Crop](#building-crop) 9 · [Deco](#building-deco) 6 · [Def](#building-def) 8 · [Dock](#building-dock) 4 · [Emblem](#building-emblem) 10 · [Entrance](#building-entrance) 6 · [Foundation](#building-foundation) 3 · [Gallery](#building-gallery) 3 · [Gatehouse](#building-gatehouse) 3 · [Grave](#building-grave) 3 · [GuardTower](#building-guardtower) 1 · [Harbour](#building-harbour) 12 · [InnerCorner](#building-innercorner) 6 · [Jetty](#building-jetty) 3 · [Kiln](#building-kiln) 1 · [LeanTo](#building-leanto) 3 · [LowWall](#building-lowwall) 4 · [MarketHall](#building-markethall) 1 · [MarketStall](#building-marketstall) 15 · [Mill](#building-mill) 1 · [Mine](#building-mine) 1 · [Palisade](#building-palisade) 8 · [Parapet](#building-parapet) 2 · [Passage](#building-passage) 1 · [Pier](#building-pier) 4 · [Pile](#building-pile) 30 · [Porch](#building-porch) 1 · [Prop](#building-prop) 120 · [Quarry](#building-quarry) 4 · [Quay](#building-quay) 3 · [Rail](#building-rail) 3 · [RetainingWall](#building-retainingwall) 2 · [Roof](#building-roof) 29 · [RoofS](#building-roofs) 4 · [RoofThatch](#building-roofthatch) 8 · [RoofThatchS](#building-roofthatchs) 3 · [Scaffold](#building-scaffold) 5 · [Ship](#building-ship) 2 · [Sign](#building-sign) 3 · [Smithy](#building-smithy) 2 · [Stair](#building-stair) 2 · [Stockpile](#building-stockpile) 1 · [Stoop](#building-stoop) 1 · [Tent](#building-tent) 2 · [TownWall](#building-townwall) 8 · [Turret](#building-turret) 4 · [Wall](#building-wall) 53 · [WatPosts](#building-watposts) 1 · [WatRoofS](#building-watroofs) 2 · [WaterWheel](#building-waterwheel) 1 · [Windmill](#building-windmill) 2
-
-### <a id="building-animal"></a>Animal: 6
-
-![Animal](catalogue/sheets/building_Animal.jpg)
-
-| Piece | Size (m) | Tris | Mats |
-|---|---|---|---|
-| `SM_VK_Animal_Chickens` | 1.91 × 1.56 × 0.71 | 2,024 | 9 |
-| `SM_VK_Animal_Cow` | 2.61 × 1.03 × 1.57 | 1,992 | 6 |
-| `SM_VK_Animal_Goat` | 1.31 × 0.47 × 1.33 | 1,264 | 4 |
-| `SM_VK_Animal_Horse` | 2.95 × 0.89 × 2.52 | 1,836 | 6 |
-| `SM_VK_Animal_Pig` | 1.67 × 0.74 × 0.85 | 1,254 | 5 |
-| `SM_VK_Animal_Sheep` | 1.45 × 0.83 × 1.07 | 1,172 | 3 |
+[Awning](#building-awning) 1 · [Balcony](#building-balcony) 1 · [Banner](#building-banner) 3 · [BellTower](#building-belltower) 1 · [Boat](#building-boat) 1 · [BreadOven](#building-breadoven) 1 · [Breakwater](#building-breakwater) 2 · [Bridge](#building-bridge) 7 · [BuildSite](#building-buildsite) 1 · [Cargo](#building-cargo) 2 · [Ceiling](#building-ceiling) 1 · [Chapel](#building-chapel) 4 · [Chimney](#building-chimney) 5 · [Corner](#building-corner) 14 · [Crop](#building-crop) 9 · [Deco](#building-deco) 6 · [Def](#building-def) 8 · [Dock](#building-dock) 4 · [Emblem](#building-emblem) 10 · [Entrance](#building-entrance) 6 · [Foundation](#building-foundation) 3 · [Gallery](#building-gallery) 3 · [Gatehouse](#building-gatehouse) 3 · [Grave](#building-grave) 3 · [GuardTower](#building-guardtower) 1 · [Harbour](#building-harbour) 12 · [InnerCorner](#building-innercorner) 6 · [Jetty](#building-jetty) 3 · [Kiln](#building-kiln) 1 · [LeanTo](#building-leanto) 3 · [LowWall](#building-lowwall) 4 · [MarketHall](#building-markethall) 1 · [MarketStall](#building-marketstall) 15 · [Mill](#building-mill) 1 · [Mine](#building-mine) 1 · [Palisade](#building-palisade) 8 · [Parapet](#building-parapet) 2 · [Passage](#building-passage) 1 · [Pier](#building-pier) 4 · [Pile](#building-pile) 30 · [Porch](#building-porch) 1 · [Prop](#building-prop) 120 · [Quarry](#building-quarry) 4 · [Quay](#building-quay) 3 · [Rail](#building-rail) 3 · [RetainingWall](#building-retainingwall) 2 · [Roof](#building-roof) 29 · [RoofS](#building-roofs) 4 · [RoofThatch](#building-roofthatch) 8 · [RoofThatchS](#building-roofthatchs) 3 · [Scaffold](#building-scaffold) 5 · [Ship](#building-ship) 2 · [Sign](#building-sign) 3 · [Smithy](#building-smithy) 2 · [Stair](#building-stair) 2 · [Stockpile](#building-stockpile) 1 · [Stoop](#building-stoop) 1 · [Tent](#building-tent) 2 · [TownWall](#building-townwall) 8 · [Turret](#building-turret) 4 · [Wall](#building-wall) 53 · [WatPosts](#building-watposts) 1 · [WatRoofS](#building-watroofs) 2 · [WaterWheel](#building-waterwheel) 1 · [Windmill](#building-windmill) 2
 
 ### <a id="building-awning"></a>Awning: 1
 
