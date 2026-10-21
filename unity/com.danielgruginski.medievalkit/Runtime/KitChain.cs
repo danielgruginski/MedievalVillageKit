@@ -78,6 +78,11 @@ namespace MedievalKit
 
         public Piece Find(string id) => pieces.Find(p => p.id == id);
 
+        /// <summary>called by Bake (the editor's) once every piece is saved and the navmesh baked: a game puts what it adds to
+        /// the generated pieces here (a quest's way in, a clue by a lair), so a re-bake keeps them; it returns lines for
+        /// Bake's report. Set it from an editor script ([InitializeOnLoad]).</summary>
+        public static Func<KitChain, string> AfterBake;
+
         /// <summary>the piece holding a spawn, or null</summary>
         public Piece WithSpawn(string spawnId) => pieces.Find(p => p.spawns.Contains(spawnId));
 

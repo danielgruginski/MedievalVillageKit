@@ -1819,6 +1819,16 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     layouts place the animals that stood in the pens (Tools~ `*_layout.py` + JSON, with "z" = the old floor height).
     Catalogue regenerated (1399 pieces). Stale: two baked caps in the game's KitSeeThroughCaps.asset
     (SM_VK_Animal_Horse/Cow...Cap), dropped at the next caps bake.
+139. 2026-10-21 (the game's user: "baking a level should allow the inclusion of data that is currently said to be added
+    by hand"). Two package features so a game's hand-made additions survive a rebuild (LEVEL_BUILDING 5.5 and 5.7):
+    `KitVillage` reads a layout's `"links"` (ways in that are no building's door: a trigger box at a spot, `LNK_<id>`,
+    its `spawn` as `SPN_<id>`; KitLink's own defaults where a key is left out) and a prop's `"colliders": false` (the
+    piece's own colliders off, beside `collide`'s box); `KitChain.AfterBake` (a static `Func<KitChain, string>`) is
+    called last by `KitChainEditor.Bake`, after the navmesh, its lines added to the report. MedievalSetting moved its
+    hamlet's well and burrow into Tools~/hamlet_layout.py (a scratch rebuild reproduced the hand-placed spots exactly),
+    Fen's marker into Hamlet_Inn.record.json's `markers`, and sets AfterBake for the HamletCellar chain
+    (Editor/LevelBakeHooks.cs). Checked: offline compiles of MedievalKit.Runtime/.Editor, the game's editor assembly,
+    scratch builds of Hamlet and Hamlet_Inn; not checked: a real re-bake of HamletCellar (its hook not run end to end).
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

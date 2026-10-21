@@ -229,7 +229,7 @@ namespace MedievalKit.Editor
         /// <summary>builds every piece of the chain lined up in world space beside the open scenes, stops if pieces overlap
         /// or a portal is missing, else saves each piece as a scene in a folder named after the asset (next to it), fills
         /// the asset's pieces, adds the scenes to the build settings and writes a play scene (sun, streamer, test walker).
-        /// The open scenes are left as they were.</summary>
+        /// The open scenes are left as they were. Last, <see cref="KitChain.AfterBake"/> (a game's own additions).</summary>
         public static string Bake(KitChain chain)
         {
             var rules = AssetDatabase.LoadAssetAtPath<KitInteriorRules>(KitRoomTools.RulesAsset);
@@ -298,6 +298,11 @@ namespace MedievalKit.Editor
                 UnityEngine.SceneManagement.SceneManager.SetActiveScene(active);
                 UnityEditor.SceneManagement.EditorSceneManager.CloseScene(tmp, true);
                 AssetDatabase.DeleteAsset(scratch);
+            }
+            if (KitChain.AfterBake != null)                                   // the game's own additions to the pieces (a quest's way in)
+            {
+                try { sb.AppendLine(KitChain.AfterBake(chain)); }
+                catch (System.Exception e) { sb.AppendLine($"after bake: {e.Message}"); Debug.LogException(e); }
             }
             return sb.ToString();
         }

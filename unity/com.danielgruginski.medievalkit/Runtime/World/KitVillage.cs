@@ -114,6 +114,7 @@ namespace MedievalKit
             Forest();
             Scatter();
             Markers();
+            Links();
             Encounters();
             Exits();
             Walls();
@@ -735,6 +736,9 @@ namespace MedievalKit
                     else KitSolid.Box(go);                                  // what one bumps into: a signpost's post, not its arms
                 }
                 if (InSea(at) && IsHull(pf.name)) seaHulls.Add((go, at));   // its waterline cut out of the sea
+                if ((bool?)p["colliders"] == false)                          // the piece's own colliders off too (a burrow mound one walks up onto)
+                    foreach (var c in go.GetComponentsInChildren<Collider>(true))
+                        if (Application.isPlaying) Destroy(c); else DestroyImmediate(c);
                 if ((bool?)p["dress"] ?? true) Dress(go, pf.name);
                 occupied.Add((Corners(box, at, deg), (string)p["piece"]));
             }
@@ -1058,6 +1062,38 @@ namespace MedievalKit
             go.transform.localRotation = KitSpawn.FromBearing(bearing);
             var sp = go.AddComponent<KitSpawn>();
             sp.spawnId = id; sp.facingDeg = bearing;
+        }
+
+        /// <summary>ways in and out that are no building's door (layout "links": [{id, at, target, arrive, prompt, size: [w, h,
+        /// d], rot, kind, walkInto, facingMin, spawn: {at, facing}}]; 2026-10-21, a game's well shaft and burrow hole, set by
+        /// hand in the scene until then and lost on a rebuild): a trigger box standing on the ground at the spot (its size, 1.6
+        /// x 2.2 x 1.6 by default; turned by "rot" as a prop is), a KitLink LNK_id on it (KitLink's own defaults where a key is
+        /// left out) and, with "spawn", where one coming back through it stands (SPN_id, its facing a bearing)</summary>
+        void Links()
+        {
+            foreach (var k in L["links"] as JArray ?? new JArray())
+            {
+                string id = (string)k["id"];
+                if (string.IsNullOrEmpty(id) || k["at"] == null) { notes.Add("a link with no id or no spot"); continue; }
+                var at = V(k["at"]);
+                var go = new GameObject("LNK_" + id);
+                go.transform.SetParent(logicT, false);
+                go.transform.localPosition = Local(at.x, at.y, Height(at));
+                go.transform.localRotation = Turn((float?)k["rot"] ?? 0f);
+                var size = k["size"] as JArray;
+                var box = go.AddComponent<BoxCollider>();
+                box.isTrigger = true;
+                box.size = size != null && size.Count >= 3 ? new Vector3((float)size[0], (float)size[1], (float)size[2]) : new Vector3(1.6f, 2.2f, 1.6f);
+                box.center = new Vector3(0f, box.size.y / 2f, 0f);
+                var lk = go.AddComponent<KitLink>();
+                lk.linkId = id; lk.target = (string)k["target"]; lk.arrive = (string)k["arrive"];
+                if (k["kind"] != null) lk.kind = (string)k["kind"];
+                if (k["prompt"] != null) lk.prompt = (string)k["prompt"];
+                if (k["walkInto"] != null) lk.walkInto = (bool)k["walkInto"];
+                if (k["facingMin"] != null) lk.facingMin = (float)k["facingMin"];
+                if (string.IsNullOrEmpty(lk.target)) notes.Add($"link {id}: no target");
+                if (k["spawn"] is JObject sp && sp["at"] != null) SpawnAt(id, V(sp["at"]), (float?)sp["facing"] ?? 0f);
+            }
         }
 
         void Markers()

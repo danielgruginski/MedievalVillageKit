@@ -361,6 +361,20 @@ and puts the walker there (Bake records each piece's spawns in `chain.pieces[i].
 link in that piece. Example: MedievalSetting's `Assets/MedievalKitWorld/HamletCellar.asset`: the inn's cellar
 (hand-made) -> a rat cave (generated, rats, the Rat King's lair) -> a cave network, entered by the inn's stair down.
 
+**A game's own additions to the pieces.** Bake regenerates every piece's scene, so anything a game put into one by
+hand (a quest's way in, a clue by a lair) is gone after it. Put it in `KitChain.AfterBake` instead: Bake calls it last,
+once the pieces are saved and the navmesh baked, with the chain; it returns lines for Bake's report. A spot found on the
+generated ground (beside an encounter, by the rock) is worked out there each time. Set it from an editor script:
+
+```csharp
+[InitializeOnLoad] static class MyBakeHooks
+{
+    static MyBakeHooks() => KitChain.AfterBake = chain => chain.name == "HamletCellar" ? PlaceMyThings(chain) : null;
+}
+```
+
+MedievalSetting's `LevelBakeHooks` puts back Osric's burrow's end in the goblin tunnels and Bram's ledger in the hideout.
+
 ### 5.6 Showcases
 
 Tools > Medieval Kit > Rooms > Build Room / Cave / Dungeon / Interior Showcase write scenes under
@@ -423,12 +437,13 @@ piers, decks, steps: `KitSolid.IsSoft`). The navmesh is baked from colliders, so
 | `clearings` | instead of `clearing`: several lumpy ovals (glades along a path through woods); walls and forest follow their union |
 | `buildings` | `[{id, structure: "Inn" or house: {cells, stories, seed, shape}, at, face: [x, y] or rot, door: {target, arrive, prompt}}]`: structures are the package's `Generated/Structures` (Inn, Chapel, GuardTower, Stable, Barn, Pigsty, Woodcutter, Smithy, Hovel_*, ...) or any kit piece (a cave mouth, `Entrance_CaveMouth` -- dry, for open ground -- or the valley's `Entrance_SpringCave` with its trickle; a cellar trapdoor in open ground, `Entrance_Trapdoor`, its lid on its +Y side, the way in from -Y: face it at a point south of it to put the lid toward a wall north of it: the piece itself is the door); houses come from the house generator |
 | `gardens` | `[{id, at, rot, beds: [cols, rows], crops: [...], fence, gate: N/E/S/W, gatePiece}]`: crop beds (Crop_Cabbage, Carrot, Pumpkin, Lavender, Wheat) fenced |
-| `props` | `[{piece, at, face or rot, collide, z}]`: any kit piece by name (`MarketStall_Tinker`, `Prop_Well`, `Grave_Cross`, `Animal_Horse`...); `z` stands it at that height instead of the ground's (a jetty over the sea at its quay's, 1.5) |
+| `props` | `[{piece, at, face or rot, collide, colliders, scale, dress, z}]`: any kit piece by name (`MarketStall_Tinker`, `Prop_Well`, `Grave_Cross`, `Animal_Horse`...); `z` stands it at that height instead of the ground's (a jetty over the sea at its quay's, 1.5); `collide: false` adds no box of the map's own, `colliders: false` also takes off the piece's own (a mound one walks up onto) |
 | `fences` | `[{piece, points, gate, gateAt: [fractions], gateDoor, gateDoorFlip, along: [{piece, at: [fractions], rot, collide}], closed, offset, flip, collide, smooth}]`: pieces laid along a curve (`Prop_Fence`, `Deco_Hedge`, `Palisade_Straight`, `Palisade_Walk`), each stretched to fit its run; a gate keeps its own width; `gateDoor` puts doors in each gate's frame at its transform (`Goblin_Gate` in a `Palisade_Gate`: closed and breakable, the way in until the game breaks it); `along` stands pieces on the line at fractions of it, turned as its pieces are (a `Palisade_Ladder` on a walkway's line leans on its deck); `closed` makes a ring (a palisade); `offset` shifts the line sideways (left of the way it runs: a walkway behind a wall) |
 | `trees` | `[{piece, at, scale, rot}]`: single trees inside the village |
 | `forest` | `{spacing, edge, wallAt, keepRoad, keepBuilt, stragglers, species: [[piece, weight]], undergrowth: [[piece, weight]], undergrowthSpacing}` |
 | `scatter` | `[{pieces: [[piece, weight]], count, keep, spacing}]`: dressing in the clearing, off roads and buildings |
 | `spawns` | `[{id, at, facing}]`: `KitSpawn`s (facing as a bearing: 0 north, 90 east) |
+| `links` | `[{id, at, target, arrive, prompt, size: [w, h, d], rot, kind, walkInto, facingMin, spawn: {at, facing}}]`: ways in and out that are no building's door (a well's shaft, a burrow's hole): a trigger box standing on the ground at `at` (1.6 x 2.2 x 1.6 by default) with a `KitLink` `LNK_<id>` (KitLink's defaults where a key is left out), and with `spawn` the `SPN_<id>` one comes back out at. A game's hand-placed way in belongs here, not in the scene: a rebuild keeps it |
 | `markers` | `[{id, role, at, facing, note}]`: `KitMarker`s for the game (`role`: npc, respawn...; read their `vki_role`, `vki_marker_id`) |
 | `grass` | grass blades over the grass (on by default; `false` turns them off; `{spacing, height: [min, max], edge, shadows}`): a clump every 0.5 m, thinning on roads, paving and steep ground and at the forest's edge, clear of everything placed; drawn on the GPU (`KitGrass`: a compute shader culls the clumps per camera, the vertex shader builds the blades; they take the ground's grass colour, sway, part round the walker, cast small shadows) |
 | `ground` | the terrain material: a material asset path (`Assets/.../M_BurntMarch_Terrain.mat`) or a kit material's name; default `M_VK_Terrain`. A copy of `M_VK_Terrain` with its own grass and dirt maps gives a map its own ground (a burnt land: scorched grass, ash); the grass blades take its grass map too |
