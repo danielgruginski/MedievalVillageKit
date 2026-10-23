@@ -432,3 +432,10 @@ materials by name).
 - Navigation and travel, 2026-10-02: every level carries a baked navmesh (`KitNavMesh`, baked by the builders and
   `KitNavBake`) for the game's NavMeshAgents; `KitTravel.Preload` holds the levels one link away loaded and switched
   off, so doors are instant cuts. LEVEL_BUILDING 5.8-5.9.
+
+## 15. Animated units
+
+Rigged, animated kit props (the siege catapult, 2026-10-23) are exported by their own pipeline, not by
+`vkx_export`: `src/units/`, `tools/unit_catapult_run.py`, into `Art/Units/<unit>/` (an FBX with a Generic rig, one FBX
+per clip, a clip list) and built by their own menu item (Tools > Medieval Kit > Units). `KitImport` only touches
+`Art/Models`, so the units keep their rig and clips. See [UNITS.md](UNITS.md).

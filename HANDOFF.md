@@ -8,6 +8,7 @@ Dungeon kit (built 2026-09-29 on the interior kit): [docs/DUNGEON_KIT.md](docs/D
 Adventure kit (built 2026-09-29 on the dungeon kit): [docs/ADVENTURE_KIT.md](docs/ADVENTURE_KIT.md).
 The town connection, the world graph (2026-09-30): [docs/WORLD_GRAPH.md](docs/WORLD_GRAPH.md).
 Unity export (vertical slice, 2026-09-30): [docs/UNITY_EXPORT.md](docs/UNITY_EXPORT.md).
+Animated units (the siege catapult, 2026-10-23, entry 140): [docs/UNITS.md](docs/UNITS.md).
 
 ---
 
@@ -1829,6 +1830,47 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     Fen's marker into Hamlet_Inn.record.json's `markers`, and sets AfterBake for the HamletCellar chain
     (Editor/LevelBakeHooks.cs). Checked: offline compiles of MedievalKit.Runtime/.Editor, the game's editor assembly,
     scratch builds of Hamlet and Hamlet_Inn; not checked: a real re-bake of HamletCellar (its hook not run end to end).
+140. 2026-10-23 (Daniel: "Do these tasks you mentioned" -- the card game's catapult as an animated unit for the RPG: the
+    kit's onager with a rigged throwing arm and wheels and a load-and-throw clip; "don't bother with adding them to the
+    game, build the creatures"). **The first animated unit, `VKU_SiegeCatapult`** (docs/UNITS.md has the rig, the clips
+    and the commands). Built headless (`tools/unit_catapult_run.py`), in its own `blender/vku_siege_catapult.blend`;
+    the kit's .blend opened, never saved.
+    - **Parts from the builder, not a copy:** `vki_orc_catapult` now calls `vki_orc_part(k, name)` after each part
+      (frame, wheelFL/FR/BL/BR, arm, stone, lash, windlass, stack). On a plain VKIKit it does nothing: the static
+      `SM_VKI_Prop_Siege_Catapult` and `_Burnt` hash the same built from HEAD's text and from the new one (stage 1
+      checks it every run). `src/units/vku_siege_catapult.py` builds with a kit whose tag writes an int layer made
+      before any geometry (no BMVert reference is invalidated), drops the lash and the ground stack, adds a windlass
+      rope, cuts the arm at 62 % (both cut faces closed), weights each part 1.0 to its bone. 2,028 tris, the kit's five
+      materials + vertex colours; projectile `SM_VKU_CatapultStone` (20 tris).
+    - **Fitted to the geometry, not guessed:** the arm's stop angle (92.98 deg from the bind pose) and the loaded angle
+      (7.35 deg: the static's arm lies through the windlass drum and the back cross beam) by bisection on triangle
+      overlaps (BVH), the rope's hook over the drum, Throw's release frame (7: launch elevation 47.6 deg), Destroyed's
+      tilt (9.0 deg about the front-right / back-left contact line until the front-left corner is down) and the
+      snapped tip's flight lifted over the pad and crossbar where it would pass through them.
+    - Clips: Idle, IdleLoaded, Move (1.0014 m/s, the wheels one turn a loop), Load (5 s), Throw (Release 0.233 s), Hit,
+      Destroyed; events Hooked/Loaded, Release/Slam, Break/Snap. Burnt look: a material swap (`M_VKU_WoodCharred`).
+    - **Unity:** built first in `Units~` folders Unity skips (the package is live in MedievalSetting through its `file:`
+      reference); installed the same day by renaming the three to `Units` (`Editor/Units/KitSiegeCatapultSetup.cs`,
+      `Runtime/Units/KitUnitEvents.cs`, `Art/Units/SiegeCatapult/`), then Tools > Medieval Kit > Units > Build Siege
+      Catapult: report `OK` (13 bones, 2028 tris, 7 clips and states, Release at 47.6 deg); the first run threw on the
+      stone's collider read after its object was destroyed (fixed: radius read first). Its own folder (`Art/Units`,
+      not `Art/Models`) keeps `KitImport`'s static-piece import settings (animation off, axis conversion off) away
+      from the rig.
+    - Checked: lowest vertex per clip (>= -0.3 mm), Move traced (skeleton in place, slip 1e-5 m/s), no part through
+      another in any frame (triangle overlaps), the FBX read back (13 bones, Motion unparented, Move -2.1363 m, the Stone
+      scale step at frame 7), renders at full res (`renders/units/siege_catapult/`: views, close-ups, rope, frame
+      strips of every clip, the wheels on a 0.5 m checker, the 22 m / 14 m game camera), offline compile of
+      MedievalKit.Runtime + .Editor with the two scripts against MedievalSetting's assemblies (0 errors, output in a
+      temp folder). Not done: game wiring.
+    - Gotchas: `Mesh.materials.clear()` after `to_mesh` reset the stone's faces to slot 0 (wood) -- fill the slots
+      first (§6 says so; it bit again); Blender 4's vertex-group names live on the mesh, so clearing the object's groups
+      after writing the deform layer dropped every weight; the rope's rest is the loose 0.35 m hang (a 1 m rest made the
+      bind pose a rope to the ground); FBX clip files carry the current frame as the bones' default, so each clip is
+      exported from its frame 0; Blender's FBX importer reads a scaled bone's default as rest (the re-imported Stone
+      read 1000x until the frame-0 fix).
+    - Open: no IdleLoaded -> Hit or Move-while-loaded clips (the controller only hits from Idle / Move); the windlass
+      spins fast while the rope is run out to the arm (~3.5 turns a second for 0.9 s); the stone pops in above the cup (scale 0 -> 1
+      over 3 frames while it drops 0.35 m); no turn-in-place (a game turns the transform; the wheels don't counter-roll).
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

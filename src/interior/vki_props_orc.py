@@ -802,11 +802,22 @@ def vki_orc_tower_burnt(k):
     vki_orc_tower(k, burnt=True)
 
 
+def vki_orc_part(k, name):
+    """the animated siege units' part split (src/units/vku_siege_catapult.py, 2026-10-23): every vertex made since
+    the last call goes to part `name` (a kit carrying `part_tag`). A no-op on a plain VKIKit, so the static pieces
+    build exactly as before (no geometry, order or random draw changes)."""
+    tag = getattr(k, "part_tag", None)
+    if tag is not None:
+        tag(name)
+
+
 def vki_orc_catapult(k, burnt=False):
     """a throwing engine (an onager, 2.3 x 4.6 m, 1.9 high): a frame of two side beams on four low solid wheels, a skein
     of twisted rope across its middle in iron washers, the arm drawn back (+Y) with a stone in its cup, the padded stop
     on an A-frame braced to the front (-Y, the way it throws), a windlass at the back, stones stacked beside it.
-    burnt: the skein burned away (the washers left), the arm snapped and fallen, the stop down, charred, ash."""
+    burnt: the skein burned away (the washers left), the arm snapped and fallen, the stop down, charred, ash.
+    vki_orc_part marks the parts the animated unit (vku_siege_catapult) rigs: frame, wheelFL/FR/BL/BR (the engine's
+    own left is +X, its front -Y), arm, stone, lash, windlass, stack."""
     rnd = random.Random(81)
 
     def T(a, b, w, d=None, bevel=0.012, mi=WOOD):
@@ -820,8 +831,10 @@ def vki_orc_catapult(k, burnt=False):
         T((-0.95, y, ZS + 0.2), (0.95, y, ZS + 0.2), 0.2, d=0.16)
     for y in (-1.35, 1.35):
         T((-1.1, y, 0.34), (1.1, y, 0.34), 0.11, bevel=0.0)
+        vki_orc_part(k, "frame")
         for x in (-1.0, 1.0):
             vki_orc_wheel(k, (x, y, 0.34), 0.34, 0.15, dark=wdark)
+            vki_orc_part(k, "wheel" + ("F" if y < 0 else "B") + ("L" if x > 0 else "R"))
     # the skein across the middle, iron washers outside the beams, their levers
     ysk, zsk = 0.25, ZS + 0.02
     R = Matrix.Rotation(math.pi / 2, 4, "Y")
@@ -831,6 +844,7 @@ def vki_orc_catapult(k, burnt=False):
     for s in (-1, 1):
         _cyl(k, (s * (XS + 0.17), ysk, zsk), 0.24, 0.24, 0.07, 12, IRON, rot=R)
         lv = T((s * (XS + 0.24), ysk - 0.45, zsk + 0.1), (s * (XS + 0.24), ysk + 0.45, zsk - 0.1), 0.06, d=0.05, mi=IRON, bevel=0.0)
+    vki_orc_part(k, "frame")
     # the arm, drawn back, its cup and stone (burnt: snapped, its two halves down)
     a0 = Vector((0.0, ysk, zsk))
     if not burnt:
@@ -840,10 +854,13 @@ def vki_orc_catapult(k, burnt=False):
             vki_orc_band_on(k, a0, a1, t, 0.1, 0.13, 0.07, segs=8)
         cup, _ = vki_home_lathe(k, [(0.05, 0.0), (0.2, 0.06), (0.25, 0.18), (0.22, 0.2), (0.1, 0.08)], c=(0.0, 2.1, 1.03),
                                 segs=10, mi=WOOD, smooth=True, closed=False)
+        vki_orc_part(k, "arm")
         st = _ico(k, (0.0, 2.1, 1.25), 0.16, VKI_STONE_BLOCK_IN, sub=1, jit=0.01, seed=88)
         k.project(vki_faces_of(st), VKI_STONE_BLOCK_IN)
         k.set_dark(st, 0.32)
+        vki_orc_part(k, "stone")
         def_rope(k, (0.0, 2.38, 0.95), (0.0, 1.85, 0.98), r=0.022, n=1)
+        vki_orc_part(k, "lash")
     else:
         T(tuple(a0), (0.15, 1.05, 0.88), 0.17, d=0.2)
         vki_orc_splinter(k, (0.15, 1.08, 0.88), 0.17, 0.26, 89)
@@ -867,6 +884,7 @@ def vki_orc_catapult(k, burnt=False):
     # the windlass at the back
     for s in (-1, 1):
         T((s * 0.45, 1.95, ZS + 0.25), (s * 0.45, 1.95, 1.05 if not burnt else 0.8), 0.12)
+    vki_orc_part(k, "frame")
     if not burnt:
         _cyl(k, (0.0, 1.95, 0.95), 0.1, 0.1, 0.84, 8, WOOD, rot=R)
         for s in (-1, 1):
@@ -874,12 +892,14 @@ def vki_orc_catapult(k, burnt=False):
                 x = s * (0.52 if a < 1.0 else 0.555)
                 vki_dpr_rod(k, (x, 1.95 - 0.28 * math.cos(a), 0.95 - 0.28 * math.sin(a)),
                             (x, 1.95 + 0.28 * math.cos(a), 0.95 + 0.28 * math.sin(a)), 0.04, WOOD)
+        vki_orc_part(k, "windlass")
     # stones stacked by its right side (ready to throw)
     for i, (x, y, z, r) in enumerate(((1.42, -1.75, 0.17, 0.17), (1.5, -1.38, 0.17, 0.17), (1.28, -1.1, 0.16, 0.16),
                                       (1.42, -1.45, 0.43, 0.16))):
         st = _ico(k, (x, y, z), r, VKI_STONE_BLOCK_IN, sub=1, jit=0.012, seed=130 + i)
         k.project(vki_faces_of(st), VKI_STONE_BLOCK_IN)
         k.set_dark(st, 0.45 if burnt else 0.32)
+    vki_orc_part(k, "stack")
     if burnt:
         vki_orc_ash_bed(k, (0.0, 0.0), 1.5, 2.6, 140, coals=((0.2, 0.3, 0.13), (-0.4, -1.0, 0.1)))
         k.slot_mats[WOOD] = "Dark"
