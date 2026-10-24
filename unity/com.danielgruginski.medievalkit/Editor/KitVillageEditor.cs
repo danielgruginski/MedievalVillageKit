@@ -60,6 +60,10 @@ namespace MedievalKit.Editor
             }
             foreach (var key in new[] { "species", "undergrowth" })
                 foreach (var e in L["forest"]?[key] as JArray ?? new JArray()) yield return (string)e[0];
+            foreach (var z in L["forest"]?["zones"] as JArray ?? new JArray())        // a forest zone's own pieces (2026-10-24)
+                foreach (var key in new[] { "species", "undergrowth", "scatter" })
+                    foreach (var e in z[key] as JArray ?? new JArray()) yield return (string)e[0];
+            if (L["forest"]?["fallen"]?["as"] != null) yield return (string)L["forest"]["fallen"]["as"];
             foreach (var s in L["scatter"] as JArray ?? new JArray())
                 foreach (var e in s["pieces"] as JArray ?? new JArray()) yield return (string)e[0];
             foreach (var g in L["gardens"] as JArray ?? new JArray())
@@ -417,7 +421,7 @@ namespace MedievalKit.Editor
                 v.waterMaskMaterial = AssetDatabase.LoadAssetAtPath<Material>(KitPaths.Materials + "/M_VKT_WaterMask.mat");
                 v.prefabs = prefabs;
                 // the materials the swaps name (the layout's palette and the entries' own)
-                var swaps = new[] { L["swap"] }.Concat(new[] { "buildings", "props" }.SelectMany(k => (L[k] as JArray ?? new JArray()).Select(e => e["swap"])))
+                var swaps = new[] { L["swap"] }.Concat(new[] { "buildings", "props", "pieceSwaps" }.SelectMany(k => (L[k] as JArray ?? new JArray()).Select(e => e["swap"])))
                     .OfType<JObject>().SelectMany(o => o.Properties().Select(pr => (string)pr.Value))
                     .Concat((L["props"] as JArray ?? new JArray()).SelectMany(Dressing).Select(d => d.roof).Where(m => m != null)).Distinct();
                 foreach (var mn in swaps)

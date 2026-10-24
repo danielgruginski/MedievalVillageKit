@@ -7,7 +7,9 @@
 # darkened almost to black, with COAL where it burned through; ash is VKI_ASH.
 #   burnt:  Prop_Ruin_Farmhouse_Burnt (7.2 x 5 m: broken stone footings, charred corner posts, the chimney left
 #           standing, fallen beams, ash and rubble inside, embers still in the ash), Prop_BurntTree_A (a charred
-#           trunk, top snapped, stub branches) and _B (a split, leaning trunk), Prop_BurntStump, Overlay_Ash (a burnt
+#           trunk, top snapped, stub branches) and _B (a split, leaning trunk), _C/_D/_E (2026-10-24: a snag with a split
+#           shard, a tree with dead limbs, a burned-out snag; every burnt tree and the stump on a buried foot),
+#           Prop_BurntLog (a fallen trunk), Overlay_BurntBranches, Prop_BurntStump, Overlay_Ash (a burnt
 #           patch), Overlay_Tracks_Orc (two furrows where logs were dragged, big bootprints either side, along +Y)
 #   orcs:   Prop_Orc_WarTable (a heavy trestle table, a hide map of a walled town with marks on it, a dagger stuck in
 #           it, a skull with a candle), Prop_Orc_Banner (the warband's standard, 3.5 m: a red hide with a black tusk, an
@@ -165,25 +167,21 @@ def vki_orc_tree(k, seed, h, r, lean, forks, split=False):
             seed=seed, wob=0.1, ts=(0.0, 0.2, 0.45, 0.7, 1.0), bend=0.12)
     trunk = [v for v in k.bm.verts if v not in before]
     vki_orc_splinter(k, tuple(top + Vector((0, 0, -0.04))), r * 0.55, 0.45, seed + 1, n=5, mi=BARK_OAK)
-    for i in range(5):                                                   # roots
-        a = 2 * math.pi * (i + rnd.uniform(-0.25, 0.25)) / 5
-        rv = vki_lair_log(k, (math.cos(a) * r * 0.5, math.sin(a) * r * 0.5, 0.35),
-                          (math.cos(a) * r * 3.2, math.sin(a) * r * 3.2, -0.12), r * 0.42, seed + 10 + i, segs=6, bend=0.05)
-        k.set_dark(rv, 0.68)
+    vki_orc_foot(k, r, seed + 10, n=4)                                   # 2026-10-24: a buried foot (was a five-root star)
     for j, (t, l) in enumerate(forks):                                   # stub branches, burned short
         a = rnd.uniform(0, 2 * math.pi)
         p = Vector((lean[0] * t, lean[1] * t, h * t))
         d = Vector((math.cos(a), math.sin(a), rnd.uniform(0.5, 1.1))).normalized()
         bv = vki_lair_log(k, tuple(p), tuple(p + d * l), r * rnd.uniform(0.25, 0.35), seed + 20 + j, segs=6, bend=0.08)
-        k.set_dark(bv, 0.6)
+        k.set_dark(bv, 0.86)                                             # charred to the end (2026-10-24: was 0.6, pale ends)
     if split:                                                            # a second fork, broken off
         p = Vector((lean[0] * 0.35, lean[1] * 0.35, h * 0.35))
         d = Vector((-lean[0] - 0.4, -lean[1] + 0.3, 1.0)).normalized()
         sv = vki_lair_log(k, tuple(p), tuple(p + d * h * 0.4), r * 0.6, seed + 30, segs=8, bend=0.06)
-        k.set_dark(sv, 0.62)
+        k.set_dark(sv, 0.86)
         vki_orc_splinter(k, tuple(p + d * h * 0.4), r * 0.35, 0.35, seed + 31, n=4, mi=BARK_OAK)
-    for v in trunk:                                                      # charred to black at the foot, ash grey above
-        k.set_dark([v], 0.72 if v.co.z < h * 0.3 else 0.58)
+    for v in trunk:                                                      # charred to black at the foot, ash grey above,
+        k.set_dark([v], 0.72 if v.co.z < h * 0.3 else 0.88 if v.co.z > h * 0.93 else 0.58)   # the snapped top black
     vki_home_meta(k, "floor", "furniture", use=[], vki_nav="block",
                   vki_note="outdoors: a tree of the burnt north wood (forest species or a single tree)")
 
@@ -197,23 +195,215 @@ def vki_orc_tree_b(k):
 
 
 def vki_orc_stump(k):
-    """a burnt stump (0.8 m across, 0.6 high): a charred trunk's foot, its top burned to a ragged crater of splinters,
-    roots spreading"""
-    rnd = random.Random(23)
+    """a burnt stump (0.8 m across, 0.6 high): a charred trunk's foot, its top burned to a ragged black crater of
+    splinters, its roots' shoulders showing"""
     before = set(k.bm.verts)
     def_log(k, (0.0, 0.0, -0.1), (0.03, 0.0, 0.55), 0.3, segs=10, mi=BARK_OAK, top_cap=True, bot_cap=True, taper=0.85,
             seed=23, wob=0.12, ts=(0.0, 0.5, 1.0))
     sv = [v for v in k.bm.verts if v not in before]
     k.set_dark(sv, 0.7)
-    vki_orc_splinter(k, (0.03, 0.0, 0.5), 0.3, 0.3, 24, n=6, mi=BARK_OAK)
-    for i in range(4):
-        a = 2 * math.pi * (i + rnd.uniform(-0.2, 0.2)) / 4
-        rv = vki_lair_log(k, (math.cos(a) * 0.15, math.sin(a) * 0.15, 0.25),
-                          (math.cos(a) * 0.75, math.sin(a) * 0.75, -0.1), 0.11, 25 + i, segs=6, bend=0.05)
-        k.set_dark(rv, 0.68)
-    c = _ico(k, (0.03, 0.0, 0.56), 0.16, COAL, scale=(1.0, 1.0, 0.25), sub=1, jit=0.02, seed=26)
-    k.project(vki_faces_of(c), COAL)
+    vki_orc_splinter(k, (0.03, 0.0, 0.5), 0.3, 0.3, 24, n=6, mi=BARK_OAK, char=0.86)
+    vki_orc_foot(k, 0.3, 25, n=4, reach=(1.5, 2.0), z0=0.22, top=0.3)   # 2026-10-24: buried roots (was a four-root star)
+    vki_orc_crater(k, (0.03, 0.0, 0.56), 0.16, 26)
     vki_home_meta(k, "floor", "furniture", use=[], vki_nav="block")
+
+
+# 2026-10-24 (MedievalSetting, the burnt maps' polish: from the game camera every burnt tree and stump stood on the
+# same five-root star, which read as clip art repeated a thousand times): more burnt trees whose roots are buried
+# shoulders (a flared foot, three or four short roots sinking into the ground), a fallen trunk and loose charred
+# branches for the ground. Bark burned through to charcoal in patches (COAL faces), darkest at the foot.
+def vki_orc_splinter_dir(k, c, d, r, h, seed, n=4, mi=BARK_OAK, char=0.72):
+    """a snapped end pointing along d: n thin wedges of uneven length standing out of the disc (c, r)"""
+    rnd = random.Random(seed)
+    d = Vector(d).normalized()
+    R = Vector((0, 0, 1)).rotation_difference(d).to_matrix().to_4x4()
+    t1 = (R @ Vector((1, 0, 0, 0))).xyz
+    t2 = (R @ Vector((0, 1, 0, 0))).xyz
+    out = []
+    for i in range(n):
+        a = 2 * math.pi * (i + rnd.uniform(-0.2, 0.2)) / n
+        p = Vector(c) + (t1 * math.cos(a) + t2 * math.sin(a)) * r * 0.5
+        hh = h * rnd.uniform(0.35, 1.0)
+        rot = R @ Matrix.Rotation(rnd.uniform(-0.25, 0.25), 4, "X") @ Matrix.Rotation(a, 4, "Z")
+        v = _cyl(k, tuple(p + d * hh / 2), r * 0.42, 0.004, hh, 4, mi, rot=rot)
+        k.set_dark(v, char)
+        out += v
+    return out
+
+
+def vki_orc_char(k, verts, z_dark, h, share, seed, low=0.78, high=0.66):
+    """darken a trunk's verts: black at the foot, charcoal-grey higher, blotched with burned-through black (a `share`
+    of the verts, more of them low down). Not COAL faces: coal on the bark's cylinder UVs rendered as flat grey slabs."""
+    rnd = random.Random(seed)
+    for v in verts:
+        d = low if v.co.z < z_dark else high
+        if rnd.random() < share * (1.3 if v.co.z < h * 0.5 else 0.7) or v.co.z > h * 0.93:
+            d = 0.9                                                      # (the snapped top black too: no pale end grain)
+        k.set_dark([v], d)
+
+
+def vki_orc_foot(k, r, seed, n=4, reach=(1.5, 2.1), z0=0.32, top=0.6):
+    """a burnt tree's foot: a flare round the trunk up to `top` and n short roots, their ends sunk under the ground
+    (only their shoulders show), never the old spread star. The flare narrows inside the trunk (no collar)."""
+    rnd = random.Random(seed)
+    before = set(k.bm.verts)
+    def_log(k, (0.0, 0.0, -0.3), (0.0, 0.0, top), r * 1.32, segs=10, mi=BARK_OAK, top_cap=True, bot_cap=True,
+            taper=0.56, seed=seed, wob=0.14, ts=(0.0, 0.5, 1.0))
+    a0 = rnd.uniform(0, 2 * math.pi)
+    for i in range(n):
+        a = a0 + 2 * math.pi * (i + rnd.uniform(-0.22, 0.22)) / n
+        L = r * rnd.uniform(*reach)
+        vki_lair_log(k, (math.cos(a) * r * 0.35, math.sin(a) * r * 0.35, z0 * rnd.uniform(0.8, 1.1)),
+                     (math.cos(a) * L, math.sin(a) * L, -0.3), r * rnd.uniform(0.42, 0.55), seed + 5 + i, segs=6, bend=0.05)
+    vs = [v for v in k.bm.verts if v not in before]
+    k.set_dark(vs, 0.8)
+    return vs
+
+
+def vki_orc_crater(k, c, r, seed):
+    """a burned-out top: a flattened lump charred black (COAL rendered pale: it read as ash stars on the stumps)"""
+    v = _ico(k, c, r, BARK_OAK, scale=(1.0, 1.0, 0.3), sub=1, jit=0.02, seed=seed)
+    k.project(vki_faces_of(v), BARK_OAK)
+    k.set_dark(v, 0.94)
+    return v
+
+
+def vki_orc_snag(k, seed, h, r, lean, stubs, shard=0.0, hollow=False, roots=4):
+    """a burnt snag: a charred trunk on a buried foot, its top snapped (splinters, and a long split `shard` standing up
+    one side), short burned-off stubs; hollow: the top burned out to a coal-black crater"""
+    rnd = random.Random(seed)
+    top = Vector((lean[0], lean[1], h))
+    before = set(k.bm.verts)
+    def_log(k, (0.0, 0.0, -0.2), tuple(top), r, segs=10, mi=BARK_OAK, top_cap=True, bot_cap=True, taper=0.62,
+            seed=seed, wob=0.13, ts=(0.0, 0.15, 0.4, 0.7, 1.0), bend=0.1)
+    trunk = [v for v in k.bm.verts if v not in before]
+    vki_orc_char(k, trunk, h * 0.4, h, 0.22, seed + 1)
+    vki_orc_foot(k, r, seed + 2, n=roots)
+    rt = r * 0.62                                                        # the trunk's radius at its top
+    vki_orc_splinter(k, tuple(top + Vector((0, 0, -0.05))), rt, 0.4, seed + 3, n=6, mi=BARK_OAK)
+    if shard:                                                            # a long split shard up one side
+        a = rnd.uniform(0, 2 * math.pi)
+        p = top + Vector((math.cos(a) * rt * 0.55, math.sin(a) * rt * 0.55, -0.25))
+        rot = Matrix.Rotation(rnd.uniform(0.05, 0.15), 4, Vector((-math.sin(a), math.cos(a), 0))) @ Matrix.Rotation(a, 4, "Z")
+        sv = _cyl(k, tuple(p + Vector((0, 0, shard / 2))), rt * 0.5, 0.01, shard, 4, BARK_OAK, rot=rot)
+        k.set_dark(sv, 0.7)
+    if hollow:                                                           # burned out from the top: a black crater
+        vki_orc_crater(k, tuple(top + Vector((0, 0, -0.06))), rt * 0.85, seed + 4)
+    for j, (t, l) in enumerate(stubs):                                   # branches burned short
+        a = rnd.uniform(0, 2 * math.pi)
+        p = Vector((lean[0] * t, lean[1] * t, h * t))
+        d = Vector((math.cos(a), math.sin(a), rnd.uniform(0.3, 0.9))).normalized()
+        bv = vki_lair_log(k, tuple(p), tuple(p + d * l), r * rnd.uniform(0.22, 0.32), seed + 20 + j, segs=6, bend=0.08)
+        k.set_dark(bv, 0.88)                                             # charred to the end (no pale end grain)
+
+
+def vki_orc_tree_c(k):
+    """a tall snag (4 m): snapped high, a long shard split up one side, two burned-off stubs"""
+    vki_orc_snag(k, 431, 3.9, 0.36, (0.18, 0.12), ((0.55, 0.7), (0.78, 0.45)), shard=1.1)
+    vki_home_meta(k, "floor", "furniture", use=[], vki_nav="block",
+                  vki_note="outdoors: a snag of the burnt north wood (forest species or a single tree)")
+
+
+def vki_orc_tree_e(k):
+    """a short hollow snag (2.1 m): burned out from the top, one stub"""
+    vki_orc_snag(k, 447, 2.1, 0.42, (-0.12, 0.08), ((0.6, 0.45),), hollow=True, roots=3)
+    vki_home_meta(k, "floor", "furniture", use=[], vki_nav="block",
+                  vki_note="outdoors: a burned-out trunk of the burnt north wood (forest species or a single tree)")
+
+
+def vki_orc_tree_d(k):
+    """a burnt tree that kept its crown (6 m): a charred trunk on a buried foot, three dead limbs forking out and up
+    from its upper half, each with a twig or two, some snapped; the top snapped"""
+    rnd = random.Random(463)
+    h, r, lean = 5.9, 0.32, Vector((-0.2, 0.15))
+    top = Vector((lean.x, lean.y, h))
+    before = set(k.bm.verts)
+    def_log(k, (0.0, 0.0, -0.2), tuple(top), r, segs=9, mi=BARK_OAK, top_cap=True, bot_cap=True, taper=0.45,
+            seed=463, wob=0.12, ts=(0.0, 0.15, 0.4, 0.7, 1.0), bend=0.14)
+    trunk = [v for v in k.bm.verts if v not in before]
+    vki_orc_char(k, trunk, h * 0.35, h, 0.18, 464)
+    vki_orc_foot(k, r, 465, n=4)
+    vki_orc_splinter(k, tuple(top + Vector((0, 0, -0.04))), r * 0.45, 0.3, 466, n=4, mi=BARK_OAK)
+    a0 = rnd.uniform(0, 2 * math.pi)
+    for j, (t, L, up) in enumerate(((0.52, 2.1, 0.55), (0.68, 1.8, 0.8), (0.83, 1.4, 1.0))):
+        a = a0 + 2 * math.pi * j / 3 + rnd.uniform(-0.4, 0.4)
+        p = Vector((lean.x * t, lean.y * t, h * t))
+        d = Vector((math.cos(a), math.sin(a), up)).normalized()
+        e = p + d * L
+        rl = r * (0.42 - 0.06 * j)
+        lv = vki_lair_log(k, tuple(p), tuple(e), rl, 470 + j, segs=6, bend=0.12, ts=(0.0, 0.5, 1.0))
+        k.set_dark(lv, 0.84)
+        if j != 1:                                                       # snapped: splinters at its end
+            vki_orc_splinter_dir(k, tuple(e), d, rl * 0.85, 0.22, 480 + j, n=3)
+        for i in range(2 if j < 2 else 1):                              # twigs off the limb
+            s = rnd.uniform(0.45, 0.8)
+            q = p + d * L * s
+            b = rnd.uniform(0, 2 * math.pi)
+            dd = (d * 0.6 + Vector((math.cos(b), math.sin(b), rnd.uniform(0.2, 0.8))) * 0.7).normalized()
+            tv = vki_lair_log(k, tuple(q), tuple(q + dd * rnd.uniform(0.5, 0.9)), rl * 0.45, 490 + 3 * j + i, segs=5, bend=0.1)
+            k.set_dark(tv, 0.88)
+    vki_home_meta(k, "floor", "furniture", use=[], vki_nav="block",
+                  vki_note="outdoors: a burnt tree that kept its dead limbs (forest species or a single tree)")
+
+
+def vki_orc_log(k):
+    """a fallen burnt trunk (5.4 m along X, lying on the ground): its crown end snapped off in splinters (+X), its root
+    end torn up -- a flared root plate with thick charred roots standing out of it (-X) -- two burned-off branch stubs,
+    blotched black"""
+    rnd = random.Random(503)
+    r = 0.34
+    a, b = Vector((-2.6, 0.0, r * 0.88)), Vector((2.75, 0.12, r * 0.62))
+    before = set(k.bm.verts)
+    def_log(k, tuple(a), tuple(b), r, segs=9, mi=BARK_OAK, top_cap=True, bot_cap=True, taper=0.66, seed=503,
+            wob=0.12, ts=(0.0, 0.25, 0.5, 0.75, 1.0), bend=0.06)
+    trunk = [v for v in k.bm.verts if v not in before]
+    vki_orc_char(k, trunk, 9.0, 1.0, 0.25, 505, low=0.76)               # all of it charred, blotched black
+    d = (b - a).normalized()
+    vki_orc_splinter_dir(k, tuple(b - d * 0.05), d, r * 0.62, 0.45, 504, n=5, char=0.86)
+    before = set(k.bm.verts)                                             # the root end torn up: a flared root plate
+    def_log(k, tuple(a + d * 0.55), tuple(a - d * 0.25), r * 1.05, segs=9, mi=BARK_OAK, top_cap=True, bot_cap=True,
+            taper=1.45, seed=506, wob=0.16, ts=(0.0, 0.5, 1.0))
+    for i, ang in enumerate((-50, 0, 45, 95, 140, 190, 235)):            # and thick roots standing out of it
+        t = math.radians(ang + rnd.uniform(-10, 10))
+        u = Vector((-rnd.uniform(0.15, 0.5), math.cos(t), math.sin(t))).normalized()
+        L = rnd.uniform(0.35, 0.8)
+        vki_lair_log(k, tuple(a + u * r * 0.5), tuple(a + u * (r * 1.2 + L)), r * rnd.uniform(0.34, 0.48), 510 + i, segs=5, bend=0.1)
+    k.set_dark([v for v in k.bm.verts if v not in before], 0.84)
+    for i, (x, ang, L) in enumerate(((-0.6, 70, 0.75), (1.1, 115, 0.5))):  # branch stubs
+        p = a + (b - a) * ((x + 2.6) / 5.35)
+        t = math.radians(ang)
+        u = Vector((rnd.uniform(-0.3, 0.3), math.cos(t), math.sin(t))).normalized()
+        sv = vki_lair_log(k, tuple(p), tuple(p + u * (r + L)), r * 0.3, 520 + i, segs=5, bend=0.06)
+        k.set_dark(sv, 0.88)
+    vki_home_meta(k, "floor", "furniture", use=[], vki_nav="block",
+                  vki_note="outdoors: a fallen burnt trunk (scatter or a prop); its length along X")
+
+
+def vki_orc_branches(k):
+    """charred branches lying on the ground (about 2.6 x 1.8 m): crooked sticks, two of them forked, charcoal lumps"""
+    rnd = random.Random(541)
+    for i in range(7):
+        c = Vector((rnd.uniform(-0.9, 0.9), rnd.uniform(-0.6, 0.6), 0.0))
+        a = rnd.uniform(0, math.pi)
+        L = rnd.uniform(0.6, 1.5)
+        rr = rnd.uniform(0.03, 0.06)
+        d = Vector((math.cos(a), math.sin(a), 0.0))
+        p0, p1 = c - d * L / 2, c + d * L / 2
+        p0.z, p1.z = rr * 0.8, rr * rnd.uniform(0.6, 1.4)
+        sv = vki_lair_log(k, tuple(p0), tuple(p1), rr, 542 + i, segs=5, bend=0.06)
+        k.set_dark(sv, 0.86)
+        if i < 2:                                                        # a fork off it
+            q = p0 + (p1 - p0) * rnd.uniform(0.4, 0.7)
+            e = q + Vector((math.cos(a + 0.6), math.sin(a + 0.6), 0.0)) * L * 0.45
+            e.z = rr * 0.6
+            fv = vki_lair_log(k, tuple(q), tuple(e), rr * 0.7, 560 + i, segs=5, bend=0.05)
+            k.set_dark(fv, 0.86)
+    for i in range(4):                                                   # charcoal lumps (black wood: COAL renders pale)
+        c = _ico(k, (rnd.uniform(-1.0, 1.0), rnd.uniform(-0.7, 0.7), 0.025), rnd.uniform(0.03, 0.05), BARK_OAK,
+                 scale=(1.3, 1.0, 0.6), sub=0, seed=570 + i)
+        k.project(vki_faces_of(c), BARK_OAK)
+        k.set_dark(c, 0.94)
+    vki_home_meta(k, "floor", "dressing", use=[], vki_class="overlay", vki_nav="none")
 
 
 def vki_orc_ash(k):
@@ -1115,7 +1305,7 @@ def vki_orc_slab(k, x0, x1, y0, y1, z0, z1, dark=0.35, bev=0.03):
     return vs
 
 
-def vki_orc_stump(k, x, y, z1, r, seed, dark=0.25):
+def vki_orc_leg(k, x, y, z1, r, seed, dark=0.25):
     """a short bark stump standing on the floor to z1"""
     return vki_lair_log(k, (x, y, -0.01), (x, y, z1), r, seed, segs=7, dark=dark, bend=0.01)
 
@@ -1134,9 +1324,9 @@ def vki_orc_throne(k):
     zs = 0.52
     vki_orc_slab(k, -0.55, 0.55, -0.38, 0.22, zs - 0.12, zs)                                     # the seat
     for x in (-0.38, 0.38):
-        vki_orc_stump(k, x, -0.10, zs - 0.11, 0.15, 700 + int(x * 10))
+        vki_orc_leg(k, x, -0.10, zs - 0.11, 0.15, 700 + int(x * 10))
     for sx in (-1, 1):                                                                         # arms
-        vki_orc_stump(k, sx * 0.62, -0.30, 0.78, 0.10, 710 + sx)
+        vki_orc_leg(k, sx * 0.62, -0.30, 0.78, 0.10, 710 + sx)
         vki_lair_log(k, (sx * 0.62, -0.42, 0.80), (sx * 0.62, 0.30, 0.80), 0.075, 715 + sx, segs=7, dark=0.25,
                      bend=0.02)
     for i, x in enumerate((-0.52, -0.26, 0.0, 0.26, 0.52)):                                    # the back
@@ -1163,7 +1353,7 @@ def vki_orc_bunk(k):
     a fur, a rolled pelt at the head, a club leaning at the foot"""
     for sx in (-0.88, 0.88):
         for sy in (-0.36, 0.36):
-            vki_orc_stump(k, sx, sy, 0.26, 0.08, 760 + int(sx * 10 + sy * 100))
+            vki_orc_leg(k, sx, sy, 0.26, 0.08, 760 + int(sx * 10 + sy * 100))
     for sy in (-0.40, 0.40):
         vki_lair_log(k, (-1.0, sy, 0.30), (1.0, sy, 0.30), 0.075, 770 + int(sy * 10), segs=7, dark=0.25, bend=0.02)
     for i in range(7):
@@ -1189,7 +1379,7 @@ def vki_orc_table(k):
     vki_orc_slab(k, -1.20, 1.20, -0.42, 0.42, zt - 0.12, zt, dark=0.3)
     for sx in (-0.90, 0.90):
         for sy in (-0.25, 0.25):
-            vki_orc_stump(k, sx, sy, zt - 0.11, 0.10, 800 + int(sx * 10 + sy * 100))
+            vki_orc_leg(k, sx, sy, zt - 0.11, 0.10, 800 + int(sx * 10 + sy * 100))
     vki_home_ham(k, -0.45, 0.05, zt + 0.002, rz=0.4, s=1.2)
     for a, b in (((0.10, -0.15), (0.38, -0.05)), ((0.25, 0.12), (0.52, 0.20))):
         vki_dun_bone(k, (a[0], a[1], zt + 0.02), (b[0], b[1], zt + 0.022), r=0.016)
@@ -1207,7 +1397,7 @@ def vki_orc_bench(k):
     zs = 0.45
     vki_orc_slab(k, -1.20, 1.20, -0.17, 0.17, zs - 0.10, zs, dark=0.3)
     for x in (-0.85, 0.85):
-        vki_orc_stump(k, x, 0.0, zs - 0.09, 0.11, 820 + int(x * 10))
+        vki_orc_leg(k, x, 0.0, zs - 0.09, 0.11, 820 + int(x * 10))
     vki_orc_hall_mats(k)
     vki_home_meta(k, "floor", "furniture", use=[], vki_seats=[[-0.8, 0.0, zs], [0.0, 0.0, zs], [0.8, 0.0, zs]],
                   vki_seat_z=zs, vki_note="seats: vki_seats [x, y, z] (sit facing local +Y or -Y, toward the table)")
@@ -1372,7 +1562,7 @@ def vki_orc_forge(k):
     vki_sto_embers(k, 0.0, 0.0, 0.69, 9, 0.28, 0.28, 1030, core=0.35, rmin=0.035, rmax=0.055, hmax=0.9)
     vki_sto_flame(k, Vector((0.02, 0.0, 0.70)), 0.22, 0.07, 0.1, 0.3, 0.02, flat=0.8)
     # the bellows: two boards with a hide between, on a stand, its iron nozzle into the hearth's side
-    vki_orc_stump(k, 1.05, 0.0, 0.42, 0.12, 1040)
+    vki_orc_leg(k, 1.05, 0.0, 0.42, 0.12, 1040)
     for z0, z1, mi in ((0.44, 0.47, WOOD), (0.47, 0.60, HIDE), (0.60, 0.63, WOOD)):
         vki_prism(k, [(0.70, -0.10), (1.40, -0.26), (1.40, 0.26), (0.70, 0.10)], z0, z1, mi, axis="z")
     vki_lair_log(k, (1.25, 0.0, 0.64), (1.55, 0.0, 0.90), 0.025, 1041, segs=6, dark=0.3)       # its handle
@@ -1389,7 +1579,7 @@ def vki_orc_forge(k):
 def vki_orc_anvil(k):
     """an iron anvil on a bark stump (0.95 x 0.70, 0.86): a rough block with a horn, a half-beaten cleaver on it, a
     hammer leaning on the stump, a quench bucket beside it"""
-    vki_orc_stump(k, 0.0, 0.0, 0.62, 0.27, 1100)
+    vki_orc_leg(k, 0.0, 0.0, 0.62, 0.27, 1100)
     vki_home_box(k, -0.22, 0.20, -0.10, 0.10, 0.615, 0.77, IRON, bev=0.015)                     # the block
     vki_home_box(k, -0.26, 0.24, -0.12, 0.12, 0.77, 0.83, IRON, bev=0.01)                       # its face
     vki_chp_cyl(k, (0.36, 0.0, 0.79), 0.07, 0.01, 0.26, 8, IRON, smooth=False,
@@ -1502,6 +1692,11 @@ VKI_ORC_SPECS = [
     ("SM_VKI_Prop_BurntTree_A", vki_orc_tree_a, "none"),
     ("SM_VKI_Prop_BurntTree_B", vki_orc_tree_b, "none"),
     ("SM_VKI_Prop_BurntStump", vki_orc_stump, "none"),
+    ("SM_VKI_Prop_BurntTree_C", vki_orc_tree_c, "none"),
+    ("SM_VKI_Prop_BurntTree_D", vki_orc_tree_d, "none"),
+    ("SM_VKI_Prop_BurntTree_E", vki_orc_tree_e, "none"),
+    ("SM_VKI_Prop_BurntLog", vki_orc_log, "none"),
+    ("SM_VKI_Overlay_BurntBranches", vki_orc_branches, "none"),
     ("SM_VKI_Overlay_Ash", vki_orc_ash, "none"),
     ("SM_VKI_Overlay_Tracks_Orc", vki_orc_tracks, "none"),
     ("SM_VKI_Prop_Orc_WarTable", vki_orc_wartable, "prop"),

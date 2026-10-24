@@ -1,6 +1,6 @@
 # Kit pieces
 
-Generated on 2026-10-21 by `tools/pieces_catalogue.py` from the Unity package's `Data/pieces.json` (what was last
+Generated on 2026-10-24 by `tools/pieces_catalogue.py` from the Unity package's `Data/pieces.json` (what was last
 exported), with a thumbnail per piece from `tools/render_thumbs.py`. Do not edit by hand: re-export, then run both.
 Browse it with pictures in [catalogue/index.html](catalogue/index.html) (open the file in a browser).
 
@@ -8,7 +8,7 @@ Size is the piece's bounding box in metres in Blender's axes (x across, y deep, 
 the exported triangle count. Mats is the number of materials on the piece. Prefabs are at
 `Packages/com.danielgruginski.medievalkit/Generated/Prefabs/<kit>/<category>/<name>.prefab`.
 
-**1399 pieces**: Building kit 458, Nature 61, Terrain tiles 33, Interior kit 847. Not listed: 37 meshes unique to one map (`U_VKV_*` valley chunks, paving and water; `U_VARI_*`).
+**1404 pieces**: Building kit 458, Nature 61, Terrain tiles 33, Interior kit 852. Not listed: 37 meshes unique to one map (`U_VKV_*` valley chunks, paving and water; `U_VARI_*`).
 
 ## Building kit (`SM_VK_*`): 458
 
@@ -1154,11 +1154,11 @@ Cliff, ramp, stair, shore and quay tiles the map generators place (`src/terrain`
 |---|---|---|---|
 | `SM_VKT_WaterQuad` | 3.00 × 3.00 × 0.00 | 2 | 1 |
 
-## Interior kit (`SM_VKI_*`): 847
+## Interior kit (`SM_VKI_*`): 852
 
 Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`; see INTERIOR_KIT.md).
 
-[Apron](#interior-apron) 2 · [FX](#interior-fx) 1 · [Floor](#interior-floor) 32 · [Ground](#interior-ground) 124 · [Leaf](#interior-leaf) 25 · [Overlay](#interior-overlay) 52 · [Pit](#interior-pit) 5 · [Post](#interior-post) 49 · [Prop](#interior-prop) 200 · [Rock](#interior-rock) 166 · [Rug](#interior-rug) 1 · [Runner](#interior-runner) 2 · [RushMat](#interior-rushmat) 1 · [Stair](#interior-stair) 11 · [Test](#interior-test) 2 · [Wall](#interior-wall) 174
+[Apron](#interior-apron) 2 · [FX](#interior-fx) 1 · [Floor](#interior-floor) 32 · [Ground](#interior-ground) 124 · [Leaf](#interior-leaf) 25 · [Overlay](#interior-overlay) 53 · [Pit](#interior-pit) 5 · [Post](#interior-post) 49 · [Prop](#interior-prop) 204 · [Rock](#interior-rock) 166 · [Rug](#interior-rug) 1 · [Runner](#interior-runner) 2 · [RushMat](#interior-rushmat) 1 · [Stair](#interior-stair) 11 · [Test](#interior-test) 2 · [Wall](#interior-wall) 174
 
 ### <a id="interior-apron"></a>Apron: 2
 
@@ -1379,7 +1379,7 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 | `SM_VKI_Leaf_Wide_Full_L` | 0.89 × 0.13 × 2.50 | 628 | 2 |
 | `SM_VKI_Leaf_Wide_Full_R` | 0.89 × 0.13 × 2.50 | 628 | 2 |
 
-### <a id="interior-overlay"></a>Overlay: 52
+### <a id="interior-overlay"></a>Overlay: 53
 
 ![Overlay](catalogue/sheets/interior_Overlay.jpg)
 
@@ -1389,6 +1389,7 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 | `SM_VKI_Overlay_Bedroll` | 1.45 × 0.65 × 0.14 | 140 | 3 |
 | `SM_VKI_Overlay_BladeSlot_150` | 1.50 × 0.14 × 0.35 | 96 | 3 |
 | `SM_VKI_Overlay_Bones` | 0.78 × 0.63 × 0.20 | 252 | 2 |
+| `SM_VKI_Overlay_BurntBranches` | 2.13 × 1.56 × 0.18 | 350 | 2 |
 | `SM_VKI_Overlay_CrackedFloor` | 1.28 × 1.28 × 0.14 | 232 | 2 |
 | `SM_VKI_Overlay_Debris_Barrel` | 1.08 × 1.04 × 0.50 | 344 | 2 |
 | `SM_VKI_Overlay_Debris_Campfire` | 0.82 × 0.83 × 0.17 | 272 | 3 |
@@ -1506,7 +1507,7 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 | `SM_VKI_Post_Wattle_Mid_Cut` | 0.20 × 0.42 × 1.34 | 124 | 2 |
 | `SM_VKI_Post_Wattle_Mid_Full` | 0.20 × 0.42 × 2.74 | 124 | 2 |
 
-### <a id="interior-prop"></a>Prop: 200
+### <a id="interior-prop"></a>Prop: 204
 
 ![Prop](catalogue/sheets/interior_Prop.jpg)
 
@@ -1542,9 +1543,13 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 | `SM_VKI_Prop_Bridge_Dwarf` | 1.16 × 4.20 × 1.87 | 452 | 3 |
 | `SM_VKI_Prop_Bridge_Sewer` | 0.90 × 2.20 × 0.22 | 132 | 2 |
 | `SM_VKI_Prop_Bucket` | 0.34 × 0.30 × 0.35 | 248 | 3 |
-| `SM_VKI_Prop_BurntStump` | 1.54 × 1.55 × 0.96 | 296 | 3 |
-| `SM_VKI_Prop_BurntTree_A` | 1.94 × 1.86 × 6.16 | 448 | 2 |
-| `SM_VKI_Prop_BurntTree_B` | 2.19 × 2.25 × 4.72 | 472 | 2 |
+| `SM_VKI_Prop_BurntLog` | 6.22 × 2.04 × 1.85 | 474 | 2 |
+| `SM_VKI_Prop_BurntStump` | 1.07 × 1.08 × 1.17 | 356 | 2 |
+| `SM_VKI_Prop_BurntTree_A` | 1.70 × 1.38 × 6.34 | 472 | 2 |
+| `SM_VKI_Prop_BurntTree_B` | 1.38 × 1.45 × 4.89 | 496 | 2 |
+| `SM_VKI_Prop_BurntTree_C` | 1.46 × 1.35 × 5.14 | 460 | 2 |
+| `SM_VKI_Prop_BurntTree_D` | 2.44 × 2.91 × 6.55 | 672 | 2 |
+| `SM_VKI_Prop_BurntTree_E` | 1.51 × 1.49 × 2.86 | 396 | 2 |
 | `SM_VKI_Prop_Burrow` | 0.87 × 0.79 × 0.27 | 300 | 2 |
 | `SM_VKI_Prop_Cage` | 0.94 × 0.97 × 2.27 | 872 | 5 |
 | `SM_VKI_Prop_CandleStand_Pricket` | 0.51 × 0.45 × 1.49 | 538 | 4 |

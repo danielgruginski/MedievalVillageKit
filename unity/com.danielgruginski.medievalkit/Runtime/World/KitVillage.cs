@@ -84,6 +84,7 @@ namespace MedievalKit
             W = size != null ? (float)size[0] : 100f; H = size != null ? (float)size[1] : 100f;
             M = (float?)L["margin"] ?? 24f;
             rnd = new System.Random((int?)L["seed"] ?? 1);
+            rz = null;                       // the forest dressing's own stream (KitVillage.ForestDress.cs)
             groundT = Group("Ground"); buildT = Group("Buildings"); propT = Group("Props"); natureT = Group("Nature");
             logicT = Group("Logic"); wallT = Group("Walls");
             clears.Clear();
@@ -119,6 +120,8 @@ namespace MedievalKit
             Exits();
             Walls();
             foreach (var t in new[] { buildT, propT, natureT }) Swap(t.gameObject, null);   // the map's palette, its nature too (props swap their own first)
+            PieceSwaps();                    // some of the nature's pieces only (KitVillage.Patches.cs)
+            Patches();                       // ground patches round what stands, into the control map (KitVillage.Patches.cs)
             Grass(GroundMaterialInstance);   // last: it keeps clear of everything placed
         }
 
@@ -449,7 +452,7 @@ namespace MedievalKit
                 {
                     var q = new Vector2((i + 0.5f) / CtlPerM - M, (j + 0.5f) / CtlPerM - M);
                     float n = (Noise(q.x, q.y, 3.1f) - 0.5f) * 0.9f;
-                    float dirt = 0f, cob = 0f;
+                    float dirt = 0f, cob = 0f, sand = 0f;
                     for (int ri = 0; ri < roads.Count; ri++)
                     {
                         var (_, pts, width, surface) = roads[ri];
@@ -463,6 +466,7 @@ namespace MedievalKit
                         float b = Blob(q, c, r, lumps, seed) + n * 0.08f;
                         float w = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.85f, 1.05f, b));
                         if (surface == "cobble") { cob = Mathf.Max(cob, w * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(1.0f, 0.7f, b))); dirt = Mathf.Max(dirt, w); }
+                        else if (surface == "sand") sand = Mathf.Max(sand, w);  // the material's sand layer (a burnt map's ash, the Northfields' burnt ground)
                         else dirt = Mathf.Max(dirt, w);
                     }
                     foreach (var dp in doors)
@@ -472,7 +476,7 @@ namespace MedievalKit
                     }
                     if (HasSea)                                                     // the sea's bed and its shore: wet dirt, no grass
                         dirt = Mathf.Max(dirt, 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.2f, 1.4f, SeaDist(q) + n * 0.6f)));
-                    px[j * tw + i] = new Color(dirt, cob, 0f, 0f);
+                    px[j * tw + i] = new Color(dirt, cob, sand, 0f);
                 }
             var tex = new Texture2D(tw, th, TextureFormat.RGBA32, false, true) { name = $"{name}_GroundControl", wrapMode = TextureWrapMode.Clamp };
             tex.SetPixels(px);
@@ -982,19 +986,34 @@ namespace MedievalKit
             if (trees.Count == 0) return;
             float keepRoad = (float?)f["keepRoad"] ?? 2.5f, keepBuilt = (float?)f["keepBuilt"] ?? 4.5f;
             var spots = Darts(q => Clearing(q) > EdgeAt(q, edge) && Free(q, keepRoad, keepBuilt, margin: true) && !Shades(q), spacing, 90000, M);
+            var glade = Glades(f["clumps"], spots);                          // KitVillage.ForestDress.cs: clumps, zones, lean, fallen
+            float wallAt = (float?)f["wallAt"] ?? 1.08f;
+            var near = new List<Vector2>();
             foreach (var q in spots)
             {
                 float s = 0.85f + (float)rnd.NextDouble() * 0.35f;
-                var go = Place(natureT, Pick(trees), q, (float)rnd.NextDouble() * 360f, s);
-                if (go != null) Trunk(go);
+                var (list, zone) = InZone(q, trees, "species");
+                string piece = Pick(list);
+                float deg = (float)rnd.NextDouble() * 360f;                   // drawn for a glade's spot too: the others stay put
+                if (glade(q)) continue;
+                near.Add(q);
+                var go = Place(natureT, piece, q, deg, s);
+                if (go == null) continue;
+                Trunk(go);
+                Fell(go, piece, q, s, Clearing(q) > wallAt + 0.04f);
+                if (zone != null) Swap(go, zone);
             }
             var under = Weights(f["undergrowth"]);
             if (under.Count > 0)
             {
                 float us = (float?)f["undergrowthSpacing"] ?? 2.6f;
-                var near = spots;
                 foreach (var q in Darts(q => Clearing(q) > EdgeAt(q, edge) - 0.08f && q.x > -4 && q.y > -4 && q.x < W + 4 && q.y < H + 4 && Free(q, 1.2f, 1.8f, margin: true) && !HidesFoot(q, 0.5f) && near.All(t => (t - q).sqrMagnitude > 1.2f), us, 30000, 4f))
-                    KitSolid.Nature(Place(natureT, Pick(under), q, (float)rnd.NextDouble() * 360f, 0.8f + (float)rnd.NextDouble() * 0.4f));
+                {
+                    var (list, zone) = InZone(q, under, "undergrowth");
+                    var go = Place(natureT, Pick(list), q, (float)rnd.NextDouble() * 360f, 0.8f + (float)rnd.NextDouble() * 0.4f);
+                    KitSolid.Nature(go);
+                    if (go != null && zone != null) Swap(go, zone);
+                }
             }
             // stragglers: single trees and pairs out in the clearing near its edge, so the forest frays instead of
             // ending on a line
@@ -1003,8 +1022,16 @@ namespace MedievalKit
                 .OrderBy(_ => rnd.Next()).Take(strag).ToList();
             foreach (var q in lone)
             {
-                var go = Place(natureT, Pick(trees), q, (float)rnd.NextDouble() * 360f, 0.8f + (float)rnd.NextDouble() * 0.35f);
-                if (go != null) Trunk(go);
+                var (list, zone) = InZone(q, trees, "species");
+                string piece = Pick(list);
+                float deg = (float)rnd.NextDouble() * 360f, s = 0.8f + (float)rnd.NextDouble() * 0.35f;
+                var go = Place(natureT, piece, q, deg, s);
+                if (go != null)
+                {
+                    Trunk(go);
+                    Fell(go, piece, q, s, false);                           // in the clearing: it may lean, never lie
+                    if (zone != null) Swap(go, zone);
+                }
                 occupied.Add((Corners(new Rect(-1.5f, -1.5f, 3f, 3f), q, 0), "straggler"));
             }
         }
@@ -1017,7 +1044,13 @@ namespace MedievalKit
                 int count = (int?)s["count"] ?? 20;
                 float keep = (float?)s["keep"] ?? 1.5f, spacing = (float?)s["spacing"] ?? 2.5f;
                 var spots = Darts(q => Clearing(q) < 0.95f && Free(q, keep) && !HidesFoot(q, 0.5f), spacing, 20000).OrderBy(_ => rnd.Next()).Take(count);
-                foreach (var q in spots) KitSolid.Nature(Place(natureT, Pick(ws), q, (float)rnd.NextDouble() * 360f, 0.8f + (float)rnd.NextDouble() * 0.4f));
+                foreach (var q in spots)
+                {
+                    var (list, zone) = InZone(q, ws, "scatter");                // a forest zone's own scatter (a burnt edge's stumps)
+                    var go = Place(natureT, Pick(list), q, (float)rnd.NextDouble() * 360f, 0.8f + (float)rnd.NextDouble() * 0.4f);
+                    KitSolid.Nature(go);
+                    if (go != null && zone != null) Swap(go, zone);
+                }
             }
         }
 

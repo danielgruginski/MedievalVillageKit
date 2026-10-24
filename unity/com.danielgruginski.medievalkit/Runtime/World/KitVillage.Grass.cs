@@ -35,6 +35,8 @@ namespace MedievalKit
                     if (groundMat.HasProperty(t)) GrassMaterialInstance.SetTexture(t, groundMat.GetTexture(t));
                 if (groundMat.HasProperty("_GrassSat")) GrassMaterialInstance.SetFloat("_GrassSat", groundMat.GetFloat("_GrassSat"));
             }
+            if (g?["tip"] is JArray tip && tip.Count >= 3)                  // the blades' tip tint (a burnt land's: dull straw)
+                GrassMaterialInstance.SetColor("_TipColor", new Color((float)tip[0], (float)tip[1], (float)tip[2], 1f));
 
             // what stands on the ground (buildings, props, fences, trees), with bounds for a quick test
             var blocked = occupied.Select(o => (poly: o.poly, min: new Vector2(o.poly.Min(p => p.x), o.poly.Min(p => p.y)),
@@ -60,7 +62,7 @@ namespace MedievalKit
                     float c = Clearing(q);
                     if (c > edge + 0.04f) continue;
                     float w = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(edge - 0.08f, edge + 0.04f, c));
-                    w *= 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.12f, 0.5f, Mathf.Max(Ctl(q, 0), Ctl(q, 1) * 1.5f)));
+                    w *= 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.12f, 0.5f, Mathf.Max(Mathf.Max(Ctl(q, 0), Ctl(q, 1) * 1.5f), Ctl(q, 2))));
                     if (w <= 0.02f || Rn() > w) continue;
                     if (blocked.Any(b => q.x >= b.min.x && q.y >= b.min.y && q.x <= b.max.x && q.y <= b.max.y && InPoly(q, b.poly))) continue;
                     if (OnStair(q)) continue;                                             // a terrain's flight of stairs

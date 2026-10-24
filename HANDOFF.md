@@ -1921,6 +1921,19 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     - Open: no crew, so the stone is lifted by no one (the basket only hides where it comes from); the charred prefab keeps the
       basket burlap-fresh (as it keeps the stop's pad); the basket overhangs the cross beam's end by ~10 cm; the static
       piece has no basket (unit only).
+142. 2026-10-24 (Daniel, in the game: the scorched earth maps "read as badly made, not destroyed scenery"; Daniel picked
+    "the ground and materials" step of three). Unity side only, no Blender. Two layout keys in `KitVillage.Patches.cs`
+    (LEVEL_BUILDING 5.7): `patches` paints the control map's sand (B) / cobble (G) layers after the nature stands --
+    ragged rings under a share of named pieces, or noise patches by scale and cover (the cover's noise level found by
+    sampling the map, so `cover` is a real share) -- and `pieceSwaps` swaps materials on named nature pieces only (a
+    palisade's or a prop's wood untouched). The grass thins on B too (no map painted B before: unchanged elsewhere), and
+    `grass.tip` tints the blades' tips. Own random stream: a map rebuilt with the keys keeps every marker, prop and piece
+    where it was (BurntMarch and OrcHold diffed before/after: identical). The game's BurntMarch_Textures carry the burnt
+    look (`Tools~/burnt_textures.py`). Learned: a ground slot's 4 m tile must hold nothing over ~0.3 m (the old burnt
+    grass's 1 m blots tiled into a grid over the map); the AgX grade stretches light greys (ash over ~90 sRGB renders as
+    snow); noise drifts of pale ash read as puddles, rings round trunks read as ash. Before/after from play mode in the
+    game's session notes. Not done (the next steps offered): dressing (fallen trunks, clumped forest, smoulders, the ash
+    overlay's slab look, the Northfields' edge) and better burnt tree meshes (Prop_BurntTree_A/B are ~450-tri poles).
 143. 2026-10-24 (Daniel: "Pilot: bring the MedievalVillageKit into Godot 4.7.2, going Blender -> glTF -> Godot (not
     through Unity)"). **Godot export pilot**, all in [docs/GODOT_EXPORT.md](docs/GODOT_EXPORT.md). New exporter
     `src/export/gdx_export.py` beside vkx (execs it for its readers; the Unity export untouched), Godot files in
@@ -1938,6 +1951,20 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     `M_VKI_Stained_Night`, `M_VKI_Leaded_In` lose their glow in Unity (emission map x `emission: [0,0,0]`). Plan for
     the rest (the full kit, weapons + items, creatures, humanoids, layouts, terrain): GODOT_EXPORT section 7.
     Gotcha: Blender's glTF export crashes on this file unless `use_active_scene=True` (it visits every scene).
+144. 2026-10-24 (Daniel: "Go ahead with step B, the dressing: fallen charred trunks, a clumped forest with clearings, a
+    few smouldering stumps, replace the Overlay_Ash slabs, and the green-to-burnt edge in the Northfields"). Kit:
+    `KitVillage.ForestDress.cs` -- forest `clumps` (glades by noise, the gaps' share found by sampling the spots), `lean`,
+    `fallen` (beyond the wall only, the first of four ways with no cliff and < 1.5 m of drop over the trunk; roots up,
+    lifted 0.22 m; the trunk's capsule turns with it), `zones` (per-region species / undergrowth / scatter and swap,
+    mixed over the rim; `PieceSwaps` also swaps all nature in a zone's core: lip plants and boulders; not over the rim,
+    where green crowns went black); `patches` got `spots` and `centre` ovals with `band`; areas take `surface: sand`.
+    All of it draws from its own stream (Rz) and a glade's spot still draws its tree's piece and turn, so maps without
+    the keys build as before; the three game maps rebuilt with every marker, prop and encounter where it was (only the
+    slabs gone and the new stumps / smoulder markers added). Game side (MedievalSetting): `FireFx.Smoulder` + a
+    LevelDirector "smoulder" marker role; a Northfields ground material (the kit's with burnt ground in sand, ash in
+    cobble). Learned: solid pale ash (spots at 0.9, an ash farmyard) reads as a pond: keep it near the 0.5 threshold so
+    it breaks up; the dirt layer draws over sand, so a fringe in dirt sits between black and green; a zone's swap over
+    its rim blackened green pine crowns. Not done: Blender (better burnt trees and fallen trunks).
 145. 2026-10-24 (Daniel, after the pilot (143): "a full port, even the shaders" -- the Godot kit gets everything the Unity
     kit has, and the Unity kit is completed by moving into it what the game already has: "transposing code that already
     exists in the game into the kit"; his picks: C#, generic outdoor-map generators). **The plan:**
@@ -1950,6 +1977,25 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     `kit_cli.gd`); `tools/gdx_round.sh` builds the C# first. Check: the whole pilot round gives the GDScript run's
     numbers exactly (58 pieces 0 problems, 19 cameras 0.5-1.6 / 255). Next: phase 1 (all pieces, every material on
     KitLit) and, beside it, phase 3a (the game's ready-to-move code into the Unity kit).
+
+146. 2026-10-24 (Daniel, on the burnt maps after 144: "Before we check them in, keep improving"). Kit pieces
+    (`vki_props_orc`, built in a background Blender: the live one had another project open): `Prop_BurntTree_C` (a 4 m
+    snag, a split shard), `_D` (6 m, dead limbs with twigs), `_E` (a 2 m burned-out snag), `Prop_BurntLog` (a fallen
+    trunk along X, root plate at -X), `Overlay_BurntBranches`; `_A`, `_B` and `Prop_BurntStump` rebuilt on the same
+    buried foot (`vki_orc_foot`: a flare that narrows inside the trunk and short roots sinking under the ground; their
+    five / four-root stars repeated into clip art from the game camera) and charred to the ends (pale end-grain rings
+    and COAL lumps rendered as light "stars"; `vki_orc_crater` is darkened bark). 356-672 tris each; vki_test_pieces {};
+    exported (8 pieces; materials unchanged), Unity Build Prefabs (8 / 0 failed), catalogue thumbs + PIECES.md.
+    Viewer scene `Burnt_Preview` in the .blend (old and new in a row). Fixed: the hall's stump-leg helper was also
+    named `vki_orc_stump` and shadowed the burnt stump's builder (any rebuild of Prop_BurntStump failed): now
+    `vki_orc_leg`, no geometry change. The .blend's `vki_props_orc` text is one header comment behind src (push before
+    the next rebuild). Package: forest `fallen.as` (the trunk laid down as that piece, both ends beyond the wall),
+    patches `onRoads`, the build loads forest zones' and `fallen.as` pieces (`KitVillageTools.Names`). Game: the three
+    burnt maps use them (logs only via `fallen`: a 6 m log in the walkable undergrowth cut off a gather marker),
+    charred-log / branch / rock debris in the clearings, scorch round the camps' fires, tents and engines (`onRoads`),
+    darker ash and cliffs; rebuilt with markers and encounters unchanged (one archer point moved 1.2 m off a log).
+    Tried and dropped: noise scorch over the yards (cow print). Disk: E: had 1.2 GB free (the .blend save needs ~710 MB
+    of temp space).
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
