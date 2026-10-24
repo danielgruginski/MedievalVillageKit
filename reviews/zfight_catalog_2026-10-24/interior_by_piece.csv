@@ -1,0 +1,109 @@
+piece,spots,pixels_showing,materials (a / b)
+SM_VKI_Wall_Dungeon_Door_150_Full,2,42600,M_VKI_DungeonBlock / M_VKI_DungeonCap; M_VKI_DungeonIn
+SM_VKI_Wall_Mine_Plain_150A_Cut,1,29880,M_VKI_CaveRock / M_VK_Hewn
+SM_VKI_Wall_Timber_Door_150_Full,4,18171,M_VKI_PlasterCream; M_VKI_PlasterCream / M_VK_Wood
+SM_VKI_Wall_Wattle_Door_150_Full,2,12988,M_VKI_PlasterDaub; M_VKI_PlasterDaub / M_VK_Wood
+SM_VKI_Wall_Stone_Window_150_Full,7,8572,M_VKI_StoneBlockIn; M_VKI_StoneIn; M_VKI_StoneIn / M_VKI_StoneBlockIn
+SM_VKI_Wall_Sewer_Outfall_150_Full,1,7793,M_VKI_SewerBlock / M_VKI_SewerCap
+SM_VKI_Wall_Timber_Window_150_Full,1,6445,M_VKI_PlasterCream
+SM_VKI_Wall_Timber_Door_150_Cut,4,3944,M_VKI_PlasterCream; M_VKI_PlasterCream / M_VK_Wood
+SM_VKI_Wall_Mine_Plain_150A_Full,3,3610,M_VKI_CaveRock / M_VK_Hewn
+SM_VKI_Wall_Orc_Plain_150B_Full,1,3470,M_VKI_OrcLogs / M_VKI_WoodDark
+SM_VKI_Wall_Sewer_Ladder_150_Full,1,3265,M_VKI_SewerBlock / M_VKI_SewerCap
+SM_VKI_Wall_Stone_Door_150_Full,2,3086,M_VKI_StoneBlockIn; M_VKI_StoneIn
+SM_VKI_Wall_Sewer_Door_150_Full,2,2241,M_VKI_SewerBlock / M_VKI_SewerCap; M_VKI_SewerBrick
+SM_VKI_Wall_Ashlar_Lancet_150_Cut,2,1822,M_VKI_AshlarIn; M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Orc_Plain_150A_Full,1,1821,M_VKI_OrcLogs / M_VKI_WoodDark
+SM_VKI_Wall_Wattle_Door_150_Cut,1,1597,M_VKI_PlasterDaub / M_VK_Wood
+SM_VKI_Wall_Stone_Rake_150_R,4,1344,M_VKI_StoneBlockIn; M_VKI_StoneIn
+SM_VKI_Wall_Stone_Window_150_Cut,4,1305,M_VKI_StoneBlockIn; M_VKI_StoneIn
+SM_VKI_Wall_Mine_Plain_300_Full,2,1046,M_VKI_CaveRock / M_VK_Hewn
+SM_VKI_Wall_Ashlar_Door_150_Cut,3,878,M_VKI_AshlarIn / M_VKI_Dress; M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Ashlar_Ruin_150_Full,3,830,M_VKI_AshlarBlock; M_VKI_AshlarBlock / M_VKI_Dress; M_VKI_AshlarIn
+SM_VKI_Wall_Orc_Plain_300_Cut,1,722,M_VKI_OrcLogs / M_VKI_WoodDark
+SM_VKI_Wall_Ashlar_DoorWide_300_Full,6,710,M_VKI_AshlarIn; M_VKI_AshlarIn / M_VKI_Dress; M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Ashlar_Ruin_300_Full,3,706,M_VKI_AshlarBlock; M_VKI_AshlarBlock / M_VKI_Dress; M_VKI_AshlarIn
+SM_VKI_Wall_Board_Door_150_Full,1,702,M_VKI_BoardsV / M_VK_Wood
+SM_VKI_Wall_Ashlar_LancetTall_150_Full_Broken,3,665,M_VKI_AshlarIn; M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Mine_Plain_300_Cut,1,657,M_VKI_CaveRock / M_VK_Hewn
+SM_VKI_Wall_Ashlar_Plain_150A_Cut,2,648,M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Ashlar_Arcade_300_Full,3,604,M_VKI_AshlarBlock / M_VKI_Dress; M_VKI_AshlarIn; M_VKI_AshlarIn / M_VKI_Dress
+SM_VKI_Wall_Cave_Gap_150_Full,1,574,M_VKI_CaveRock
+SM_VKI_Wall_Orc_Plain_300_Full,1,573,M_VKI_OrcLogs / M_VKI_WoodDark
+SM_VKI_Wall_Dungeon_Breach_150_Full,2,533,M_VKI_DungeonBlock / M_VKI_DungeonCap; M_VKI_DungeonIn
+SM_VKI_Wall_Stone_Forge_300_Full,1,520,M_VKI_StoneBlockIn
+SM_VKI_Wall_Dwarf_Rake_150_R,3,484,M_VKI_DwarfBlock / M_VKI_DwarfCap; M_VKI_DwarfCap; M_VKI_DwarfIn
+SM_VKI_Wall_Dwarf_Rake_150_L,2,482,M_VKI_DwarfBlock / M_VKI_DwarfCap; M_VKI_DwarfIn
+SM_VKI_Wall_Dwarf_Plain_300_Full,1,477,M_VKI_DwarfBlock / M_VKI_DwarfCap
+SM_VKI_Wall_Sewer_Passage_150_Full,2,415,M_VKI_SewerBlock / M_VKI_SewerCap; M_VKI_SewerBrick
+SM_VKI_Wall_Dwarf_Breach_150_Full,2,397,M_VKI_DwarfBlock / M_VKI_DwarfCap; M_VKI_DwarfIn
+SM_VKI_Wall_Ashlar_DoorWide_300_Cut,4,397,M_VKI_AshlarIn / M_VKI_Dress; M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Ashlar_LancetTall_150_Full,3,345,M_VKI_AshlarIn; M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Dwarf_Breach_300_Full,2,326,M_VKI_DwarfBlock / M_VKI_DwarfCap; M_VKI_DwarfIn
+SM_VKI_Wall_Ashlar_Hearth_300_Full,4,302,M_VKI_AshlarIn; M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Ashlar_Plain_300_Cut,1,294,M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Ground_Sewer_OXOX,1,286,M_VKI_SewerBlock
+SM_VKI_Wall_Ashlar_Door_150_Full,4,280,M_VKI_AshlarIn; M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Stone_Hearth_300_Cut,1,248,M_VKI_StoneBlockIn
+SM_VKI_Wall_Stone_Hearth_300_Full,1,231,M_VKI_StoneBlockIn
+SM_VKI_Wall_Dwarf_Breach_300_Cut,2,226,M_VKI_DwarfBlock / M_VKI_DwarfCap; M_VKI_DwarfIn
+SM_VKI_Wall_Cave_Rake_150_L,1,202,M_VKI_CaveRock
+SM_VKI_Wall_Timber_Rake_150_R,1,197,M_VKI_PlasterCream
+SM_VKI_Wall_Ashlar_Ruin_150_Cut,1,197,M_VKI_AshlarBlock / M_VKI_Dress
+SM_VKI_Wall_Sewer_Plain_150A_Full,1,191,M_VKI_SewerBlock / M_VKI_SewerCap
+SM_VKI_Wall_Cave_Passage_150_Full,1,172,M_VKI_CaveRock
+SM_VKI_Wall_Stone_Door_150_Cut,2,162,M_VKI_StoneBlockIn; M_VKI_StoneIn
+SM_VKI_Wall_Timber_Window_150_Cut,1,147,M_VKI_PlasterCream
+SM_VKI_Wall_Sewer_Plain_150B_Full,1,147,M_VKI_SewerBlock / M_VKI_SewerCap
+SM_VKI_Wall_Ashlar_Plain_300_Full,1,145,M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Sewer_Plain_150A_Cut,1,137,M_VKI_SewerBlock / M_VKI_SewerCap
+SM_VKI_Wall_Ashlar_Lancet_150_Full_Broken,1,121,M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Ashlar_Plain_150A_Full,1,110,M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Orc_Window_150_Cut,1,107,M_VKI_OrcLogs / M_VKI_WoodDark
+SM_VKI_Wall_Orc_Window_150_Full,1,89,M_VKI_OrcLogs / M_VKI_WoodDark
+SM_VKI_Wall_Ashlar_Hearth_300_Cut,4,83,M_VKI_AshlarIn; M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Orc_Door_150_Full,2,80,M_VKI_OrcLogs / M_VKI_WoodDark
+SM_VKI_Wall_Ashlar_Ruin_300_Cut,1,74,M_VKI_AshlarBlock / M_VKI_Dress
+SM_VKI_Wall_Dungeon_Niche_150_Full,1,71,M_VKI_DungeonBlock / M_VKI_DungeonCap
+SM_VKI_Wall_Stone_Plain_150B_Full,1,65,M_VKI_StoneBlockIn
+SM_VKI_Ground_Sewer_XXXX,1,50,M_VKI_SewerBlock
+SM_VKI_Wall_Sewer_Rake_150_R,1,39,M_VKI_SewerBlock / M_VKI_SewerCap
+SM_VKI_Wall_Ancient_Plain_300_Full,1,39,M_VKI_AncientBlock / M_VKI_AncientCap
+SM_VKI_Wall_Ancient_Breach_300_Full,2,38,M_VKI_AncientBlock / M_VKI_AncientCap; M_VKI_AncientIn
+SM_VKI_Wall_Dungeon_Passage_150_Full,1,37,M_VKI_DungeonBlock / M_VKI_DungeonCap
+SM_VKI_Wall_Ashlar_Arch_300_Full,2,37,M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Dungeon_Niche_150_Cut,2,37,M_VKI_DungeonBlock / M_VKI_DungeonCap; M_VKI_DungeonIn
+SM_VKI_Wall_Dwarf_DoorWide_300_Full,1,36,M_VKI_DwarfBlock / M_VKI_DwarfCap
+SM_VKI_Wall_Sewer_Plain_300_Cut,1,35,M_VKI_SewerBlock / M_VKI_SewerCap
+SM_VKI_Wall_Ashlar_Arch_300_Cut,2,30,M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Stone_DoorWide_300_Cut,1,28,M_VKI_StoneBlockIn
+SM_VKI_Wall_Ancient_Plain_300_Cut,1,28,M_VKI_AncientBlock / M_VKI_AncientCap
+SM_VKI_Wall_Ancient_Broken_150_Full,2,26,M_VKI_AncientBlock / M_VKI_AncientCap; M_VKI_AncientIn
+SM_VKI_Wall_Ashlar_Arcade_300_Full_Broken,1,22,M_VKI_AshlarBlock / M_VKI_Dress
+SM_VKI_Wall_Ancient_Rake_150_L,1,21,M_VKI_AncientBlock / M_VKI_AncientCap
+SM_VKI_Wall_Sewer_Breach_150_Cut,1,18,M_VKI_SewerBlock / M_VKI_SewerCap
+SM_VKI_Wall_Dungeon_Plain_150A_Cut,1,16,M_VKI_DungeonBlock / M_VKI_DungeonCap
+SM_VKI_Stair_Up_Spiral_300_Tall,1,16,M_VKI_StoneBlockIn
+SM_VKI_Wall_Sewer_Breach_300_Full,1,16,M_VKI_SewerBlock / M_VKI_SewerCap
+SM_VKI_Wall_Stone_Plain_300_Cut,1,15,M_VKI_StoneBlockIn
+SM_VKI_Wall_Ancient_Broken_300_Full,1,14,M_VKI_AncientBlock / M_VKI_AncientCap
+SM_VKI_Wall_Ancient_Relief_150_Full,2,14,M_VKI_AncientBlock / M_VKI_AncientCap
+SM_VKI_Wall_Dungeon_Breach_150_Cut,1,10,M_VKI_DungeonIn
+SM_VKI_Wall_Orc_Door_150_Cut,1,10,M_VKI_OrcLogs / M_VKI_WoodDark
+SM_VKI_Wall_Ashlar_Lancet_150_Full,1,10,M_VKI_StoneBlockIn / M_VKI_Dress
+SM_VKI_Wall_Ancient_Plain_150A_Full,1,9,M_VKI_AncientBlock / M_VKI_AncientCap
+SM_VKI_Wall_Ancient_DoorWide_300_Full,1,9,M_VKI_AncientBlock / M_VKI_AncientCap
+SM_VKI_Wall_Dungeon_Plain_150B_Full,1,8,M_VKI_DungeonBlock / M_VKI_DungeonCap
+SM_VKI_Wall_Sewer_Culvert_150_Cut,1,8,M_VKI_SewerBlock / M_VKI_SewerCap
+SM_VKI_Wall_Sewer_Breach_150_Full,1,7,M_VKI_SewerBlock / M_VKI_SewerCap
+SM_VKI_Wall_Dungeon_Plain_150A_Full,1,7,M_VKI_DungeonBlock / M_VKI_DungeonCap
+SM_VKI_Wall_Dwarf_Plain_300_Cut,1,6,M_VKI_DwarfBlock / M_VKI_DwarfCap
+SM_VKI_Wall_Dwarf_Plain_150B_Full,1,6,M_VKI_DwarfBlock / M_VKI_DwarfCap
+SM_VKI_Wall_Ancient_Breach_150_Full,1,5,M_VKI_AncientBlock / M_VKI_AncientCap
+SM_VKI_Wall_Ancient_Plain_150A_Cut,1,5,M_VKI_AncientBlock / M_VKI_AncientCap
+SM_VKI_Wall_Cave_Rake_150_R,1,4,M_VKI_CaveRock
+SM_VKI_Wall_Stone_Plain_150A_Full,1,4,M_VKI_StoneBlockIn
+SM_VKI_Wall_Ancient_Breach_150_Cut,1,4,M_VKI_AncientBlock / M_VKI_AncientCap
+SM_VKI_Wall_Ancient_Door_150_Full,1,4,M_VKI_AncientBlock / M_VKI_AncientCap
+SM_VKI_Wall_Dwarf_Plain_150A_Full,1,4,M_VKI_DwarfBlock / M_VKI_DwarfCap
+SM_VKI_Wall_Stone_Forge_300_Cut,1,4,M_VKI_StoneBlockIn

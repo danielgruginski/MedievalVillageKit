@@ -215,7 +215,10 @@ def vki_cav_gap(k, height, passage=False):
         for a, b in zip(xs[:-1], xs[1:]):
             polys.append([(a, zb[a]), (b, zb[b]), (b, H), (a, H)])
     vki_cav_body(k, polys)
-    jt = (VKI_CAV_GAP["arch"][0] if full else H) - 0.03                  # ragged jambs: inward only (T3)
+    # ragged jambs: inward only (T3), and only below the arch: an arch strip starting under the old 1.97 (its foot is
+    # jittered +-0.08 about 2.0) had its corners pushed with the jamb's while the jamb's face between its own vertices
+    # stayed put -- the two faces parted into a crack round a shared face (z-fight; 2026-10-24 sweep)
+    jt = (min(VKI_CAV_GAP["arch"][0], zb[x0], zb[x1]) if full else H) - 0.03
     for v in k.bm.verts:
         for xe, sg in ((x0, 1.0), (x1, -1.0)):
             if abs(v.co.x - xe) < 1e-4 and 0.0 < v.co.z < jt:

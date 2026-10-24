@@ -264,7 +264,8 @@ def vki_dun_ossuary(k, x0, x1, zf, y0, y1, seed):
     """contents of one ossuary niche: long bones stacked along x at the back, a row of skulls on them in front"""
     rng = random.Random(seed)
     L = x1 - x0
-    for i, (dy, dz) in enumerate(((0.10, 0.018), (0.06, 0.018), (0.08, 0.05))):
+    # the first two rows lie 4 cm apart, so their knuckles overlap: 2 mm apart in height (one plane z-fought)
+    for i, (dy, dz) in enumerate(((0.10, 0.018), (0.06, 0.020), (0.08, 0.05))):
         ya = y1 - dy
         xa = x0 + 0.03 + rng.uniform(0.0, 0.05); xb = x1 - 0.03 - rng.uniform(0.0, 0.05)
         vki_dun_bone(k, (xa, ya, zf + dz), (xb, ya + rng.uniform(-0.02, 0.02), zf + dz + rng.uniform(-0.006, 0.006)),

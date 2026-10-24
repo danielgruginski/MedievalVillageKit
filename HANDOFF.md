@@ -2027,6 +2027,48 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     cameras (Tab), a free camera (F), Esc back; `Play Medieval Kit demo.bat` / `Open in Godot editor.bat` in the
     project folder; Project > Tools > "Play From Start Level" / "Walk This Level" too. Chains and their streamer wait
     for phase 4 (they need the generators). Committed with phase 1 (147) in one commit.
+149. 2026-10-24 (Daniel: "You can refresh them [the Unity catalogs], and give support for that tool that when pressed F8
+    tries to count the Zfighting places in the screen", then "the ZFighting tool can exist in Unity only, but it would
+    be interesting to use that in the catalog"). **Unity catalogs refreshed** (UNITY_EXPORT 7): Catalog_KitExterior 544
+    pieces / 52 cameras, Catalog_KitInterior 852 / 26 (were 480 / 713 from 2026-10-01). Built beside the open scene:
+    `KitBuilder.BuildLevel(name, beside)` + **Tools > Medieval Kit > Build Catalogs**; SetupEnvironment now recolours
+    only the level's own cameras (it took every open scene's). **Look Around This Level** (`Walker/KitLookAround`, menu
+    in KitPlay): play without a walker, Tab through the scene's cameras, T tours them all, F free camera; the camera in
+    use is MainCamera, so the game's F8 z-fight watch follows it through a whole catalog. The game's `ZFightWatch` placed
+    spots as if every camera were perspective: fixed for orthographic ones (MedievalSetting, not checked in). No Godot
+    port of the watch (his call). **Sweep of the interior catalog** (F8 + T, scripted through `KitLookAround.Tour()`):
+    108 pieces fight inside themselves, none with each other -- wall caps flush with the wall faces, ashlar trims,
+    timber / wattle door frames in the plaster's plane, mine timbering, orc walls; list in
+    `reviews/zfight_catalog_2026-10-24/` (to fix like 132-133). **The exterior catalog crashes the editor** when drawn
+    (D3D12 device hung, three times; also once that morning before any catalog work): ~1 M tris, KitLit + KitTerrain
+    only, no shader that can run long; cause not found, not swept.
+150. 2026-10-24 (a side session's brief from 149's sweep: "fix the z-fighting faces inside the interior wall pieces").
+    **The sweep's fights are the catalog's open wall ends, not flush trims.** Every interior wall is separate closed
+    solids (body panels, coping units, frames) touching back to back, and `vki_open_wall_ends` deletes each wall's end
+    faces (a post or the next wall always covers them; a free end is T12's error). M_VKI_* materials export two-sided,
+    so a wall standing alone in the catalog shows its hollow inside through each end: a coping unit's inside bottom on
+    the body's top (the `*Block / *Cap` spots, all at z 2.88 / 0.90 at a piece end), panel ends against the panel over
+    an opening or a door frame (x 1.17, 1.31), coping joints, mine boards, orc plates (the watch's screenshots show it).
+    `tools/vk_zfight.py` learnt the watch's view: **`sided`** (one plane facing either way, |dot| > 0.995, < 1 mm apart
+    where they overlap, seen from each side where both draw by `vkx_double_sided`; an escaping ray counts only when two
+    copies tilted 0.6 deg escape too -- single rays slip through shared triangle edges) and **`closed`** (wall ends
+    covered as in a level); also `@list`, `out=`, `rebuild` of SM_VKI_* through vki_rebuild, material names. On the 108:
+    sided 105 pieces / 2,187 contacts (the sweep, reproduced); sided closed 5 real. Fixed in shared code: the cave
+    Gap / Passage's ragged jambs (`vki_cav_gap`: an arch strip whose foot (2.0 +- 0.08) fell under the noise's 1.97 top
+    had its corners pushed with the jamb's while the jamb's face between its own vertices stayed: a crack round a
+    shared face; the noise now stops 3 cm under the lowest strip foot) and the ossuary's second bone row
+    (`vki_dun_ossuary`: knuckles in one plane, now 2 mm higher). Rebuilt Cave_Gap_150_Full, Cave_Passage_150_Full,
+    Dungeon_Niche_150_Full / _Cut (vki_test_pieces clean before and after; Gap_Cut came out identical), .blend saved,
+    exported for Unity (`vkx_export_pieces`) and Godot (`gdx_export -- pieces`; their .md5 removed, so Godot reimports
+    them on its next import). After: closed 107 / 108 clean (left: a 1 mm step between two Ancient_Breach_150_Cut
+    columns), plain vk_zfight 100 / 108 (left: the breach spill's undersides at z 0, buried under the floor). **The
+    catalog still shows the 2,187** until it covers wall ends: Daniel's call (posts at each wall's ends in
+    `vkx_build_catalog`, or end plugs in the pieces at ~20-60 tris a wall end no level ever shows). Whole interior kit
+    (852 masters, sided closed): walls clean; outside the walls left the lava ground tiles' channel blocks (DwarfBlock
+    under the floor, ~80 contacts on 5 tiles; tile edges not covered by the check, so unconfirmed), stream / cave tiles
+    (6 small), props (siege tower burlap, orc altar and necro circle bones, 2-35 cm2) and floor-level undersides.
+    Builds are deterministic in vertices but not in face order (mesh hashes differ between identical rebuilds: compare
+    canonical face sets). Unity's prefabs not rebuilt (same submeshes; the FBX reimport updates them).
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

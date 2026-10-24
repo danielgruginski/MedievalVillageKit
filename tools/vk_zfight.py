@@ -2,16 +2,19 @@
 # Same-facing faces of one piece in one plane (normals within 0.999, planes within 2 mm) that overlap by more than
 # 0.2 cm2 AND can be seen: from 2 mm off the overlap some of 24 rays in its hemisphere escape 40 m (buried overlaps
 # never show). Writes renders/zfight.json (piece -> overlaps, biggest first).
-#   blender -b blender/medievalDiorama.blend --python tools/vk_zfight.py -- [rebuild] [demo] [save] [SM_... names]
+#   blender -b blender/medievalDiorama.blend --python tools/vk_zfight.py -- [rebuild] [demo] [save] [SM_... names] [@list.txt]
 # With no names: the market, harbour, dock and quay pieces. "demo": also qy_demo's assembled quay chunk (overlaps
 # between neighbouring tiles). Bottoms resting on / under the ground of land pieces still show here (no ground):
-# read those as buried.
+# read those as buried. Interior pieces (SM_VKI_*) rebuild through vki_rebuild; @file reads one name per line;
+# out=<path> writes the report elsewhere; "sided" checks as the game's z-fight watch does (zfight_sided below);
+# "closed" (with sided) covers wall pieces' open ends as a level does (a post or the next wall).
 import bpy, os, sys, json, math, traceback
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 assert bpy.data.filepath.endswith("medievalDiorama.blend"), bpy.data.filepath
 OUT = os.path.join(os.path.dirname(os.path.dirname(bpy.data.filepath)), "renders", "zfight.json")
 args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+OUT = next((a[4:] for a in args if a.startswith("out=")), OUT)          # out=<path>: another report file
 exec(open(r"E:\Unity\Projects\GameArtGeneration\MedievalVillageKit\tools\kit_sync.py", encoding="utf8").read())
 push()
 gk = {}; exec(bpy.data.texts["vk_kit"].as_string(), gk); kit = gk["vk_kit_ns"]()
@@ -21,12 +24,20 @@ PREFIX = ("SM_VKT_Quay_", "SM_VK_Harbour_", "SM_VK_Jetty_", "SM_VK_Breakwater", 
           "SM_VK_Prop_CrierStand")
 STALLS = ["SM_VK_MarketStall_" + t for t in ("Spicer", "Butcher", "Jeweller", "Armourer", "Apothecary", "Vintner", "Scribe")]
 only = [a for a in args if a.startswith("SM_")]
+for a in args:
+    if a.startswith("@"): only += [l.strip() for l in open(a[1:], encoding="utf8") if l.strip().startswith("SM_")]
 names = only or [o.name for o in bpy.data.objects if o.type == "MESH" and "_inst" not in o.name and (o.name.startswith(PREFIX) or o.name in STALLS)]
 
 if "rebuild" in args:
     if any(n.startswith("SM_VKT_Quay_") for n in names): kit["tk_build_quays"]()
+    vki = [n for n in names if n.startswith("SM_VKI_")]
+    if vki:
+        g0 = {}; exec(bpy.data.texts["vki_core"].as_string(), g0); ik = g0["vki_ns"]()
+        for n in vki:
+            try: ik["vki_rebuild"]([n])
+            except Exception: print("REBUILD FAILED", n); traceback.print_exc()
     for n in names:
-        if n.startswith("SM_VKT_"): continue
+        if n.startswith(("SM_VKT_", "SM_VKI_")): continue
         try: kit["full_rebuild"]([n])
         except Exception: print("REBUILD FAILED", n); traceback.print_exc()
 
@@ -61,6 +72,10 @@ def visible(bvh, p, n):
         hit = bvh.ray_cast(o, q, 40.0)
         if hit[0] is None: return True
     return False
+
+def mname(me, pi):
+    mi = me.polygons[pi].material_index; m = me.materials[mi] if mi < len(me.materials) else None
+    return m.name if m else mi
 
 def zfight(o, dist=2e-3, dot=0.999, min_area=2e-5):
     me = o.data; me.calc_loop_triangles()
@@ -105,10 +120,122 @@ def zfight(o, dist=2e-3, dot=0.999, min_area=2e-5):
                     if not visible(bvh, pw, ta[2]): continue
                     out.append(dict(area=round(abs(area2(C)), 5), at=[round(x, 3) for x in pw], n=[round(x, 2) for x in ta[2]],
                                     gap=round(abs(ta[3] - tb[3]), 5), faces=list(sk),
-                                    mats=[me.polygons[ta[0]].material_index, me.polygons[tb[0]].material_index]))
+                                    mats=[mname(me, ta[0]), mname(me, tb[0])]))
     out.sort(key=lambda e: -e["area"])
     return out
 
+# "sided": the game's z-fight watch (MedievalSetting ZFightWatch) instead -- faces in one plane facing either way
+# (|dot| > 0.995, planes < 1 mm apart; "fight" under 0.2 mm), seen from each side where both draw: a face draws its
+# back too when its material is two-sided in the export (vkx_double_sided: M_VKI_* and the sheet materials). Catches
+# what one-sided thinking misses: a cap's inside bottom on a wall body's top, seen through the open wall end.
+import ast
+_src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "export", "vkx_export.py"), encoding="utf8").read()
+_ns = {}
+for _nd in ast.parse(_src).body:
+    if (isinstance(_nd, ast.Assign) and any(getattr(t, "id", "").startswith("VKX_TWO_SIDED") for t in _nd.targets)) or \
+       (isinstance(_nd, ast.FunctionDef) and _nd.name == "vkx_double_sided"):
+        exec(compile(ast.Module([_nd], []), "vkx_export", "exec"), _ns)
+two_sided = _ns["vkx_double_sided"]
+DIRS96 = []
+for i in range(96):
+    z = 0.08 + 0.92 * (i % 8) / 7.0; a = i * 2.39996
+    r = math.sqrt(max(0.0, 1 - z * z)); DIRS96.append(Vector((r * math.cos(a), r * math.sin(a), z)))
+
+def seen_from(bvh, pts, s, off=0.002):
+    """a ray escapes 40 m, and so do two copies tilted 0.6 deg (one ray in thousands slips through the shared edge of
+    two triangles of a closed box; a real opening lets its neighbours through too). Rays start `off` from the plane:
+    just past both faces (2 mm off put points near a sloping occluder's edge outside it)"""
+    M = s.to_track_quat("Z", "Y").to_matrix()
+    for p in pts:
+        o = p + s * off
+        for d0 in DIRS96:
+            d = M @ d0
+            if bvh.ray_cast(o, d, 40.0)[0] is not None: continue
+            a = d.orthogonal().normalized(); b = d.cross(a)
+            if all(bvh.ray_cast(o, (d + w * 0.0105).normalized(), 40.0)[0] is None for w in (a, b)): return True
+    return False
+
+def end_blockers(o, co, polys):
+    """"closed": a wall's open ends (vki_open_wall_ends) as a level has them -- covered by a post or the next wall --
+    as a quad 0.1 mm outside each end over the bounding box of the piece's vertices in that end plane"""
+    L = o.get("vki_len")
+    if o.get("vki_class") != "wall" or not L: return
+    for xe, sg in ((0.0, -1.0), (float(L), 1.0)):
+        e = [p for p in co if abs(p.x - xe) < 1e-4]
+        if not e: continue
+        y0, y1 = min(p.y for p in e), max(p.y for p in e); z0, z1 = min(p.z for p in e), max(p.z for p in e)
+        x = xe + sg * 1e-4; i = len(co)
+        co += [Vector((x, y0, z0)), Vector((x, y1, z0)), Vector((x, y1, z1)), Vector((x, y0, z1))]
+        polys.append((i, i + 1, i + 2, i + 3))
+
+def zfight_sided(o, dist=1e-3, fight=2e-4, dot=0.995, min_area=2e-5):
+    me = o.data; me.calc_loop_triangles()
+    co = [Vector(v.co) for v in me.vertices]
+    polys = [tuple(p.vertices) for p in me.polygons]
+    bco = list(co)
+    if "closed" in args: end_blockers(o, bco, polys)
+    bvh = BVHTree.FromPolygons(bco, polys)
+    ts = [two_sided(m.name) if m else True for m in me.materials]
+    tris = []
+    for t in me.loop_triangles:
+        a, b, c = (co[i] for i in t.vertices); n = (b - a).cross(c - a)
+        if n.length < 1e-12: continue
+        n.normalize()
+        ax = max(range(3), key=lambda i: abs(n[i]))
+        cn = n if n[ax] > 0 else -n                          # canonical: its largest component positive
+        tris.append((t.polygon_index, (a, b, c), n, cn, cn.dot(a)))
+    buckets = {}
+    for tr in tris:
+        cn, d = tr[3], tr[4]
+        buckets.setdefault((round(cn.x, 1), round(cn.y, 1), round(cn.z, 1), math.floor(d / 0.002)), []).append(tr)
+    seen = set(); out = []
+    for key, lst in buckets.items():
+        cand = list(lst) + buckets.get(key[:3] + (key[3] + 1,), [])
+        if len({c_[0] for c_ in cand}) < 2: continue
+        n0 = lst[0][3]; u = Vector((0, 0, 1)) if abs(n0.z) < 0.9 else Vector((1, 0, 0))
+        u = (u - n0 * u.dot(n0)).normalized(); v = n0.cross(u)
+        proj = []; grid = {}
+        for tr in cand:
+            P = [(p.dot(u), p.dot(v)) for p in tr[1]]
+            if area2(P) < 0: P = P[::-1]
+            proj.append((tr, P)); k_ = len(proj) - 1
+            xs = [p[0] for p in P]; ys = [p[1] for p in P]
+            for gx in range(math.floor(min(xs) / 0.5), math.floor(max(xs) / 0.5) + 1):
+                for gy in range(math.floor(min(ys) / 0.5), math.floor(max(ys) / 0.5) + 1):
+                    grid.setdefault((gx, gy), []).append(k_)
+        for cell in grid.values():
+            for ii in range(len(cell)):
+                for jj in range(ii + 1, len(cell)):
+                    (ta, Pa), (tb, Pb) = proj[cell[ii]], proj[cell[jj]]
+                    if ta[0] == tb[0] or abs(ta[3].dot(tb[3])) <= dot or abs(ta[4] - tb[4]) >= 0.004: continue
+                    sk = (min(ta[0], tb[0]), max(ta[0], tb[0]))
+                    if sk in seen: continue
+                    C = clip(Pa, Pb)
+                    if len(C) < 3 or abs(area2(C)) < min_area: continue
+                    seen.add(sk)
+                    cx = sum(p[0] for p in C) / len(C); cy = sum(p[1] for p in C) / len(C)
+                    pts = [Vector((cx, cy))] + [Vector((cx + 0.7 * (p[0] - cx), cy + 0.7 * (p[1] - cy))) for p in C]
+                    pts = [u * q.x + v * q.y + n0 * ta[4] for q in pts]
+                    ma, mb = me.polygons[ta[0]].material_index, me.polygons[tb[0]].material_index
+                    pc = u * cx + v * cy + n0 * ta[4]       # the gap where they overlap (tilted planes part away
+                    gb = tb[3].dot(pc) - tb[4]               # from the origin: offsets there say nothing)
+                    gap = abs(gb)
+                    if gap >= dist: continue
+                    sides = []
+                    for s in (n0, -n0):                      # both draw on side s: front-facing, or two-sided
+                        p0 = [p - n0 * min(gb, 0.0) if s is n0 else p - n0 * max(gb, 0.0) for p in pts]
+                        if (ta[2].dot(s) > 0 or ts[ma]) and (tb[2].dot(s) > 0 or ts[mb]) and seen_from(bvh, p0, s, 3e-4):
+                            sides.append("+" if s is n0 else "-")
+                    if not sides: continue
+                    out.append(dict(area=round(abs(area2(C)), 5), at=[round(x, 3) for x in pts[0]],
+                                    n=[round(x, 2) for x in n0], side="".join(sides),
+                                    facing="same" if ta[2].dot(tb[2]) > 0 else "opposite",
+                                    kind="fight" if gap < fight else "near", gap=round(gap, 5), faces=list(sk),
+                                    mats=[mname(me, ta[0]), mname(me, tb[0])]))
+    out.sort(key=lambda e: -e["area"])
+    return out
+
+if "sided" in args: zfight = zfight_sided
 res = {}
 for n in sorted(names):
     try: res[n] = zfight(bpy.data.objects[n])
