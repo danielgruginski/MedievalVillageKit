@@ -8,6 +8,8 @@ Dungeon kit (built 2026-09-29 on the interior kit): [docs/DUNGEON_KIT.md](docs/D
 Adventure kit (built 2026-09-29 on the dungeon kit): [docs/ADVENTURE_KIT.md](docs/ADVENTURE_KIT.md).
 The town connection, the world graph (2026-09-30): [docs/WORLD_GRAPH.md](docs/WORLD_GRAPH.md).
 Unity export (vertical slice, 2026-09-30): [docs/UNITY_EXPORT.md](docs/UNITY_EXPORT.md).
+Godot export (pilot, 2026-10-24, entries 143 and 145): [docs/GODOT_EXPORT.md](docs/GODOT_EXPORT.md); the full port
+(a Godot kit with everything the Unity kit has, the Unity kit completed from the game): [docs/FULL_PORT_PLAN.md](docs/FULL_PORT_PLAN.md).
 Animated units (the siege catapult, 2026-10-23, entries 140-141): [docs/UNITS.md](docs/UNITS.md).
 
 ---
@@ -1919,6 +1921,35 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     - Open: no crew, so the stone is lifted by no one (the basket only hides where it comes from); the charred prefab keeps the
       basket burlap-fresh (as it keeps the stop's pad); the basket overhangs the cross beam's end by ~10 cm; the static
       piece has no basket (unit only).
+143. 2026-10-24 (Daniel: "Pilot: bring the MedievalVillageKit into Godot 4.7.2, going Blender -> glTF -> Godot (not
+    through Unity)"). **Godot export pilot**, all in [docs/GODOT_EXPORT.md](docs/GODOT_EXPORT.md). New exporter
+    `src/export/gdx_export.py` beside vkx (execs it for its readers; the Unity export untouched), Godot files in
+    `godot/kit/` (since entry 145 the addon `godot/addons/medieval_kit/`: KitLit.gdshader for moss / rim / roof
+    jitter, import script, layout builder, capture, checks),
+    `tools/gdx_round.sh` / `gdx_compare.py` / `gdx_crop.py`. One .glb per piece + a shared .tres library mapped by
+    name at import; restyles = surface_material_override. Pilot family: the interior Overlay (52) + restyles, KitLit
+    and glass checks, scene `GDX_Pilot` built in a background Blender (nothing saved): 58 pieces, 51 materials, all 19
+    cameras 0.5-1.6 / 255 mean from Blender (shadows on and off), checked in full-res crops. Settled: vertex colour
+    as albedo comes from our .tres (the importer sets it on 2 of 3 surfaces by itself); glass needs no node split (a
+    transparent-pass material never casts shadows). Calibrated: AgX MHC = Godot contrast 1.5, flat sky for
+    reflections, emission operator Multiply, sun shadows orthogonal 60 m / 8192 / angle x 0.6. Verdict on all 200
+    materials: 160 clean, 13 transparent pass, 13 cut-out / translucent cards (8 leaf normals unported, as in Unity),
+    10 KitLit, 6 projected (KitTerrain port). **Unity bug found, not fixed:** `M_VK_Stained`, `M_VKI_Stained_In`,
+    `M_VKI_Stained_Night`, `M_VKI_Leaded_In` lose their glow in Unity (emission map x `emission: [0,0,0]`). Plan for
+    the rest (the full kit, weapons + items, creatures, humanoids, layouts, terrain): GODOT_EXPORT section 7.
+    Gotcha: Blender's glTF export crashes on this file unless `use_active_scene=True` (it visits every scene).
+145. 2026-10-24 (Daniel, after the pilot (143): "a full port, even the shaders" -- the Godot kit gets everything the Unity
+    kit has, and the Unity kit is completed by moving into it what the game already has: "transposing code that already
+    exists in the game into the kit"; his picks: C#, generic outdoor-map generators). **The plan:**
+    [docs/FULL_PORT_PLAN.md](docs/FULL_PORT_PLAN.md) (decisions, what the Unity kit has to port, the game code to move
+    in from a read-only survey of MedievalSetting, the outdoor maps' scripts, phases 0-7 with a check each). **Phase 0
+    done:** Godot 4.7.2 .NET build (`C:\Users\danie\Downloads\Godot_v4.7.2-stable_mono_win64\`, SHA-512 checked), .NET
+    SDK 10; the Godot files became the addon `godot/addons/medieval_kit/` (Shaders, Editor, Runtime, plugin), linked into
+    the project as a directory junction (`gdx_link_addon`); `MedievalKit.csproj` (net10.0, the editor's own NuGet
+    packages: nothing downloaded); the pilot's GDScript tools are C# (`KitImport`, `KitBuilder`, `KitCapture`, entry
+    `kit_cli.gd`); `tools/gdx_round.sh` builds the C# first. Check: the whole pilot round gives the GDScript run's
+    numbers exactly (58 pieces 0 problems, 19 cameras 0.5-1.6 / 255). Next: phase 1 (all pieces, every material on
+    KitLit) and, beside it, phase 3a (the game's ready-to-move code into the Unity kit).
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

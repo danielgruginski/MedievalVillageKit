@@ -5,7 +5,9 @@
   [unity/com.danielgruginski.medievalkit/Documentation~/LEVEL_BUILDING.md](unity/com.danielgruginski.medievalkit/Documentation~/LEVEL_BUILDING.md).
 - **Working on the kit itself** (the Blender code in `src/`, the exporter, the package's internals): read
   [HANDOFF.md](HANDOFF.md) first (working agreements, open issues, the checks to run), then
-  [docs/UNITY_EXPORT.md](docs/UNITY_EXPORT.md) for the Unity side.
+  [docs/UNITY_EXPORT.md](docs/UNITY_EXPORT.md) for the Unity side and [docs/GODOT_EXPORT.md](docs/GODOT_EXPORT.md) for the
+  Godot side (`src/export/gdx_export.py`, the addon `godot/addons/medieval_kit/`); the plan for the rest:
+  [docs/FULL_PORT_PLAN.md](docs/FULL_PORT_PLAN.md).
 - **What pieces exist:** [docs/PIECES.md](docs/PIECES.md) lists every exported piece by kit and category with size,
   triangles and a contact sheet; `docs/catalogue/index.html` is the same with search (regenerate after exports: KIT_README §3).
 - Someone usually has Blender and the Unity editor open and watches them: build in scenes of your own, never replace
