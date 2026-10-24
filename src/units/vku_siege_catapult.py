@@ -7,9 +7,12 @@
 #     build_unit_blend(g)            g = vki_ns(); writes blender/vku_siege_catapult.blend (the unit's own file)
 #   The geometry is vki_orc_catapult's own: the builder tags its parts (vki_orc_part) and this splits them -- frame,
 #   four wheels, the arm (cut in two at ARM_CUT so Destroyed can snap it), the stone in the cup, the windlass. The
-#   lashing rope and the stones stacked on the ground are left out; a rope from the windlass to the arm is added.
+#   lashing rope and the stones stacked on the ground are left out; a rope from the windlass to the arm is added, and
+#   (2026-10-23, Daniel: "Do the number 4") a basket of stones on the rear cross beam that Load takes the stone from.
 # Stage 2 (inside blender/vku_siege_catapult.blend): build_rig(), build_clips(), checks, renders, export().
-# Headless driver: tools/unit_catapult_run.py. Unity: Editor/Units/KitSiegeCatapultSetup.cs (see HANDOFF 140).
+# Headless driver: tools/unit_catapult_run.py. Unity: Editor/Units/KitSiegeCatapultSetup.cs (see HANDOFF 140, 141).
+# The package's Art/Units/SiegeCatapult is live in the open Unity editor: export elsewhere with set_export_dir /
+# VKU_EXPORT_DIR / the driver's export_dir=<folder> and copy in by hand.
 #
 # Coordinates are the kit's: front (the way it throws and drives) -Y, up +Z; Unity sees (-x, z, -y), front +Z.
 # Rig (Generic): Root (the skeleton's parent, never moves) and Motion (its sibling: root motion only, nothing skinned)
@@ -26,7 +29,17 @@ ROOT = r"E:\Unity\Projects\GameArtGeneration\MedievalVillageKit"
 BLEND = os.path.join(ROOT, "blender", "vku_siege_catapult.blend")
 RENDERS = os.path.join(ROOT, "renders", "units", "siege_catapult")
 PKG = os.path.join(ROOT, "unity", "com.danielgruginski.medievalkit")
-EXPORT = os.path.join(PKG, "Art", "Units", "SiegeCatapult")     # live: the open editor imports what lands here
+EXPORT_LIVE = os.path.join(PKG, "Art", "Units", "SiegeCatapult")   # live: the open editor imports what lands here
+# the export folder: the package's (default), or a staging folder outside it (env VKU_EXPORT_DIR, or the driver's
+# `export_dir=<folder>` argument -> set_export_dir) to be copied in by hand when Unity is not playing
+EXPORT = os.environ.get("VKU_EXPORT_DIR") or EXPORT_LIVE
+
+
+def set_export_dir(path):
+    """export (and read back) into `path` instead of the package's live Art/Units/SiegeCatapult"""
+    global EXPORT
+    EXPORT = os.path.normpath(path if os.path.isabs(path) else os.path.join(ROOT, path))   # relative: to the repo
+    return EXPORT
 
 UNIT = "VKU_SiegeCatapult"           # scene, FBX and prefab name
 RIG = UNIT + "_Rig"
@@ -52,7 +65,23 @@ ROPE_REST = Vector((0.0, math.cos(ROPE_DANGLE[0]), math.sin(ROPE_DANGLE[0])))   
 PARTS_DROPPED = ("lash", "stack")
 PART_BONE = {"frame": "Frame", "wheelFL": "Wheel_FL", "wheelFR": "Wheel_FR", "wheelBL": "Wheel_BL",
              "wheelBR": "Wheel_BR", "arm": "Arm", "armtip": "Arm_Tip", "stone": "Stone", "windlass": "Windlass",
-             "rope": "Rope"}
+             "rope": "Rope", "basket": "Frame"}
+# the stone basket (2026-10-23, Daniel: "Do the number 4" -- the stone popped in above the cup): a woven basket of
+# stones on the rear cross beam's left (+X) end, beside the windlass's spokes. Load lifts the next stone out of it and
+# swings it into the cup; the stone grows to full size inside the basket's closed body (under the heap's top), so it
+# never appears in view. Its geometry rides the Frame bone (no new bone).
+BASKET = Vector((0.83, 1.85, 0.775))  # its base centre, on the cross beam (y 1.75..1.95, top z 0.78; its floor 5 mm
+                                      # down in the beam, not coplanar); the spokes end at x 0.575, its belly at 0.615
+BASKET_SEGS = 12
+BASKET_IN = 0.19                      # the lip's inner radius (12-gon: 0.1835 to a face); the stone's is 0.173
+BASKET_PROF = [(0.0, 0.0), (0.19, 0.0), (0.215, 0.22), (0.21, 0.44), (BASKET_IN, 0.45), (BASKET_IN, 0.41),
+               (0.11, 0.435), (0.0, 0.45)]   # (r, z over BASKET): bottom, belly, rim, the lip's inside down to the heap
+BASKET_HEAP = ((0.095, math.radians(20.0), 0.095, 151), (0.095, math.radians(140.0), 0.088, 152),
+               (0.095, math.radians(260.0), 0.1, 153))   # stones on the heap: (from the axis, angle, radius, seed)
+STONE_HIDDEN = BASKET + Vector((0.0, 0.0, 0.19))   # the loaded stone's centre inside the basket (its top 0.05 under
+                                                   # the heap, its bottom 0.017 over the floor)
+STONE_LIFT_Z = 1.52                   # how high it is lifted straight up before it swings over (its bottom then clears
+                                      # the heap's stones, top ~1.28, and the spokes, top 1.27)
 
 
 def arm_dir():
@@ -162,6 +191,29 @@ def _split_arm(bm, lay, names):
     return new, P, u
 
 
+def _basket(g, k):
+    """the stone basket (BASKET): a woven body (the kit's burlap) closed on top by its heap (stone) -- one closed solid,
+    so the loaded stone can wait inside it unseen -- and three stones on the heap. The lathe and its colours come
+    before the icospheres (creating one invalidates BMVert references held from before it)."""
+    stone_mi = g["VKI_STONE_BLOCK_IN"]
+    vs, fs = g["vki_home_lathe"](k, BASKET_PROF, c=tuple(BASKET), segs=BASKET_SEGS, mi=g["BURLAP"], smooth=True)
+
+    def rad(v):
+        return math.hypot(v.co.x - BASKET.x, v.co.y - BASKET.y)
+    heap = [f for f in fs if any(rad(v) < 0.15 for v in f.verts) and all(v.co.z > BASKET.z + 0.3 for v in f.verts)]
+    for f in heap:
+        f.material_index = stone_mi
+    k.project(heap, stone_mi)
+    k.set_dark(vs, 0.12)
+    k.set_dark([v for v in vs if v.co.z > BASKET.z + 0.43 and rad(v) > 0.185], 0.3)   # the rim, a darker band
+    k.set_dark(list({v for f in heap for v in f.verts}), 0.5)                            # the heap: stones in shadow
+    for rr, a, r, seed in BASKET_HEAP:
+        c = BASKET + Vector((math.cos(a) * rr, math.sin(a) * rr, 0.437 + 0.4 * r))
+        st = g["_ico"](k, tuple(c), r, stone_mi, sub=1, jit=0.008, seed=seed)
+        k.project(g["vki_faces_of"](st), stone_mi)
+        k.set_dark(st, 0.32)
+
+
 def build_parts(g):
     """the fresh onager with its parts tagged -> (mesh object, part names, material names), in scene UNIT"""
     k = _tagging_kit(g, "SM_VKI_Prop_Siege_Catapult")
@@ -169,6 +221,8 @@ def build_parts(g):
     # the unit's rope, hanging loose from the drum's axis (ROPE_DANGLE; the Rope bone turns and stretches it)
     g["def_rope"](k, tuple(DRUM), tuple(DRUM + ROPE_REST * ROPE_DANGLE[1]), r=0.022, n=1)
     k.part_tag("rope")
+    _basket(g, k)
+    k.part_tag("basket")
     for f in k.bm.faces:                                     # as vki_build_tmp: faces left without UVs
         if all(l[k.uv].uv.length == 0 for l in f.loops):
             k.project([f], f.material_index)
@@ -571,6 +625,7 @@ class Pose:
         s.windlass = None
         s.rope = ("free", ROPE_DANGLE[0], ROPE_DANGLE[1])
         s.stone = (STONE_HIDE, Vector())
+        s.stone_at = None          # (scale, centre, turn): the stone off the arm (Load: in the basket, on its way)
 
 
 def rope_state(p, an):
@@ -600,8 +655,13 @@ def matrices(p, an, rest):
     Dtip = p.tip_free if p.tip_free is not None else Darm
     M["Arm_Tip"] = Dtip @ rest["Arm_Tip"]
     M["Socket_Projectile"] = Dtip @ rest["Socket_Projectile"]
-    s, off = p.stone
-    M["Stone"] = Matrix.Translation(off) @ Dtip @ rest["Stone"] @ Matrix.Diagonal((s, s, s, 1.0))
+    if p.stone_at is not None:                     # the stone's centre at c, turned q from its bind pose
+        s, c, q = p.stone_at
+        M["Stone"] = Matrix.Translation(c) @ q.to_matrix().to_4x4() @ Matrix.Translation(-STONE_C) @ rest["Stone"] \
+            @ Matrix.Diagonal((s, s, s, 1.0))
+    else:
+        s, off = p.stone
+        M["Stone"] = Matrix.Translation(off) @ Dtip @ rest["Stone"] @ Matrix.Diagonal((s, s, s, 1.0))
     a, L = rope_state(p, an)
     M["Rope"] = F @ rx(a - ROPE_DANGLE[0], DRUM) @ rest["Rope"] @ Matrix.Diagonal((1.0, L / ROPE_DANGLE[1], 1.0, 1.0))
     psi = p.windlass if p.windlass is not None else windlass_angle(L)
@@ -682,48 +742,111 @@ def clip_move(an, f, N):
     return p
 
 
-LOAD = dict(carry=(0, 36), wind=(40, 128), heaves=8, settle=(128, 137), stone=(132, 139))   # frames
+# Load (frames). 2026-10-23, Daniel: "Do the number 4" -- the windlass had spun ~3.5 turns a second (7 at its peak,
+# from a standing start) for 0.9 s while the rope ran out, and the stone popped in over the cup. Now the rope is run
+# out over 56 frames, the windlass easing up to ~2.5 turns a second and back down (below the heaves' peaks), so the
+# eight heaves start later and pause less (Hooked 1.2 -> 1.9 s; the heaves' own speed is within 5 % of before); the
+# stone grows inside the basket, is lifted straight out of it and swung over into the cup (Loaded stays 4.633 s).
+LOAD = dict(carry=(1, 57), swing=12, ramp=16, wind=(59, 128), heaves=8, heave_move=0.92, settle=(128, 137),
+            basket=98, grow=(100, 104), lift=(106, 139))   # basket: the hidden (0.001) stone moves from the cup into
+                                                           # the basket, held 2 frames (curve tangents settle) ere it grows
+STONE_TURN = Quaternion(Vector((0.45, -0.7, 0.55)).normalized(), math.radians(75.0))   # how it lies in the basket
+
+
+def ease_run(t, D, R):
+    """the distance fraction (0..1) at frame t of a run over D frames whose speed eases up over the first R frames (half
+    a cosine), holds, and eases down over the last R: the windlass paying out"""
+    t = max(0.0, min(float(D), t))
+    R = min(R, D / 2.0)
+
+    def part(x):
+        if x <= R:
+            return x / 2.0 - R / (2.0 * math.pi) * math.sin(math.pi * x / R)
+        return R / 2.0 + (x - R)
+    total = D - R
+    return part(t) / total if t <= D / 2.0 else 1.0 - part(D - t) / total
+
+
+def _cup(p):
+    """the cup's stone centre and the cup's turn (armature space) in pose p"""
+    D = p.frame @ rx(p.arm, PIVOT)
+    return D @ STONE_C, D.to_quaternion()
+
+
+def _bez3(p0, p1, p2, p3, t):
+    u = 1.0 - t
+    return p0 * (u * u * u) + p1 * (3 * u * u * t) + p2 * (3 * u * t * t) + p3 * (t * t * t)
+
+
+def stone_path(s, C, q_cup):
+    """the loaded stone's centre and turn at fraction s (by length) of its way: straight up out of the basket until it
+    clears the heap's stones and the windlass's spokes, then an arc over and down into the cup (C, q_cup: the cup now)"""
+    A = STONE_HIDDEN
+    B = Vector((A.x, A.y, STONE_LIFT_Z))
+    n = q_cup @ Vector((0.0, 0.0, 1.0))                     # the cup's opening (+Z when the arm is drawn back)
+    P1, P2 = B + Vector((0.0, 0.0, 0.25)), C + n * 0.42
+    pts = [_bez3(B, P1, P2, C, i / 48.0) for i in range(49)]
+    cum = [0.0]
+    for i in range(48):
+        cum.append(cum[-1] + (pts[i + 1] - pts[i]).length)
+    up = (B - A).length
+    d = max(0.0, min(1.0, s)) * (up + cum[-1])
+    if d <= up:
+        c = A.lerp(B, d / up)
+    else:
+        d -= up
+        i = max(0, min(47, next((j for j in range(48) if cum[j + 1] >= d), 47)))
+        seg = cum[i + 1] - cum[i]
+        c = pts[i].lerp(pts[i + 1], (d - cum[i]) / seg if seg > 1e-9 else 0.0)
+    q = STONE_TURN.copy()
+    if q.dot(q_cup) < 0.0:
+        q.negate()
+    return c, q.slerp(q_cup, max(0.0, min(1.0, s)))
+
+
+def load_rope(an, f):
+    """Load's rope: (angle, length) while it is run out (the loose end swung up over the drum toward the arm while the
+    windlass pays out, eased), None once it is on the hook"""
+    c0, c1 = LOAD["carry"]
+    if f >= c1:
+        return None
+    d = rx(an["stop"], PIVOT) @ an["hook"] - DRUM
+    a0, L0 = ROPE_DANGLE
+    a1, L1 = math.atan2(d.z, d.y), d.length
+    while a1 < a0:
+        a1 += 2 * math.pi
+    a = a0 + (a1 - a0) * smooth((f - c0) / LOAD["swing"])
+    return a, L0 + (L1 - L0) * ease_run(f - c0, c1 - c0, LOAD["ramp"])
 
 
 def clip_load(an, f, N):
-    """the rope carried up and hooked to the arm (the windlass pays out), eight heaves on the windlass wind the arm
-    down onto the drum, the stone drops into the cup"""
+    """the rope swung up over the drum and run out to the arm, the windlass easing up and down as it pays out; eight
+    heaves on the windlass wind the arm down onto the drum (the windlass turns with the rope's length); a stone is
+    lifted out of the basket on the rear beam and swung over into the cup (it grows to size hidden inside the basket)"""
     p = Pose(an)
-    c0, c1 = LOAD["carry"]
     w0, w1 = LOAD["wind"]
-    if f < c1:
-        # the loose end swung up over the drum toward the arm, then run out to the hook (the windlass pays out)
-        d = rx(an["stop"], PIVOT) @ an["hook"] - DRUM
-        a0, L0 = ROPE_DANGLE
-        a1, L1 = math.atan2(d.z, d.y), d.length
-        while a1 < a0:
-            a1 += 2 * math.pi
-        split = c0 + 8
-        if f < split:
-            p.rope = ("free", a0 + (a1 - a0) * smooth((f - c0) / (split - c0)), L0)
-        else:
-            t = (f - split) / (c1 - split)
-            p.rope = ("free", a1, L0 + (L1 - L0) * (1.0 - (1.0 - t) ** 2))
-    else:
-        p.rope = ("hook",)
+    r = load_rope(an, f)
+    p.rope = ("free", r[0], r[1]) if r is not None else ("hook",)
     if f >= w0:
         n = LOAD["heaves"]
         per = (w1 - w0) / n
         k = min(n - 1, int((f - w0) // per))
-        ph = smooth(((f - w0) - k * per) / (per * 0.75))
+        ph = smooth(((f - w0) - k * per) / (per * LOAD["heave_move"]))
         prog = min(1.0, (k + ph) / n)
         p.arm = an["stop"] + (an["loaded"] - an["stop"]) * prog
     s0, s1 = LOAD["settle"]
     if s0 <= f <= s1:
         p.arm = an["loaded"] + math.radians(0.8) * hump(f, s0, 4) + math.radians(0.25) * hump(f, s0 + 4, 4)
-    t0, t1 = LOAD["stone"]
-    if f >= t0:
-        sc = smooth((f - t0) / 3.0)
-        if f <= t1:
-            h = 0.35 * (1.0 - ((f - t0) / (t1 - t0)) ** 2)
-        else:
-            h = 0.03 * hump(f, t1, 4)
-        p.stone = (max(STONE_HIDE, sc), Vector((0.0, 0.0, h)))
+    g0, g1 = LOAD["grow"]
+    t0, t1 = LOAD["lift"]
+    if LOAD["basket"] <= f < t0:                            # inside the basket: grows to full size, unseen
+        p.stone_at = (max(STONE_HIDE, smooth((f - g0) / (g1 - g0))), STONE_HIDDEN.copy(), STONE_TURN.copy())
+    elif t0 <= f <= t1:                                     # lifted out, swung over, set down in the cup
+        C, q = _cup(p)
+        c, qs = stone_path(smooth((f - t0) / (t1 - t0)), C, q)
+        p.stone_at = (1.0, c, qs)
+    elif f > t1:                                            # in the cup: a little settle
+        p.stone = (1.0, Vector((0.0, 0.0, 0.03 * hump(f, t1, 4))))
     return p
 
 
@@ -909,7 +1032,7 @@ CLIPS = {
     "Idle": (clip_idle, 90, True, False, {}),
     "IdleLoaded": (clip_idle_loaded, 60, True, False, {}),
     "Move": (clip_move, MOVE_FRAMES, True, True, {}),
-    "Load": (clip_load, 150, False, False, {"Hooked": LOAD["carry"][1], "Loaded": LOAD["stone"][1]}),
+    "Load": (clip_load, 150, False, False, {"Hooked": LOAD["carry"][1], "Loaded": LOAD["lift"][1]}),
     "Throw": (clip_throw, 45, False, False, {"Release": None, "Slam": T_TRIGGER + WHIP}),
     "Hit": (clip_hit, 18, False, False, {}),
     "Destroyed": (clip_destroyed, 44, False, False, {"Break": DEST["brk"], "Snap": DEST["snap"]}),
@@ -1072,9 +1195,118 @@ def check_socket():
     return out
 
 
+def _basket_tris():
+    """the basket's triangles (Frame's, at the basket): (heap -- the stone-faced top and the stones on it --, the rest)"""
+    o = bpy.data.objects[MESH]
+    me = o.data
+    stone_slot = next(i for i, m in enumerate(me.materials) if m is not None and m.name == "M_VKI_StoneBlockIn")
+    gi = o.vertex_groups["Frame"].index
+
+    def inb(i):
+        v = me.vertices[i]
+        return (math.hypot(v.co.x - BASKET.x, v.co.y - BASKET.y) < 0.3 and v.co.z > BASKET.z - 0.001
+                and any(g.group == gi and g.weight > 0.5 for g in v.groups))
+    heap, wall = [], []
+    for p in me.polygons:
+        if all(inb(i) for i in p.vertices):
+            (heap if p.material_index == stone_slot else wall).append(tuple(p.vertices))
+    return heap, wall
+
+
+def _basket_body_tris():
+    """the basket's closed body alone (its lathe: walls + the heap's top), without the stones lying on the heap (their
+    lower halves are inside it)"""
+    me = bpy.data.objects[MESH].data
+    prof = [(r, BASKET.z + z) for r, z in BASKET_PROF]
+
+    def on_lathe(i):
+        v = me.vertices[i].co
+        r = math.hypot(v.x - BASKET.x, v.y - BASKET.y)
+        return any(abs(r - pr) < 2e-3 and abs(v.z - pz) < 2e-3 for pr, pz in prof)
+    heap, wall = _basket_tris()
+    return [t for t in heap + wall if all(on_lathe(i) for i in t)]
+
+
+def _windlass_turn(rig):
+    """the Windlass bone's turn about X (radians) at the current frame"""
+    z = rig.pose.bones["Windlass"].matrix.to_3x3().col[2]
+    return math.atan2(-z.y, z.z)
+
+
+def check_load():
+    """Load from its keys: the windlass's speed (turns a second, frame to frame) while the rope is run out and while the
+    heaves wind it in; the stone kept inside the basket's closed body whenever it is not full size (rays from each of
+    its vertices leave through the basket's own faces: it grows unseen); its lowest point over the cup's rim"""
+    rig = bpy.data.objects[RIG]
+    sc = bpy.context.scene
+    act = use_clip(rig, "Load")
+    N = int(act["frames"])
+    _, vb, _ = _parts()
+    stone_i = [i for i, b in enumerate(vb) if b == "Stone"]
+    heap, wall = _basket_tris()
+    body = _basket_body_tris()
+    psi, scale, hidden_bad, grow_frames = [], [], [], []
+    for f in range(N + 1):
+        sc.frame_set(f)
+        psi.append(_windlass_turn(rig))
+        s = rig.pose.bones["Stone"].matrix.to_scale().x
+        scale.append(s)
+        if 0.002 < s < 0.999:
+            grow_frames.append(f)
+            co = _eval_co()
+            bvh = BVHTree.FromPolygons(co, body, epsilon=0.0)
+            for i in stone_i:
+                for d in (Vector((0, 0, 1)), Vector((1, 0, 0)), Vector((0, -1, 0)), Vector((-0.6, 0.6, -0.5))):
+                    loc, nrm, idx, dist = bvh.ray_cast(co[i], d.normalized())
+                    if loc is None or nrm.dot(d) <= 0.0:
+                        hidden_bad.append((f, i))
+                        break
+    rate = []
+    for f in range(N):
+        d = (psi[f + 1] - psi[f] + math.pi) % (2 * math.pi) - math.pi
+        rate.append(d * FPS / (2 * math.pi))
+    c0, c1 = LOAD["carry"]
+    w0, w1 = LOAD["wind"]
+    # the stone seated in the cup (IdleLoaded): how many of its triangles touch the cup's (the static's own fit)
+    act = use_clip(rig, "IdleLoaded")
+    sc.frame_set(0)
+    co = _eval_co()
+    co0, _, tris = _parts()
+    seated = len(BVHTree.FromPolygons(co, tris["Stone"], epsilon=0.0).overlap(
+        BVHTree.FromPolygons(co, tris["Arm"] + tris["Arm_Tip"], epsilon=0.0)))
+    # the windlass's spokes through a whole turn against the basket (the overlap check holds the windlass as fixed),
+    # and its closest approach
+    bas = BVHTree.FromPolygons(co0, heap + wall, epsilon=0.0)
+    wi = sorted({i for t in tris["Windlass"] for i in t})
+    sweep_hits, gap = [], 9.0
+    for k in range(72):
+        Mw = rx(2 * math.pi * k / 72, DRUM)
+        if len(BVHTree.FromPolygons([Mw @ c for c in co0], tris["Windlass"], epsilon=0.0).overlap(bas)):
+            sweep_hits.append(k * 5)
+        gap = min(gap, min((bas.find_nearest(Mw @ co0[i])[3] for i in wi), default=9.0))
+    rig.animation_data.action = None
+    pay = rate[c0 - 1:c1]
+    wind = rate[w0 - 1:w1 + 1]
+    return {"payout_frames": [c0, c1], "payout_turns": round(sum(pay) / FPS, 3), "payout_peak_tps": round(max(pay), 2),
+            "payout_mean_tps": round(sum(pay) / FPS / ((c1 - c0) / FPS), 2),
+            "payout_first_steps_tps": [round(r, 2) for r in rate[c0 - 1:c0 + 5]],
+            "payout_last_steps_tps": [round(r, 2) for r in rate[c1 - 5:c1 + 1]],
+            "wind_frames": [w0, w1], "wind_turns": round(-sum(wind) / FPS, 3),
+            "wind_mean_tps": round(-sum(wind) / FPS / ((w1 - w0) / FPS), 2), "wind_peak_tps": round(-min(wind), 2),
+            "max_deg_per_frame": round(max(abs(r) for r in rate) * 360 / FPS, 1),
+            "rate_tps": [round(r, 2) for r in rate],
+            "stone_grow_frames": grow_frames, "stone_not_hidden_while_growing": hidden_bad[:10] or "none",
+            "basket_tris": {"heap": len(heap), "wall": len(wall), "body": len(body)},
+            "stone_cup_overlaps_seated": seated,
+            "windlass_turn_vs_basket": {"hits_at_deg": sweep_hits or "none", "closest_vertex_mm": round(gap * 1000, 1)},
+            "events": {k: round(v / FPS, 3) for k, v in clip_events("Load", analyse()).items()}}
+
+
 def check_overlaps(clips=None):
     """moving parts through fixed ones, frame by frame (triangle overlaps of the skinned mesh): the arm and the stone
-    against the frame (skein left out) / windlass / wheels; Destroyed's loose wheel and tip against the rest"""
+    against the frame (skein left out) / windlass / wheels / basket; Destroyed's loose wheel and tip against the rest;
+    Load's stone against the arm on its way to the cup (more than the seated stone's own contact with its cup), and
+    against the basket's heap only while it is lifted out through it (by design: listed apart as `Load_by_design`)"""
     rig = bpy.data.objects[RIG]
     co0, vb, tris = _parts()
     sc = bpy.context.scene
@@ -1084,16 +1316,33 @@ def check_overlaps(clips=None):
         return abs(c.x) < 0.7 and math.hypot(c.y - PIVOT.y, c.z - PIVOT.z) < 0.26
     frame_t = [t for t in tris["Frame"] if not any(near_pivot(i) for i in t)]
     fixed = frame_t + tris["Windlass"] + tris["Wheel_FR"] + tris["Wheel_BL"] + tris["Wheel_BR"]
-    out = {}
+    heap = set(_basket_tris()[0])
+    fixed_noheap = [t for t in fixed if tuple(t) not in heap]
+    # the stone seated in the cup touches it (the static's own fit, IdleLoaded): on its way in, only more than that counts
+    use_clip(rig, "IdleLoaded")
+    sc.frame_set(0)
+    co = _eval_co()
+    seat = len(BVHTree.FromPolygons(co, tris["Stone"], epsilon=0.0).overlap(
+        BVHTree.FromPolygons(co, tris["Arm"] + tris["Arm_Tip"], epsilon=0.0)))
+    out = {"stone_seat_contact": seat}
     for clip in (clips or CLIPS):
         act = use_clip(rig, clip)
         bad = []
+        by_design = []
         for f in range(int(act["frames"]) + 1):
             sc.frame_set(f)
             co = _eval_co()
             B = lambda ts: BVHTree.FromPolygons(co, ts, epsilon=0.0)
             fx = B(fixed + (tris["Wheel_FL"] if clip != "Destroyed" else []))
-            pairs = [("arm", B(tris["Arm"]), fx), ("tip", B(tris["Arm_Tip"]), fx), ("stone", B(tris["Stone"]), fx)]
+            st_fx = fx
+            if clip == "Load" and LOAD["lift"][0] <= f <= LOAD["lift"][1]:
+                st_fx = B(fixed_noheap + tris["Wheel_FL"])
+                n = len(B(tris["Stone"]).overlap(B(list(heap))))
+                if n:
+                    by_design.append((f, "stone-heap", n))
+            pairs = [("arm", B(tris["Arm"]), fx), ("tip", B(tris["Arm_Tip"]), fx), ("stone", B(tris["Stone"]), st_fx)]
+            if clip == "Load" and f < LOAD["lift"][1]:
+                pairs.append(("stone-arm", B(tris["Stone"]), B(tris["Arm"] + tris["Arm_Tip"])))
             if clip == "Destroyed":
                 # (the axle runs through the wheel's hub until it has slid off; the arm's two halves meet at the cut
                 # until it snaps: both by design)
@@ -1103,9 +1352,13 @@ def check_overlaps(clips=None):
                     pairs.append(("tip-arm", B(tris["Arm_Tip"]), B(tris["Arm"])))
             for nm, a, b in pairs:
                 n = len(a.overlap(b))
-                if n:
+                if n > (seat if nm == "stone-arm" else 0):
                     bad.append((f, nm, n))
+                elif n:
+                    by_design.append((f, nm, n))            # the stone settling into its seat (<= the seat's contact)
         out[clip] = bad[:40] if bad else "none"
+        if by_design:
+            out[clip + "_by_design"] = by_design
     rig.animation_data.action = None
     return out
 
@@ -1260,7 +1513,26 @@ def render_setup():
     sc.render.film_transparent = False
 
 
-def render_all(which=("views", "throw", "load", "move", "hit", "destroyed", "snap", "game")):
+def _ghost_stones(clip, frames, an, rest, tag):
+    """copies of the projectile mesh where the Stone bone puts the stone at each frame (the path, in one picture)"""
+    sme = bpy.data.objects[STONE].data
+    coll = bpy.data.collections[UNIT]
+    rig = bpy.data.objects[RIG]
+    out = []
+    for f in frames:
+        p = pose_at(clip, f, an)
+        M = matrices(p, an, rest)["Stone"]
+        if M.to_scale().x < 0.5:
+            continue
+        o = bpy.data.objects.new(f"VKU_Ghost_{tag}_{f:03d}", sme)
+        coll.objects.link(o)
+        o.matrix_world = rig.matrix_world @ M @ rest["Stone"].inverted() @ Matrix.Translation(STONE_C)
+        out.append(o)
+    return out
+
+
+def render_all(which=("views", "throw", "load", "move", "hit", "destroyed", "snap", "game", "windlass", "stone",
+                      "gameload")):
     rig = bpy.data.objects[RIG]
     mesh = bpy.data.objects[MESH]
     stone = bpy.data.objects[STONE]
@@ -1297,7 +1569,7 @@ def render_all(which=("views", "throw", "load", "move", "hit", "destroyed", "sna
             out["closeups_stop"] = _sheet(paths, os.path.join(RENDERS, "closeups_stop.png"), 2)
             # the rope at the windlass: hanging loose (Idle), swung over the drum and run out (Load), dropped (Throw)
             paths = []
-            for k, (clip, f) in enumerate((("Idle", 0), ("Load", 4), ("Load", 20), ("Load", 70), ("Throw", 8), ("Throw", 14))):
+            for k, (clip, f) in enumerate((("Idle", 0), ("Load", 6), ("Load", 30), ("Load", 80), ("Throw", 8), ("Throw", 14))):
                 _pose_obj(rig, clip, f, an, rest)
                 paths.append(_render(_cam("VKU_Cam", (2.2, 3.6, 1.9), (0.0, 1.7, 1.1), 40),
                                      os.path.join(RENDERS, f"_r{k}.png"), (720, 560)))
@@ -1305,8 +1577,14 @@ def render_all(which=("views", "throw", "load", "move", "hit", "destroyed", "sna
         strips = {
             "throw": ("Throw", [0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 19, 24, 32, 45],
                       ((6.4, -1.6, 2.2), (0.0, 0.1, 1.2), 32, None)),
-            "load": ("Load", [0, 4, 8, 16, 26, 36, 50, 62, 74, 86, 98, 110, 128, 133, 137, 150],
+            "load": ("Load", [0, 8, 20, 32, 44, 57, 70, 86, 100, 108, 114, 120, 126, 132, 139, 150],
                      ((5.0, 4.6, 3.0), (0.0, 0.5, 1.1), 32, None)),
+            # the windlass paying out: the ease-up (every 4th frame), then four running frames back to back
+            "windlass": ("Load", [1, 5, 9, 13, 17, 21, 25, 29, 30, 31, 32, 33],
+                         ((-1.9, 3.3, 1.75), (-0.15, 1.95, 0.98), 45, None)),
+            # the stone: hidden in the basket, lifted out, swung over, set down in the cup
+            "stone": ("Load", [100, 106, 110, 114, 118, 121, 124, 127, 130, 133, 136, 139],
+                      ((2.6, 3.9, 2.5), (0.35, 1.85, 1.25), 40, None)),
             "hit": ("Hit", [0, 1, 2, 3, 4, 6, 8, 10, 13, 18], ((5.2, -4.4, 2.2), (0.0, -0.2, 0.9), 32, None)),
             "destroyed": ("Destroyed", [0, 5, 7, 9, 11, 12, 14, 16, 18, 20, 23, 26, 29, 31, 34, 44],
                           ((5.4, -5.6, 3.0), (0.4, -1.0, 0.6), 32, None)),
@@ -1360,6 +1638,44 @@ def render_all(which=("views", "throw", "load", "move", "hit", "destroyed", "sna
                 out[nm] = _render(cam, os.path.join(RENDERS, nm), (1920, 1080), 32)
             mesh.hide_render = False
             _remove(copies)
+        if "stone" in which:
+            # the stone's way in one picture: the engine at Loaded, a copy of the stone every 3rd frame of its way
+            stone.hide_render = True
+            _pose_obj(rig, "Load", LOAD["lift"][1], an, rest)
+            ghosts = _ghost_stones("Load", range(LOAD["lift"][0], LOAD["lift"][1], 3), an, rest, "P")
+            for nm, (loc, tgt) in (("stone_path_rear.png", ((2.9, 4.4, 2.6), (0.35, 1.85, 1.2))),
+                                   ("stone_path_side.png", ((4.6, 1.2, 1.7), (0.3, 1.7, 1.2)))):
+                out[nm] = _render(_cam("VKU_Cam", loc, tgt, 40), os.path.join(RENDERS, nm), (1400, 1000), 32)
+            _remove(ghosts)
+        if "gameload" in which:
+            # the RPG camera (as "game") on Load: rope hooked, the stone in the basket (hidden), lifted, swung, in the cup;
+            # and one engine with the stone's way as copies
+            copies = []
+            lineup = (57, 104, 116, 127, 150)
+            for i, f in enumerate(lineup):
+                r2, m2 = _copy_unit(f"G{i}")
+                copies += [r2, m2]
+                r2.location = ((i - (len(lineup) - 1) / 2) * 4.0, 0.0, 0.0)
+                r2.rotation_euler = (0.0, 0.0, math.radians(-25.0))
+                _pose_obj(r2, "Load", f, an, rest)
+            stone.hide_render = True
+            mesh.hide_render = True
+            p = math.radians(50.0)
+            cam = _cam("VKU_Cam", (0.0, -math.cos(p) * 22.0, math.sin(p) * 22.0), (0.0, 0.0, 0.0), 38.0)
+            cam.rotation_euler = (math.radians(90 - 50), 0.0, 0.0)
+            out["game_22m_load.png"] = _render(cam, os.path.join(RENDERS, "game_22m_load.png"), (1920, 1080), 32)
+            _remove(copies)
+            mesh.hide_render = False
+            # one engine at Loaded with its stone's way, the game camera turned to look at its rear-left corner
+            _pose_obj(rig, "Load", LOAD["lift"][1], an, rest)
+            ghosts = _ghost_stones("Load", range(LOAD["lift"][0], LOAD["lift"][1], 3), an, rest, "G")
+            for D, nm in ((22.0, "game_22m_stonepath.png"),):
+                yaw = math.radians(150.0)                         # from behind and to its left (+X)
+                tgt = Vector((0.0, 0.6, 0.8))
+                off = Vector((math.sin(yaw) * math.cos(p), -math.cos(yaw) * math.cos(p), math.sin(p))) * D
+                cam = _cam("VKU_Cam", tgt + off, tgt, 38.0)
+                out[nm] = _render(cam, os.path.join(RENDERS, nm), (1920, 1080), 32)
+            _remove(ghosts)
     finally:
         stone.location = stone_loc
         stone.hide_render = False
@@ -1388,6 +1704,20 @@ def _select(objs):
     vl.objects.active = objs[0]
 
 
+def _export_clip(rig, clip, path, default_frame=0):
+    """one clip as its own FBX: the skeleton with one baked take; the file's default pose = default_frame (the clip's
+    first frame for the delivered files)"""
+    use_clip(rig, clip)
+    bpy.context.scene.frame_set(default_frame)
+    _select([rig])
+    opts = dict(FBX)
+    opts.update(bake_anim=True, bake_anim_use_all_bones=True, bake_anim_use_nla_strips=False,
+                bake_anim_use_all_actions=False, bake_anim_force_startend_keying=True, bake_anim_step=1.0,
+                bake_anim_simplify_factor=0.0)
+    bpy.ops.export_scene.fbx(filepath=path, use_selection=True, object_types={"ARMATURE"}, **opts)
+    return path
+
+
 def export_all():
     rig = bpy.data.objects[RIG]
     mesh = bpy.data.objects[MESH]
@@ -1412,15 +1742,8 @@ def export_all():
         meta = []
         sc.render.fps = FPS
         for clip, (fn, N, loop, moves, _) in CLIPS.items():
-            use_clip(rig, clip)
-            sc.frame_set(0)                     # the file's default pose = the clip's first frame
-            _select([rig])
             p = os.path.join(EXPORT, "Anims", f"{UNIT}@{clip}.fbx")
-            opts = dict(FBX)
-            opts.update(bake_anim=True, bake_anim_use_all_bones=True, bake_anim_use_nla_strips=False,
-                        bake_anim_use_all_actions=False, bake_anim_force_startend_keying=True, bake_anim_step=1.0,
-                        bake_anim_simplify_factor=0.0)
-            bpy.ops.export_scene.fbx(filepath=p, use_selection=True, object_types={"ARMATURE"}, **opts)
+            _export_clip(rig, clip, p)
             written.append(p)
             meta.append({"name": clip, "frames": N, "fps": FPS, "loop": loop, "rootMotion": moves,
                          "events": [{"name": k, "time": round(v / FPS, 4)} for k, v in clip_events(clip, an).items()]})
@@ -1467,9 +1790,19 @@ def export_all():
 
 
 def check_reimport():
-    """import the written model and the Move / Throw clips into a scratch scene: bones, meshes, UVs, colours, Motion's
-    travel, the wheels' turn, the stone's scale keys -- then remove everything imported"""
+    """import the written model and the Move / Throw / Load clips into a scratch scene: bones, meshes, UVs, colours,
+    Motion's travel, the wheels' turn, the stone's scale keys, the windlass's turn per frame, the stone's way in Load
+    (from a scratch copy, see below) -- then remove everything imported"""
+    import tempfile, shutil
     out = {}
+    tmpdir = tempfile.mkdtemp(prefix="vku_")
+    load_check = None
+    try:
+        load_check = _export_clip(bpy.data.objects[RIG], "Load", os.path.join(tmpdir, "load_check.fbx"), LOAD["lift"][0])
+    finally:
+        bpy.data.objects[RIG].animation_data.action = None
+        for o in bpy.context.view_layer.objects:
+            o.select_set(False)
     before = set(bpy.data.objects)
     kinds = ("meshes", "materials", "armatures", "actions", "images")
     had = {k: set(getattr(bpy.data, k)) for k in kinds}
@@ -1486,7 +1819,7 @@ def check_reimport():
                         "meshes": len(mo), "tris": sum(len(p.vertices) - 2 for p in me.polygons),
                         "uv_layers": len(me.uv_layers), "colors": [c.name for c in me.color_attributes],
                         "materials": [m.name for m in me.materials], "groups": len(mo[0].vertex_groups)}
-        for clip in ("Move", "Throw"):
+        for clip in ("Move", "Throw", "Load"):
             n0 = set(bpy.data.objects)
             bpy.ops.import_scene.fbx(filepath=os.path.join(EXPORT, "Anims", f"{UNIT}@{clip}.fbx"))
             a2 = next(o for o in set(bpy.data.objects) - n0 if o.type == "ARMATURE")
@@ -1509,7 +1842,32 @@ def check_reimport():
                     tmp.frame_set(f)
                     sc_.append(round(a2.pose.bones["Stone"].matrix.to_scale().x, 3))
                 res["stone_scale"] = sc_
+            if clip == "Load":
+                # the windlass's largest turn between two frames (q and -q are one turn)
+                prev, top = None, 0.0
+                for f in range(int(r0), int(r1) + 1):
+                    tmp.frame_set(f)
+                    q = a2.pose.bones["Windlass"].matrix.to_quaternion()
+                    if prev is not None:
+                        top = max(top, math.degrees(2.0 * math.acos(min(1.0, abs(prev.dot(q))))))
+                    prev = q
+                res["windlass_max_deg_per_frame"] = round(top, 1)
             out[clip] = res
+        if load_check is not None:
+            # the stone's keys, read from a scratch copy of Load whose default pose is a frame with the stone full size
+            # (Blender's importer takes a scaled bone's default as its rest: the delivered file's default is frame 0,
+            # the stone hidden at 0.001, so it reads every later scale 1000x; Unity plays the keys themselves)
+            n0 = set(bpy.data.objects)
+            bpy.ops.import_scene.fbx(filepath=load_check)
+            a2 = next(o for o in set(bpy.data.objects) - n0 if o.type == "ARMATURE")
+            r0 = int(a2.animation_data.action.frame_range[0])
+            pts = {}
+            for f in (LOAD["basket"] - 1, LOAD["basket"], LOAD["grow"][0], LOAD["grow"][1], LOAD["lift"][0], 118, 127,
+                      LOAD["lift"][1], CLIPS["Load"][1]):
+                tmp.frame_set(r0 + f)
+                m = a2.pose.bones["Stone"].matrix
+                pts[f] = {"scale": round(m.to_scale().x, 3), "at": [round(c, 3) for c in m.translation]}
+            out["Load_stone_keys"] = pts
     finally:
         for o in set(bpy.data.objects) - before:
             bpy.data.objects.remove(o)
@@ -1519,11 +1877,16 @@ def check_reimport():
             coll = getattr(bpy.data, k)
             for idb in set(coll) - had[k]:
                 coll.remove(idb)
+        shutil.rmtree(tmpdir, ignore_errors=True)
     return out
 
 
 def run(args):
     out = {}
+    for a in args:
+        if a.startswith("export_dir="):
+            set_export_dir(a[len("export_dir="):])
+    out["export_dir"] = EXPORT
     if "rig" in args:
         out["rig"] = build_rig()
     an = analyse()
@@ -1540,6 +1903,7 @@ def run(args):
         out["lowest"] = check_lowest()
         out["move"] = check_move()
         out["socket"] = check_socket()
+        out["load"] = check_load()
         out["overlaps"] = check_overlaps()
     if "renders" in args:
         which = [a[len("only="):].split(",") for a in args if a.startswith("only=")]

@@ -6,6 +6,10 @@
 # Steps: rig (armature + skin), clips (all actions), check (lowest vertex per clip, wheel slip / Motion trace, part
 # overlaps), renders (close-ups, frame strips, game camera into renders/units/siege_catapult), export (FBX + clip FBXs +
 # JSON into the package's Art/Units/SiegeCatapult), save (the unit's .blend).
+# The package's Art/Units/SiegeCatapult is LIVE (the open Unity editor imports what lands there): to export somewhere
+# else, pass `export_dir=<folder>` (or set the env var VKU_EXPORT_DIR); `export` and `reimport` then use that folder,
+# laid out like the package's (<folder>/VKU_SiegeCatapult.fbx, <folder>/Anims/...), to be copied in by hand, e.g.
+#   ... --python tools/unit_catapult_run.py -- rig clips check export reimport export_dir=renders/units/siege_catapult_export
 import bpy, sys, os, json, subprocess, traceback
 
 ROOT = r"E:\Unity\Projects\GameArtGeneration\MedievalVillageKit"

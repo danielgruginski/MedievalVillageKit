@@ -8,7 +8,7 @@ Dungeon kit (built 2026-09-29 on the interior kit): [docs/DUNGEON_KIT.md](docs/D
 Adventure kit (built 2026-09-29 on the dungeon kit): [docs/ADVENTURE_KIT.md](docs/ADVENTURE_KIT.md).
 The town connection, the world graph (2026-09-30): [docs/WORLD_GRAPH.md](docs/WORLD_GRAPH.md).
 Unity export (vertical slice, 2026-09-30): [docs/UNITY_EXPORT.md](docs/UNITY_EXPORT.md).
-Animated units (the siege catapult, 2026-10-23, entry 140): [docs/UNITS.md](docs/UNITS.md).
+Animated units (the siege catapult, 2026-10-23, entries 140-141): [docs/UNITS.md](docs/UNITS.md).
 
 ---
 
@@ -1870,7 +1870,55 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
       read 1000x until the frame-0 fix).
     - Open: no IdleLoaded -> Hit or Move-while-loaded clips (the controller only hits from Idle / Move); the windlass
       spins fast while the rope is run out to the arm (~3.5 turns a second for 0.9 s); the stone pops in above the cup (scale 0 -> 1
-      over 3 frames while it drops 0.35 m); no turn-in-place (a game turns the transform; the wheels don't counter-roll).
+      over 3 frames while it drops 0.35 m) [both done in 141]; no turn-in-place (a game turns the transform; the
+      wheels don't counter-roll).
+141. 2026-10-23 (Daniel, on the list of the catapult's rough edges: "Do the number 4" -- the Load clip's two: the
+    windlass spinning while the rope is run out, the stone popping in over the cup). `src/units/vku_siege_catapult.py`,
+    rebuilt headless (stage 1 + 2; the static `SM_VKI_Prop_Siege_Catapult` / `_Burnt` hash unchanged).
+    - **The windlass:** the run-out is 3.34 turns of the drum (2.1 m of rope on r 0.1). It took 28 frames from a
+      standing start at 7.0 turns a second (84 deg a frame: past the 45 at which the four-spoke cross strobes; mean
+      3.6). Now `load_rope` swings the rope's end up over the drum (12 frames) while `ease_run` pays it out over 56
+      frames: 0 -> 2.51 -> 0 turns a second (half-cosine ramps of 16 frames; mean 1.8; nowhere in the clip more than
+      35 deg a frame). The windlass still turns with the rope's length. To fit, the eight heaves start 22 frames later
+      (59..128) and pause less between pulls (0.7 frames, was 2.75): their peaks 2.79 -> 2.92 turns a second, mean
+      1.27 -> 1.61. **Hooked 1.2 -> 1.9 s**; Loaded 4.633 s and the 5 s length kept. The setup reads events from
+      `siegecatapult_clips.json`: no C# change. A truly hand-paced windlass (~1 turn a second) needs Load at 6+ s (the
+      drum turns 7.1 times in all); not done, the game's reload time stays. Chart:
+      `renders/units/siege_catapult/windlass_speed_before_after.png`.
+    - **The stone:** a basket of stones on the rear cross beam's +X end, beside the windlass's spokes (`_basket`, part
+      `basket` on the Frame bone, no new bone): a 12-sided burlap lathe closed on top by a stone-faced heap, three stones
+      on the heap; 204 triangles (unit 2,028 -> 2,232), the kit's M_VK_Burlap / M_VKI_StoneBlockIn. In Load the hidden
+      stone (0.001) moves from the cup into the basket at frame 98, holds 2 frames (so Unity's curve tangents settle
+      before it grows), grows to full size inside the basket's closed body (100-104), is lifted straight up out of the
+      heap (106-118) and swung over in an arc and set down in the cup (`stone_path`: by length, smoothstep in time;
+      straight down into the cup at the end), seated at 139 = Loaded, then the old 3 cm settle. `Pose.stone_at`
+      (scale, centre, turn) places the Stone bone off the arm; it turns from `STONE_TURN` to the cup's turn on the way.
+      Nothing else changes: every other clip keeps the hidden stone at the cup.
+    - **Export override:** the package's `Art/Units/SiegeCatapult` is live in the open editor, so the export went to
+      `renders/units/siege_catapult_export/SiegeCatapult/` (`export_dir=<folder>` on the driver, or env
+      `VKU_EXPORT_DIR`, or `set_export_dir`; `export` and `reimport` both use it). Copied in by hand afterwards.
+    - Checked: lowest vertex per clip (unchanged: Idle/IdleLoaded/Load +8.5, Move 0.0, Throw +3.2, Hit -0.3, Destroyed
+      0.0 mm); Move trace (1.0014 m/s, slip 1e-5, skeleton still); the socket at Release (47.6 deg); overlaps in every
+      frame of every clip: none, apart from the stone rising through the heap's stones (111-117, by design) and the last
+      frame before it is seated (138: the same 5-triangle contact the seated stone has with its cup in IdleLoaded, the
+      static's own fit); new `check_load`: the payout / heave speeds above from the keys, the stone inside the basket's
+      closed body in every frame it is not full size (vertex rays leave through the basket's own faces: none fail), the
+      spokes through a whole turn against the basket (no hit, closest 44.9 mm); `reimport` (13 bones, 2,232 tris, UVs,
+      `Col`, Move -2.1363 m, Throw's Stone step at frame 7, Load's windlass at most 35 deg a frame, the stone's keys
+      read from a scratch Load whose default pose is frame 106). Renders at full res (`renders/units/siege_catapult/`):
+      `strip_load.png` (before: `before_load_fix/strip_load.png`), `strip_windlass.png` (four running frames back to
+      back), `strip_stone.png`, `stone_path_rear.png` / `_side.png` (the way as copies), `game_22m_load.png`,
+      `game_22m_stonepath.png`, plus every earlier render re-made with the basket.
+    - Gotcha: Blender's FBX importer takes a scaled bone's default as rest, so any clip whose frame 0 has the Stone at
+      0.001 (Load, like Idle) reads back 1000x in Blender; Unity plays the keys. Read such keys from a scratch export
+      with another default frame (`check_reimport` does).
+    - Unity (the same evening): the staged export copied over `Art/Units/SiegeCatapult`, Build Siege Catapult: report
+      `OK` (2,232 tris, Load Hooked@1.900s / Loaded@4.633s, Release at 47.6 deg); Load sampled in a preview scene: the
+      stone (scale 0.001 -> 1 inside the basket at 3.33-3.47 s, a -0.005 / 1.006 curve overshoot, invisible there)
+      rises from y 0.97 to 1.61 m, arcs over and sits in the cup at 4.633 s; the windlass at most 35 deg a frame.
+    - Open: no crew, so the stone is lifted by no one (the basket only hides where it comes from); the charred prefab keeps the
+      basket burlap-fresh (as it keeps the stop's pad); the basket overhangs the cross beam's end by ~10 cm; the static
+      piece has no basket (unit only).
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
