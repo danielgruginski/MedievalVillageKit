@@ -150,6 +150,15 @@ def _glb_write(path, js, rest):
         f.write(struct.pack("<4sII", b"glTF", 2, 12 + len(body)) + body)
 
 
+# where the kit's pieces depart from Blender's materials, as Unity's KitBuilder.MaterialDefaults: painted furniture is
+# plain wood (Daniel's call, 2026-10-02: no teal chests); shutters, stalls and boats keep their paint, and a style on
+# the "shutter" slot still paints them
+GDX_MATERIAL_DEFAULTS = {
+    "SM_VKI_Prop_Chest": ("M_VK_Shutter_Teal", "M_VK_Shutter_Natural"),
+    "SM_VKI_Prop_Dresser": ("M_VK_Shutter_Teal", "M_VK_Shutter_Natural"),
+}
+
+
 def gdx_piece_path(pn):
     return os.path.join(GDX_KIT, "models", _family_dir(pn), pn + ".glb")
 
@@ -248,6 +257,8 @@ def gdx_export_piece(me, report):
     gm = [x.get("name") for x in js.get("materials", [])]
     surf = [gm[p["material"]] if "material" in p else None for p in js["meshes"][0]["primitives"]]
     base_of = {n: mats[i] for i, n in enumerate(names)}
+    swap = GDX_MATERIAL_DEFAULTS.get(pn)
+    if swap: base_of = {k: (swap[1] if v == swap[0] else v) for k, v in base_of.items()}
     surfaces = [base_of.get(s, s) for s in surf]
     slot_map = {str(i): surf.index(names[slot_of[i]]) for i in keep}
     lo = [min(v.co[i] for v in me.vertices) for i in range(3)] if me.vertices else [0, 0, 0]
@@ -312,15 +323,25 @@ def gdx_write_glb_import(piece):
 def gdx_export_pieces(names):
     """export these master pieces (object names) to .glb, update kit/data/pieces.json; returns the report and the
     material names they use"""
+    meshes, failed = {}, {}
+    for n in names:
+        o = bpy.data.objects.get(n)
+        if o is None or o.type != "MESH" or VKX["master_object"](o.data) is not o: failed[n] = "no master object"
+        else: meshes[n] = o.data
+    report, used = gdx_export_meshes(meshes)
+    report["failed"].update(failed)
+    return report, used
+
+
+def gdx_export_meshes(meshes):
+    """export these meshes ({name: mesh}: masters, or a level's own meshes such as the valley's U_VKV_ chunks) to .glb,
+    update kit/data/pieces.json; returns the report and the material names they use"""
     pieces = _load(os.path.join(GDX_KIT, "data", "pieces.json"))
     report = {"pieces": 0, "failed": {}}
     used = set()
-    for n in names:
-        o = bpy.data.objects.get(n)
-        if o is None or o.type != "MESH" or VKX["master_object"](o.data) is not o:
-            report["failed"][n] = "no master object"; continue
+    for n, me in meshes.items():
         try:
-            d = gdx_export_piece(o.data, report)
+            d = gdx_export_piece(me, report)
         except Exception as e:
             report["failed"][n] = repr(e); continue
         pieces[d["name"]] = d
@@ -333,6 +354,32 @@ def gdx_export_pieces(names):
 # ---------------------------------------------------------------- materials -> .tres
 VKX_MATERIALS = os.path.join(VKX["VKX_DATA"], "materials.json")
 VKX_TEXTURES = VKX["VKX_TEX"]
+# vkx's analysis (and bakes) of materials the Unity export has not seen yet, made here with vkx's own functions into a
+# cache of the Godot project's, so the Unity package is never written (kit/.vkx, ignored by Godot)
+GDX_VKX_CACHE = os.path.join(GDX_KIT, ".vkx")
+
+
+def vkx_materials(names):
+    """vkx's analysis for these materials: the Unity export's materials.json, else (made now) the Godot-side cache"""
+    out = _load(VKX_MATERIALS)
+    missing = [n for n in names if not out.get(n) and bpy.data.materials.get(n) is not None]
+    cache = _load(os.path.join(GDX_VKX_CACHE, "materials.json"))
+    todo = {n: cache.get(n) for n in missing}
+    if todo:
+        _mk(os.path.join(GDX_VKX_CACHE, "textures"))
+        open(os.path.join(GDX_VKX_CACHE, ".gdignore"), "w").close()
+        old = VKX["VKX_TEX"], VKX["VKX_DATA"]
+        VKX["VKX_TEX"], VKX["VKX_DATA"] = os.path.join(GDX_VKX_CACHE, "textures"), GDX_VKX_CACHE
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                VKX["process_materials"](todo, {}, {"notes": {}})     # skips those whose signature is unchanged
+        finally:
+            VKX["VKX_TEX"], VKX["VKX_DATA"] = old
+            VKX["vkx_cleanup"]()                                       # the bake images, in memory only
+        cache.update(todo)
+        _save(os.path.join(GDX_VKX_CACHE, "materials.json"), cache)
+    out.update({n: cache[n] for n in missing if cache.get(n)})
+    return out
 
 TEX_IMPORT = """[remap]
 
@@ -341,13 +388,13 @@ type="CompressedTexture2D"
 
 [params]
 
-compress/mode=2
+compress/mode=%d
 compress/high_quality=true
 compress/lossy_quality=0.7
 compress/hdr_compression=1
 compress/normal_map=%d
 compress/channel_pack=0
-mipmaps/generate=true
+mipmaps/generate=%s
 mipmaps/limit=-1
 roughness/mode=0
 roughness/src_normal=""
@@ -361,21 +408,53 @@ detect_3d/compress_to=0
 """
 
 
-def gdx_texture(fn, normal=False, done=None):
-    """copy a texture of the Unity export into kit/textures (with an .import: VRAM compressed, mipmaps, BC5 normals)"""
+def gdx_texture(fn, normal=False, done=None, control=False):
+    """copy a texture of the Unity export into kit/textures (with an .import: VRAM compressed, mipmaps, BC5 normals;
+    a terrain control map lossless and without mipmaps, as in Unity: its layers are thresholded, not blurred)"""
     src = os.path.join(VKX_TEXTURES, fn)
-    if not os.path.exists(src): raise FileNotFoundError(src)
+    if not os.path.exists(src): src = os.path.join(GDX_VKX_CACHE, "textures", fn)
+    if not os.path.exists(src): raise FileNotFoundError(fn)
     dst = os.path.join(GDX_KIT, "textures", fn)
     _mk(os.path.dirname(dst))
     if not os.path.exists(dst) or os.path.getsize(dst) != os.path.getsize(src) or open(dst, "rb").read() != open(src, "rb").read():
         shutil.copyfile(src, dst)
     imp = dst + ".import"
-    text = TEX_IMPORT % (1 if normal else 0)
+    mode = 0 if control else 2
+    text = TEX_IMPORT % (mode, 1 if normal else 0, "false" if control else "true")
     old = open(imp, encoding="utf-8").read() if os.path.exists(imp) else ""
-    if ("compress/normal_map=%d" % (1 if normal else 0)) not in old or "compress/mode=2" not in old:
+    if ("compress/normal_map=%d" % (1 if normal else 0)) not in old or ("compress/mode=%d" % mode) not in old:
         _write_if_changed(imp, text)
     if done is not None: done.add(fn)
     return _res(dst)
+
+
+def gdx_bump(mn):
+    """a card material's bump from a height map over its geometric normal (vk_leafgen's leaves and herbs: Blender's
+    Bump(Height = T_*_H, Normal = Geometry > Normal flipped on back faces)); vkx keeps the flat card. None if absent."""
+    m = bpy.data.materials.get(mn)
+    if m is None or not m.use_nodes: return None
+    nt = m.node_tree
+    for b in (n for n in nt.nodes if n.type == "BUMP"):
+        if not (b.inputs["Height"].is_linked and b.inputs["Normal"].is_linked): continue
+        h = b.inputs["Height"].links[0].from_node
+        if h.type != "TEX_IMAGE" or h.image is None: continue
+        src = b.inputs["Normal"].links[0].from_node
+        if not any(n.type == "NEW_GEOMETRY" for n in [src] + list(VKX["_upstream"](nt, src))): continue
+        return {"image": h.image.name, "strength": _r(b.inputs["Strength"].default_value),
+                "distance": _r(b.inputs["Distance"].default_value)}
+    return None
+
+
+def gdx_blend_image(name):
+    """a .blend image the Unity export never wrote (a leaf sheet's height map), written into the Godot-side cache with
+    vkx's export_image; returns its file name for gdx_texture"""
+    _mk(os.path.join(GDX_VKX_CACHE, "textures"))
+    old = VKX["VKX_TEX"]
+    VKX["VKX_TEX"] = os.path.join(GDX_VKX_CACHE, "textures")
+    try:
+        return VKX["export_image"](name, {})
+    finally:
+        VKX["VKX_TEX"] = old
 
 
 def blender_alpha_mode(mn):
@@ -418,38 +497,116 @@ FILTER_ANISO = 5            # linear, mipmaps, anisotropic
 DIFFUSE_LAMBERT = 1         # Blender's Principled diffuse is Lambertian (Godot's default is Burley)
 
 
+def gdx_draw_mode(d):
+    """how a kit material is drawn: Blender's cut-outs (alpha > threshold) -> 'clip'; dithered texture alpha -> 'hash';
+    blended or a constant alpha -> 'blend'. A surface that casts no shadow ('Is Shadow Ray' -> Transparent: windows,
+    webs, puddles) goes to the transparent pass, which Godot never draws into shadow maps: an opaque one as 'glass'
+    (alpha 1, depth written), a dithered one blended (Blender's 64 dithered samples converge to the blend; Godot's hash
+    stayed grainy on web strands)."""
+    alpha, no_shadow = d.get("alpha", "opaque"), bool(d.get("no_shadow"))
+    if alpha == "clip": return "clip"
+    if alpha == "blend":
+        return "hash" if d.get("alpha_map") and blender_alpha_mode(d["name"]) != "BLENDED" and not no_shadow else "blend"
+    return "glass" if no_shadow else "opaque"
+
+
+KITLIT_VARIANT = {"opaque": "", "clip": "Clip", "hash": "Hash", "blend": "Blend", "glass": "Glass"}
+# Every kit material is a KitLit ShaderMaterial (the see-through and the shroud clip every one, as in Unity).
+# 'standard' writes the pilot's StandardMaterial3Ds instead where they suffice: the reference KitLit was checked against.
+GDX_MATERIALS = globals().get("GDX_MATERIALS_OVERRIDE") or "kitlit"
+
+
+KITTERRAIN_VARIANT = {"terrain": "", "stair": "Stair", "paving": "Paving", "water": "Water"}   # paving + box: Curb
+TERRAIN_LAYERS = ("Grass", "Sand", "Dirt", "Cobble", "Cliff", "Moss", "Stone")
+
+
+def terrain_slot(image):
+    """a projected material's image -> its KitTerrain parameter, by name (Unity: KitBuilder.TerrainProp)"""
+    if "GroundCtl" in image: return "ctl_map"
+    if "TerrainMacro" in image: return "macro_map"
+    m = re.match(r"^T_VK_([A-Za-z]+)_(BC|H|R)$", image)
+    if not m: return None
+    key = "Stone" if m.group(1) == "StoneBlock" else m.group(1)
+    if key not in TERRAIN_LAYERS: return None
+    return key.lower() + ("_map" if m.group(2) == "BC" else "_h")
+
+
+def gdx_terrain_tres(d, done, notes):
+    """a projected material (vk_terrain's recipes) -> a ShaderMaterial on its KitTerrain variant"""
+    t = _Tres("ShaderMaterial")
+    t.set("resource_name", f'"{d["name"]}"')
+    t.set("render_priority", 0)
+    rec = d.get("recipe")
+    var = "Curb" if rec == "paving" and d.get("box") else KITTERRAIN_VARIANT[rec]
+    t.set("shader", t.ext_res("Shader", "res://addons/medieval_kit/Shaders/KitTerrain%s.gdshader" % var))
+    sp = lambda k, v: t.set("shader_parameter/" + k, v)
+    imgs = d.get("images") if isinstance(d.get("images"), dict) else {}
+    for img, fn in sorted(imgs.items()):
+        slot = terrain_slot(img)
+        if slot is None:
+            notes.append("image %s has no KitTerrain slot" % img); continue
+        sp(slot, t.ext_res("Texture2D", gdx_texture(fn, done=done, control=slot == "ctl_map")))
+    if d.get("ctl_scale"): sp("ctl_scale", "Vector2(%s, %s)" % (_r(d["ctl_scale"][0], 8), _r(d["ctl_scale"][1], 8)))
+    if rec == "terrain":    # the grass's saturation as the Blender material has it (the shader's 0.6 is the game's pick)
+        m = bpy.data.materials.get(d["name"])
+        hs = next((n for n in m.node_tree.nodes if n.type == "HUE_SAT"), None) if m is not None and m.use_nodes else None
+        if hs is not None: sp("grass_sat", _r(hs.inputs["Saturation"].default_value))
+    if d.get("proj_scale") is not None: sp("proj_scale", float(d["proj_scale"]))
+    sp("rough", float(d.get("roughness", 0.8)))
+    if d.get("bump_strength") is not None: sp("bump_strength", float(d["bump_strength"]))
+    if rec == "water": sp("water_alpha", float((d.get("base_color") or [0, 0, 0, 0.9])[3]))
+    return t.text()
+
+
 def gdx_classify(d):
-    """what a kit material becomes in Godot: 'standard' (StandardMaterial3D), 'kitlit' (KitLit.gdshader) or
-    'skip' (the projected terrain / stair / paving / water recipes, not in the pilot), with notes on approximations"""
-    if d.get("shader") == "projected": return "skip", ["projected (%s): needs a KitTerrain port" % d.get("recipe")]
+    """what a kit material becomes in Godot: 'kitlit' (a KitLit variant), 'kitterrain' (the projected terrain /
+    stair / paving / water recipes), 'standard' (StandardMaterial3D, only with GDX_MATERIALS 'standard') or 'skip'
+    (a projected material without a recipe), with notes on approximations"""
+    if d.get("shader") == "projected":
+        if d.get("recipe") not in KITTERRAIN_VARIANT: return "skip", ["projected material without a KitTerrain recipe"]
+        return "kitterrain", ["KitTerrain %s: Blender's noise and bump as the Unity port's stand-ins" % d["recipe"]]
     notes = []
-    if d.get("moss") or d.get("rim") or d.get("jitter"): kind = "kitlit"
-    else: kind = "standard"
+    mode = gdx_draw_mode(d)
     if d.get("translucency"): notes.append("translucency %.2f as backlight (Godot's own back-lighting term)" % d["translucency"])
-    if d.get("no_shadow"): notes.append("casts no shadow: drawn in the transparent pass")
-    if kind == "kitlit" and d.get("alpha") != "opaque": notes.append("KitLit has no alpha mode: drawn opaque")
-    notes += d.get("notes") or []
-    return kind, notes
+    if d.get("no_shadow"):
+        notes.append("casts no shadow: drawn in the transparent pass" if mode in ("glass", "blend")
+                     else "casts no shadow in Blender, a cut-out here: it casts one")
+    if gdx_bump(d["name"]):
+        notes.append("bump from the height map over the geometric normal (vkx keeps the flat card)")
+        notes += [n for n in d.get("notes") or [] if not any(k in n for k in ("NEW_GEOMETRY", "VECT_MATH", "BUMP"))]
+    else:
+        notes += d.get("notes") or []
+    special = d.get("moss") or d.get("rim") or d.get("jitter") or gdx_bump(d["name"])
+    return ("kitlit" if GDX_MATERIALS == "kitlit" or special else "standard"), notes
 
 
 def gdx_material_tres(d, done):
     """one kit material (vkx analysis) -> the .tres text"""
     kind, notes = gdx_classify(d)
-    alpha = d.get("alpha", "opaque")
-    no_shadow = bool(d.get("no_shadow"))
+    if kind == "kitterrain": return gdx_terrain_tres(d, done, notes), kind, notes
+    mode = gdx_draw_mode(d)
     if kind == "kitlit":
         t = _Tres("ShaderMaterial")
         two = bool(d.get("double_sided"))
         t.set("resource_name", f'"{d["name"]}"')
         t.set("render_priority", 0)
-        t.set("shader", t.ext_res("Shader", "res://addons/medieval_kit/Shaders/KitLit%s.gdshader" % ("TwoSided" if two else "")))
+        j = d.get("jitter") or [1.0, 1.0]
+        jit = list(j) != [1.0, 1.0]       # only the roofs: an instance uniform costs every instance a slot
+        t.set("shader", t.ext_res("Shader", "res://addons/medieval_kit/Shaders/KitLit%s%s%s.gdshader"
+                                  % ("TwoSided" if two else "", "Jitter" if jit else "", KITLIT_VARIANT[mode])))
         sp = lambda k, v: t.set("shader_parameter/" + k, v)
         bc = d.get("base_color") or [1, 1, 1, 1]
-        sp("base_color", _color(bc[:3], bc[3] if len(bc) > 3 else 1.0))
+        sp("base_color", _color(bc[:3], 1.0 if mode == "glass" else (bc[3] if len(bc) > 3 else 1.0)))
         if d.get("base_map"): sp("albedo_map", t.ext_res("Texture2D", gdx_texture(d["base_map"], done=done)))
+        if mode == "clip": sp("alpha_cut", float(d.get("cutoff", 0.5)))
+        if d.get("translucency"): sp("translucency", float(d["translucency"]))
+        bump = gdx_bump(d["name"])
+        if bump:
+            sp("use_bump", True)
+            sp("bump_map", t.ext_res("Texture2D", gdx_texture(gdx_blend_image(bump["image"]), done=done)))
+            sp("bump_strength", bump["strength"]); sp("bump_distance", bump["distance"])
         sp("use_vertex_color", bool(d.get("vertex_color")))
-        j = d.get("jitter") or [1.0, 1.0]
-        sp("jitter", "Vector2(%s, %s)" % (_r(j[0]), _r(j[1])))
+        if jit: sp("jitter", "Vector2(%s, %s)" % (_r(j[0]), _r(j[1])))
         sp("roughness", float(d.get("roughness", 0.5)))
         if d.get("rough_map"):
             sp("use_rough_map", True); sp("rough_map", t.ext_res("Texture2D", gdx_texture(d["rough_map"], done=done)))
@@ -487,21 +644,10 @@ def gdx_material_tres(d, done):
         return t.text(), kind, notes
     t = _Tres("StandardMaterial3D")
     t.set("resource_name", f'"{d["name"]}"')
-    # transparency: Blender's cut-outs (alpha > threshold) -> scissor; hashed (dithered) texture alpha -> hash;
-    # blended or a constant alpha -> alpha blend. A surface that casts no shadow ('Is Shadow Ray' -> Transparent:
-    # windows, webs, puddles) goes to the transparent pass, which Godot never draws into shadow maps; there a dithered
-    # one is blended (Blender's 64 dithered samples converge to the blend; Godot's hash stayed grainy on web strands).
-    mode = "opaque"
-    if alpha == "clip": mode = "scissor"
-    elif alpha == "blend":
-        mode = "hash" if d.get("alpha_map") and blender_alpha_mode(d["name"]) != "BLENDED" and not no_shadow else "alpha"
-    depth = DEPTH_OPAQUE
-    if no_shadow:
-        if mode == "opaque": mode, depth = "alpha", DEPTH_ALWAYS      # alpha 1: drawn as opaque, writes depth
-        elif mode == "scissor": depth = DEPTH_NEVER                    # moves it to the transparent pass
-    if mode != "opaque": t.set("transparency", TRANSPARENCY[mode])
-    if mode == "scissor": t.set("alpha_scissor_threshold", float(d.get("cutoff", 0.5)))
-    if depth != DEPTH_OPAQUE: t.set("depth_draw_mode", depth)
+    tr = {"clip": "scissor", "hash": "hash", "blend": "alpha", "glass": "alpha"}.get(mode)
+    if tr: t.set("transparency", TRANSPARENCY[tr])
+    if mode == "clip": t.set("alpha_scissor_threshold", float(d.get("cutoff", 0.5)))
+    if mode == "glass": t.set("depth_draw_mode", DEPTH_ALWAYS)      # alpha 1: drawn as opaque, writes depth
     t.set("cull_mode", CULL_DISABLED if d.get("double_sided") else CULL_BACK)
     t.set("diffuse_mode", DIFFUSE_LAMBERT)
     t.set("texture_filter", FILTER_ANISO)
@@ -509,8 +655,7 @@ def gdx_material_tres(d, done):
     t.set("vertex_color_is_srgb", False)           # glTF vertex colours are linear, as Blender multiplies them
     bc = list(d.get("base_color") or [1, 1, 1, 1])
     tl = float(d.get("translucency") or 0.0)
-    a = bc[3] if len(bc) > 3 else 1.0
-    if no_shadow and alpha == "opaque": a = 1.0
+    a = 1.0 if mode == "glass" else (bc[3] if len(bc) > 3 else 1.0)
     # translucency (leaves, foliage, crops): Blender mixes (1 - t) x surface + t x Translucent BSDF. Godot's backlight
     # adds light from behind times albedo x backlight: albedo x (1 - t) and backlight t / (1 - t) give the same shares.
     k = 1.0 - tl
@@ -547,7 +692,7 @@ def gdx_material_tres(d, done):
 def gdx_write_materials(names=None):
     """write kit/materials/<name>.tres for these kit materials (default: every one in materials.json) and
     kit/data/materials.json: what each became and why. Names ending in __s<slot> are the slots' copies (no .tres)."""
-    src = _load(VKX_MATERIALS)
+    src = vkx_materials(names) if names is not None else _load(VKX_MATERIALS)
     out = _load(os.path.join(GDX_KIT, "data", "materials.json"))
     done, written, missing = set(), [], []
     for mn in sorted(names if names is not None else src):
@@ -562,6 +707,138 @@ def gdx_write_materials(names=None):
         out[mn] = {"kind": kind, "notes": notes, "tres": "res://kit/materials/%s.tres" % mn}
     _save(os.path.join(GDX_KIT, "data", "materials.json"), out)
     return {"written": written, "textures": sorted(done), "missing": missing}
+
+
+def gdx_export_all(collections=None):
+    """every master piece of the kit's collections (VK_Pieces, VKI_Pieces, VK_NaturePieces, VK_TerrainTiles) and the
+    materials they use"""
+    names = []
+    for cn in (collections or VKX["VKX_PIECE_COLLECTIONS"]):
+        for o in sorted(bpy.data.collections[cn].objects, key=lambda o: o.name):
+            if o.type == "MESH" and o.data.vertices and VKX["master_object"](o.data) is o: names.append(o.name)
+    rep, used = gdx_export_pieces(names)
+    mats = gdx_write_materials(used)
+    return {"pieces": rep["pieces"], "failed": rep["failed"], "materials": len(used),
+            "written": len(mats["written"]), "textures": len(mats["textures"]), "missing": mats["missing"]}
+
+
+GDX_CATALOGS = {"Exterior": ["VK_Pieces", "VK_NaturePieces", "VK_TerrainTiles"], "Interior": ["VKI_Pieces"]}
+
+
+def gdx_catalog(which, render=True):
+    """a verification catalog (vkx_build_catalog: every master of the kit by family, orthographic 50-degree cameras,
+    lit like the valley) as scene GDX_Catalog_<which>, its layout Catalog_<which> and the Blender renders into the
+    project's catalog/<which>/shots; the Godot side: sh tools/gdx_round.sh Catalog_<which> <project> <shots> 1920x1080"""
+    sc_name = "GDX_Catalog_" + which
+    info = VKX["vkx_build_catalog"](sc_name, GDX_CATALOGS[which])
+    sc = bpy.data.scenes[sc_name]
+    for o in sorted([o for o in sc.objects if o.type == "CAMERA" and o.name.startswith("VKX_CatCam")], key=lambda o: o.name):
+        o.name = "GDX_Cam_%s_%s" % (re.match(r"VKX_CatCam_(\d+)", o.name).group(1), which.lower())
+    lay = gdx_export_layout(sc_name, name="Catalog_" + which, export_pieces=False)
+    out = {"catalog": info, "layout": {k: v for k, v in lay.items() if k != "materials"}}
+    out["materials"] = gdx_write_materials(lay["materials"])["missing"]
+    if render:
+        shots = _mk(os.path.join(GDX_PROJECT, "catalog", which.lower(), "shots"))
+        open(os.path.join(GDX_PROJECT, "catalog", ".gdignore"), "w").close()
+        out["renders"] = len(gdx_render_cameras(sc_name, shots, shadows=False))
+    return out
+
+
+def gdx_valley_terrain(render=True):
+    """KitTerrain on a real map: the valley's ground (VK_ValleyTerrain: terrain, paving, curbs, stairs, river) seen by
+    copies of the Unity verification's eight VKX_ValleyCams, lit like the catalogs (flat world, no AO, no shadows) so
+    only the shader is compared; layout Valley_Terrain (origin x 1500 -> 0), renders in the project's
+    catalog/valley_terrain/shots. Godot: sh tools/gdx_round.sh Valley_Terrain "" <shots> 1600x1000"""
+    name = "GDX_ValleyTerrain"
+    old = bpy.data.scenes.get(name)
+    if old is not None:
+        for o in list(old.objects):
+            if o.name.startswith("GDX_Cam"):
+                cd = o.data; bpy.data.objects.remove(o); bpy.data.cameras.remove(cd)
+        bpy.data.scenes.remove(old)
+    sc = bpy.data.scenes.new(name)
+    cat, vk = bpy.data.scenes["VKX_Catalog_Interior"], bpy.data.scenes["VillageKit"]
+    sc.world = cat.world
+    for a in ("view_transform", "look", "exposure", "gamma"): setattr(sc.view_settings, a, getattr(cat.view_settings, a))
+    sc.render.engine = cat.render.engine
+    for a in ("use_gtao", "use_shadows", "taa_render_samples", "use_raytracing"):
+        if hasattr(cat.eevee, a): setattr(sc.eevee, a, getattr(cat.eevee, a))
+    sc.render.resolution_x, sc.render.resolution_y = vk.render.resolution_x, vk.render.resolution_y
+    for o in bpy.data.collections["VK_ValleyTerrain"].all_objects:
+        if o.type == "MESH": sc.collection.objects.link(o)
+    for n in ("VK_Sun", "VK_Fill"): sc.collection.objects.link(bpy.data.objects[n])
+    for vl in vk.view_layers: vl.update()       # a scene not on screen has stale matrix_world (HANDOFF gotchas)
+    for i, c in enumerate(sorted(bpy.data.collections["VKX_ValleyCams"].objects, key=lambda o: o.name)):
+        cam = bpy.data.objects.new("GDX_Cam_%02d_%s" % (i, c.name.split("_", 3)[-1]), c.data.copy())
+        cam.matrix_world = c.matrix_world.copy()
+        sc.collection.objects.link(cam)
+        if i == 0: sc.camera = cam
+    for vl in sc.view_layers: vl.update()
+    lay = gdx_export_layout(name, name="Valley_Terrain", origin=(1500, 0, 0), export_pieces=False)
+    out = {"layout": {k: v for k, v in lay.items() if k != "materials"},
+           "missing": gdx_write_materials(lay["materials"])["missing"]}
+    if render:
+        shots = _mk(os.path.join(GDX_PROJECT, "catalog", "valley_terrain", "shots"))
+        open(os.path.join(GDX_PROJECT, "catalog", ".gdignore"), "w").close()
+        out["renders"] = len(gdx_render_cameras(name, shots, shadows=False))
+    return out
+
+
+GDX_WORLD_JSON = os.path.join(GDX_REPO, "docs", "world_graph.json")
+
+
+def gdx_export_world(levels=None, render=True):
+    """every level of docs/world_graph.json (or `levels`) as a layout under its world-graph name -- the valley is
+    VillageKit's ground, town, sun and fill with the verification cameras, x 1500 -> 0, as for Unity -- plus
+    kit/data/world.json, and each level's cameras rendered into the project's catalog/levels/<level>/
+    (blender_<camera>.png) for: sh tools/gdx_round.sh <level> "" <that folder>"""
+    graph = _load(GDX_WORLD_JSON)
+    out = {}
+    for n in (levels or list(graph["levels"])):
+        if n == "VK_ValleyTown":
+            sc_name, objs = "VillageKit", VKX["vkx_valley_objects"]()
+            lay = gdx_export_layout(sc_name, objects=objs, name=n, origin=(1500, 0, 0), export_pieces=False)
+        else:
+            sc_name, objs = n, None
+            lay = gdx_export_layout(n, name=n, export_pieces=False)
+        mats = gdx_write_materials(lay["materials"])
+        out[n] = {"placements": lay["placements"], "new_pieces": lay["new_pieces"], "failed": lay["failed"],
+                  "missing": mats["missing"]}
+        if render:
+            shots = _mk(os.path.join(GDX_PROJECT, "catalog", "levels", n))
+            open(os.path.join(GDX_PROJECT, "catalog", ".gdignore"), "w").close()
+            cams = [o for o in (objs if objs is not None else bpy.data.scenes[sc_name].objects) if o.type == "CAMERA"]
+            out[n]["renders"] = len(gdx_render_cameras(sc_name, shots, cameras=cams))
+    shutil.copyfile(GDX_WORLD_JSON, os.path.join(GDX_KIT, "data", "world.json"))
+    return out
+
+
+def gdx_export_structures(render=True):
+    """the premade structures (vkx_build_structures: Blender's builders, a row in scene GDX_Structures) -> one
+    kit/data/structures/<name>.json each (origin on the structure's own, as Unity's Data/Structures; KitBuilder makes
+    res://kit/structures/<name>.tscn) and the whole row as the layout Structures_Showcase with a 50-degree camera on each,
+    rendered into the project's catalog/structures/shots for (at its own size):
+    sh tools/gdx_round.sh Structures_Showcase "" <shots> "" """
+    sc_name = "GDX_Structures"
+    built, errors = VKX["vkx_build_structures"](None, sc_name)
+    builders = {n: f for n, f, k in VKX["VKX_STRUCTURES"]}
+    sc = bpy.data.scenes[sc_name]
+    out = {"errors": errors, "structures": {}}
+    mats = set()
+    for name, coll, ox, cam in built:
+        objs = [o for o in coll.all_objects if o.type != "CAMERA"]
+        r = gdx_export_layout(sc_name, objects=objs, name=name, origin=(ox, 0, 0), export_pieces=False, folder="structures",
+                              extra={"structure": name, "builder": builders[name]})
+        out["structures"][name] = {"placements": r["placements"], "new_pieces": r["new_pieces"], "failed": r["failed"]}
+        mats.update(r["materials"])
+    lay = gdx_export_layout(sc_name, name="Structures_Showcase", export_pieces=False)
+    mats.update(lay["materials"])
+    out["missing"] = gdx_write_materials(sorted(mats))["missing"]
+    if render:
+        shots = _mk(os.path.join(GDX_PROJECT, "catalog", "structures", "shots"))
+        open(os.path.join(GDX_PROJECT, "catalog", ".gdignore"), "w").close()
+        out["renders"] = len(gdx_render_cameras(sc_name, shots, cameras=[cam for _, _, _, cam in built]))
+    return out
 
 
 def gdx_classify_all():
@@ -581,21 +858,26 @@ def to_godot(mw, origin=None, local=True):
     return cols, [_r(Mg[0][3]), _r(Mg[1][3]), _r(Mg[2][3])]
 
 
-def gdx_export_layout(scene_name, objects=None, name=None, origin=None, export_pieces=True):
-    """a scene (or some of its objects) -> kit/data/layouts/<name>.json: placements (piece, transform, material
-    overrides by Godot surface, Blender's Object Info random), lights, cameras, world and view transform. The pieces
-    it uses are exported (export_pieces=False: only those not exported yet). Objects with a 'gdx_kind' property (helpers: floor, chart) are passed as is."""
+def gdx_export_layout(scene_name, objects=None, name=None, origin=None, export_pieces=True, folder="layouts", extra=None):
+    """a scene (or some of its objects) -> kit/data/<folder>/<name>.json: placements (piece, transform, material
+    overrides by Godot surface, Blender's Object Info random), lights, cameras, world and view transform, + `extra`. The
+    pieces it uses are exported (export_pieces=False: only those not exported yet). Objects with a 'gdx_kind' property
+    (helpers: floor, chart) are passed as is."""
     sc = bpy.data.scenes[scene_name]
     for vl in sc.view_layers: vl.update()
     objs = list(objects) if objects is not None else list(sc.objects)
     name = name or scene_name
     pieces = _load(os.path.join(GDX_KIT, "data", "pieces.json"))
-    todo = sorted({VKX["piece_name"](VKX["vkx_base_mesh"](o)) for o in objs
-                   if o.type == "MESH" and not o.hide_render and "gdx_kind" not in o})
-    todo = [n for n in todo if export_pieces or n not in pieces]
-    rep, _ = gdx_export_pieces(todo) if todo else ({}, [])
+    meshes = {}
+    for o in objs:
+        if o.type == "MESH" and not o.hide_render and "gdx_kind" not in o:
+            base = VKX["vkx_base_mesh"](o)
+            meshes.setdefault(VKX["piece_name"](base), base)
+    todo = {n: me for n, me in sorted(meshes.items()) if export_pieces or n not in pieces}
+    rep, _ = gdx_export_meshes(todo) if todo else ({}, [])
     pieces = _load(os.path.join(GDX_KIT, "data", "pieces.json"))
-    placements, helpers, lights, cams, mats = [], [], [], [], set()
+    placements, helpers, lights, cams, markers, mats = [], [], [], [], [], set()
+    coll = lambda o: o.users_collection[0].name if o.users_collection else None
     for o in objs:
         if o.hide_render: continue
         basis, org = to_godot(o.matrix_world, origin, local=o.type not in ("CAMERA", "LIGHT"))
@@ -616,11 +898,17 @@ def gdx_export_layout(scene_name, objects=None, name=None, origin=None, export_p
                 if s is not None: ov[str(s)] = mn; mats.add(mn)
             mats.update(m for m in pc["surfaces"] if m)
             placements.append({"piece": pn, "name": o.name, "basis": basis, "origin": org, "mat": ov,
-                               "random": _r(blender_object_random(o.name), 6)})
+                               "random": _r(blender_object_random(o.name), 6), "props": VKX["_props"](o),
+                               "coll": coll(o)})
+        elif o.type == "EMPTY":     # SPN_ spawns, LGT_ / FXA_ anchors, the VKI_Root and the rest of a level's markers
+            markers.append({"name": o.name, "basis": basis, "origin": org, "props": VKX["_props"](o), "coll": coll(o)})
         elif o.type == "LIGHT":
             L = VKX["_light"](o)
-            L.update({"name": o.name, "basis": basis, "origin": org,
+            L.update({"name": o.name, "basis": basis, "origin": org, "coll": coll(o), "props": VKX["_props"](o),
                       "angle_deg": _r(math.degrees(getattr(o.data, "angle", 0.0)))})
+            if o.data.type == "AREA":   # its rectangle (a disk or ellipse as the rectangle round it)
+                two = o.data.shape in ("RECTANGLE", "ELLIPSE")
+                L.update({"shape": o.data.shape, "size": [_r(o.data.size), _r(o.data.size_y if two else o.data.size)]})
             lights.append(L)
         elif o.type == "CAMERA":
             cd = o.data
@@ -635,8 +923,10 @@ def gdx_export_layout(scene_name, objects=None, name=None, origin=None, export_p
                     "exposure": _r(sc.view_settings.exposure), "gamma": _r(sc.view_settings.gamma)},
            "world": VKX["_world"](sc.world), "shadows": bool(getattr(e, "use_shadows", True)),
            "ao": bool(getattr(e, "use_gtao", False)), "resolution": [sc.render.resolution_x, sc.render.resolution_y],
-           "placements": placements, "helpers": helpers, "lights": lights, "cameras": cams}
-    _save(os.path.join(GDX_KIT, "data", "layouts", name + ".json"), lay)
+           "root": next((m["props"] for m in markers if m["name"].startswith("VKI_Root")), {}),
+           "placements": placements, "markers": markers, "helpers": helpers, "lights": lights, "cameras": cams}
+    lay.update(extra or {})
+    _save(os.path.join(GDX_KIT, "data", folder, name + ".json"), lay)
     return {"layout": name, "placements": len(placements), "new_pieces": rep.get("pieces", 0),
             "failed": rep.get("failed", {}), "materials": sorted(mats)}
 
@@ -796,14 +1086,16 @@ def gdx_build_pilot_scene(row_w=12.0, gap=0.6, cols=2):
     return {"objects": sum(len(v) for v in made.values()), "cameras": n + 1, "rows": [(r[0], round(r[3], 2)) for r in rows]}
 
 
-def gdx_render_cameras(scene_name, out_dir, shadows=None, tag=""):
-    """render every GDX_Cam_* of a scene to out_dir/blender<tag>_<camera>.png (shadows: force Eevee's on / off)"""
+def gdx_render_cameras(scene_name, out_dir, shadows=None, tag="", cameras=None):
+    """render every GDX_Cam_* of a scene (or these camera objects) to out_dir/blender<tag>_<camera>.png (shadows: force
+    Eevee's on / off)"""
     sc = bpy.data.scenes[scene_name]
     prev = sc.camera, getattr(sc.eevee, "use_shadows", None)
     if shadows is not None: sc.eevee.use_shadows = shadows
     out = []
     try:
-        for c in sorted([o for o in sc.objects if o.type == "CAMERA" and o.name.startswith("GDX_Cam")], key=lambda o: o.name):
+        for c in sorted(cameras if cameras is not None else
+                        [o for o in sc.objects if o.type == "CAMERA" and o.name.startswith("GDX_Cam")], key=lambda o: o.name):
             sc.camera = c
             sc.render.filepath = os.path.join(_mk(out_dir), f"blender{tag}_{c.name}.png")
             with contextlib.redirect_stdout(io.StringIO()):
@@ -879,11 +1171,33 @@ def gdx_pilot(render=True):
 
 if globals().get("__name__") == "__main__" and bpy.app.background and "--" in sys.argv:
     args = sys.argv[sys.argv.index("--") + 1:]
+    if "standard" in args:          # the pilot's StandardMaterial3Ds (the reference KitLit is checked against)
+        GDX_MATERIALS = "standard"; args.remove("standard")
     if args[:1] == ["pilot"]:
         print("GDX " + json.dumps(gdx_pilot(render="norender" not in args), default=str))
     elif args[:1] == ["pieces"]:
         gdx_link_addon()
         r, used = gdx_export_pieces(args[1:])
         print("GDX " + json.dumps({"report": r, "materials": gdx_write_materials(used)}, default=str))
+    elif args[:1] == ["all"]:
+        gdx_link_addon()
+        print("GDX " + json.dumps(gdx_export_all(), default=str))
+    elif args[:1] == ["catalog"]:
+        gdx_link_addon()
+        print("GDX " + json.dumps(gdx_catalog(args[1], render="norender" not in args), default=str))
+    elif args[:1] == ["materials"]:     # every material of the Unity export's analysis and of the exported pieces
+        used = {m for pc in _load(os.path.join(GDX_KIT, "data", "pieces.json")).values() for m in pc["surfaces"] if m}
+        r = gdx_write_materials(sorted(used | set(_load(VKX_MATERIALS))))
+        print("GDX " + json.dumps({"written": len(r["written"]), "textures": len(r["textures"]), "missing": r["missing"]}))
+    elif args[:1] == ["terrain"]:
+        gdx_link_addon()
+        print("GDX " + json.dumps(gdx_valley_terrain(render="norender" not in args), default=str))
+    elif args[:1] == ["world"]:       # world [level ...] [norender]
+        gdx_link_addon()
+        lv = [a for a in args[1:] if a != "norender"] or None
+        print("GDX " + json.dumps(gdx_export_world(lv, render="norender" not in args), default=str))
+    elif args[:1] == ["structures"]:  # structures [norender]
+        gdx_link_addon()
+        print("GDX " + json.dumps(gdx_export_structures(render="norender" not in args), default=str))
     elif args[:1] == ["classify"]:
         print("GDX " + json.dumps(gdx_classify_all(), default=str))

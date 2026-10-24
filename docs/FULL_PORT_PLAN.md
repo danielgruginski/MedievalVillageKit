@@ -94,12 +94,16 @@ Each phase ends with its check passing and its record in HANDOFF; commits and Pl
    into the project, `MedievalKit.csproj` (net10.0), `tools/gdx_round.sh` on C#; the pilot's GDScript tools became the
    addon's C# editor tools (`KitImport`, `KitBuilder`, `KitCapture`, behind `kit_cli.gd`). Check: the pilot round gives
    the GDScript run's numbers exactly.
-1. **Godot art, the whole kit.** All 1,399 pieces and 200 materials, every material on KitLit (alpha, cull, translucency
-   variants; leaf normals; point / spot lights), KitTerrain, KitSea, KitGrass, KitWaterMask. Check: verification
-   catalogs per family, Blender vs Godot, as the pilot (0.5-1.6 / 255 there).
-2. **Godot levels.** Data, pieces' metadata (colliders, links, spawns, markers), the 20 world-graph levels and 45
-   structures, travel along the world graph, chains and streaming, the test walker. Check: the Unity verifications
-   (links resolve, walk tests) run in Godot, Unity vs Godot captures from the levels' cameras.
+1. **Godot art, the whole kit. Done 2026-10-24 (HANDOFF 147; GODOT_EXPORT 5b).** All the pieces and materials, every material on KitLit (alpha, cull, translucency
+   variants; the leaves' bump; point / spot lights) and KitTerrain (terrain, stair, paving, curb, water). Check:
+   KitLit-for-all against the pilot's StandardMaterial3Ds (identical) and Blender; the verification catalogs
+   (vkx_build_catalog), Blender vs Godot. KitSea, KitGrass (+ its culling compute) and KitWaterMask move to phase 5:
+   only KitVillage builds them, so they are checked there against Unity.
+2. **Godot levels. Done 2026-10-24 (HANDOFF 148; GODOT_EXPORT 5c).** Data, pieces' metadata (colliders, links,
+   spawns, markers), the 20 world-graph levels and 45 structures, navmeshes, travel along the world graph, the test
+   walker and a demo. Check: walk tests and Godot's own paths (all 20 levels), the travel test (40 links, preload),
+   Blender vs Godot captures from the levels' cameras. Chains and their streamer moved to phase 4: a chain's pieces
+   are made by the generators.
 3. **Unity kit, completed from the game** (can run beside 1-2: different files). One system at a time: moved into the
    package, the game switched to it (its rules on top through hooks), the game played by Daniel or with his OK.
    a. The table of section 2.2 that moves almost as is (z-fight watch, fires, decks, click-to-use, missiles, walk
@@ -112,10 +116,11 @@ Each phase ends with its check passing and its record in HANDOFF; commits and Pl
       and the walk test; the game's existing maps stay as they are unless Daniel wants them regenerated.
    d. The generic cores of the mixed table (area maps and fog, day / night, resource-node placement, interior dressing,
       gates, ladders, closed ways, world-state memory, encounter spawning, footsteps, the generator recipes' steps).
-4. **Godot rooms and generators.** KitRoom and the six generators (+ the new outdoor ones from the shared core).
+4. **Godot rooms and generators.** KitRoom and the six generators (+ the new outdoor ones from the shared core), and
+   chains (KitChain, its bake, KitChainStreamer and KitTravel's hand-over to it).
    Check: same seed, same layout as Unity (dumped and diffed), the generators' walk validators.
-5. **Godot outdoor maps.** KitVillage (terrain, grass with GPU culling, patches, forest dress), navmesh baking
-   (NavigationRegion3D), the shroud. Check: a game map's layout built in both engines, captures from its cameras.
+5. **Godot outdoor maps.** KitVillage (terrain, grass with GPU culling, patches, forest dress, the sea) with the
+   KitGrass, KitSea and KitWaterMask shaders, navmesh baking (NavigationRegion3D), the shroud. Check: a game map's layout built in both engines, captures from its cameras.
 6. **Godot see-through.** The shader's hole and caps pass, the hidden check (a small SubViewport read back), a building
    opening as one, the baked caps, and the driver moved out of the game in phase 3. Check: the spike's edge-case
    gallery (docs/history/SPIKE_SEETHROUGH.md) walked in both engines.

@@ -7,7 +7,7 @@ using Godot;
 namespace MedievalKit.Editor;
 
 /// <summary>Renders every camera of a built layout (res://kit/layouts/&lt;name&gt;.tscn) to &lt;out&gt;/godot_&lt;camera&gt;.png,
-/// then again with the lights' Blender shadows on to &lt;out&gt;/godot_shadows_&lt;camera&gt;.png, for side-by-side checks
+/// then again with the lights' Blender shadows on to &lt;out&gt;/godot_shadows_&lt;camera&gt;.png (or once as built), for side-by-side checks
 /// with the Blender renders (gdx_export.gdx_render_cameras, tools/gdx_compare.py). Through a SubViewport of the given
 /// size (MSAA 4x + TAA), so the window's size does not matter; needs a window (not --headless). Quits when done.
 /// Unity: KitCapture.CaptureAll.</summary>
@@ -21,13 +21,24 @@ public partial class KitCapture : Node
     List<Camera3D> cams;
     List<Light3D> lights;
     int i, frame;
-    bool shadowPass;
+    int drawnAtSwitch;
+    bool shadowPass, asBuilt;
 
-    /// <summary>Called before the node enters the tree. res: "WxH".</summary>
-    public void Setup(string layoutName, string outDirectory, string res)
+    /// <summary>Called before the node enters the tree. res: "WxH", or empty for the layout's own (its Blender scene's).
+    /// asBuiltShadows: one pass with the shadows as the level was built (its Blender scene's: a world level's renders
+    /// from gdx_export_world), saved as godot_&lt;camera&gt;.png.</summary>
+    public void Setup(string layoutName, string outDirectory, string res, bool asBuiltShadows = false)
     {
         layout = layoutName;
         outDir = outDirectory;
+        asBuilt = asBuiltShadows;
+        if (string.IsNullOrEmpty(res))
+        {
+            var lay = System.Text.Json.JsonDocument.Parse(Godot.FileAccess.GetFileAsString(KitPaths.LayoutData + layout + ".json")).RootElement;
+            var r = lay.GetProperty("resolution");
+            size = new Vector2I(r[0].GetInt32(), r[1].GetInt32());
+            return;
+        }
         var p = res.Split('x');
         size = new Vector2I(int.Parse(p[0]), int.Parse(p[1]));
     }
@@ -46,7 +57,7 @@ public partial class KitCapture : Node
         vp.AddChild(scene);
         cams = scene.FindChildren("*", "Camera3D", true, false).OfType<Camera3D>().OrderBy(c => (string)c.Name, StringComparer.Ordinal).ToList();
         lights = scene.FindChildren("*", "Light3D", true, false).OfType<Light3D>().ToList();
-        SetShadows(false);
+        if (!asBuilt) SetShadows(false);
         cams[0].Current = true;
     }
 
@@ -58,15 +69,23 @@ public partial class KitCapture : Node
 
     public override void _Process(double delta)
     {
-        if (++frame < WarmFrames) return;
+        // count frames actually drawn: a minimized or hidden window keeps processing but stops drawing, and the
+        // viewport then hands back its last image (a whole shadow pass came out as one camera's view)
+        int drawn = Engine.GetFramesDrawn();
+        if (++frame == 1) drawnAtSwitch = drawn;
+        if (drawn - drawnAtSwitch < WarmFrames)
+        {
+            if (frame % 600 == 0) GD.PushWarning($"KitCapture: nothing drawn for {frame} frames (window minimized or hidden?)");
+            return;
+        }
         string tag = shadowPass ? "_shadows" : "";
         vp.GetTexture().GetImage().SavePng(System.IO.Path.Combine(outDir, $"godot{tag}_{cams[i].Name}.png"));
         frame = 0;
         if (++i >= cams.Count)
         {
-            if (shadowPass)
+            if (shadowPass || asBuilt)
             {
-                GD.Print($"CAPTURE {cams.Count} cameras x 2 -> {outDir}");
+                GD.Print($"CAPTURE {cams.Count} cameras x {(asBuilt ? 1 : 2)} -> {outDir}");
                 GetTree().Quit();
                 return;
             }

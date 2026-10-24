@@ -12,7 +12,11 @@ public static class KitPaths
     public const string Pieces = Data + "pieces.json";
     public const string LayoutData = Data + "layouts/";      // <name>.json, from gdx_export_layout
     public const string LayoutScenes = Root + "layouts/";    // <name>.tscn, built from them (KitBuilder)
+    public const string StructureData = Data + "structures/"; // <name>.json, from gdx_export_structures
+    public const string Structures = Root + "structures/";    // <name>.tscn, built from them (KitBuilder.BuildStructures)
     public const string Addon = "res://addons/medieval_kit/";
     public const string Shaders = Addon + "Shaders/";
+    public const string Runtime = Addon + "Runtime/";
+    public const string World = Root + "world.tres";            // the world graph (KitWorld), built from Data + "world.json"
     public const string KitLit = Shaders + "KitLit";         // KitLit.gdshader and KitLitTwoSided.gdshader
 }

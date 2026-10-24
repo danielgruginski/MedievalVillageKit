@@ -1996,6 +1996,37 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     darker ash and cliffs; rebuilt with markers and encounters unchanged (one archer point moved 1.2 m off a log).
     Tried and dropped: noise scorch over the yards (cow print). Disk: E: had 1.2 GB free (the .blend save needs ~710 MB
     of temp space).
+147. 2026-10-24 (Daniel: "Commit and push the Godot work so far ... then start phase 1"; FULL_PORT_PLAN phase 1, the
+    whole kit in Godot; details in docs/GODOT_EXPORT.md 3 and 5b). **Every material on KitLit** (variants for clip /
+    hash / blend / glass, the leaves' height-map bump) -- identical to the pilot's StandardMaterial3Ds (mean 0.000) --
+    and **KitTerrain** ported (terrain, stair, paving, curb, water, `kit_noise`). Whole kit exported (`-- all`: 1,396
+    pieces, 200 materials, 4 m 18 s), imported (6 m 40 s), every piece checked. Catalogs (`-- catalog Exterior|Interior`)
+    and the valley's ground (`-- terrain`) against Blender: interior all under 2.5 / 255, exterior 48 of 52 (the four
+    others trees and bushes, below), valley ground 2.5-3.4 (water noise 5-10). **Godot's image v runs from the top**:
+    textures sampled at Blender coordinates turn v (tile tops had come out rock); perspective cameras lock the height.
+    **Trees:** EEVEE darkens the leaves (their Translucent BSDF normal scaled by -1; one oak rendered a node change at a
+    time); Daniel picked C, Godot's backlight as in Unity ("B and C look the same ... proper industry standard; the A
+    look isn't very good"). Materials missing from Unity's materials.json are analysed with vkx's own code into the
+    project's `kit/.vkx` cache. KitSea / KitGrass / KitWaterMask moved to phase 5 (only KitVillage builds them).
+    Disk: E: down to 1.2 GB again; the comparison sheets (~460 MB, rebuilt by every round) removed -> 1.7 GB.
+148. 2026-10-24 (Daniel: "ok, we have enough space to work now, can we resume?", then "Can you build me a test scene
+    to see how it looks in godot? I know nothing about godot"; FULL_PORT_PLAN phase 2, details in GODOT_EXPORT 4 and
+    5c). **The levels in Godot:** runtime C# in the addon (KitPiece / Link / Spawn / Marker / Level / World / Travel +
+    its host, KitDecks, KitNavMesh = a NavigationRegion3D, KitEncounter, KitPortalMarker, KitStructure); the importer
+    makes every piece a KitPiece with its colliders (doors that open and breakables on a second layer); KitBuilder
+    builds the 20 world-graph levels with bridge decks, a navmesh each and a walk test (all 20: every spawn and link
+    reachable), and the 45 structures (exporter `-- structures`). Travel test (`kit_cli travel`): 40 links taken,
+    Godot's own paths reach every spawn and link, preload cuts instant. Captures against Blender: interiors and
+    dungeons 1.9-5.7 / 255, valley 5.6-7.8 (one camera 16.5: an oak crown, look C, and the river's noise stand-in).
+    **Lights measured in Godot** (`tools/godot_probes/`): point / spot P / (4 pi^2) holds; Godot 4.7 reads
+    `spot_angle_attenuation` inverted (the first build's 8.9 dimmed every window shaft to 45 %; now ln(1 - blend/2) /
+    ln 0.5); Godot 4.7 has AreaLight3D: Blender's area lights (the doorway aprons) are area lights of P / pi^2 (Unity
+    makes them points). The roof jitter's instance uniform moved to a KitLitJitter variant (instance uniforms cost
+    every instance a slot of a 4096-instance buffer: the valley ran out). **The demo:** the Godot project's main
+    scene (`Walker/kit_demo.tscn`): a menu of the built levels, the test walker (E at doors and stairs), Blender's
+    cameras (Tab), a free camera (F), Esc back; `Play Medieval Kit demo.bat` / `Open in Godot editor.bat` in the
+    project folder; Project > Tools > "Play From Start Level" / "Walk This Level" too. Chains and their streamer wait
+    for phase 4 (they need the generators). Committed with phase 1 (147) in one commit.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
