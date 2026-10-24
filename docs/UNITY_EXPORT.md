@@ -132,10 +132,30 @@ plain UVMap, so the bake is exact. Cut-outs built as `alpha > threshold` keep th
 
 `vkx_build_catalog(scene, collections)` lays every master out on a grid by family (linked copies) with orthographic
 50-degree cameras; `vkx_render_cameras` renders them in Blender and `KitCapture.CaptureAll(level, dir)` in Unity.
-Scenes `VKX_Catalog_Exterior` (486 pieces, 42 shots) and `VKX_Catalog_Interior` (713, 20) / levels
-`Catalog_KitExterior`, `Catalog_KitInterior`. 2026-10-01 result: interior shots differ by ~0.026 mean (a slight
-global brightness offset, no local hotspots); exterior the same except the terrain tiles (placeholder material) and
-trees (above). Keep catalog cameras inside URP's shadow distance (50 m): a far camera renders with no shadows.
+Scenes `VKX_Catalog_Exterior` and `VKX_Catalog_Interior` / levels `Catalog_KitExterior`, `Catalog_KitInterior`
+(refreshed 2026-10-24: 544 pieces in 52 shots, 852 in 26; the older `Catalog_Adventure`, `_Dungeon`, `_Interior` are
+the slice's, from 2026-09-30). 2026-10-01 result: interior shots differ by ~0.026 mean (a slight global brightness
+offset, no local hotspots); exterior the same except the terrain tiles (placeholder material) and trees (above). Keep
+catalog cameras inside URP's shadow distance (50 m): a far camera renders with no shadows.
+
+Refreshing them: in a background Blender, `vkx_build_catalog("VKX_Catalog_Exterior", ["VK_Pieces", "VK_NaturePieces",
+"VK_TerrainTiles"])` + `vkx_export_level("VKX_Catalog_Exterior", name="Catalog_KitExterior", export_pieces=False)`, the
+same with `VKX_Catalog_Interior` / `["VKI_Pieces"]` / `Catalog_KitInterior`, then `vkx_cleanup()` (~1 min); in Unity
+**Tools > Medieval Kit > Build Catalogs**, which builds each `Catalog_*` level in a scene added beside the open ones
+(`KitBuilder.BuildLevel(name, beside: true)`): the user's scenes stay open and untouched, unsaved changes included, and
+a catalog open in the editor is skipped.
+
+**Looking at them / z-fights:** open a catalog and press Play (a `Catalog_*` level starts `KitLookAround` by itself;
+**Tools > Medieval Kit > Look Around This Level** does the same for any level): Tab / Shift+Tab steps through the catalog's cameras, T tours them all (2.5 s each), F flies a free
+camera (right mouse button to look, WASD, Q / E, Shift), H hides the help. The camera in use is tagged MainCamera, so
+the game's z-fight watch (MedievalSetting `ZFightWatch`, F8 in play) follows it: F8 then T logs every fight of the
+catalog to `MedievalSetting/Logs/ZFightWatch/<time>/spots.csv` (+ a cropped shot of each). The watch places its spots
+for orthographic cameras too since 2026-10-24 (it assumed a perspective camera: the catalogs' spots landed elsewhere).
+First sweep: `reviews/zfight_catalog_2026-10-24/` (the interior catalog; HANDOFF 150: nearly all its fights are the
+open wall ends, which no level shows). Drawing the two `Catalog_Kit*` catalogs in the editor crashed it several times on
+2026-10-24 (D3D12 device hung, `887a0006`; the older three draw fine; cause not found): mind open work before opening
+them. When Unity crashes on start because it reopens one, empty `MedievalSetting/Library/LastSceneManagerSetup.txt`
+(`sceneSetups: []`) while the editor is closed.
 
 Gotchas found: objects created in a scene that is not on screen have a stale `matrix_world` until the view layer is
 updated (the exporter now updates it); `ShaderUtil.ShaderHasError` misses errors in keyword variants — check

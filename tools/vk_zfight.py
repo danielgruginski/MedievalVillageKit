@@ -7,7 +7,8 @@
 # between neighbouring tiles). Bottoms resting on / under the ground of land pieces still show here (no ground):
 # read those as buried. Interior pieces (SM_VKI_*) rebuild through vki_rebuild; @file reads one name per line;
 # out=<path> writes the report elsewhere; "sided" checks as the game's z-fight watch does (zfight_sided below);
-# "closed" (with sided) covers wall pieces' open ends as a level does (a post or the next wall).
+# "closed" (with sided) covers wall pieces' open ends as a level does (a post or the next wall); "posts" checks each
+# interior wall between its family's Mid posts (wall-post fights).
 import bpy, os, sys, json, math, traceback
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
@@ -235,9 +236,42 @@ def zfight_sided(o, dist=1e-3, fight=2e-4, dot=0.995, min_area=2e-5):
     out.sort(key=lambda e: -e["area"])
     return out
 
+import bmesh
+
+def with_posts(o):
+    """"posts": an interior wall stood between its family's Mid posts at both nodes, as a level stands it, in one
+    temporary mesh -- fights between wall and post show (a breach's intact end in the post's face, HANDOFF 151)"""
+    L, h = o.get("vki_len"), o.get("vki_height") or o.name.rsplit("_", 1)[-1]
+    fam = o.get("vki_family")
+    post = bpy.data.objects.get("SM_VKI_Post_%s_Mid_%s" % (fam, h))
+    if o.get("vki_class") != "wall" or not L or post is None: return None
+    me = bpy.data.meshes.new("__zf_posts"); mats = list(o.data.materials)
+    bm = bmesh.new(); bm.from_mesh(o.data)
+    for x in (0.0, float(L)):
+        t = bmesh.new(); t.from_mesh(post.data)
+        bmesh.ops.translate(t, vec=(x, 0.0, 0.0), verts=t.verts)
+        for f in t.faces:
+            m = post.data.materials[f.material_index] if f.material_index < len(post.data.materials) else None
+            if m not in mats: mats.append(m)
+            f.material_index = mats.index(m)
+        tm = bpy.data.meshes.new("__zf_post"); t.to_mesh(tm); t.free()
+        bm.from_mesh(tm); bpy.data.meshes.remove(tm)
+    bm.to_mesh(me); bm.free()
+    for m in mats: me.materials.append(m)
+    tmp = bpy.data.objects.new("__zf_posts", me)
+    for k_ in ("vki_class", "vki_len"): tmp[k_] = o[k_]
+    return tmp
+
 if "sided" in args: zfight = zfight_sided
 res = {}
 for n in sorted(names):
+    if "posts" in args:
+        tmp = with_posts(bpy.data.objects[n])
+        if tmp is None: res[n] = "ERR no Mid post for this wall"; continue
+        try: res[n + "+posts"] = zfight(tmp)
+        except Exception as e: res[n + "+posts"] = "ERR " + repr(e); traceback.print_exc()
+        me_ = tmp.data; bpy.data.objects.remove(tmp); bpy.data.meshes.remove(me_)
+        continue
     try: res[n] = zfight(bpy.data.objects[n])
     except Exception as e: res[n] = "ERR " + repr(e); traceback.print_exc()
 if "demo" in args:

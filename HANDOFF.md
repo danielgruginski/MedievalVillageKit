@@ -2069,6 +2069,32 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     (6 small), props (siege tower burlap, orc altar and necro circle bones, 2-35 cm2) and floor-level undersides.
     Builds are deterministic in vertices but not in face order (mesh hashes differ between identical rebuilds: compare
     canonical face sets). Unity's prefabs not rebuilt (same submeshes; the FBX reimport updates them).
+151. 2026-10-24 (Daniel: "do the same with the other catalogs, can you add free camera support for them?" -- the kit's
+    catalogs). **A catalog looks around on plain Play:** `KitLookAround` starts itself (RuntimeInitializeOnLoad) when a
+    level named `Catalog_*` is open, so Tab / T / F and the F8 watch need no menu (Daniel had played the three older
+    catalogs with F8 on and no camera control); the menu's KitPlay path no longer adds a second one. Offline compile
+    against Unity's assemblies: clean. **Catalog_KitInterior now hangs the GPU in edit mode too** (D3D12 `887a0006`
+    device hung, twice at 20:01-20:02; the next start reopened it and crashed again: Library/LastSceneManagerSetup.txt
+    emptied, backup beside it, so the editor opens an untitled scene). Not the 150 re-export: the older Adventure and
+    Dungeon catalogs hold all four re-exported pieces and drew and played fine after the reimport; the exterior catalog
+    hung the same way before it. What the two new catalogs share and the old three don't: orthographic cameras (one
+    camera on in each; no piece lights; no data-driven shader loop in the kit's shaders). Not opened again to find out.
+    **Catalog_Interior had every piece at the origin** (Daniel): its JSON (2026-09-30, written before the exporter
+    refreshed off-screen view layers) held 178 placements at (0, 0, 0). Re-exported from Blender scene `VKI_Catalog`
+    (`vkx_export_level("VKI_Catalog", name="Catalog_Interior", export_pieces=False)`): 168 distinct positions, the same
+    14 cameras and 3 lights; rebuilt beside the open scene (`KitBuilder.BuildLevel(name, true)`). Catalog_Dungeon and
+    Catalog_Adventure were fine. Daniel's sweep of Catalog_Adventure (`Logs/ZFightWatch/20261024_201944`): 50 fights,
+    all between two pieces -- 26 the 150 breaches against their Mid posts (`VKI_BRK[1.5]["e"]` 0.12 = the Mid post's
+    half width: the intact end's face lies in the post's), 24 the catalog's own layout (floor strips and chasm pits on
+    its floor tiles, the adit tile's earth on the floor).
+152. 2026-10-24 (Daniel: "Fix the breach vs Mid post fight"). `VKI_BRK[1.5]["e"]` 0.12 -> 0.10: the 150 breaches'
+    intact ends stop 2 cm inside a Mid post (the Ancient frieze and Dwarf plinth at 0.08). Rebuilt the 8 masters
+    (Dungeon / Ancient / Dwarf / Sewer Breach_150 Full and Cut; same vertex and face counts, vki_test_pieces clean
+    before and after), .blend saved, exported for Unity (refreshed in the editor: clean console) and Godot (.md5
+    removed). `tools/vk_zfight.py -- posts` stands each wall between its family's Mid posts (wall-post fights): before,
+    every breach fought its posts (body and coping against the post block, 4-19 per piece); after, none. Left between
+    wall and post, kit-wide: footing bottoms at z -0.30 (buried) and, on Dwarf walls, the rune band in the plane of
+    the Mid post's band (same DwarfBlock, so "same look": invisible until their looks differ).
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

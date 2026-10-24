@@ -5,17 +5,26 @@ using UnityEngine;
 namespace MedievalKit.Editor
 {
     /// <summary>Tools > Medieval Kit > Play From Start Level: opens the world's start level and walks it with
-    /// KitTestWalker (created in play mode only, at the first spawn, so nothing is saved into the scene).</summary>
+    /// KitTestWalker (created in play mode only, at the first spawn, so nothing is saved into the scene). Look Around This
+    /// Level: play without a walker, stepping through the scene's cameras or flying a free one (KitLookAround; the
+    /// catalogs, where the game's z-fight watch, F8, then follows every view).</summary>
     [InitializeOnLoad]
     public static class KitPlay
     {
-        const string Flag = "MedievalKit.PlayWithWalker";
+        const string Flag = "MedievalKit.PlayWithWalker", LookFlag = "MedievalKit.PlayLookAround";
 
         static KitPlay()
         {
             EditorApplication.playModeStateChanged += s =>
             {
-                if (s != PlayModeStateChange.EnteredPlayMode || !SessionState.GetBool(Flag, false)) return;
+                if (s != PlayModeStateChange.EnteredPlayMode) return;
+                if (SessionState.GetBool(LookFlag, false))
+                {
+                    SessionState.SetBool(LookFlag, false);
+                    if (Object.FindAnyObjectByType<KitLookAround>() == null)       // a catalog starts its own
+                        new GameObject("KitLookAround").AddComponent<KitLookAround>();
+                }
+                if (!SessionState.GetBool(Flag, false)) return;
                 SessionState.SetBool(Flag, false);
                 SpawnWalker();
             };
@@ -36,6 +45,13 @@ namespace MedievalKit.Editor
         public static void WalkThis()
         {
             SessionState.SetBool(Flag, true);
+            EditorApplication.EnterPlaymode();
+        }
+
+        [MenuItem("Tools/Medieval Kit/Look Around This Level")]
+        public static void LookAround()
+        {
+            SessionState.SetBool(LookFlag, true);
             EditorApplication.EnterPlaymode();
         }
 

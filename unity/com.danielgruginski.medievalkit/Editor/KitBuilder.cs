@@ -549,11 +549,17 @@ namespace MedievalKit.Editor
         }
 
         // ------------------------------------------------------------------ levels
-        public static string BuildLevel(string name)
+        public static string BuildLevel(string name) => BuildLevel(name, false);
+
+        /// <summary>One level's scene from Data/Levels/&lt;name&gt;.json. beside: built in a scene added next to the open
+        /// ones, which stay open and untouched (unsaved changes included), then saved and closed again.</summary>
+        public static string BuildLevel(string name, bool beside)
         {
             var lv = ReadJson($"{KitPaths.Data}/Levels/{name}.json");
             var pieces = ReadJson(KitPaths.Data + "/pieces.json");
-            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var before = SceneManager.GetActiveScene();
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, beside ? NewSceneMode.Additive : NewSceneMode.Single);
+            if (beside) SceneManager.SetActiveScene(scene);       // new objects and the lighting go to the active scene
             var root = new GameObject("Level_" + name);
             var level = root.AddComponent<KitLevel>();
             level.levelName = name;
@@ -572,8 +578,30 @@ namespace MedievalKit.Editor
             EnsureFolder(KitPaths.Levels);
             string path = $"{KitPaths.Levels}/{name}.unity";
             EditorSceneManager.SaveScene(scene, path);
+            if (beside)
+            {
+                if (before.IsValid()) SceneManager.SetActiveScene(before);
+                EditorSceneManager.CloseScene(scene, true);
+            }
             Log.AppendLine($"level {name}: {placed} pieces, {missing} missing, {lv["markers"].Count()} markers, {lv["lights"].Count()} lights -> {path}");
             return path;
+        }
+
+        /// <summary>The verification catalogs (Data/Levels/Catalog_*.json, vkx_build_catalog: every master piece on a
+        /// grid with 50-degree cameras), each built beside the open scenes (they stay as they are); a catalog open in the
+        /// editor is skipped. Walk them with Tools > Medieval Kit > Look Around This Level.</summary>
+        [MenuItem("Tools/Medieval Kit/Build Catalogs")]
+        public static void BuildCatalogsMenu()
+        {
+            Log.Clear();
+            var open = OpenScenePaths();
+            foreach (var f in Directory.GetFiles(Abs(KitPaths.Data + "/Levels"), "Catalog_*.json"))
+            {
+                string name = Path.GetFileNameWithoutExtension(f);
+                if (open.Contains($"{KitPaths.Levels}/{name}.unity")) { Log.AppendLine($"  {name}: open in the editor, not rebuilt"); continue; }
+                BuildLevel(name, true);
+            }
+            WriteReport();
         }
 
         /// <summary>The placements, markers and lights of an exported level or structure, under `root`
@@ -804,7 +832,7 @@ namespace MedievalKit.Editor
             RenderSettings.skybox = null;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
             RenderSettings.reflectionIntensity = 0f;
-            foreach (var cam in Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var cam in parent.GetComponentsInChildren<Camera>(true))      // the level's own (not other open scenes')
             {
                 cam.clearFlags = CameraClearFlags.SolidColor;
                 cam.backgroundColor = back;

@@ -346,7 +346,9 @@ def vki_anc_passage(k):
 
 
 # ---------------------------------------------------------------- transitions: breaches (Dungeon and Ancient)
-VKI_BRK = {1.5: dict(e=0.12, open=(0.33, 1.17), hi=(2.45, 2.15)), 3.0: dict(e=0.20, open=(0.90, 2.10), hi=(2.50, 2.25))}
+# e: the intact end. 150: 0.10, 2 cm inside a Mid post (+-0.12 along the wall): at 0.12 the end's face (pier and
+# coping, the Ancient frieze and Dwarf plinth 2 cm short of it) lay in the post's face and z-fought (2026-10-24 sweep)
+VKI_BRK = {1.5: dict(e=0.10, open=(0.33, 1.17), hi=(2.45, 2.15)), 3.0: dict(e=0.20, open=(0.90, 2.10), hi=(2.50, 2.25))}
 VKI_BRK_LO = 0.70                  # the reveals' top: every break vertex stays above 0.65, so Full = Cut below it (T2)
 
 
