@@ -2173,6 +2173,56 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
       changes had not been exported yet). Look Around (151): `maxViewDistance` (60 m) clamps the far clip of every
       camera it drives, the free one too (the catalogs' cameras kept 500 m and drew whole catalogs in one frame; the
       editor's D3D12 device hung on the big ones).
+156. 2026-10-25 (Daniel: "there is more stuff required for the ports? You can work on that"). **FULL_PORT_PLAN phase
+    3a: the game's engine-generic systems moved into the Unity package** (namespace `MedievalKit`; the .cs and .meta
+    moved together, so nothing that referenced them by GUID breaks: none sits in a scene or prefab, the game adds them
+    in code). Runtime/World: `Fire` (steady / blaze / collapse / smoulder fires), `FireFx` (their particle parts),
+    `FireFlicker`, `Interactable` + `UseVia` (click-to-use base), `Missile` (a thrown or shot object's arc; what it
+    carries acts on landing through the new `IMissileLanding`), `CreatureSilhouettes` (+ `Resources/CreatureSilhouette
+    .shader`), `KitWalkways` (was the game's `Decks`: a navmesh over walkway tops; not `KitDecks`, the bridges'), and,
+    split out of game files: `KitFires` (the kit's torches, braziers, hearths, fire pits burning; was LevelDirector's),
+    `KitMapFrame` + `KitWalkWindow` (an area map's frame and walk grid, and the camera / minimap window kept over the
+    walkable ground; the game's AreaMapData now extends KitMapFrame: its 9 baked maps load unchanged), `KitGround`
+    (floor under a point, scatter on the navmesh; was GroundLoot's). Walker: `ZFightWatch` (it reads F8 through the
+    Input System, which only the Walker assembly references) + `Runtime/Resources/ZFightProbe.shader`.
+    `Runtime/Resources/FX`: the fire's six materials and six flipbooks (URP Particles/Unlit; the spells' stay in the
+    game, which still finds the shared textures by GUID). **Hooks** the game fills (its `KitHooks.cs`,
+    SubsystemRegistration): `Fire.SoundLoop` / `SoundAt` (Sfx), `KitWalkways.Names` (GameRules.decks),
+    `CreatureSilhouettes.ActorCount` (Creature.All). `FireFx.Load` is public (the game's SpellFx loads its materials
+    through it). 35 game files gained `using MedievalKit;`; the game's `Tools~/fx/make_fx.py` takes `<kit FX> <game FX>`
+    and Game > Create FX Materials finds each material where it lives; itch `stage.sh` and Beasts
+    `install_to_godot.py` read the fire from here now. **Checked:** the game compiles with no errors or warnings; the
+    types resolve in their assemblies; `Resources.Load("FX/...")` finds the fire's materials in the package and the
+    spells' in the game. **Not checked: a play test** (fires, kit torches, walkway decks, arrows and fire bolts landing,
+    silhouettes behind cover, the camera and minimap at a map's border, loot dropped on the ground, F8). Left for later
+    in 3a: the build-settings helper copied across the game's level menus. Next: 3b (the camera, the see-through driver
+    and the click-to-move core out of GameCamera / ClickToMove).
+158. 2026-10-25 (Daniel: model assets for the slums -- "I wanted you to work on model assets, not on creating the map";
+    he liked the planned set). **New module `vk_mod_slums` (prefix slm_), 29 pieces, in KIT_MODULES:** shack walls
+    (3 m, top `SLM_HW` 2.25, outer face -Y; rough planks / patched planks (cross boards, a hide, sacking, straw in a
+    gap) / wattle with mud (the daub turned to SOIL, bare wattle where it fell off), each plain, `_Door` (a crooked
+    plank door ajar, or a sack curtain) and `_Window` (a propped board flap or a rag)), `SM_VK_Shack_Corner`; roofs per
+    3 m bay at the wall top: plank lean-to (`_Mid/_EndL/_EndR/_Single`: front low, back 0.85 m higher, its back strip
+    and end triangles boarded, a hide over a missing board, stones on it), patched thatch gable (`_Mid/_End/_Single`,
+    the End turned 180 for the other end: fresh straw patches, a sack patch, a rope over the ridge with a stone hung
+    each side), sailcloth over a ridge pole (`_Mid/_End/_Single`: a red patch, the hem tied to the wall top, a canvas
+    flap closing the gable); `SM_VK_Shack_Stilts` (3 x 3 m platform, deck top z 0, six crooked stilts to -3.2 with
+    braces), `_Walkway` (3 m x 1.2 m, rope rail), `_StiltLadder`; props `SM_VK_Slum_JunkPile`, `_Crates_Broken`,
+    `_RainBarrel`, `_Privy`, `_WashingLine`, `_Ladder`. `slm_sheet` builds cloth as a thin closed sheet thickened along
+    its own normal (offset straight down, an upright flap's two layers lay nearly in one plane). `build_shack(coll,
+    origin, seed, bays, walls, roof, stilts, props)`; structures `Shack_Planks`, `Shack_Patched` (2 bays, thatch),
+    `Shack_Wattle` (sail), `Shack_Stilts` (1.8 m) in `VKX_STRUCTURES`. Tris: walls 960-1,690, roofs 560-2,680 (the
+    lean-to Single the most), stilts 1,390, props 150-2,370. **Checked:** `vk_zfight -- sided closed ends=1.5 ground`
+    over all 29: no fights (two straw patches overlapping and a board top level with the top plate fixed); review
+    renders `renders/slums/` (scene `SLM_Review`, `tools/slums_run.py -- build scene shots save`). **Exported** (Daniel:
+    "Export them to unity / godot"): Unity `vkx_export_pieces(names=...)` + `vkx_export_structures()` (49), Build
+    Prefabs (the 29) + Build Structures: bounds check 29 pieces 0 off, no console errors; Godot `gdx_export.py --
+    pieces ...` + `-- structures`, `kit_cli check` 1,465 pieces 0 with problems, `kit_cli structures` 49. The Godot
+    structure build died at the 41st structure (0xC000001D in KitStructure's constructor) after parsing pieces.json
+    once per structure: `KitBuilder.Pieces()` now parses it once per change, and `kit_cli structures [name ...]`
+    builds a subset (`BuildStructuresOnly`); then all 49 in one run. Renders of the four shacks in both engines:
+    `renders/slums/unity_shacks_*.png`, `godot_shacks_*.png`. Catalogue: 29 thumbnails, PIECES.md regenerated (1,433
+    pieces, none without a thumbnail).
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

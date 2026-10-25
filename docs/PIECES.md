@@ -1,6 +1,6 @@
 # Kit pieces
 
-Generated on 2026-10-24 by `tools/pieces_catalogue.py` from the Unity package's `Data/pieces.json` (what was last
+Generated on 2026-10-25 by `tools/pieces_catalogue.py` from the Unity package's `Data/pieces.json` (what was last
 exported), with a thumbnail per piece from `tools/render_thumbs.py`. Do not edit by hand: re-export, then run both.
 Browse it with pictures in [catalogue/index.html](catalogue/index.html) (open the file in a browser).
 
@@ -8,13 +8,13 @@ Size is the piece's bounding box in metres in Blender's axes (x across, y deep, 
 the exported triangle count. Mats is the number of materials on the piece. Prefabs are at
 `Packages/com.danielgruginski.medievalkit/Generated/Prefabs/<kit>/<category>/<name>.prefab`.
 
-**1404 pieces**: Building kit 458, Nature 61, Terrain tiles 33, Interior kit 852. Not listed: 37 meshes unique to one map (`U_VKV_*` valley chunks, paving and water; `U_VARI_*`).
+**1433 pieces**: Building kit 487, Nature 61, Terrain tiles 33, Interior kit 852. Not listed: 37 meshes unique to one map (`U_VKV_*` valley chunks, paving and water; `U_VARI_*`).
 
-## Building kit (`SM_VK_*`): 458
+## Building kit (`SM_VK_*`): 487
 
 Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules`).
 
-[Awning](#building-awning) 1 · [Balcony](#building-balcony) 1 · [Banner](#building-banner) 3 · [BellTower](#building-belltower) 1 · [Boat](#building-boat) 1 · [BreadOven](#building-breadoven) 1 · [Breakwater](#building-breakwater) 2 · [Bridge](#building-bridge) 7 · [BuildSite](#building-buildsite) 1 · [Cargo](#building-cargo) 2 · [Ceiling](#building-ceiling) 1 · [Chapel](#building-chapel) 4 · [Chimney](#building-chimney) 5 · [Corner](#building-corner) 14 · [Crop](#building-crop) 9 · [Deco](#building-deco) 6 · [Def](#building-def) 8 · [Dock](#building-dock) 4 · [Emblem](#building-emblem) 10 · [Entrance](#building-entrance) 6 · [Foundation](#building-foundation) 3 · [Gallery](#building-gallery) 3 · [Gatehouse](#building-gatehouse) 3 · [Grave](#building-grave) 3 · [GuardTower](#building-guardtower) 1 · [Harbour](#building-harbour) 12 · [InnerCorner](#building-innercorner) 6 · [Jetty](#building-jetty) 3 · [Kiln](#building-kiln) 1 · [LeanTo](#building-leanto) 3 · [LowWall](#building-lowwall) 4 · [MarketHall](#building-markethall) 1 · [MarketStall](#building-marketstall) 15 · [Mill](#building-mill) 1 · [Mine](#building-mine) 1 · [Palisade](#building-palisade) 8 · [Parapet](#building-parapet) 2 · [Passage](#building-passage) 1 · [Pier](#building-pier) 4 · [Pile](#building-pile) 30 · [Porch](#building-porch) 1 · [Prop](#building-prop) 120 · [Quarry](#building-quarry) 4 · [Quay](#building-quay) 3 · [Rail](#building-rail) 3 · [RetainingWall](#building-retainingwall) 2 · [Roof](#building-roof) 29 · [RoofS](#building-roofs) 4 · [RoofThatch](#building-roofthatch) 8 · [RoofThatchS](#building-roofthatchs) 3 · [Scaffold](#building-scaffold) 5 · [Ship](#building-ship) 2 · [Sign](#building-sign) 3 · [Smithy](#building-smithy) 2 · [Stair](#building-stair) 2 · [Stockpile](#building-stockpile) 1 · [Stoop](#building-stoop) 1 · [Tent](#building-tent) 2 · [TownWall](#building-townwall) 8 · [Turret](#building-turret) 4 · [Wall](#building-wall) 53 · [WatPosts](#building-watposts) 1 · [WatRoofS](#building-watroofs) 2 · [WaterWheel](#building-waterwheel) 1 · [Windmill](#building-windmill) 2
+[Awning](#building-awning) 1 · [Balcony](#building-balcony) 1 · [Banner](#building-banner) 3 · [BellTower](#building-belltower) 1 · [Boat](#building-boat) 1 · [BreadOven](#building-breadoven) 1 · [Breakwater](#building-breakwater) 2 · [Bridge](#building-bridge) 7 · [BuildSite](#building-buildsite) 1 · [Cargo](#building-cargo) 2 · [Ceiling](#building-ceiling) 1 · [Chapel](#building-chapel) 4 · [Chimney](#building-chimney) 5 · [Corner](#building-corner) 14 · [Crop](#building-crop) 9 · [Deco](#building-deco) 6 · [Def](#building-def) 8 · [Dock](#building-dock) 4 · [Emblem](#building-emblem) 10 · [Entrance](#building-entrance) 6 · [Foundation](#building-foundation) 3 · [Gallery](#building-gallery) 3 · [Gatehouse](#building-gatehouse) 3 · [Grave](#building-grave) 3 · [GuardTower](#building-guardtower) 1 · [Harbour](#building-harbour) 12 · [InnerCorner](#building-innercorner) 6 · [Jetty](#building-jetty) 3 · [Kiln](#building-kiln) 1 · [LeanTo](#building-leanto) 3 · [LowWall](#building-lowwall) 4 · [MarketHall](#building-markethall) 1 · [MarketStall](#building-marketstall) 15 · [Mill](#building-mill) 1 · [Mine](#building-mine) 1 · [Palisade](#building-palisade) 8 · [Parapet](#building-parapet) 2 · [Passage](#building-passage) 1 · [Pier](#building-pier) 4 · [Pile](#building-pile) 30 · [Porch](#building-porch) 1 · [Prop](#building-prop) 120 · [Quarry](#building-quarry) 4 · [Quay](#building-quay) 3 · [Rail](#building-rail) 3 · [RetainingWall](#building-retainingwall) 2 · [Roof](#building-roof) 29 · [RoofS](#building-roofs) 4 · [RoofThatch](#building-roofthatch) 8 · [RoofThatchS](#building-roofthatchs) 3 · [Scaffold](#building-scaffold) 5 · [Shack](#building-shack) 23 · [Ship](#building-ship) 2 · [Sign](#building-sign) 3 · [Slum](#building-slum) 6 · [Smithy](#building-smithy) 2 · [Stair](#building-stair) 2 · [Stockpile](#building-stockpile) 1 · [Stoop](#building-stoop) 1 · [Tent](#building-tent) 2 · [TownWall](#building-townwall) 8 · [Turret](#building-turret) 4 · [Wall](#building-wall) 53 · [WatPosts](#building-watposts) 1 · [WatRoofS](#building-watroofs) 2 · [WaterWheel](#building-waterwheel) 1 · [Windmill](#building-windmill) 2
 
 ### <a id="building-awning"></a>Awning: 1
 
@@ -30,7 +30,7 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
-| `SM_VK_Balcony` | 2.30 × 1.05 × 2.27 | 1,440 | 5 |
+| `SM_VK_Balcony` | 2.32 × 1.05 × 2.27 | 1,440 | 5 |
 
 ### <a id="building-banner"></a>Banner: 3
 
@@ -86,8 +86,8 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Bridge_Stone_Ramp` | 4.71 × 5.72 × 2.73 | 2,304 | 3 |
 | `SM_VK_Bridge_Stone_Span` | 6.00 × 4.26 × 3.86 | 7,480 | 4 |
 | `SM_VK_Bridge_Wood_Bent` | 0.46 × 3.60 × 2.98 | 608 | 4 |
-| `SM_VK_Bridge_Wood_End` | 3.24 × 4.07 × 2.28 | 2,200 | 3 |
-| `SM_VK_Bridge_Wood_Mid` | 3.09 × 3.51 × 1.70 | 1,284 | 2 |
+| `SM_VK_Bridge_Wood_End` | 3.24 × 4.07 × 2.28 | 2,216 | 3 |
+| `SM_VK_Bridge_Wood_Mid` | 3.09 × 3.51 × 1.70 | 1,316 | 2 |
 
 ### <a id="building-buildsite"></a>BuildSite: 1
 
@@ -121,9 +121,9 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
 | `SM_VK_Chapel_Corner` | 1.52 × 1.52 × 6.35 | 590 | 2 |
-| `SM_VK_Chapel_Wall` | 3.30 × 1.55 × 4.50 | 1,661 | 4 |
-| `SM_VK_Chapel_Wall_Door` | 3.33 × 1.60 × 4.50 | 4,469 | 5 |
-| `SM_VK_Chapel_Wall_Plain` | 3.30 × 1.55 × 4.50 | 688 | 2 |
+| `SM_VK_Chapel_Wall` | 3.30 × 1.55 × 4.50 | 1,701 | 4 |
+| `SM_VK_Chapel_Wall_Door` | 3.33 × 1.60 × 4.50 | 4,541 | 5 |
+| `SM_VK_Chapel_Wall_Plain` | 3.30 × 1.55 × 4.50 | 728 | 2 |
 
 ### <a id="building-chimney"></a>Chimney: 5
 
@@ -198,7 +198,7 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Def_Standin_Plateau` | 3.59 × 3.56 × 1.55 | 408 | 4 |
 | `SM_VK_Def_Standin_Ramp` | 3.00 × 3.00 × 1.55 | 8 | 2 |
 | `SM_VK_Def_StoneUp` | 3.00 × 0.68 × 2.80 | 324 | 3 |
-| `SM_VK_Def_StoneUp_Door` | 3.00 × 1.01 × 2.80 | 1,222 | 5 |
+| `SM_VK_Def_StoneUp_Door` | 3.00 × 1.00 × 2.80 | 1,222 | 5 |
 | `SM_VK_Def_StoneUp_Slit` | 3.00 × 0.68 × 2.80 | 458 | 4 |
 | `SM_VK_Def_StoneUp_Window` | 3.00 × 1.10 × 2.80 | 1,146 | 7 |
 
@@ -209,9 +209,9 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
 | `SM_VK_Dock_Chandlery` | 7.58 × 9.30 × 10.90 | 30,270 | 13 |
-| `SM_VK_Dock_CustomsHouse` | 11.70 × 8.70 × 11.75 | 39,624 | 15 |
+| `SM_VK_Dock_CustomsHouse` | 11.70 × 8.70 × 11.75 | 39,828 | 15 |
 | `SM_VK_Dock_FishMarket` | 10.35 × 8.97 × 8.50 | 14,814 | 12 |
-| `SM_VK_Dock_Warehouse` | 8.97 × 11.77 × 10.41 | 35,258 | 11 |
+| `SM_VK_Dock_Warehouse` | 8.97 × 11.77 × 10.41 | 35,538 | 11 |
 
 ### <a id="building-emblem"></a>Emblem: 10
 
@@ -236,11 +236,11 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
-| `SM_VK_Entrance_CaveMouth` | 8.22 × 6.38 × 4.60 | 1,018 | 5 |
-| `SM_VK_Entrance_DwarfGate` | 10.11 × 8.79 × 8.68 | 3,022 | 9 |
+| `SM_VK_Entrance_CaveMouth` | 8.22 × 6.38 × 4.60 | 912 | 5 |
+| `SM_VK_Entrance_DwarfGate` | 10.11 × 8.79 × 8.68 | 2,918 | 9 |
 | `SM_VK_Entrance_LockUp` | 3.16 × 3.57 × 4.70 | 1,450 | 7 |
 | `SM_VK_Entrance_SewerGrate` | 1.44 × 1.44 × 0.18 | 598 | 3 |
-| `SM_VK_Entrance_SpringCave` | 8.22 × 6.38 × 4.60 | 1,164 | 6 |
+| `SM_VK_Entrance_SpringCave` | 8.22 × 6.38 × 4.60 | 1,058 | 6 |
 | `SM_VK_Entrance_Trapdoor` | 1.45 × 1.44 × 1.27 | 928 | 6 |
 
 ### <a id="building-foundation"></a>Foundation: 3
@@ -249,9 +249,9 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
-| `SM_VK_Foundation_Corner` | 1.54 × 1.54 × 1.24 | 484 | 5 |
-| `SM_VK_Foundation_Drop` | 3.00 × 0.91 × 2.10 | 252 | 2 |
-| `SM_VK_Foundation_Wall` | 3.04 × 1.87 × 1.24 | 2,092 | 5 |
+| `SM_VK_Foundation_Corner` | 1.54 × 1.55 × 1.24 | 484 | 5 |
+| `SM_VK_Foundation_Drop` | 3.00 × 0.91 × 2.10 | 280 | 2 |
+| `SM_VK_Foundation_Wall` | 3.04 × 1.87 × 1.24 | 2,136 | 5 |
 
 ### <a id="building-gallery"></a>Gallery: 3
 
@@ -368,7 +368,7 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
-| `SM_VK_MarketHall` | 11.70 × 8.70 × 15.80 | 19,430 | 11 |
+| `SM_VK_MarketHall` | 11.70 × 8.70 × 15.81 | 19,570 | 11 |
 
 ### <a id="building-marketstall"></a>MarketStall: 15
 
@@ -406,7 +406,7 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
-| `SM_VK_Mine_Portal` | 8.94 × 7.91 × 5.75 | 3,976 | 12 |
+| `SM_VK_Mine_Portal` | 8.94 × 7.91 × 5.75 | 3,850 | 12 |
 
 ### <a id="building-palisade"></a>Palisade: 8
 
@@ -430,7 +430,7 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
 | `SM_VK_Parapet_Corner` | 1.40 × 1.39 × 2.81 | 424 | 3 |
-| `SM_VK_Parapet_Crenel` | 3.00 × 1.68 × 2.37 | 932 | 4 |
+| `SM_VK_Parapet_Crenel` | 3.00 × 1.68 × 2.37 | 968 | 4 |
 
 ### <a id="building-passage"></a>Passage: 1
 
@@ -460,9 +460,9 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Pile_Bricks_1` | 1.33 × 1.20 × 0.64 | 600 | 3 |
 | `SM_VK_Pile_Bricks_2` | 1.83 × 1.29 × 0.73 | 1,076 | 3 |
 | `SM_VK_Pile_Bricks_3` | 3.28 × 1.29 × 0.73 | 1,552 | 3 |
-| `SM_VK_Pile_Coal_1` | 2.09 × 1.43 × 0.68 | 736 | 3 |
-| `SM_VK_Pile_Coal_2` | 2.75 × 2.15 × 0.93 | 1,140 | 4 |
-| `SM_VK_Pile_Coal_3` | 3.39 × 2.72 × 1.03 | 1,792 | 4 |
+| `SM_VK_Pile_Coal_1` | 2.09 × 1.43 × 0.71 | 702 | 3 |
+| `SM_VK_Pile_Coal_2` | 2.75 × 2.15 × 0.89 | 1,108 | 4 |
+| `SM_VK_Pile_Coal_3` | 3.39 × 2.72 × 1.03 | 1,760 | 4 |
 | `SM_VK_Pile_Fish_1` | 0.85 × 0.71 × 0.37 | 968 | 4 |
 | `SM_VK_Pile_Fish_2` | 1.76 × 1.14 × 0.37 | 1,980 | 4 |
 | `SM_VK_Pile_Fish_3` | 1.78 × 1.57 × 0.68 | 3,308 | 4 |
@@ -472,9 +472,9 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Pile_Logs_1` | 2.94 × 1.46 × 0.56 | 368 | 2 |
 | `SM_VK_Pile_Logs_2` | 2.95 × 1.85 × 0.90 | 792 | 2 |
 | `SM_VK_Pile_Logs_3` | 2.95 × 1.85 × 1.48 | 1,080 | 2 |
-| `SM_VK_Pile_Ore_1` | 1.89 × 1.55 × 0.68 | 776 | 4 |
-| `SM_VK_Pile_Ore_2` | 2.65 × 2.08 × 0.81 | 1,064 | 4 |
-| `SM_VK_Pile_Ore_3` | 3.16 × 2.62 × 1.22 | 1,480 | 6 |
+| `SM_VK_Pile_Ore_1` | 1.89 × 1.55 × 0.68 | 744 | 4 |
+| `SM_VK_Pile_Ore_2` | 2.65 × 2.08 × 0.81 | 1,032 | 4 |
+| `SM_VK_Pile_Ore_3` | 3.16 × 2.62 × 1.22 | 1,448 | 6 |
 | `SM_VK_Pile_Planks_1` | 2.90 × 1.95 × 0.34 | 612 | 2 |
 | `SM_VK_Pile_Planks_2` | 2.90 × 1.95 × 0.63 | 1,044 | 2 |
 | `SM_VK_Pile_Planks_3` | 2.90 × 1.95 × 0.96 | 1,560 | 2 |
@@ -515,7 +515,7 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Prop_BeeBench` | 2.77 × 1.35 × 1.81 | 1,580 | 6 |
 | `SM_VK_Prop_Bellows` | 2.11 × 0.66 × 1.17 | 1,500 | 3 |
 | `SM_VK_Prop_Bench` | 1.80 × 0.48 × 1.00 | 352 | 1 |
-| `SM_VK_Prop_Bloomery` | 3.26 × 4.14 × 4.22 | 2,401 | 9 |
+| `SM_VK_Prop_Bloomery` | 3.26 × 4.14 × 4.22 | 2,369 | 9 |
 | `SM_VK_Prop_BottleKiln` | 5.00 × 5.66 × 6.90 | 3,640 | 6 |
 | `SM_VK_Prop_BreadRack` | 1.50 × 0.51 × 1.91 | 1,792 | 3 |
 | `SM_VK_Prop_Bunting_6` | 6.12 × 0.19 × 0.87 | 312 | 5 |
@@ -524,15 +524,15 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Prop_Cart` | 3.30 × 1.74 × 1.42 | 916 | 3 |
 | `SM_VK_Prop_Cauldron` | 1.75 × 1.72 × 2.12 | 1,320 | 7 |
 | `SM_VK_Prop_CellarHatch` | 1.54 × 1.56 × 1.29 | 852 | 4 |
-| `SM_VK_Prop_CharcoalMound` | 4.59 × 4.24 × 2.19 | 3,628 | 7 |
+| `SM_VK_Prop_CharcoalMound` | 4.59 × 4.24 × 2.19 | 3,512 | 7 |
 | `SM_VK_Prop_ChickenCoop` | 2.37 × 2.48 × 2.21 | 744 | 5 |
 | `SM_VK_Prop_ChickenCoop_Wattle` | 1.99 × 2.58 × 2.29 | 1,535 | 7 |
 | `SM_VK_Prop_Chickens` | 1.41 × 2.19 × 0.54 | 1,480 | 4 |
 | `SM_VK_Prop_ChoppingBlock` | 1.59 × 1.41 × 0.99 | 300 | 5 |
 | `SM_VK_Prop_CiderPress` | 2.24 × 1.60 × 2.27 | 2,520 | 7 |
-| `SM_VK_Prop_ClayPit` | 3.70 × 3.60 × 1.69 | 1,484 | 9 |
+| `SM_VK_Prop_ClayPit` | 3.70 × 3.60 × 1.69 | 1,292 | 9 |
 | `SM_VK_Prop_ClothRack` | 3.40 × 1.67 × 3.22 | 1,012 | 6 |
-| `SM_VK_Prop_CoalPile` | 2.00 × 1.51 × 1.36 | 2,956 | 4 |
+| `SM_VK_Prop_CoalPile` | 2.00 × 1.51 × 1.36 | 2,924 | 4 |
 | `SM_VK_Prop_Crates` | 2.51 × 1.75 × 1.49 | 2,288 | 3 |
 | `SM_VK_Prop_Creels` | 2.02 × 1.52 × 0.67 | 2,234 | 8 |
 | `SM_VK_Prop_CrierStand` | 2.04 × 2.93 × 2.81 | 1,244 | 7 |
@@ -568,10 +568,10 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Prop_LavoirBasin` | 5.44 × 2.69 × 1.19 | 1,378 | 9 |
 | `SM_VK_Prop_Loom` | 1.80 × 2.11 × 1.83 | 1,522 | 6 |
 | `SM_VK_Prop_MarketCross` | 3.40 × 3.40 × 6.64 | 1,320 | 9 |
-| `SM_VK_Prop_MashTun` | 3.09 × 2.70 × 2.03 | 1,206 | 7 |
+| `SM_VK_Prop_MashTun` | 3.09 × 2.70 × 2.03 | 1,174 | 7 |
 | `SM_VK_Prop_Maypole` | 6.09 × 6.09 × 9.73 | 1,896 | 9 |
 | `SM_VK_Prop_Millstone` | 2.22 × 1.67 × 1.33 | 724 | 4 |
-| `SM_VK_Prop_Minecart` | 1.79 × 0.98 × 1.24 | 1,780 | 8 |
+| `SM_VK_Prop_Minecart` | 1.79 × 0.98 × 1.24 | 1,748 | 8 |
 | `SM_VK_Prop_Monument` | 3.40 × 3.40 × 6.01 | 2,088 | 6 |
 | `SM_VK_Prop_MortarTub` | 1.85 × 0.93 × 0.97 | 520 | 6 |
 | `SM_VK_Prop_NetRack` | 3.70 × 1.04 × 2.81 | 1,396 | 7 |
@@ -579,7 +579,7 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Prop_Pen` | 4.07 × 4.33 × 1.52 | 1,046 | 5 |
 | `SM_VK_Prop_Pillory` | 1.52 × 1.91 × 3.46 | 836 | 8 |
 | `SM_VK_Prop_Planter` | 0.68 × 0.70 × 1.06 | 196 | 3 |
-| `SM_VK_Prop_PottersWheel` | 1.69 × 1.20 × 1.10 | 1,020 | 5 |
+| `SM_VK_Prop_PottersWheel` | 1.69 × 1.20 × 1.10 | 1,018 | 5 |
 | `SM_VK_Prop_Privy` | 1.51 × 1.67 × 2.96 | 1,000 | 6 |
 | `SM_VK_Prop_QuenchTub` | 0.86 × 0.86 × 0.96 | 260 | 3 |
 | `SM_VK_Prop_Rowboat` | 4.28 × 1.42 × 0.93 | 2,148 | 5 |
@@ -641,8 +641,8 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
 | `SM_VK_Quay_Post` | 0.67 × 0.70 × 1.78 | 384 | 2 |
-| `SM_VK_Quay_Stair` | 3.00 × 1.30 × 2.08 | 1,040 | 4 |
-| `SM_VK_Quay_Straight` | 3.00 × 1.01 × 2.03 | 720 | 4 |
+| `SM_VK_Quay_Stair` | 3.00 × 1.30 × 2.08 | 1,052 | 4 |
+| `SM_VK_Quay_Straight` | 3.00 × 1.01 × 2.03 | 732 | 4 |
 
 ### <a id="building-rail"></a>Rail: 3
 
@@ -651,8 +651,8 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
 | `SM_VK_Rail_Curve` | 3.84 × 3.84 × 0.53 | 1,056 | 3 |
-| `SM_VK_Rail_End` | 3.59 × 1.69 × 1.20 | 1,104 | 6 |
-| `SM_VK_Rail_Straight` | 3.00 × 1.60 × 0.53 | 324 | 3 |
+| `SM_VK_Rail_End` | 3.59 × 1.69 × 1.20 | 1,076 | 6 |
+| `SM_VK_Rail_Straight` | 3.00 × 1.60 × 0.53 | 332 | 3 |
 
 ### <a id="building-retainingwall"></a>RetainingWall: 2
 
@@ -660,7 +660,7 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
-| `SM_VK_RetainingWall` | 3.00 × 0.87 × 2.26 | 468 | 3 |
+| `SM_VK_RetainingWall` | 3.00 × 0.87 × 2.26 | 496 | 3 |
 | `SM_VK_RetainingWall_End` | 0.80 × 0.96 × 2.50 | 336 | 2 |
 
 ### <a id="building-roof"></a>Roof: 29
@@ -671,29 +671,29 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 |---|---|---|---|
 | `SM_VK_Roof_Bellcote` | 1.30 × 0.91 × 4.04 | 1,008 | 5 |
 | `SM_VK_Roof_Cone_R2` | 4.40 × 4.40 × 5.37 | 532 | 3 |
-| `SM_VK_Roof_CrossGable` | 3.31 × 8.80 × 5.09 | 3,912 | 4 |
+| `SM_VK_Roof_CrossGable` | 3.31 × 8.80 × 5.10 | 3,929 | 4 |
 | `SM_VK_Roof_Cupola` | 2.50 × 2.50 × 6.76 | 4,352 | 7 |
 | `SM_VK_Roof_Dormer` | 2.51 × 2.85 × 3.01 | 499 | 4 |
 | `SM_VK_Roof_Firewall` | 0.72 × 7.84 × 5.56 | 812 | 3 |
-| `SM_VK_Roof_Gable` | 4.23 × 9.04 × 5.89 | 5,688 | 4 |
-| `SM_VK_Roof_Gable_Flush` | 3.39 × 8.88 × 5.79 | 3,388 | 5 |
-| `SM_VK_Roof_Gable_Frame` | 4.11 × 8.93 × 4.80 | 2,828 | 2 |
-| `SM_VK_Roof_Gable_Hoist` | 5.08 × 9.04 × 7.48 | 6,540 | 7 |
-| `SM_VK_Roof_Gable_Logs` | 4.16 × 9.04 × 5.44 | 5,542 | 5 |
-| `SM_VK_Roof_Gable_Planks` | 4.59 × 9.04 × 5.89 | 5,528 | 5 |
-| `SM_VK_Roof_Gable_Stepped` | 3.39 × 8.88 × 6.71 | 3,838 | 8 |
-| `SM_VK_Roof_Gable_Stone` | 4.23 × 9.04 × 5.89 | 7,062 | 5 |
-| `SM_VK_Roof_HalfHip` | 4.12 × 8.99 × 5.20 | 6,602 | 4 |
-| `SM_VK_Roof_Hip` | 4.66 × 8.90 × 5.90 | 6,918 | 3 |
-| `SM_VK_Roof_Hip_Frame` | 4.31 × 8.42 × 4.50 | 2,592 | 2 |
-| `SM_VK_Roof_Hip_Plain` | 4.68 × 8.94 × 5.07 | 6,936 | 2 |
+| `SM_VK_Roof_Gable` | 4.23 × 9.04 × 5.89 | 5,704 | 4 |
+| `SM_VK_Roof_Gable_Flush` | 3.39 × 8.88 × 5.79 | 3,409 | 5 |
+| `SM_VK_Roof_Gable_Frame` | 4.11 × 8.93 × 4.81 | 2,828 | 2 |
+| `SM_VK_Roof_Gable_Hoist` | 5.08 × 9.04 × 7.48 | 6,561 | 7 |
+| `SM_VK_Roof_Gable_Logs` | 4.16 × 9.04 × 5.45 | 5,558 | 5 |
+| `SM_VK_Roof_Gable_Planks` | 4.59 × 9.04 × 5.89 | 5,544 | 5 |
+| `SM_VK_Roof_Gable_Stepped` | 3.39 × 8.88 × 6.71 | 3,859 | 8 |
+| `SM_VK_Roof_Gable_Stone` | 4.23 × 9.04 × 5.89 | 7,078 | 5 |
+| `SM_VK_Roof_HalfHip` | 4.12 × 8.99 × 5.20 | 6,622 | 4 |
+| `SM_VK_Roof_Hip` | 4.66 × 8.90 × 5.90 | 6,934 | 3 |
+| `SM_VK_Roof_Hip_Frame` | 4.31 × 8.42 × 4.50 | 2,548 | 2 |
+| `SM_VK_Roof_Hip_Plain` | 4.68 × 8.94 × 5.07 | 6,952 | 2 |
 | `SM_VK_Roof_LCorner` | 7.23 × 9.04 × 5.89 | 6,354 | 4 |
-| `SM_VK_Roof_Mid` | 3.06 × 8.90 × 5.00 | 2,368 | 2 |
-| `SM_VK_Roof_Mid_CapL` | 3.19 × 9.02 × 5.10 | 3,032 | 2 |
-| `SM_VK_Roof_Mid_CapR` | 3.19 × 9.02 × 5.10 | 3,032 | 2 |
+| `SM_VK_Roof_Mid` | 3.06 × 8.90 × 5.01 | 2,409 | 2 |
+| `SM_VK_Roof_Mid_CapL` | 3.19 × 9.02 × 5.11 | 3,077 | 2 |
+| `SM_VK_Roof_Mid_CapR` | 3.19 × 9.02 × 5.11 | 3,099 | 2 |
 | `SM_VK_Roof_Mid_Frame` | 3.00 × 8.39 × 4.44 | 1,684 | 2 |
-| `SM_VK_Roof_Mid_Hatch` | 3.06 × 8.90 × 5.00 | 2,864 | 5 |
-| `SM_VK_Roof_Mid_Skylight` | 3.06 × 8.90 × 5.00 | 2,690 | 4 |
+| `SM_VK_Roof_Mid_Hatch` | 3.06 × 8.90 × 5.01 | 2,905 | 5 |
+| `SM_VK_Roof_Mid_Skylight` | 3.06 × 8.90 × 5.01 | 2,731 | 4 |
 | `SM_VK_Roof_Pent` | 3.24 × 1.72 × 1.05 | 1,612 | 2 |
 | `SM_VK_Roof_Pyramid_6` | 4.21 × 4.21 × 4.14 | 772 | 4 |
 | `SM_VK_Roof_Single` | 5.40 × 9.04 × 5.89 | 9,008 | 4 |
@@ -705,9 +705,9 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
-| `SM_VK_RoofS_Gable` | 3.88 × 5.14 × 3.75 | 4,202 | 3 |
-| `SM_VK_RoofS_Gable_Planks` | 3.88 × 5.14 × 3.75 | 4,292 | 4 |
-| `SM_VK_RoofS_Mid` | 3.06 × 5.00 × 2.86 | 2,368 | 2 |
+| `SM_VK_RoofS_Gable` | 3.88 × 5.14 × 3.75 | 4,218 | 3 |
+| `SM_VK_RoofS_Gable_Planks` | 3.88 × 5.14 × 3.75 | 4,308 | 4 |
+| `SM_VK_RoofS_Mid` | 3.06 × 5.00 × 2.87 | 2,409 | 2 |
 | `SM_VK_RoofS_Single` | 4.70 × 5.14 × 3.75 | 6,116 | 4 |
 
 ### <a id="building-roofthatch"></a>RoofThatch: 8
@@ -747,6 +747,36 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Scaffold_Wall` | 3.24 × 0.91 × 3.00 | 388 | 5 |
 | `SM_VK_Scaffold_Wall_Top` | 3.24 × 0.91 × 2.30 | 388 | 5 |
 
+### <a id="building-shack"></a>Shack: 23
+
+![Shack](catalogue/sheets/building_Shack.jpg)
+
+| Piece | Size (m) | Tris | Mats |
+|---|---|---|---|
+| `SM_VK_Shack_Corner` | 0.37 × 0.36 × 2.61 | 132 | 2 |
+| `SM_VK_Shack_Roof_LeanTo_EndL` | 3.25 × 3.68 × 1.20 | 2,000 | 3 |
+| `SM_VK_Shack_Roof_LeanTo_EndR` | 3.25 × 3.67 × 1.20 | 2,212 | 4 |
+| `SM_VK_Shack_Roof_LeanTo_Mid` | 3.02 × 3.74 × 1.20 | 1,640 | 4 |
+| `SM_VK_Shack_Roof_LeanTo_Single` | 3.51 × 3.68 × 1.20 | 2,680 | 3 |
+| `SM_VK_Shack_Roof_Sail_End` | 3.25 × 3.44 × 1.41 | 740 | 4 |
+| `SM_VK_Shack_Roof_Sail_Mid` | 3.00 × 3.44 × 1.35 | 512 | 4 |
+| `SM_VK_Shack_Roof_Sail_Single` | 3.50 × 3.44 × 1.41 | 928 | 4 |
+| `SM_VK_Shack_Roof_Thatch_End` | 3.27 × 4.16 × 2.13 | 1,588 | 6 |
+| `SM_VK_Shack_Roof_Thatch_Mid` | 3.02 × 4.16 × 2.15 | 1,060 | 5 |
+| `SM_VK_Shack_Roof_Thatch_Single` | 3.53 × 4.15 × 2.14 | 2,160 | 6 |
+| `SM_VK_Shack_StiltLadder` | 0.50 × 0.80 × 3.02 | 152 | 1 |
+| `SM_VK_Shack_Stilts` | 3.00 × 3.03 × 3.23 | 1,388 | 3 |
+| `SM_VK_Shack_Walkway` | 3.00 × 1.42 × 4.15 | 752 | 4 |
+| `SM_VK_Shack_Wall_Patched` | 3.03 × 0.30 × 2.36 | 1,156 | 6 |
+| `SM_VK_Shack_Wall_Patched_Door` | 3.01 × 0.49 × 2.35 | 1,686 | 8 |
+| `SM_VK_Shack_Wall_Patched_Window` | 3.02 × 0.29 × 2.34 | 1,378 | 7 |
+| `SM_VK_Shack_Wall_Planks` | 3.02 × 0.26 × 2.34 | 964 | 4 |
+| `SM_VK_Shack_Wall_Planks_Door` | 3.01 × 0.55 × 2.34 | 1,538 | 6 |
+| `SM_VK_Shack_Wall_Planks_Window` | 3.01 × 0.64 × 2.34 | 1,378 | 5 |
+| `SM_VK_Shack_Wall_Wattle` | 3.04 × 0.31 × 2.33 | 1,116 | 4 |
+| `SM_VK_Shack_Wall_Wattle_Door` | 3.08 × 0.31 × 2.34 | 1,412 | 6 |
+| `SM_VK_Shack_Wall_Wattle_Window` | 3.04 × 0.32 × 2.35 | 1,270 | 6 |
+
 ### <a id="building-ship"></a>Ship: 2
 
 ![Ship](catalogue/sheets/building_Ship.jpg)
@@ -765,6 +795,19 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | `SM_VK_Sign_Anvil` | 0.25 × 1.48 × 1.00 | 420 | 4 |
 | `SM_VK_Sign_Boot` | 0.22 × 1.48 × 1.00 | 364 | 4 |
 | `SM_VK_Sign_Potion` | 0.40 × 1.48 × 1.00 | 396 | 4 |
+
+### <a id="building-slum"></a>Slum: 6
+
+![Slum](catalogue/sheets/building_Slum.jpg)
+
+| Piece | Size (m) | Tris | Mats |
+|---|---|---|---|
+| `SM_VK_Slum_Crates_Broken` | 1.43 × 1.14 × 1.15 | 2,372 | 3 |
+| `SM_VK_Slum_JunkPile` | 2.02 × 1.82 × 0.92 | 1,168 | 5 |
+| `SM_VK_Slum_Ladder` | 0.47 × 0.71 × 2.47 | 152 | 1 |
+| `SM_VK_Slum_Privy` | 1.35 × 1.70 × 2.52 | 1,006 | 3 |
+| `SM_VK_Slum_RainBarrel` | 0.83 × 0.70 × 1.55 | 540 | 4 |
+| `SM_VK_Slum_WashingLine` | 3.42 × 0.10 × 2.13 | 424 | 4 |
 
 ### <a id="building-smithy"></a>Smithy: 2
 
@@ -816,12 +859,12 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
 | `SM_VK_TownWall_Corner_In` | 1.68 × 1.68 × 7.75 | 1,036 | 3 |
-| `SM_VK_TownWall_Corner_Out` | 2.69 × 2.68 × 9.66 | 1,304 | 4 |
-| `SM_VK_TownWall_Postern` | 3.00 × 2.67 × 9.45 | 4,060 | 6 |
+| `SM_VK_TownWall_Corner_Out` | 2.70 × 2.69 × 9.66 | 1,304 | 4 |
+| `SM_VK_TownWall_Postern` | 3.00 × 2.67 × 9.45 | 4,076 | 6 |
 | `SM_VK_TownWall_Ruin` | 3.53 × 5.28 × 6.99 | 2,540 | 4 |
 | `SM_VK_TownWall_Stair` | 3.07 × 1.17 × 6.43 | 446 | 2 |
-| `SM_VK_TownWall_Step` | 3.45 × 2.82 × 10.57 | 2,336 | 4 |
-| `SM_VK_TownWall_Straight` | 3.45 × 2.82 × 9.45 | 2,308 | 4 |
+| `SM_VK_TownWall_Step` | 3.45 × 2.82 × 10.57 | 2,352 | 4 |
+| `SM_VK_TownWall_Straight` | 3.45 × 2.82 × 9.45 | 2,324 | 4 |
 | `SM_VK_TownWall_Tower_Round` | 7.16 × 7.14 × 13.97 | 9,282 | 9 |
 
 ### <a id="building-turret"></a>Turret: 4
@@ -842,58 +885,58 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
 | `SM_VK_Wall_Arcade` | 3.08 × 3.25 × 3.16 | 3,194 | 9 |
-| `SM_VK_Wall_Barn` | 3.16 × 0.69 × 4.31 | 1,270 | 5 |
-| `SM_VK_Wall_Barn_Door` | 3.13 × 2.26 × 4.31 | 1,650 | 6 |
+| `SM_VK_Wall_Barn` | 3.16 × 0.69 × 4.31 | 1,422 | 5 |
+| `SM_VK_Wall_Barn_Door` | 3.13 × 2.26 × 4.31 | 1,766 | 6 |
 | `SM_VK_Wall_Log` | 3.00 × 0.53 × 3.64 | 1,512 | 4 |
 | `SM_VK_Wall_Log_B` | 3.00 × 0.55 × 3.81 | 1,512 | 4 |
 | `SM_VK_Wall_Log_B_Door` | 3.00 × 1.44 × 3.81 | 2,568 | 8 |
 | `SM_VK_Wall_Log_B_Window` | 3.00 × 0.90 × 3.81 | 2,502 | 8 |
 | `SM_VK_Wall_Log_Door` | 3.00 × 1.44 × 3.64 | 2,568 | 8 |
 | `SM_VK_Wall_Log_Window` | 3.00 × 0.90 × 3.64 | 2,502 | 8 |
-| `SM_VK_Wall_Plaster` | 3.13 × 0.77 × 3.11 | 1,060 | 4 |
-| `SM_VK_Wall_PlasterUp` | 3.00 × 0.72 × 2.92 | 1,260 | 3 |
-| `SM_VK_Wall_PlasterUp_Oxeye` | 3.00 × 0.73 × 2.92 | 1,328 | 4 |
-| `SM_VK_Wall_PlasterUp_Window` | 3.00 × 1.05 × 2.92 | 1,486 | 5 |
-| `SM_VK_Wall_Plaster_Door` | 3.13 × 1.03 × 3.11 | 1,504 | 5 |
-| `SM_VK_Wall_Plaster_Frame` | 3.13 × 0.77 × 3.60 | 1,108 | 4 |
-| `SM_VK_Wall_Plaster_Frame_Door` | 3.13 × 1.43 × 3.60 | 1,452 | 3 |
-| `SM_VK_Wall_Plaster_Shop` | 3.13 × 1.27 × 3.60 | 2,280 | 10 |
-| `SM_VK_Wall_Plaster_Window` | 3.13 × 1.08 × 3.11 | 1,894 | 7 |
+| `SM_VK_Wall_Plaster` | 3.13 × 0.77 × 3.11 | 1,200 | 4 |
+| `SM_VK_Wall_PlasterUp` | 3.00 × 0.72 × 2.92 | 1,316 | 3 |
+| `SM_VK_Wall_PlasterUp_Oxeye` | 3.00 × 0.73 × 2.92 | 1,384 | 4 |
+| `SM_VK_Wall_PlasterUp_Window` | 3.00 × 1.05 × 2.92 | 1,542 | 5 |
+| `SM_VK_Wall_Plaster_Door` | 3.13 × 1.03 × 3.11 | 1,658 | 5 |
+| `SM_VK_Wall_Plaster_Frame` | 3.13 × 0.77 × 3.60 | 1,144 | 4 |
+| `SM_VK_Wall_Plaster_Frame_Door` | 3.13 × 1.43 × 3.60 | 1,480 | 3 |
+| `SM_VK_Wall_Plaster_Shop` | 3.13 × 1.27 × 3.60 | 2,340 | 10 |
+| `SM_VK_Wall_Plaster_Window` | 3.13 × 1.08 × 3.11 | 2,064 | 7 |
 | `SM_VK_Wall_Posts` | 3.26 × 0.53 × 3.60 | 360 | 3 |
 | `SM_VK_Wall_Posts_Barn` | 3.29 × 0.51 × 4.80 | 360 | 3 |
 | `SM_VK_Wall_Shed` | 3.09 × 0.46 × 3.21 | 1,304 | 4 |
 | `SM_VK_Wall_Shed_Door` | 3.09 × 1.02 × 3.21 | 1,766 | 6 |
 | `SM_VK_Wall_Shed_Door_Raised` | 3.09 × 0.96 × 2.73 | 1,474 | 5 |
 | `SM_VK_Wall_Shed_Raised` | 3.09 × 0.33 × 2.73 | 1,012 | 2 |
-| `SM_VK_Wall_Shed_Wide` | 3.09 × 1.25 × 3.21 | 2,154 | 7 |
+| `SM_VK_Wall_Shed_Wide` | 3.09 × 1.25 × 3.21 | 2,158 | 7 |
 | `SM_VK_Wall_Shed_Window` | 3.09 × 0.78 × 3.21 | 1,814 | 5 |
-| `SM_VK_Wall_Stall` | 3.13 × 1.97 × 4.31 | 1,478 | 7 |
-| `SM_VK_Wall_Stone` | 3.04 × 0.82 × 3.11 | 832 | 2 |
-| `SM_VK_Wall_StoneUp` | 3.00 × 0.77 × 2.92 | 732 | 2 |
-| `SM_VK_Wall_StoneUp_Door` | 3.00 × 0.81 × 2.92 | 2,272 | 4 |
-| `SM_VK_Wall_StoneUp_Loading` | 3.00 × 1.22 × 2.92 | 2,742 | 7 |
-| `SM_VK_Wall_StoneUp_Slit` | 3.00 × 0.77 × 2.92 | 1,436 | 3 |
-| `SM_VK_Wall_StoneUp_Twin` | 3.00 × 0.84 × 2.92 | 2,284 | 4 |
-| `SM_VK_Wall_StoneUp_Window` | 3.00 × 1.10 × 2.92 | 1,806 | 6 |
-| `SM_VK_Wall_Stone_Axle` | 3.04 × 0.89 × 4.60 | 1,136 | 5 |
-| `SM_VK_Wall_Stone_Door` | 3.04 × 1.13 × 3.23 | 3,602 | 5 |
-| `SM_VK_Wall_Stone_Half` | 3.04 × 1.38 × 2.37 | 1,264 | 6 |
-| `SM_VK_Wall_Stone_Half_Door` | 3.12 × 1.65 × 3.39 | 2,164 | 6 |
-| `SM_VK_Wall_Stone_Passage` | 3.21 × 1.00 × 3.60 | 1,876 | 3 |
-| `SM_VK_Wall_Stone_Shop` | 3.04 × 1.25 × 3.63 | 2,556 | 8 |
-| `SM_VK_Wall_Stone_Window` | 3.04 × 1.10 × 3.11 | 1,726 | 6 |
-| `SM_VK_Wall_Timber` | 3.13 × 0.80 × 3.01 | 888 | 2 |
-| `SM_VK_Wall_Timber_Door` | 3.13 × 0.80 × 3.01 | 1,446 | 5 |
+| `SM_VK_Wall_Stall` | 3.13 × 1.97 × 4.31 | 1,506 | 7 |
+| `SM_VK_Wall_Stone` | 3.04 × 0.82 × 3.11 | 866 | 2 |
+| `SM_VK_Wall_StoneUp` | 3.00 × 0.77 × 2.92 | 748 | 2 |
+| `SM_VK_Wall_StoneUp_Door` | 3.00 × 0.81 × 2.92 | 2,288 | 4 |
+| `SM_VK_Wall_StoneUp_Loading` | 3.00 × 1.22 × 2.92 | 2,758 | 7 |
+| `SM_VK_Wall_StoneUp_Slit` | 3.00 × 0.77 × 2.92 | 1,452 | 3 |
+| `SM_VK_Wall_StoneUp_Twin` | 3.00 × 0.84 × 2.92 | 2,300 | 4 |
+| `SM_VK_Wall_StoneUp_Window` | 3.00 × 1.10 × 2.92 | 1,822 | 6 |
+| `SM_VK_Wall_Stone_Axle` | 3.04 × 0.89 × 4.60 | 1,176 | 5 |
+| `SM_VK_Wall_Stone_Door` | 3.04 × 1.13 × 3.23 | 3,788 | 5 |
+| `SM_VK_Wall_Stone_Half` | 3.04 × 1.38 × 2.37 | 1,318 | 6 |
+| `SM_VK_Wall_Stone_Half_Door` | 3.12 × 1.65 × 3.39 | 2,222 | 6 |
+| `SM_VK_Wall_Stone_Passage` | 3.21 × 1.00 × 3.60 | 1,954 | 3 |
+| `SM_VK_Wall_Stone_Shop` | 3.04 × 1.25 × 3.63 | 2,636 | 8 |
+| `SM_VK_Wall_Stone_Window` | 3.04 × 1.10 × 3.11 | 1,816 | 6 |
+| `SM_VK_Wall_Timber` | 3.13 × 0.80 × 3.01 | 960 | 2 |
+| `SM_VK_Wall_Timber_Door` | 3.13 × 0.80 × 3.01 | 1,506 | 5 |
 | `SM_VK_Wall_Timber_Frame` | 3.13 × 0.74 × 3.01 | 784 | 1 |
-| `SM_VK_Wall_Timber_K` | 3.13 × 0.80 × 3.01 | 1,496 | 2 |
-| `SM_VK_Wall_Timber_Oriel` | 3.13 × 1.41 × 3.10 | 1,814 | 4 |
-| `SM_VK_Wall_Timber_Window` | 3.13 × 0.80 × 3.01 | 1,226 | 3 |
-| `SM_VK_Wall_Timber_X` | 3.13 × 0.80 × 3.01 | 932 | 2 |
-| `SM_VK_Wall_Wattle` | 3.13 × 0.52 × 3.00 | 1,924 | 5 |
-| `SM_VK_Wall_Wattle_Byre` | 3.13 × 1.94 × 3.00 | 2,900 | 8 |
-| `SM_VK_Wall_Wattle_Door` | 3.13 × 1.42 × 3.00 | 2,524 | 8 |
-| `SM_VK_Wall_Wattle_Frame` | 3.13 × 0.96 × 3.00 | 1,652 | 5 |
-| `SM_VK_Wall_Wattle_Window` | 3.13 × 0.96 × 3.00 | 2,522 | 9 |
+| `SM_VK_Wall_Timber_K` | 3.13 × 0.80 × 3.01 | 1,568 | 2 |
+| `SM_VK_Wall_Timber_Oriel` | 3.13 × 1.41 × 3.10 | 1,886 | 4 |
+| `SM_VK_Wall_Timber_Window` | 3.13 × 0.80 × 3.01 | 1,294 | 3 |
+| `SM_VK_Wall_Timber_X` | 3.13 × 0.80 × 3.01 | 968 | 2 |
+| `SM_VK_Wall_Wattle` | 3.13 × 0.52 × 3.00 | 1,932 | 5 |
+| `SM_VK_Wall_Wattle_Byre` | 3.13 × 1.94 × 3.00 | 2,928 | 8 |
+| `SM_VK_Wall_Wattle_Door` | 3.13 × 1.42 × 3.00 | 2,550 | 8 |
+| `SM_VK_Wall_Wattle_Frame` | 3.13 × 0.96 × 3.00 | 1,660 | 5 |
+| `SM_VK_Wall_Wattle_Window` | 3.13 × 0.96 × 3.00 | 2,546 | 9 |
 
 ### <a id="building-watposts"></a>WatPosts: 1
 
@@ -909,7 +952,7 @@ Houses, walls, roofs, defences, market, harbour, props (`src/core`, `src/modules
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
-| `SM_VK_WatRoofS_Gable` | 3.86 × 5.10 × 3.56 | 4,460 | 4 |
+| `SM_VK_WatRoofS_Gable` | 3.86 × 5.10 × 3.56 | 4,476 | 4 |
 | `SM_VK_WatRoofS_Single` | 4.66 × 5.10 × 3.56 | 6,414 | 4 |
 
 ### <a id="building-waterwheel"></a>WaterWheel: 1
@@ -1279,16 +1322,16 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 | `SM_VKI_Ground_Cave_XXXO_Q10` | 1.50 × 1.50 × 4.12 | 143 | 3 |
 | `SM_VKI_Ground_Cave_XXXO_Q11` | 1.50 × 1.50 × 4.12 | 143 | 3 |
 | `SM_VKI_Ground_Cave_XXXX` | 1.50 × 1.50 × 0.08 | 12 | 1 |
-| `SM_VKI_Ground_Lava_OOOX` | 0.75 × 0.75 × 0.81 | 292 | 3 |
-| `SM_VKI_Ground_Lava_OOXX` | 1.50 × 0.75 × 0.81 | 316 | 3 |
-| `SM_VKI_Ground_Lava_OXOX` | 1.50 × 1.50 × 0.81 | 556 | 3 |
-| `SM_VKI_Ground_Lava_OXXX` | 1.50 × 1.50 × 0.81 | 624 | 3 |
-| `SM_VKI_Ground_Lava_XXXX` | 1.50 × 1.50 × 0.55 | 40 | 2 |
-| `SM_VKI_Ground_Sewer_OOOX` | 0.75 × 0.75 × 0.79 | 100 | 3 |
-| `SM_VKI_Ground_Sewer_OOXX` | 1.50 × 0.75 × 0.79 | 112 | 3 |
-| `SM_VKI_Ground_Sewer_OXOX` | 1.50 × 1.50 × 0.79 | 200 | 3 |
-| `SM_VKI_Ground_Sewer_OXXX` | 1.50 × 1.50 × 0.79 | 180 | 3 |
-| `SM_VKI_Ground_Sewer_XXXX` | 1.50 × 1.50 × 0.47 | 48 | 2 |
+| `SM_VKI_Ground_Lava_OOOX` | 0.75 × 0.75 × 0.81 | 332 | 3 |
+| `SM_VKI_Ground_Lava_OOXX` | 1.50 × 0.75 × 0.81 | 312 | 3 |
+| `SM_VKI_Ground_Lava_OXOX` | 1.50 × 1.50 × 0.81 | 636 | 3 |
+| `SM_VKI_Ground_Lava_OXXX` | 1.50 × 1.50 × 0.81 | 602 | 3 |
+| `SM_VKI_Ground_Lava_XXXX` | 1.50 × 1.50 × 0.55 | 24 | 2 |
+| `SM_VKI_Ground_Sewer_OOOX` | 0.75 × 0.75 × 0.79 | 120 | 3 |
+| `SM_VKI_Ground_Sewer_OOXX` | 1.50 × 0.75 × 0.79 | 120 | 3 |
+| `SM_VKI_Ground_Sewer_OXOX` | 1.50 × 1.50 × 0.79 | 240 | 3 |
+| `SM_VKI_Ground_Sewer_OXXX` | 1.50 × 1.50 × 0.79 | 196 | 3 |
+| `SM_VKI_Ground_Sewer_XXXX` | 1.50 × 1.50 × 0.47 | 32 | 2 |
 | `SM_VKI_Ground_Stream_OOOX_Q00` | 1.50 × 1.50 × 0.60 | 301 | 4 |
 | `SM_VKI_Ground_Stream_OOOX_Q01` | 1.50 × 1.50 × 0.60 | 301 | 4 |
 | `SM_VKI_Ground_Stream_OOOX_Q10` | 1.50 × 1.50 × 0.60 | 303 | 4 |
@@ -1334,9 +1377,9 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 | `SM_VKI_Ground_Stream_XOXX_Q10` | 1.50 × 1.50 × 0.60 | 155 | 4 |
 | `SM_VKI_Ground_Stream_XOXX_Q11` | 1.50 × 1.50 × 0.60 | 155 | 4 |
 | `SM_VKI_Ground_Stream_XXOO_Q00` | 1.50 × 1.50 × 0.60 | 240 | 4 |
-| `SM_VKI_Ground_Stream_XXOO_Q01` | 1.50 × 1.50 × 0.60 | 238 | 4 |
+| `SM_VKI_Ground_Stream_XXOO_Q01` | 1.50 × 1.50 × 0.60 | 246 | 4 |
 | `SM_VKI_Ground_Stream_XXOO_Q10` | 1.50 × 1.50 × 0.60 | 252 | 4 |
-| `SM_VKI_Ground_Stream_XXOO_Q11` | 1.50 × 1.50 × 0.60 | 230 | 4 |
+| `SM_VKI_Ground_Stream_XXOO_Q11` | 1.50 × 1.50 × 0.60 | 232 | 4 |
 | `SM_VKI_Ground_Stream_XXOX_Q00` | 1.50 × 1.50 × 0.60 | 161 | 4 |
 | `SM_VKI_Ground_Stream_XXOX_Q01` | 1.50 × 1.50 × 0.60 | 157 | 4 |
 | `SM_VKI_Ground_Stream_XXOX_Q10` | 1.50 × 1.50 × 0.60 | 157 | 4 |
@@ -1418,7 +1461,7 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 | `SM_VKI_Overlay_GoldCoins` | 0.76 × 0.54 × 0.02 | 336 | 1 |
 | `SM_VKI_Overlay_Gravel` | 1.20 × 0.88 × 0.10 | 392 | 2 |
 | `SM_VKI_Overlay_Moss` | 1.20 × 0.89 × 0.16 | 348 | 2 |
-| `SM_VKI_Overlay_Orc_BearTrap` | 1.07 × 0.41 × 0.12 | 348 | 1 |
+| `SM_VKI_Overlay_Orc_BearTrap` | 1.07 × 0.39 × 0.12 | 348 | 1 |
 | `SM_VKI_Overlay_Orc_BearTrap_Sprung` | 1.07 × 0.30 × 0.29 | 348 | 1 |
 | `SM_VKI_Overlay_Orc_Furs` | 1.72 × 1.02 × 0.16 | 240 | 2 |
 | `SM_VKI_Overlay_Overgrowth` | 1.82 × 1.28 × 0.51 | 316 | 2 |
@@ -1445,11 +1488,11 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
-| `SM_VKI_Pit_ChasmBridge_150x300` | 1.50 × 3.00 × 5.30 | 1,532 | 6 |
-| `SM_VKI_Pit_Chasm_150x300` | 1.50 × 3.00 × 4.25 | 588 | 3 |
+| `SM_VKI_Pit_ChasmBridge_150x300` | 1.50 × 3.00 × 5.30 | 1,266 | 6 |
+| `SM_VKI_Pit_Chasm_150x300` | 1.50 × 3.00 × 4.25 | 322 | 3 |
 | `SM_VKI_Pit_Pool_300x300` | 3.00 × 3.00 × 0.87 | 388 | 3 |
-| `SM_VKI_Pit_Shaft_300x300` | 3.00 × 3.00 × 4.16 | 992 | 3 |
-| `SM_VKI_Pit_SpikePit_150` | 1.50 × 1.50 × 1.40 | 636 | 4 |
+| `SM_VKI_Pit_Shaft_300x300` | 3.00 × 3.00 × 4.16 | 1,040 | 3 |
+| `SM_VKI_Pit_SpikePit_150` | 1.50 × 1.50 × 1.40 | 644 | 4 |
 
 ### <a id="interior-post"></a>Post: 49
 
@@ -1598,7 +1641,7 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 | `SM_VKI_Prop_Hearth_Open` | 1.26 × 1.26 × 1.20 | 1,902 | 7 |
 | `SM_VKI_Prop_IronStock_150` | 1.16 × 0.56 × 1.20 | 772 | 4 |
 | `SM_VKI_Prop_Ivy_Wall` | 1.50 × 0.27 × 2.29 | 232 | 2 |
-| `SM_VKI_Prop_Ivy_Wall_Tall` | 1.54 × 0.28 × 3.66 | 358 | 2 |
+| `SM_VKI_Prop_Ivy_Wall_Tall` | 1.54 × 0.28 × 3.67 | 358 | 2 |
 | `SM_VKI_Prop_Jars_Cluster` | 0.83 × 0.57 × 0.70 | 992 | 4 |
 | `SM_VKI_Prop_Lantern_Wall` | 0.27 × 0.45 × 0.55 | 324 | 2 |
 | `SM_VKI_Prop_LeanTo` | 2.36 × 1.02 × 1.66 | 168 | 2 |
@@ -1887,7 +1930,7 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 | `SM_VKI_Rock_Cave_FOOO_WallSNW` | 0.42 × 0.42 × 3.30 | 87 | 2 |
 | `SM_VKI_Rock_Cave_FOOO_WallSW` | 0.42 × 0.42 × 3.30 | 87 | 2 |
 | `SM_VKI_Rock_Cave_FOOO_WallW` | 0.95 × 0.42 × 3.30 | 121 | 2 |
-| `SM_VKI_Rock_Cave_OOFF_Adit` | 1.92 × 0.88 × 3.32 | 682 | 6 |
+| `SM_VKI_Rock_Cave_OOFF_Adit` | 1.92 × 0.88 × 3.32 | 790 | 6 |
 | `SM_VKI_Rock_Cave_OOFF_Mouth` | 1.55 × 1.05 × 3.31 | 974 | 7 |
 | `SM_VKI_Rock_Cave_OOFF_Tunnel` | 1.50 × 1.02 × 3.30 | 288 | 3 |
 
@@ -1949,177 +1992,177 @@ Walls, posts, floors, furniture and the dungeon and cave pieces (`src/interior`;
 
 | Piece | Size (m) | Tris | Mats |
 |---|---|---|---|
-| `SM_VKI_Wall_Ancient_Breach_150_Cut` | 1.50 × 1.91 × 1.30 | 700 | 6 |
-| `SM_VKI_Wall_Ancient_Breach_150_Full` | 1.50 × 1.91 × 3.30 | 1,096 | 6 |
-| `SM_VKI_Wall_Ancient_Breach_300_Cut` | 3.00 × 2.08 × 1.30 | 1,116 | 6 |
-| `SM_VKI_Wall_Ancient_Breach_300_Full` | 3.00 × 2.08 × 3.30 | 1,684 | 6 |
-| `SM_VKI_Wall_Ancient_Broken_150_Full` | 1.50 × 1.04 × 3.30 | 1,236 | 5 |
-| `SM_VKI_Wall_Ancient_Broken_300_Full` | 3.00 × 1.25 × 3.30 | 2,308 | 5 |
-| `SM_VKI_Wall_Ancient_Collapsed_150_Cut` | 1.50 × 1.03 × 1.30 | 640 | 6 |
-| `SM_VKI_Wall_Ancient_DoorWide_300_Cut` | 3.00 × 0.58 × 1.30 | 512 | 5 |
-| `SM_VKI_Wall_Ancient_DoorWide_300_Full` | 3.00 × 0.61 × 3.30 | 1,272 | 5 |
-| `SM_VKI_Wall_Ancient_Door_150_Cut` | 1.50 × 0.58 × 1.30 | 408 | 5 |
-| `SM_VKI_Wall_Ancient_Door_150_Full` | 1.50 × 0.61 × 3.30 | 932 | 5 |
-| `SM_VKI_Wall_Ancient_Passage_150_Full` | 1.50 × 1.17 × 3.30 | 1,236 | 6 |
-| `SM_VKI_Wall_Ancient_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 252 | 5 |
-| `SM_VKI_Wall_Ancient_Plain_150A_Full` | 1.50 × 0.56 × 3.30 | 528 | 5 |
-| `SM_VKI_Wall_Ancient_Plain_150B_Full` | 1.50 × 0.59 × 3.30 | 712 | 5 |
-| `SM_VKI_Wall_Ancient_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 508 | 5 |
-| `SM_VKI_Wall_Ancient_Plain_300_Full` | 3.00 × 0.56 × 3.30 | 1,064 | 5 |
-| `SM_VKI_Wall_Ancient_Rake_150_L` | 1.50 × 0.56 × 3.30 | 722 | 5 |
-| `SM_VKI_Wall_Ancient_Rake_150_R` | 1.50 × 0.56 × 3.30 | 722 | 5 |
-| `SM_VKI_Wall_Ancient_Relief_150_Full` | 1.50 × 0.62 × 3.30 | 968 | 6 |
-| `SM_VKI_Wall_Ancient_Vault_300_Full` | 3.00 × 0.60 × 3.30 | 2,292 | 5 |
-| `SM_VKI_Wall_Ashlar_Arcade_300_Full` | 3.00 × 0.56 × 4.80 | 2,360 | 5 |
-| `SM_VKI_Wall_Ashlar_Arcade_300_Full_Broken` | 3.00 × 1.64 × 4.80 | 1,788 | 6 |
-| `SM_VKI_Wall_Ashlar_Arch_300_Cut` | 3.00 × 0.56 × 1.30 | 516 | 5 |
-| `SM_VKI_Wall_Ashlar_Arch_300_Full` | 3.00 × 0.56 × 4.80 | 1,808 | 5 |
-| `SM_VKI_Wall_Ashlar_DoorWide_300_Cut` | 3.00 × 0.56 × 1.30 | 492 | 5 |
-| `SM_VKI_Wall_Ashlar_DoorWide_300_Full` | 3.00 × 0.56 × 4.80 | 1,828 | 5 |
-| `SM_VKI_Wall_Ashlar_Door_150_Cut` | 1.50 × 0.56 × 1.30 | 400 | 5 |
-| `SM_VKI_Wall_Ashlar_Door_150_Full` | 1.50 × 0.56 × 4.80 | 1,476 | 5 |
-| `SM_VKI_Wall_Ashlar_Hearth_300_Cut` | 3.00 × 1.58 × 1.30 | 2,330 | 11 |
-| `SM_VKI_Wall_Ashlar_Hearth_300_Full` | 3.00 × 1.58 × 4.84 | 3,306 | 11 |
-| `SM_VKI_Wall_Ashlar_LancetTall_150_Full` | 1.50 × 0.56 × 4.80 | 1,388 | 7 |
-| `SM_VKI_Wall_Ashlar_LancetTall_150_Full_Broken` | 1.50 × 0.56 × 4.80 | 1,484 | 7 |
-| `SM_VKI_Wall_Ashlar_Lancet_150_Cut` | 1.50 × 0.56 × 1.30 | 348 | 5 |
-| `SM_VKI_Wall_Ashlar_Lancet_150_Full` | 1.50 × 0.56 × 4.80 | 1,408 | 7 |
-| `SM_VKI_Wall_Ashlar_Lancet_150_Full_Broken` | 1.50 × 0.56 × 4.80 | 1,436 | 7 |
+| `SM_VKI_Wall_Ancient_Breach_150_Cut` | 1.50 × 1.91 × 1.30 | 636 | 6 |
+| `SM_VKI_Wall_Ancient_Breach_150_Full` | 1.50 × 1.91 × 3.30 | 972 | 6 |
+| `SM_VKI_Wall_Ancient_Breach_300_Cut` | 3.00 × 2.08 × 1.30 | 920 | 6 |
+| `SM_VKI_Wall_Ancient_Breach_300_Full` | 3.00 × 2.08 × 3.30 | 1,352 | 6 |
+| `SM_VKI_Wall_Ancient_Broken_150_Full` | 1.50 × 1.04 × 3.30 | 1,008 | 5 |
+| `SM_VKI_Wall_Ancient_Broken_300_Full` | 3.00 × 1.25 × 3.30 | 1,756 | 5 |
+| `SM_VKI_Wall_Ancient_Collapsed_150_Cut` | 1.50 × 1.03 × 1.30 | 552 | 6 |
+| `SM_VKI_Wall_Ancient_DoorWide_300_Cut` | 3.00 × 0.58 × 1.30 | 536 | 5 |
+| `SM_VKI_Wall_Ancient_DoorWide_300_Full` | 3.00 × 0.61 × 3.30 | 1,328 | 5 |
+| `SM_VKI_Wall_Ancient_Door_150_Cut` | 1.50 × 0.58 × 1.30 | 432 | 5 |
+| `SM_VKI_Wall_Ancient_Door_150_Full` | 1.50 × 0.61 × 3.30 | 952 | 5 |
+| `SM_VKI_Wall_Ancient_Passage_150_Full` | 1.50 × 1.17 × 3.30 | 1,112 | 6 |
+| `SM_VKI_Wall_Ancient_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 272 | 5 |
+| `SM_VKI_Wall_Ancient_Plain_150A_Full` | 1.50 × 0.56 × 3.30 | 544 | 5 |
+| `SM_VKI_Wall_Ancient_Plain_150B_Full` | 1.50 × 0.59 × 3.30 | 728 | 5 |
+| `SM_VKI_Wall_Ancient_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 556 | 5 |
+| `SM_VKI_Wall_Ancient_Plain_300_Full` | 3.00 × 0.56 × 3.30 | 1,100 | 5 |
+| `SM_VKI_Wall_Ancient_Rake_150_L` | 1.50 × 0.56 × 3.30 | 666 | 5 |
+| `SM_VKI_Wall_Ancient_Rake_150_R` | 1.50 × 0.56 × 3.30 | 666 | 5 |
+| `SM_VKI_Wall_Ancient_Relief_150_Full` | 1.50 × 0.62 × 3.30 | 984 | 6 |
+| `SM_VKI_Wall_Ancient_Vault_300_Full` | 3.00 × 0.60 × 3.30 | 1,922 | 5 |
+| `SM_VKI_Wall_Ashlar_Arcade_300_Full` | 3.00 × 0.56 × 4.80 | 2,332 | 5 |
+| `SM_VKI_Wall_Ashlar_Arcade_300_Full_Broken` | 3.00 × 1.64 × 4.80 | 1,834 | 6 |
+| `SM_VKI_Wall_Ashlar_Arch_300_Cut` | 3.00 × 0.56 × 1.30 | 632 | 5 |
+| `SM_VKI_Wall_Ashlar_Arch_300_Full` | 3.00 × 0.56 × 4.80 | 1,974 | 5 |
+| `SM_VKI_Wall_Ashlar_DoorWide_300_Cut` | 3.00 × 0.56 × 1.30 | 608 | 5 |
+| `SM_VKI_Wall_Ashlar_DoorWide_300_Full` | 3.00 × 0.56 × 4.80 | 2,004 | 5 |
+| `SM_VKI_Wall_Ashlar_Door_150_Cut` | 1.50 × 0.56 × 1.30 | 516 | 5 |
+| `SM_VKI_Wall_Ashlar_Door_150_Full` | 1.50 × 0.56 × 4.80 | 1,624 | 5 |
+| `SM_VKI_Wall_Ashlar_Hearth_300_Cut` | 3.00 × 1.58 × 1.30 | 2,382 | 11 |
+| `SM_VKI_Wall_Ashlar_Hearth_300_Full` | 3.00 × 1.58 × 4.84 | 3,242 | 11 |
+| `SM_VKI_Wall_Ashlar_LancetTall_150_Full` | 1.50 × 0.56 × 4.80 | 1,230 | 7 |
+| `SM_VKI_Wall_Ashlar_LancetTall_150_Full_Broken` | 1.50 × 0.56 × 4.80 | 1,326 | 7 |
+| `SM_VKI_Wall_Ashlar_Lancet_150_Cut` | 1.50 × 0.56 × 1.30 | 328 | 5 |
+| `SM_VKI_Wall_Ashlar_Lancet_150_Full` | 1.50 × 0.56 × 4.80 | 1,226 | 7 |
+| `SM_VKI_Wall_Ashlar_Lancet_150_Full_Broken` | 1.50 × 0.56 × 4.80 | 1,254 | 7 |
 | `SM_VKI_Wall_Ashlar_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 180 | 5 |
 | `SM_VKI_Wall_Ashlar_Plain_150A_Full` | 1.50 × 0.56 × 4.80 | 588 | 5 |
 | `SM_VKI_Wall_Ashlar_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 348 | 5 |
 | `SM_VKI_Wall_Ashlar_Plain_300_Full` | 3.00 × 0.56 × 4.80 | 1,140 | 5 |
 | `SM_VKI_Wall_Ashlar_Ruin_150_Cut` | 1.50 × 1.57 × 1.30 | 384 | 6 |
-| `SM_VKI_Wall_Ashlar_Ruin_150_Full` | 1.50 × 1.57 × 4.80 | 1,080 | 6 |
+| `SM_VKI_Wall_Ashlar_Ruin_150_Full` | 1.50 × 1.57 × 4.80 | 968 | 6 |
 | `SM_VKI_Wall_Ashlar_Ruin_300_Cut` | 3.00 × 1.55 × 1.30 | 676 | 6 |
-| `SM_VKI_Wall_Ashlar_Ruin_300_Full` | 3.00 × 1.55 × 4.80 | 1,672 | 6 |
-| `SM_VKI_Wall_Bars_Door_150_Full` | 1.50 × 0.30 × 3.30 | 428 | 4 |
-| `SM_VKI_Wall_Bars_Plain_150A_Full` | 1.50 × 0.30 × 3.30 | 304 | 3 |
-| `SM_VKI_Wall_Bars_Plain_300_Full` | 3.00 × 0.30 × 3.30 | 600 | 3 |
-| `SM_VKI_Wall_Board_Door_150_Cut` | 1.50 × 0.36 × 1.30 | 376 | 5 |
-| `SM_VKI_Wall_Board_Door_150_Full` | 1.50 × 0.36 × 3.30 | 748 | 5 |
-| `SM_VKI_Wall_Board_Plain_150A_Cut` | 1.50 × 0.36 × 1.30 | 208 | 5 |
-| `SM_VKI_Wall_Board_Plain_150A_Full` | 1.50 × 0.36 × 3.30 | 480 | 5 |
-| `SM_VKI_Wall_Board_Plain_300_Cut` | 3.00 × 0.36 × 1.30 | 376 | 5 |
-| `SM_VKI_Wall_Board_Plain_300_Full` | 3.00 × 0.36 × 3.30 | 840 | 5 |
-| `SM_VKI_Wall_Cave_Gap_150_Cut` | 1.50 × 0.73 × 1.30 | 400 | 4 |
-| `SM_VKI_Wall_Cave_Gap_150_Full` | 1.50 × 0.85 × 3.30 | 1,084 | 4 |
-| `SM_VKI_Wall_Cave_Passage_150_Full` | 1.50 × 0.86 × 3.30 | 1,100 | 5 |
+| `SM_VKI_Wall_Ashlar_Ruin_300_Full` | 3.00 × 1.55 × 4.80 | 1,536 | 6 |
+| `SM_VKI_Wall_Bars_Door_150_Full` | 1.50 × 0.30 × 3.30 | 432 | 4 |
+| `SM_VKI_Wall_Bars_Plain_150A_Full` | 1.50 × 0.30 × 3.30 | 296 | 3 |
+| `SM_VKI_Wall_Bars_Plain_300_Full` | 3.00 × 0.30 × 3.30 | 576 | 3 |
+| `SM_VKI_Wall_Board_Door_150_Cut` | 1.50 × 0.36 × 1.30 | 424 | 5 |
+| `SM_VKI_Wall_Board_Door_150_Full` | 1.50 × 0.36 × 3.30 | 828 | 5 |
+| `SM_VKI_Wall_Board_Plain_150A_Cut` | 1.50 × 0.36 × 1.30 | 220 | 5 |
+| `SM_VKI_Wall_Board_Plain_150A_Full` | 1.50 × 0.36 × 3.30 | 492 | 5 |
+| `SM_VKI_Wall_Board_Plain_300_Cut` | 3.00 × 0.36 × 1.30 | 388 | 5 |
+| `SM_VKI_Wall_Board_Plain_300_Full` | 3.00 × 0.36 × 3.30 | 852 | 5 |
+| `SM_VKI_Wall_Cave_Gap_150_Cut` | 1.50 × 0.73 × 1.30 | 408 | 4 |
+| `SM_VKI_Wall_Cave_Gap_150_Full` | 1.50 × 0.85 × 3.30 | 958 | 4 |
+| `SM_VKI_Wall_Cave_Passage_150_Full` | 1.50 × 0.86 × 3.30 | 968 | 5 |
 | `SM_VKI_Wall_Cave_Plain_150A_Cut` | 1.50 × 0.95 × 1.30 | 440 | 3 |
 | `SM_VKI_Wall_Cave_Plain_150A_Full` | 1.50 × 0.95 × 3.30 | 960 | 3 |
 | `SM_VKI_Wall_Cave_Plain_150B_Full` | 1.50 × 1.14 × 3.30 | 1,080 | 4 |
 | `SM_VKI_Wall_Cave_Plain_300_Cut` | 3.00 × 0.96 × 1.30 | 880 | 3 |
 | `SM_VKI_Wall_Cave_Plain_300_Full` | 3.00 × 0.96 × 3.30 | 1,920 | 3 |
-| `SM_VKI_Wall_Cave_Rake_150_L` | 1.50 × 0.90 × 3.30 | 802 | 3 |
-| `SM_VKI_Wall_Cave_Rake_150_R` | 1.50 × 0.96 × 3.30 | 846 | 3 |
-| `SM_VKI_Wall_Dungeon_Breach_150_Cut` | 1.50 × 1.85 × 1.30 | 700 | 6 |
-| `SM_VKI_Wall_Dungeon_Breach_150_Full` | 1.50 × 1.85 × 3.30 | 1,020 | 6 |
-| `SM_VKI_Wall_Dungeon_Breach_300_Cut` | 3.00 × 1.97 × 1.30 | 1,104 | 6 |
-| `SM_VKI_Wall_Dungeon_Breach_300_Full` | 3.00 × 1.97 × 3.30 | 1,576 | 6 |
-| `SM_VKI_Wall_Dungeon_DartTrap_150_Full` | 1.50 × 0.56 × 3.30 | 536 | 6 |
-| `SM_VKI_Wall_Dungeon_DoorWide_300_Cut` | 3.00 × 0.56 × 1.30 | 644 | 5 |
-| `SM_VKI_Wall_Dungeon_DoorWide_300_Full` | 3.00 × 0.60 × 3.30 | 1,796 | 5 |
-| `SM_VKI_Wall_Dungeon_Door_150_Cut` | 1.50 × 0.56 × 1.30 | 496 | 5 |
-| `SM_VKI_Wall_Dungeon_Door_150_Full` | 1.50 × 0.60 × 3.30 | 1,416 | 5 |
-| `SM_VKI_Wall_Dungeon_Niche_150_Cut` | 1.50 × 0.57 × 1.30 | 676 | 7 |
-| `SM_VKI_Wall_Dungeon_Niche_150_Full` | 1.50 × 0.57 × 3.30 | 1,272 | 7 |
-| `SM_VKI_Wall_Dungeon_Passage_150_Full` | 1.50 × 1.17 × 3.30 | 1,152 | 6 |
-| `SM_VKI_Wall_Dungeon_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 252 | 5 |
-| `SM_VKI_Wall_Dungeon_Plain_150A_Full` | 1.50 × 0.56 × 3.30 | 444 | 5 |
-| `SM_VKI_Wall_Dungeon_Plain_150B_Full` | 1.50 × 0.59 × 3.30 | 628 | 5 |
-| `SM_VKI_Wall_Dungeon_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 508 | 5 |
-| `SM_VKI_Wall_Dungeon_Plain_300_Full` | 3.00 × 0.56 × 3.30 | 892 | 5 |
-| `SM_VKI_Wall_Dungeon_Rake_150_L` | 1.50 × 0.56 × 3.30 | 680 | 5 |
-| `SM_VKI_Wall_Dungeon_Rake_150_R` | 1.50 × 0.56 × 3.30 | 680 | 5 |
-| `SM_VKI_Wall_Dungeon_Secret_150_Full` | 1.50 × 0.56 × 3.30 | 588 | 6 |
-| `SM_VKI_Wall_Dungeon_Window_150_Full` | 1.50 × 0.57 × 3.30 | 740 | 7 |
-| `SM_VKI_Wall_Dwarf_Breach_150_Cut` | 1.50 × 1.83 × 1.30 | 688 | 6 |
-| `SM_VKI_Wall_Dwarf_Breach_150_Full` | 1.50 × 1.83 × 3.30 | 1,120 | 7 |
-| `SM_VKI_Wall_Dwarf_Breach_300_Cut` | 3.00 × 1.83 × 1.30 | 1,112 | 6 |
-| `SM_VKI_Wall_Dwarf_Breach_300_Full` | 3.00 × 1.83 × 3.30 | 1,680 | 7 |
-| `SM_VKI_Wall_Dwarf_DoorWide_300_Cut` | 3.00 × 0.58 × 1.30 | 596 | 5 |
-| `SM_VKI_Wall_Dwarf_DoorWide_300_Full` | 3.00 × 0.61 × 3.30 | 1,200 | 6 |
-| `SM_VKI_Wall_Dwarf_Door_150_Cut` | 1.50 × 0.58 × 1.30 | 492 | 5 |
-| `SM_VKI_Wall_Dwarf_Door_150_Full` | 1.50 × 0.61 × 3.30 | 932 | 6 |
-| `SM_VKI_Wall_Dwarf_Passage_150_Full` | 1.50 × 0.61 × 3.30 | 944 | 7 |
-| `SM_VKI_Wall_Dwarf_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 336 | 5 |
-| `SM_VKI_Wall_Dwarf_Plain_150A_Full` | 1.50 × 0.57 × 3.30 | 620 | 6 |
-| `SM_VKI_Wall_Dwarf_Plain_150B_Full` | 1.50 × 0.59 × 3.30 | 960 | 6 |
-| `SM_VKI_Wall_Dwarf_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 680 | 5 |
-| `SM_VKI_Wall_Dwarf_Plain_300_Full` | 3.00 × 0.57 × 3.30 | 1,244 | 6 |
-| `SM_VKI_Wall_Dwarf_Rake_150_L` | 1.50 × 0.57 × 3.30 | 816 | 6 |
-| `SM_VKI_Wall_Dwarf_Rake_150_R` | 1.50 × 0.57 × 3.30 | 816 | 6 |
-| `SM_VKI_Wall_Mine_Plain_150A_Cut` | 1.50 × 0.54 × 1.30 | 120 | 4 |
-| `SM_VKI_Wall_Mine_Plain_150A_Full` | 1.50 × 0.56 × 3.30 | 376 | 4 |
-| `SM_VKI_Wall_Mine_Plain_300_Cut` | 3.00 × 0.55 × 1.30 | 204 | 4 |
-| `SM_VKI_Wall_Mine_Plain_300_Full` | 3.00 × 0.56 × 3.30 | 640 | 4 |
-| `SM_VKI_Wall_Orc_DoorWide_300_Cut` | 3.00 × 0.58 × 1.30 | 568 | 5 |
-| `SM_VKI_Wall_Orc_DoorWide_300_Full` | 3.00 × 0.77 × 3.30 | 1,296 | 7 |
-| `SM_VKI_Wall_Orc_Door_150_Cut` | 1.50 × 0.56 × 1.30 | 376 | 4 |
-| `SM_VKI_Wall_Orc_Door_150_Full` | 1.50 × 0.71 × 3.30 | 832 | 6 |
-| `SM_VKI_Wall_Orc_Plain_150A_Cut` | 1.50 × 0.58 × 1.30 | 296 | 5 |
-| `SM_VKI_Wall_Orc_Plain_150A_Full` | 1.50 × 0.58 × 3.30 | 568 | 5 |
-| `SM_VKI_Wall_Orc_Plain_150B_Full` | 1.50 × 0.72 × 3.30 | 772 | 8 |
-| `SM_VKI_Wall_Orc_Plain_300_Cut` | 3.00 × 0.58 × 1.30 | 552 | 5 |
-| `SM_VKI_Wall_Orc_Plain_300_Full` | 3.00 × 0.58 × 3.30 | 1,016 | 5 |
-| `SM_VKI_Wall_Orc_Window_150_Cut` | 1.50 × 0.56 × 1.30 | 400 | 4 |
-| `SM_VKI_Wall_Orc_Window_150_Full` | 1.50 × 0.56 × 3.30 | 980 | 5 |
-| `SM_VKI_Wall_Sewer_Breach_150_Cut` | 1.50 × 1.88 × 1.30 | 700 | 6 |
-| `SM_VKI_Wall_Sewer_Breach_150_Full` | 1.50 × 1.88 × 3.30 | 1,020 | 6 |
-| `SM_VKI_Wall_Sewer_Breach_300_Cut` | 3.00 × 2.05 × 1.30 | 1,104 | 6 |
-| `SM_VKI_Wall_Sewer_Breach_300_Full` | 3.00 × 2.05 × 3.30 | 1,588 | 6 |
-| `SM_VKI_Wall_Sewer_Culvert_150_Cut` | 1.50 × 0.56 × 1.30 | 672 | 6 |
-| `SM_VKI_Wall_Sewer_Culvert_150_Full` | 1.50 × 0.56 × 3.30 | 1,120 | 6 |
-| `SM_VKI_Wall_Sewer_Door_150_Cut` | 1.50 × 0.56 × 1.30 | 496 | 5 |
-| `SM_VKI_Wall_Sewer_Door_150_Full` | 1.50 × 0.60 × 3.30 | 1,416 | 5 |
-| `SM_VKI_Wall_Sewer_Ladder_150_Full` | 1.50 × 0.63 × 3.30 | 704 | 6 |
-| `SM_VKI_Wall_Sewer_Outfall_150_Full` | 1.50 × 1.25 × 3.30 | 1,116 | 7 |
-| `SM_VKI_Wall_Sewer_Passage_150_Full` | 1.50 × 0.60 × 3.30 | 1,428 | 6 |
-| `SM_VKI_Wall_Sewer_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 252 | 5 |
-| `SM_VKI_Wall_Sewer_Plain_150A_Full` | 1.50 × 0.56 × 3.30 | 444 | 5 |
-| `SM_VKI_Wall_Sewer_Plain_150B_Full` | 1.50 × 0.58 × 3.30 | 548 | 7 |
-| `SM_VKI_Wall_Sewer_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 508 | 5 |
-| `SM_VKI_Wall_Sewer_Plain_300_Full` | 3.00 × 0.56 × 3.30 | 892 | 5 |
-| `SM_VKI_Wall_Sewer_Rake_150_L` | 1.50 × 0.56 × 3.30 | 680 | 5 |
-| `SM_VKI_Wall_Sewer_Rake_150_R` | 1.50 × 0.56 × 3.30 | 680 | 5 |
-| `SM_VKI_Wall_Stone_DoorWide_300_Cut` | 3.00 × 0.56 × 1.30 | 644 | 5 |
-| `SM_VKI_Wall_Stone_DoorWide_300_Full` | 3.00 × 0.60 × 3.30 | 1,796 | 5 |
-| `SM_VKI_Wall_Stone_Door_150_Cut` | 1.50 × 0.56 × 1.30 | 496 | 5 |
-| `SM_VKI_Wall_Stone_Door_150_Full` | 1.50 × 0.60 × 3.30 | 1,416 | 5 |
-| `SM_VKI_Wall_Stone_Forge_300_Cut` | 3.00 × 1.73 × 1.33 | 3,388 | 11 |
-| `SM_VKI_Wall_Stone_Forge_300_Full` | 3.00 × 1.73 × 3.34 | 4,248 | 12 |
-| `SM_VKI_Wall_Stone_Hearth_300_Cut` | 3.00 × 1.73 × 1.30 | 3,214 | 13 |
-| `SM_VKI_Wall_Stone_Hearth_300_Full` | 3.00 × 1.73 × 3.34 | 4,010 | 13 |
-| `SM_VKI_Wall_Stone_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 252 | 5 |
-| `SM_VKI_Wall_Stone_Plain_150A_Full` | 1.50 × 0.56 × 3.30 | 444 | 5 |
-| `SM_VKI_Wall_Stone_Plain_150B_Full` | 1.50 × 0.60 × 3.30 | 996 | 5 |
-| `SM_VKI_Wall_Stone_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 508 | 5 |
-| `SM_VKI_Wall_Stone_Plain_300_Full` | 3.00 × 0.56 × 3.30 | 892 | 5 |
-| `SM_VKI_Wall_Stone_Rake_150_L` | 1.50 × 0.56 × 3.30 | 680 | 5 |
-| `SM_VKI_Wall_Stone_Rake_150_R` | 1.50 × 0.56 × 3.30 | 680 | 5 |
-| `SM_VKI_Wall_Stone_Window_150_Cut` | 1.50 × 0.56 × 1.30 | 400 | 5 |
-| `SM_VKI_Wall_Stone_Window_150_Full` | 1.50 × 0.58 × 3.30 | 1,404 | 7 |
-| `SM_VKI_Wall_Timber_Door_150_Cut` | 1.50 × 0.56 × 1.30 | 592 | 5 |
-| `SM_VKI_Wall_Timber_Door_150_Full` | 1.50 × 0.56 × 3.30 | 1,008 | 5 |
-| `SM_VKI_Wall_Timber_Fireplace_300_Cut` | 3.00 × 1.73 × 1.30 | 2,646 | 11 |
-| `SM_VKI_Wall_Timber_Fireplace_300_Full` | 3.00 × 1.73 × 3.34 | 3,994 | 11 |
-| `SM_VKI_Wall_Timber_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 504 | 5 |
-| `SM_VKI_Wall_Timber_Plain_150A_Full` | 1.50 × 0.56 × 3.30 | 784 | 5 |
-| `SM_VKI_Wall_Timber_Plain_150B_Full` | 1.50 × 0.56 × 3.30 | 852 | 5 |
-| `SM_VKI_Wall_Timber_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 856 | 5 |
-| `SM_VKI_Wall_Timber_Plain_300_Full` | 3.00 × 0.56 × 3.30 | 1,416 | 5 |
-| `SM_VKI_Wall_Timber_Rake_150_L` | 1.50 × 0.56 × 3.30 | 908 | 5 |
-| `SM_VKI_Wall_Timber_Rake_150_R` | 1.50 × 0.56 × 3.30 | 908 | 5 |
-| `SM_VKI_Wall_Timber_Window_150_Cut` | 1.50 × 0.56 × 1.30 | 616 | 5 |
-| `SM_VKI_Wall_Timber_Window_150_Full` | 1.50 × 0.56 × 3.30 | 1,172 | 8 |
-| `SM_VKI_Wall_Wattle_Door_150_Cut` | 1.50 × 0.36 × 1.30 | 592 | 5 |
-| `SM_VKI_Wall_Wattle_Door_150_Full` | 1.50 × 0.36 × 2.70 | 996 | 5 |
-| `SM_VKI_Wall_Wattle_Plain_150A_Cut` | 1.50 × 0.36 × 1.30 | 460 | 5 |
-| `SM_VKI_Wall_Wattle_Plain_150A_Full` | 1.50 × 0.36 × 2.70 | 728 | 5 |
-| `SM_VKI_Wall_Wattle_Plain_150B_Full` | 1.50 × 0.36 × 2.70 | 816 | 6 |
-| `SM_VKI_Wall_Wattle_Plain_300_Cut` | 3.00 × 0.36 × 1.30 | 768 | 5 |
-| `SM_VKI_Wall_Wattle_Plain_300_Full` | 3.00 × 0.36 × 2.70 | 1,304 | 5 |
-| `SM_VKI_Wall_Wattle_Rake_150_L` | 1.50 × 0.36 × 2.70 | 760 | 5 |
-| `SM_VKI_Wall_Wattle_Rake_150_R` | 1.50 × 0.36 × 2.70 | 760 | 5 |
-| `SM_VKI_Wall_Wattle_Window_150_Cut` | 1.50 × 0.36 × 1.30 | 572 | 5 |
-| `SM_VKI_Wall_Wattle_Window_150_Full` | 1.50 × 0.48 × 2.70 | 1,452 | 8 |
+| `SM_VKI_Wall_Cave_Rake_150_L` | 1.50 × 0.90 × 3.30 | 766 | 3 |
+| `SM_VKI_Wall_Cave_Rake_150_R` | 1.50 × 0.96 × 3.30 | 810 | 3 |
+| `SM_VKI_Wall_Dungeon_Breach_150_Cut` | 1.50 × 1.85 × 1.30 | 636 | 6 |
+| `SM_VKI_Wall_Dungeon_Breach_150_Full` | 1.50 × 1.85 × 3.30 | 892 | 6 |
+| `SM_VKI_Wall_Dungeon_Breach_300_Cut` | 3.00 × 1.97 × 1.30 | 912 | 6 |
+| `SM_VKI_Wall_Dungeon_Breach_300_Full` | 3.00 × 1.97 × 3.30 | 1,252 | 6 |
+| `SM_VKI_Wall_Dungeon_DartTrap_150_Full` | 1.50 × 0.56 × 3.30 | 556 | 6 |
+| `SM_VKI_Wall_Dungeon_DoorWide_300_Cut` | 3.00 × 0.56 × 1.30 | 688 | 5 |
+| `SM_VKI_Wall_Dungeon_DoorWide_300_Full` | 3.00 × 0.60 × 3.30 | 1,828 | 5 |
+| `SM_VKI_Wall_Dungeon_Door_150_Cut` | 1.50 × 0.56 × 1.30 | 536 | 5 |
+| `SM_VKI_Wall_Dungeon_Door_150_Full` | 1.50 × 0.60 × 3.30 | 1,354 | 5 |
+| `SM_VKI_Wall_Dungeon_Niche_150_Cut` | 1.50 × 0.57 × 1.30 | 696 | 7 |
+| `SM_VKI_Wall_Dungeon_Niche_150_Full` | 1.50 × 0.57 × 3.30 | 1,356 | 7 |
+| `SM_VKI_Wall_Dungeon_Passage_150_Full` | 1.50 × 1.17 × 3.30 | 1,028 | 6 |
+| `SM_VKI_Wall_Dungeon_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 272 | 5 |
+| `SM_VKI_Wall_Dungeon_Plain_150A_Full` | 1.50 × 0.56 × 3.30 | 464 | 5 |
+| `SM_VKI_Wall_Dungeon_Plain_150B_Full` | 1.50 × 0.59 × 3.30 | 648 | 5 |
+| `SM_VKI_Wall_Dungeon_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 556 | 5 |
+| `SM_VKI_Wall_Dungeon_Plain_300_Full` | 3.00 × 0.56 × 3.30 | 940 | 5 |
+| `SM_VKI_Wall_Dungeon_Rake_150_L` | 1.50 × 0.56 × 3.30 | 624 | 5 |
+| `SM_VKI_Wall_Dungeon_Rake_150_R` | 1.50 × 0.56 × 3.30 | 624 | 5 |
+| `SM_VKI_Wall_Dungeon_Secret_150_Full` | 1.50 × 0.56 × 3.30 | 632 | 6 |
+| `SM_VKI_Wall_Dungeon_Window_150_Full` | 1.50 × 0.57 × 3.30 | 712 | 7 |
+| `SM_VKI_Wall_Dwarf_Breach_150_Cut` | 1.50 × 1.83 × 1.30 | 624 | 6 |
+| `SM_VKI_Wall_Dwarf_Breach_150_Full` | 1.50 × 1.83 × 3.30 | 988 | 7 |
+| `SM_VKI_Wall_Dwarf_Breach_300_Cut` | 3.00 × 1.83 × 1.30 | 912 | 6 |
+| `SM_VKI_Wall_Dwarf_Breach_300_Full` | 3.00 × 1.83 × 3.30 | 1,352 | 7 |
+| `SM_VKI_Wall_Dwarf_DoorWide_300_Cut` | 3.00 × 0.58 × 1.30 | 620 | 5 |
+| `SM_VKI_Wall_Dwarf_DoorWide_300_Full` | 3.00 × 0.61 × 3.30 | 1,304 | 6 |
+| `SM_VKI_Wall_Dwarf_Door_150_Cut` | 1.50 × 0.58 × 1.30 | 516 | 5 |
+| `SM_VKI_Wall_Dwarf_Door_150_Full` | 1.50 × 0.61 × 3.30 | 992 | 6 |
+| `SM_VKI_Wall_Dwarf_Passage_150_Full` | 1.50 × 0.61 × 3.30 | 1,008 | 7 |
+| `SM_VKI_Wall_Dwarf_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 352 | 5 |
+| `SM_VKI_Wall_Dwarf_Plain_150A_Full` | 1.50 × 0.57 × 3.30 | 632 | 6 |
+| `SM_VKI_Wall_Dwarf_Plain_150B_Full` | 1.50 × 0.59 × 3.30 | 972 | 6 |
+| `SM_VKI_Wall_Dwarf_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 716 | 5 |
+| `SM_VKI_Wall_Dwarf_Plain_300_Full` | 3.00 × 0.57 × 3.30 | 1,268 | 6 |
+| `SM_VKI_Wall_Dwarf_Rake_150_L` | 1.50 × 0.57 × 3.30 | 756 | 6 |
+| `SM_VKI_Wall_Dwarf_Rake_150_R` | 1.50 × 0.57 × 3.30 | 756 | 6 |
+| `SM_VKI_Wall_Mine_Plain_150A_Cut` | 1.50 × 0.54 × 1.30 | 164 | 4 |
+| `SM_VKI_Wall_Mine_Plain_150A_Full` | 1.50 × 0.56 × 3.30 | 534 | 4 |
+| `SM_VKI_Wall_Mine_Plain_300_Cut` | 3.00 × 0.55 × 1.30 | 302 | 4 |
+| `SM_VKI_Wall_Mine_Plain_300_Full` | 3.00 × 0.56 × 3.30 | 990 | 4 |
+| `SM_VKI_Wall_Orc_DoorWide_300_Cut` | 3.00 × 0.58 × 1.30 | 600 | 5 |
+| `SM_VKI_Wall_Orc_DoorWide_300_Full` | 3.00 × 0.77 × 3.30 | 1,330 | 7 |
+| `SM_VKI_Wall_Orc_Door_150_Cut` | 1.50 × 0.56 × 1.30 | 408 | 4 |
+| `SM_VKI_Wall_Orc_Door_150_Full` | 1.50 × 0.71 × 3.30 | 856 | 6 |
+| `SM_VKI_Wall_Orc_Plain_150A_Cut` | 1.50 × 0.58 × 1.30 | 308 | 5 |
+| `SM_VKI_Wall_Orc_Plain_150A_Full` | 1.50 × 0.58 × 3.30 | 580 | 5 |
+| `SM_VKI_Wall_Orc_Plain_150B_Full` | 1.50 × 0.72 × 3.30 | 784 | 8 |
+| `SM_VKI_Wall_Orc_Plain_300_Cut` | 3.00 × 0.58 × 1.30 | 564 | 5 |
+| `SM_VKI_Wall_Orc_Plain_300_Full` | 3.00 × 0.58 × 3.30 | 1,028 | 5 |
+| `SM_VKI_Wall_Orc_Window_150_Cut` | 1.50 × 0.56 × 1.30 | 404 | 4 |
+| `SM_VKI_Wall_Orc_Window_150_Full` | 1.50 × 0.56 × 3.30 | 1,032 | 5 |
+| `SM_VKI_Wall_Sewer_Breach_150_Cut` | 1.50 × 1.88 × 1.30 | 636 | 6 |
+| `SM_VKI_Wall_Sewer_Breach_150_Full` | 1.50 × 1.88 × 3.30 | 892 | 6 |
+| `SM_VKI_Wall_Sewer_Breach_300_Cut` | 3.00 × 2.05 × 1.30 | 912 | 6 |
+| `SM_VKI_Wall_Sewer_Breach_300_Full` | 3.00 × 2.05 × 3.30 | 1,260 | 6 |
+| `SM_VKI_Wall_Sewer_Culvert_150_Cut` | 1.50 × 0.56 × 1.30 | 648 | 6 |
+| `SM_VKI_Wall_Sewer_Culvert_150_Full` | 1.50 × 0.56 × 3.30 | 936 | 6 |
+| `SM_VKI_Wall_Sewer_Door_150_Cut` | 1.50 × 0.56 × 1.30 | 536 | 5 |
+| `SM_VKI_Wall_Sewer_Door_150_Full` | 1.50 × 0.60 × 3.30 | 1,354 | 5 |
+| `SM_VKI_Wall_Sewer_Ladder_150_Full` | 1.50 × 0.63 × 3.30 | 756 | 6 |
+| `SM_VKI_Wall_Sewer_Outfall_150_Full` | 1.50 × 1.25 × 3.30 | 1,100 | 7 |
+| `SM_VKI_Wall_Sewer_Passage_150_Full` | 1.50 × 0.60 × 3.30 | 1,466 | 6 |
+| `SM_VKI_Wall_Sewer_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 272 | 5 |
+| `SM_VKI_Wall_Sewer_Plain_150A_Full` | 1.50 × 0.56 × 3.30 | 464 | 5 |
+| `SM_VKI_Wall_Sewer_Plain_150B_Full` | 1.50 × 0.58 × 3.30 | 576 | 7 |
+| `SM_VKI_Wall_Sewer_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 556 | 5 |
+| `SM_VKI_Wall_Sewer_Plain_300_Full` | 3.00 × 0.56 × 3.30 | 940 | 5 |
+| `SM_VKI_Wall_Sewer_Rake_150_L` | 1.50 × 0.56 × 3.30 | 624 | 5 |
+| `SM_VKI_Wall_Sewer_Rake_150_R` | 1.50 × 0.56 × 3.30 | 624 | 5 |
+| `SM_VKI_Wall_Stone_DoorWide_300_Cut` | 3.00 × 0.56 × 1.30 | 688 | 5 |
+| `SM_VKI_Wall_Stone_DoorWide_300_Full` | 3.00 × 0.60 × 3.30 | 1,828 | 5 |
+| `SM_VKI_Wall_Stone_Door_150_Cut` | 1.50 × 0.56 × 1.30 | 536 | 5 |
+| `SM_VKI_Wall_Stone_Door_150_Full` | 1.50 × 0.60 × 3.30 | 1,354 | 5 |
+| `SM_VKI_Wall_Stone_Forge_300_Cut` | 3.00 × 1.73 × 1.33 | 3,592 | 11 |
+| `SM_VKI_Wall_Stone_Forge_300_Full` | 3.00 × 1.73 × 3.34 | 4,490 | 12 |
+| `SM_VKI_Wall_Stone_Hearth_300_Cut` | 3.00 × 1.73 × 1.30 | 3,330 | 13 |
+| `SM_VKI_Wall_Stone_Hearth_300_Full` | 3.00 × 1.73 × 3.34 | 4,074 | 13 |
+| `SM_VKI_Wall_Stone_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 272 | 5 |
+| `SM_VKI_Wall_Stone_Plain_150A_Full` | 1.50 × 0.56 × 3.30 | 464 | 5 |
+| `SM_VKI_Wall_Stone_Plain_150B_Full` | 1.50 × 0.60 × 3.30 | 1,016 | 5 |
+| `SM_VKI_Wall_Stone_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 556 | 5 |
+| `SM_VKI_Wall_Stone_Plain_300_Full` | 3.00 × 0.56 × 3.30 | 940 | 5 |
+| `SM_VKI_Wall_Stone_Rake_150_L` | 1.50 × 0.56 × 3.30 | 624 | 5 |
+| `SM_VKI_Wall_Stone_Rake_150_R` | 1.50 × 0.56 × 3.30 | 624 | 5 |
+| `SM_VKI_Wall_Stone_Window_150_Cut` | 1.50 × 0.56 × 1.30 | 388 | 5 |
+| `SM_VKI_Wall_Stone_Window_150_Full` | 1.50 × 0.58 × 3.30 | 1,378 | 7 |
+| `SM_VKI_Wall_Timber_Door_150_Cut` | 1.50 × 0.56 × 1.30 | 640 | 5 |
+| `SM_VKI_Wall_Timber_Door_150_Full` | 1.50 × 0.56 × 3.30 | 1,100 | 5 |
+| `SM_VKI_Wall_Timber_Fireplace_300_Cut` | 3.00 × 1.73 × 1.30 | 2,700 | 11 |
+| `SM_VKI_Wall_Timber_Fireplace_300_Full` | 3.00 × 1.73 × 3.34 | 3,762 | 11 |
+| `SM_VKI_Wall_Timber_Plain_150A_Cut` | 1.50 × 0.56 × 1.30 | 524 | 5 |
+| `SM_VKI_Wall_Timber_Plain_150A_Full` | 1.50 × 0.56 × 3.30 | 820 | 5 |
+| `SM_VKI_Wall_Timber_Plain_150B_Full` | 1.50 × 0.56 × 3.30 | 900 | 5 |
+| `SM_VKI_Wall_Timber_Plain_300_Cut` | 3.00 × 0.56 × 1.30 | 900 | 5 |
+| `SM_VKI_Wall_Timber_Plain_300_Full` | 3.00 × 0.56 × 3.30 | 1,488 | 5 |
+| `SM_VKI_Wall_Timber_Rake_150_L` | 1.50 × 0.56 × 3.30 | 914 | 5 |
+| `SM_VKI_Wall_Timber_Rake_150_R` | 1.50 × 0.56 × 3.30 | 928 | 5 |
+| `SM_VKI_Wall_Timber_Window_150_Cut` | 1.50 × 0.56 × 1.30 | 600 | 5 |
+| `SM_VKI_Wall_Timber_Window_150_Full` | 1.50 × 0.56 × 3.30 | 1,224 | 8 |
+| `SM_VKI_Wall_Wattle_Door_150_Cut` | 1.50 × 0.36 × 1.30 | 640 | 5 |
+| `SM_VKI_Wall_Wattle_Door_150_Full` | 1.50 × 0.36 × 2.70 | 1,052 | 5 |
+| `SM_VKI_Wall_Wattle_Plain_150A_Cut` | 1.50 × 0.36 × 1.30 | 472 | 5 |
+| `SM_VKI_Wall_Wattle_Plain_150A_Full` | 1.50 × 0.36 × 2.70 | 752 | 5 |
+| `SM_VKI_Wall_Wattle_Plain_150B_Full` | 1.50 × 0.36 × 2.70 | 840 | 6 |
+| `SM_VKI_Wall_Wattle_Plain_300_Cut` | 3.00 × 0.36 × 1.30 | 788 | 5 |
+| `SM_VKI_Wall_Wattle_Plain_300_Full` | 3.00 × 0.36 × 2.70 | 1,348 | 5 |
+| `SM_VKI_Wall_Wattle_Rake_150_L` | 1.50 × 0.36 × 2.70 | 766 | 5 |
+| `SM_VKI_Wall_Wattle_Rake_150_R` | 1.50 × 0.36 × 2.70 | 752 | 5 |
+| `SM_VKI_Wall_Wattle_Window_150_Cut` | 1.50 × 0.36 × 1.30 | 548 | 5 |
+| `SM_VKI_Wall_Wattle_Window_150_Full` | 1.50 × 0.48 × 2.70 | 1,448 | 8 |

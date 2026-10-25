@@ -1114,6 +1114,10 @@ VKX_STRUCTURES = [
     ("ConstructionSite_1", "build_construction_site", {"stage": 1}),
     ("ConstructionSite_2", "build_construction_site", {"stage": 2}),
     ("ConstructionSite_3", "build_construction_site", {"stage": 3}),
+    ("Shack_Planks", "build_shack", {"seed": 1, "walls": "planks", "roof": "leanto"}),
+    ("Shack_Patched", "build_shack", {"seed": 2, "bays": 2, "walls": "patched", "roof": "thatch"}),
+    ("Shack_Wattle", "build_shack", {"seed": 3, "walls": "wattle", "roof": "sail"}),
+    ("Shack_Stilts", "build_shack", {"seed": 4, "walls": "patched", "roof": "leanto", "stilts": 1.8}),
 ]
 
 

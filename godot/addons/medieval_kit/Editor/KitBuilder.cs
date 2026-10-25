@@ -53,6 +53,18 @@ public partial class KitBuilder : RefCounted
 
     static JsonElement LoadJson(string path) => JsonDocument.Parse(Godot.FileAccess.GetFileAsString(path)).RootElement;
 
+    // pieces.json (1,465 pieces) parsed once per change, not once per structure: 49 structures in one run parsed it 49
+    // times and the run died at the 41st (2026-10-25)
+    static JsonElement? piecesCache;
+    static ulong piecesTime;
+
+    static JsonElement Pieces()
+    {
+        ulong t = Godot.FileAccess.GetModifiedTime(KitPaths.Pieces);
+        if (piecesCache == null || t != piecesTime) { piecesCache = LoadJson(KitPaths.Pieces); piecesTime = t; }
+        return piecesCache.Value;
+    }
+
     static MeshInstance3D MeshInstanceOf(Node n) =>
         n as MeshInstance3D ?? n.FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>().FirstOrDefault();
 
@@ -249,14 +261,19 @@ public partial class KitBuilder : RefCounted
     /// <summary>res://kit/data/structures/*.json (gdx_export_structures) -> res://kit/structures/&lt;name&gt;.tscn: a
     /// KitStructure root with the kit pieces as instances of their .glb (restyled where Blender restyled them), markers
     /// and lights, no camera or world. Unity: KitBuilder.BuildStructures.</summary>
-    public string BuildStructures()
+    public string BuildStructures() => BuildStructuresOnly(null);
+
+    /// <summary>BuildStructures for the named structures only (all when names is null or empty).</summary>
+    public string BuildStructuresOnly(string[] names)
     {
         if (!DirAccess.DirExistsAbsolute(KitPaths.StructureData)) return "STRUCTURES none exported";
         int n = 0;
         var notes = new List<string>();
+        var want = names is { Length: > 0 } ? new HashSet<string>(names) : null;
         foreach (var f in DirAccess.GetFilesAt(KitPaths.StructureData).Where(f => f.EndsWith(".json")).OrderBy(f => f, StringComparer.Ordinal))
         {
             string name = f[..^5];
+            if (want != null && !want.Contains(name)) continue;
             var sj = LoadJson(KitPaths.StructureData + f);
             var root = new KitStructure { Name = name, StructureName = name, Builder = Str(sj, "builder"), ExportVersion = Str(sj, "version") };
             var log = new List<string>();
@@ -286,7 +303,7 @@ public partial class KitBuilder : RefCounted
     /// collection when `grouped`), as Unity's KitBuilder.Populate.</summary>
     static (int placed, int links, int markers, List<string> missing) Populate(JsonElement lay, Node3D root, KitWorldLevel worldLevel, bool grouped, List<string> log)
     {
-        var pieces = LoadJson(KitPaths.Pieces);
+        var pieces = Pieces();
         bool sceneShadows = !lay.TryGetProperty("shadows", out var sh) || sh.GetBoolean();
         var groups = new Dictionary<string, Node3D>();
         Node3D Group(JsonElement e)

@@ -107,7 +107,8 @@ Each phase ends with its check passing and its record in HANDOFF; commits and Pl
 3. **Unity kit, completed from the game** (can run beside 1-2: different files). One system at a time: moved into the
    package, the game switched to it (its rules on top through hooks), the game played by Daniel or with his OK.
    a. The table of section 2.2 that moves almost as is (z-fight watch, fires, decks, click-to-use, missiles, walk
-      window, silhouettes, helpers).
+      window, silhouettes, helpers). **Done 2026-10-25 (HANDOFF 156), not play-tested:** compiles clean in the game;
+      left for later: the build-settings helper copied across the game's level menus.
    b. The camera and the see-through driver out of `GameCamera`, and the click-to-move core (floor through the hole,
       links, doors): with them the kit's see-through works without the game, and the test walker becomes a real one.
    c. The outdoor-map generators (section 2.3): the shared C# core with the layout check built in, then generators

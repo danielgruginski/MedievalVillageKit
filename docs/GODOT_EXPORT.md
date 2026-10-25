@@ -45,6 +45,7 @@ sh tools/gdx_round.sh Pilot
 sh tools/gdx_round.sh Catalog_Exterior "" E:/Unity/Godot/GameArtGeneration/medieval-kit/catalog/exterior/shots 1920x1080
 sh tools/gdx_round.sh Valley_Terrain "" E:/Unity/Godot/GameArtGeneration/medieval-kit/catalog/valley_terrain/shots 1600x1000
 sh tools/gdx_levels.sh                 # the world levels: build (navmesh, walk test), structures, captures, travel test
+# one structure or a few (Godot): ...console.exe --headless --path <project> --script res://addons/medieval_kit/Editor/kit_cli.gd -- structures Shack_Planks Shack_Stilts
 ```
 
 `tools/gdx_round.sh` builds the C# (`dotnet build`), runs Godot's `--import` (with `KitImport`), then through

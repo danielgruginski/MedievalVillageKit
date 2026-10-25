@@ -6,7 +6,7 @@
 import bpy
 KIT_MODULES=["vk_mod_humble","vk_mod_frontier","vk_mod_construction","vk_mod_skyline",
              "vk_mod_town","vk_mod_water","vk_mod_industry","vk_mod_defence","vk_mod_entrances","vk_mod_market",
-             "vk_mod_harbour"]
+             "vk_mod_harbour","vk_mod_slums"]
 TERRAIN_TEXTS=["vk_nature","vk_terrain","vk_terrain_quay","vk_terrain_demo"]
 def vk_kit_ns(terrain=True,modules=True):
     g={}
