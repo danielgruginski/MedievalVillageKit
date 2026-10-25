@@ -570,8 +570,8 @@ def vki_poi_ratking(k):
         k.box((s * 0.37, 0.25, zs + 0.82), (0.10, 0.66, 0.035), PLANKS, rot=(0.12 * s, 0.0, 0.0), bevel=0.0)
     for j, x in enumerate((-0.28, -0.12, 0.05, 0.22)):                   # the tall back, odd boards
         h = 1.05 + 0.18 * ((j * 7) % 3)
-        k.box((x, 0.60 + 0.006 * j, zs + 0.40 + h / 2), (0.15, 0.04, h), PLANKS, rot=(0.0, 0.06 * (j - 1.5), 0.0),
-              bevel=0.0)
+        k.box((x, 0.60 + 0.006 * j, zs + 0.40 + 0.004 * j + h / 2), (0.15, 0.04, h), PLANKS,   # feet 4 mm apart:
+              rot=(0.0, 0.06 * (j - 1.5), 0.0), bevel=0.0)      # tilted, neighbours' bottoms overlapped in one plane
     # the cart wheel behind, a halo; the crown of bones and the rat skull on its pole
     wc = Vector((0.0, 0.72, zs + 1.30))
     vki_home_hoop(k, tuple(wc), 0.56, 0.64, 0.07, segs=16, mi=WOOD, rot=Matrix.Rotation(math.pi / 2, 3, "X"))

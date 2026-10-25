@@ -798,7 +798,8 @@ def vki_tim_fireplace(k, height):
     if full:
         vki_tim_apply_sag(k, sag, *VKI_TIM_HEAD)
     vki_tim_body_finish(k, L)
-    vki_wobble(k, L, "Timber", "A", holes=[(fx0, 0.0, fx1, zr)], top_body_fn=lambda x: tb - sag(x), pins=studs)
+    vki_wobble(k, L, "Timber", "A", holes=[(fx0, 0.0, fx1, zr)], top_body_fn=lambda x: tb - sag(x), pins=studs,
+               holes_a=[(bx0, 0.0, bx1, 4.0)])              # face A behind the breast stays flat (its back is welded)
     k.meta.update(vki_class="wall", vki_special=1,
                   vki_lights=[dict(type="POINT", role="hearth", pos=list(VKI_TIM_HEARTH_LIGHT), w=VKI_TIM_HEARTH_W,
                                    color=[1.0, .52, .22], range=7.0, flicker=1, shadows=1,

@@ -216,9 +216,10 @@ def zfight_sided(o, dist=1e-3, fight=2e-4, dot=0.995, min_area=2e-5):
                     seen.add(sk)
                     cx = sum(p[0] for p in C) / len(C); cy = sum(p[1] for p in C) / len(C)
                     pts = [Vector((cx, cy))] + [Vector((cx + 0.7 * (p[0] - cx), cy + 0.7 * (p[1] - cy))) for p in C]
-                    pts = [u * q.x + v * q.y + n0 * ta[4] for q in pts]
+                    on_a = lambda q: (lambda w: w + n0 * ((ta[4] - ta[3].dot(w)) / ta[3].dot(n0)))(u * q.x + v * q.y)
+                    pts = [on_a(q) for q in pts]             # on ta's own plane (n0 is the bucket's first triangle's)
                     ma, mb = me.polygons[ta[0]].material_index, me.polygons[tb[0]].material_index
-                    pc = u * cx + v * cy + n0 * ta[4]       # the gap where they overlap (tilted planes part away
+                    pc = pts[0]                              # the gap where they overlap (tilted planes part away
                     gb = tb[3].dot(pc) - tb[4]               # from the origin: offsets there say nothing)
                     gap = abs(gb)
                     if gap >= dist: continue
@@ -232,6 +233,7 @@ def zfight_sided(o, dist=1e-3, fight=2e-4, dot=0.995, min_area=2e-5):
                                     n=[round(x, 2) for x in n0], side="".join(sides),
                                     facing="same" if ta[2].dot(tb[2]) > 0 else "opposite",
                                     kind="fight" if gap < fight else "near", gap=round(gap, 5), faces=list(sk),
+                                    verts=[[[round(c, 4) for c in co[i]] for i in me.polygons[fi].vertices][:8] for fi in sk],
                                     mats=[mname(me, ta[0]), mname(me, tb[0])]))
     out.sort(key=lambda e: -e["area"])
     return out

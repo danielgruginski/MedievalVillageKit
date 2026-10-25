@@ -2095,6 +2095,44 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     every breach fought its posts (body and coping against the post block, 4-19 per piece); after, none. Left between
     wall and post, kit-wide: footing bottoms at z -0.30 (buried) and, on Dwarf walls, the rune band in the plane of
     the Mid post's band (same DwarfBlock, so "same look": invisible until their looks differ).
+153. 2026-10-24 (Daniel, on Catalog_Interior's F8 sweep: 83 fights, all looking into open wall ends; then "No
+    Zfighting allowed, even on the inside of the objects" -- the game's dissolve round the player shows wall insides).
+    **Every interior wall is now one closed shell:** `vki_weld_contacts` (vki_core, run by `VKIKit.finish` after
+    `vki_open_wall_ends`) finds each pair of a wall's faces in one plane facing opposite ways (two solids touching:
+    coping on body, panel against panel, coping units, strip against pier, frame against plaster; planes within
+    0.2 mm, `VKI_WELD_DIST`), cuts both along each other's outline (bisect), deletes the shared parts, then closes the
+    seams (open edges split at the other side's vertices, welded at 0.25 mm) and joins the leftover pieces of each cut
+    face again in a fixed order (so Full and Cut twins agree, T2) with collinear vertices dissolved. Faces of open
+    sheets (an open edge off the end planes) are left. `vki_wobble(holes_a=)`: holes on face A only; the timber
+    fireplace keeps face A flat behind its breast (it rippled into the breast's back, so the two could not be
+    welded); the sewer outfall's void disc sinks 1.5 cm into the body (its back lay in the wobbled face). All 175
+    interior walls rebuilt (vki_test_pieces: nothing worse except T9 on Ashlar_Door_150_Full, 1,476 -> 1,624 tris
+    over its 1,500 hard limit -- seam vertices on its dressed jambs; allowed for now, Daniel's call), .blend saved,
+    exported for Unity (refreshed in the editor: clean console, every wall prefab's material count still equals its
+    mesh's submeshes) and Godot (.md5 removed). **Check:** `vk_zfight -- sided` (ends open, the catalog / dissolve
+    view): 175 / 175 walls without a fight (was 3 / 108 clean); left 168 "near" pairs at 0.5 mm (timber and wattle
+    members set 0.5 mm off the plaster on purpose, the breach spill's bottoms at the floor). Outside unchanged: rays
+    from outside (ends covered) hit the same point and material on 160 walls; on the rakes and two DoorWide_300_Cut a
+    few in 3,000 differ by 0.4-1.2 mm (re-joined pieces of wobbled faces triangulate differently). Tris over all walls
+    170,908 -> 168,854 (-1 %; mine walls +40-55 %, ashlar doors +20-30 %, breaches -20 %). vk_zfight: `sided` placed
+    its sample points on the bucket's first triangle's plane (a tilted wobbled one moved them ~0.4 mm: false gaps);
+    now on each face's own plane.
+154. 2026-10-24 (Daniel: "Extend the contact weld to the interior ground and rock tiles and fix the few props").
+    `vki_weld_contacts` now also runs on ground, rock and pit tiles (open at their `vki_open_bottom` plane); for them
+    it first triangulates the cave mesher's bent quads and turns the diagonal of triangle pairs folded back over each
+    other (kept only when the pair then lies flat: turning them all broke T5S on four stream tiles). Props fixed in
+    their builders: the sprung bear trap (one jaw R 0.185 nested in the other's 0.2, teeth interleaved, the spring
+    leaves end 4.4 cm apart), the rat king's back boards (feet 4 mm apart), the debris barrel (staves' lifts 2.2 mm
+    apart, the hoop 1.1 mm clear), the siege tower's gin rope (`vki_orc_rope`: every other segment turned half a facet;
+    def_rope, shared with the exterior, untouched), the ivy's stems (rods 6 mm past each joint, every other one turned
+    45 deg and 2.5 mm thinner). Rebuilt all 295 tiles and 8 props (Debris_Barrel, Ivy_Wall, Ivy_Wall_Tall, Siege_Tower,
+    Siege_Tower_Burnt, BearTrap, BearTrap_Sprung, RatKing; vki_test_pieces not worse; tris 84,726 -> 84,514), .blend
+    saved, exported for Unity (852 VKI prefabs' materials still match their submeshes) and Godot (.md5 removed).
+    `vk_zfight -- sided` over the 677 non-wall interior pieces: 674 clean (was 661). Left: Ground_Cave_XOOX_Q00
+    (174 cm2, a chasm wall at -2.6..-4), Ground_Stream_OXOX_Q00 (5.9), Ground_Stream_XOOO_Q11 (1.6): two parts of the
+    mesher a degree or two apart; letting the weld take faces that far apart cleared them but left open seams (T7) on
+    four other tiles, so it is off -- the fix belongs in the cave mesher (vki_cav_ms_solid). 2,935 "near" pairs
+    (0.2-1 mm) across the non-walls, not looked at.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

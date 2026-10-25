@@ -287,9 +287,10 @@ def vki_deb_barrel(k):
         k.set_dark(vs, rnd.uniform(0.05, 0.2))
     for i in range(4):                                                                           # fallen staves
         a = math.radians(-60 + 35 * i) + rnd.uniform(-0.2, 0.2)
-        vki_deb_plank(k, 0.40 * math.cos(a), 0.40 * math.sin(a), 0.0125 + 0.0012 * i, rnd.uniform(0.40, 0.56), 0.10,
+        vki_deb_plank(k, 0.40 * math.cos(a), 0.40 * math.sin(a), 0.0125 + 0.0022 * i, rnd.uniform(0.40, 0.56), 0.10,
                       0.024, a + rnd.uniform(-0.4, 0.4), 910 + i, mi=WOOD, split=i % 2 == 0)
-    vki_home_hoop(k, (0.05, -0.02, 0.0115), 0.27, 0.29, 0.02, segs=12, mi=VKI_DEB_RUST)                   # a hoop round it
+    # the hoop's bottom 1.1 mm clear of every stave's (bottoms 0.5 / 2.7 / 4.9 / 7.1 mm; they lay 0.2 mm apart)
+    vki_home_hoop(k, (0.05, -0.02, 0.0116), 0.27, 0.29, 0.02, segs=12, mi=VKI_DEB_RUST)                   # a hoop round it
     vki_home_hoop(k, (-0.30, 0.20, 0.16), 0.24, 0.26, 0.022, segs=12, mi=VKI_DEB_RUST,
                   rot=Matrix.Rotation(1.15, 3, "Y") @ Matrix.Rotation(0.4, 3, "Z"))               # one leaning
     k.slot_mats[WOOD] = "Dark"

@@ -134,7 +134,9 @@ def vki_sew_outfall(k):
     cx, cz, r0, r1 = 0.75, 0.80, 0.26, 0.40
     n = 16
     vki_prism(k, [(cx + r0 * math.cos(2 * math.pi * i / n), cz + r0 * math.sin(2 * math.pi * i / n)) for i in range(n)],
-              -0.285, -0.26, VOID, axis="y")
+              -0.285, -0.235, VOID, axis="y")                        # back 1.5 cm into the body: at -0.26 it lay
+    # in the wobbled face A (outward 0..0.015) and z-fought it where they met; 5 mm past the ring's and lip's backs
+    # (-0.24) (2026-10-24)
     for i in range(10):                                                 # the ring (V-joints)
         a0, a1 = 2 * math.pi * i / 10, 2 * math.pi * (i + 1) / 10
         pts = [(cx + rr * math.cos(a), cz + rr * math.sin(a)) for rr, a in ((r0, a0), (r1, a0), (r1, a1), (r0, a1))]

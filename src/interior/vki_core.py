@@ -417,6 +417,7 @@ class VKIKit(Kit):
         bm = s.bm
         bm.normal_update()
         vki_open_wall_ends(s, piece)
+        vki_weld_contacts(s, piece)
         used = {}
         for f in bm.faces:
             used[f.material_index] = used.get(f.material_index, 0) + 1
@@ -533,6 +534,277 @@ def vki_open_wall_ends(k, piece=""):
     return len(dead)
 
 
+VKI_WELD_DOT = 0.9999          # faces facing opposite ways closer than this to anti-parallel
+VKI_WELD_DIST = 2e-4           # planes closer than this (m) are one plane (the z-fight watch's "fight": 0.2 mm)
+VKI_WELD_MIN = 1e-6            # shared areas smaller than this (m2) are left
+VKI_WELD_SNAP = 2.5e-4         # seam vertices this close are welded (contacts up to VKI_WELD_DIST apart)
+
+
+def vki_poly2(pts, u, v):
+    return [(p.dot(u), p.dot(v)) for p in pts]
+
+
+def vki_in_poly2(q, P):
+    """point in polygon (crossings), q and P in the plane's 2D coordinates"""
+    x, y = q; inside = False
+    for i in range(len(P)):
+        (x0, y0), (x1, y1) = P[i - 1], P[i]
+        if (y0 > y) != (y1 > y) and x < x0 + (y - y0) * (x1 - x0) / (y1 - y0):
+            inside = not inside
+    return inside
+
+
+def vki_shared_area2(Pa, Pb):
+    """area two planar polygons share (each fanned into triangles, clipped pairwise)"""
+    def tris(P):
+        return [(P[0], P[i], P[i + 1]) for i in range(1, len(P) - 1)] if len(P) > 2 else []
+
+    def clip(S, C):
+        out = list(S)
+        for i in range(len(C)):
+            a, b = C[i], C[(i + 1) % len(C)]
+            inp, out = out, []
+            if not inp:
+                break
+            side = lambda p: (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])
+            for j in range(len(inp)):
+                cur, prv = inp[j], inp[j - 1]; sc, sp = side(cur), side(prv)
+                if sc >= 0:
+                    if sp < 0:
+                        t = sp / (sp - sc); out.append((prv[0] + t * (cur[0] - prv[0]), prv[1] + t * (cur[1] - prv[1])))
+                    out.append(cur)
+                elif sp >= 0:
+                    t = sp / (sp - sc); out.append((prv[0] + t * (cur[0] - prv[0]), prv[1] + t * (cur[1] - prv[1])))
+        return out
+
+    def area(P):
+        return sum(P[i][0] * P[(i + 1) % len(P)][1] - P[(i + 1) % len(P)][0] * P[i][1] for i in range(len(P))) / 2
+
+    tot = 0.0; cx = cy = 0.0
+    for ta in tris(Pa):
+        ta = ta if area(ta) > 0 else ta[::-1]
+        for tb in tris(Pb):
+            tb = tb if area(tb) > 0 else tb[::-1]
+            c = clip(ta, tb)
+            if len(c) > 2:
+                a_ = abs(area(c)); tot += a_
+                cx += a_ * sum(p[0] for p in c) / len(c); cy += a_ * sum(p[1] for p in c) / len(c)
+    vki_shared_area2.centre = (cx / tot, cy / tot) if tot > 0 else None     # where they overlap (the gap is measured
+    return tot                                                             # there for faces not quite parallel)
+
+
+def vki_weld_contacts(k, piece=""):
+    """core fix (z-fighting inside pieces, 2026-10-24; Daniel: "no z-fighting allowed, even on the inside"): where two
+    of a wall's solids touch face to face -- a coping on the body, a panel against the panel over an opening, two
+    coping units, a strip against a pier -- their faces lie in one plane facing opposite ways, and drawn two-sided
+    (M_VKI_*) they fight wherever the inside shows: an open wall end, the game's dissolve round the player. Each such
+    pair is cut along the other's outline (both ways, so the seam's vertices match), the shared parts of both are
+    deleted and the seam welded: the solids become one closed shell, unchanged from outside. Faces with a boundary edge
+    off the piece's open planes (open sheets: cards, panes) are left alone. Walls (open at x = 0 / L) and the dual-grid
+    ground, rock and pit tiles (open at their vki_open_bottom plane, or closed); props are fixed in their builders.
+    Returns the number of contacts welded."""
+    cls = k.meta.get("vki_class", k.meta.get("class")) or k.parsed.get("cls")
+    L = k.meta.get("vki_len", k.meta.get("len", k.parsed.get("len")))
+    ob = k.meta.get("vki_open_bottom")
+    if cls == "wall" and L:
+        L = float(L)
+        ends = lambda e: all(abs(v.co.x) <= VKI_END_TOL for v in e.verts) or \
+            all(abs(v.co.x - L) <= VKI_END_TOL for v in e.verts)
+    elif cls in ("ground", "rock", "pit"):
+        ends = (lambda e: all(abs(v.co.z - float(ob)) <= VKI_END_TOL for v in e.verts)) if ob is not None else \
+            (lambda e: False)
+    else:
+        return 0
+    bm = k.bm
+    if cls != "wall":
+        # the cave mesher leaves some quads bent or folded (a bank quad with three corners in the tile's side plane,
+        # two thin faces folded over each other): their triangles overlap others in one plane. Triangulated, the
+        # overlapping triangles are contacts like any other (walls keep their wobbled quads: they are fine)
+        bm.normal_update()
+        bent = [f for f in bm.faces if len(f.verts) > 3 and
+                max(abs(f.normal.dot(v.co - f.verts[0].co)) for v in f.verts) > 1e-5]
+        if bent:
+            bmesh.ops.triangulate(bm, faces=bent, quad_method="BEAUTY", ngon_method="BEAUTY")
+        # two triangles folded back over each other along their shared edge (a zigzag quad, a few degrees off flat:
+        # too far for a contact, close enough to fight) lie flat once their diagonal is turned
+        bm.normal_update()
+        fold = [e for e in bm.edges if len(e.link_faces) == 2 and all(len(f.verts) == 3 for f in e.link_faces)
+                and e.link_faces[0].normal.dot(e.link_faces[1].normal) < -0.99]
+        for e in fold:                                   # one at a time, kept only if the pair then lies flat
+            if not e.is_valid or len(e.link_faces) != 2:
+                continue
+            r = bmesh.ops.rotate_edges(bm, edges=[e], use_ccw=False)
+            ne = [x for x in r["edges"] if x.is_valid and len(x.link_faces) == 2]
+            if not ne:
+                continue
+            f0, f1 = ne[0].link_faces
+            f0.normal_update(); f1.normal_update()
+            if f0.normal.dot(f1.normal) < 0.9:
+                bmesh.ops.rotate_edges(bm, edges=[ne[0]], use_ccw=True)
+
+    def in_end(e):
+        """an edge in one of the piece's open planes (open by design)"""
+        return ends(e)
+
+    def solid(f):
+        """not part of an open sheet: no open edge off the end planes (an edge shared by 3+ faces is fine: touching
+        parts often share an edge exactly)"""
+        return all(len(e.link_faces) >= 2 or in_end(e) for e in f.edges)
+
+    # which faces belong to closed solids is decided once, before any cut (a face beside a deleted part is still
+    # one); bisect hands the mark on to the pieces. Welding waits until every contact is cut away: welding as it went
+    # merged the corners of contacts not yet cut, and Blender fused those coincident faces into one (3-face edges)
+    ok = bm.faces.layers.int.new("vki_weldok")
+    src = bm.faces.layers.int.new("vki_weldsrc")          # the face each piece was cut from
+    for i, f in enumerate(bm.faces):
+        f[ok] = 1 if solid(f) else 0
+        f[src] = i + 1
+    cut_ids = set()
+
+    def canon(n):
+        ax = max(range(3), key=lambda i: abs(n[i]))
+        return n.copy() if n[ax] > 0 else -n
+
+    # exactly parallel faces only. (Letting tiles' faces a degree or two apart count, the gap measured where they
+    # overlap, cleared three cave / stream spots but left their seams open (T7) on four other tiles: not used.)
+    dot_min, nkey, dbin = VKI_WELD_DOT, 3, 5e-4
+
+    def find():
+        bm.normal_update()
+        buckets = {}
+        for f in bm.faces:
+            if f.calc_area() < 1e-9 or not f[ok]:
+                continue
+            c = canon(f.normal); d = c.dot(f.verts[0].co)
+            buckets.setdefault((round(c.x, nkey), round(c.y, nkey), round(c.z, nkey), math.floor(d / dbin)), []).append((f, c, d))
+        for key, lst in buckets.items():
+            cand = lst + buckets.get(key[:3] + (key[3] + 1,), [])
+            for i in range(len(lst)):
+                fa, ca, da = lst[i]
+                for fb, cb, db in cand:
+                    if fb is fa or fa.normal.dot(fb.normal) > -dot_min:
+                        continue
+                    if dot_min >= VKI_WELD_DOT and abs(da - db) > VKI_WELD_DIST:
+                        continue
+                    u = (Vector((0, 0, 1)) if abs(ca.z) < 0.9 else Vector((1, 0, 0)))
+                    u = (u - ca * u.dot(ca)).normalized(); v = ca.cross(u)
+                    Pa = vki_poly2([x.co for x in fa.verts], u, v); Pb = vki_poly2([x.co for x in fb.verts], u, v)
+                    if vki_shared_area2(Pa, Pb) < VKI_WELD_MIN:
+                        continue
+                    if dot_min < VKI_WELD_DOT:              # not quite parallel: the gap where they overlap
+                        q = vki_shared_area2.centre
+                        w = u * q[0] + v * q[1]
+                        pa = w + ca * ((da - ca.dot(w)) / max(ca.dot(ca), 1e-12))
+                        if abs(cb.dot(pa) - db) > VKI_WELD_DIST:
+                            continue
+                    return fa, fb, ca, u, v
+        return None
+
+    def cut(face, P, n, u, v):
+        """bisect `face` (and its pieces) along every edge line of the 2D polygon P; returns the pieces"""
+        faces = [face]
+        for i in range(len(P)):
+            a, b = P[i - 1], P[i]
+            if (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2 < 1e-14:
+                continue
+            pa = u * a[0] + v * a[1]; pb = u * b[0] + v * b[1]
+            no = n.cross(pb - pa).normalized()
+            co = pa + n * n.dot(faces[0].verts[0].co)
+            geom = list({x for f in faces for x in list(f.verts) + list(f.edges)}) + faces
+            r = bmesh.ops.bisect_plane(bm, geom=geom, dist=1e-7, plane_co=co, plane_no=no)
+            faces = [x for x in r["geom"] if isinstance(x, bmesh.types.BMFace)]
+        return faces
+
+    done = 0
+    seam = set()
+    for _ in range(2000):
+        hit = find()
+        if hit is None:
+            break
+        fa, fb, n, u, v = hit
+        cut_ids.update((fa[src], fb[src]))
+        Pa = vki_poly2([x.co for x in fa.verts], u, v); Pb = vki_poly2([x.co for x in fb.verts], u, v)
+        pieces_a = cut(fa, Pb, n, u, v)
+        pieces_b = cut(fb, Pa, n, u, v)
+        dead = [f for f in pieces_a if vki_in_poly2(vki_poly2([f.calc_center_median()], u, v)[0], Pb)] + \
+               [f for f in pieces_b if vki_in_poly2(vki_poly2([f.calc_center_median()], u, v)[0], Pa)]
+        if not dead:
+            raise RuntimeError(f"{piece}: weld_contacts found a contact but no shared piece at {fa.calc_center_median()}")
+        seam.update(x for f in dead for x in f.verts)
+        bmesh.ops.delete(bm, geom=dead, context="FACES_ONLY")
+        done += 1
+    else:
+        raise RuntimeError(f"{piece}: weld_contacts did not settle")
+    if done:
+        bmesh.ops.remove_doubles(bm, verts=[x for x in seam if x.is_valid], dist=VKI_WELD_SNAP)
+        # close the seams: along a contact's outline the two solids' side faces are subdivided differently (a
+        # vertex of one in the middle of an edge of the other): split each open edge at the open vertices lying on
+        # it, then weld the open vertices
+        for _ in range(20):
+            opn = [e for e in bm.edges if e.is_boundary and not in_end(e)]
+            if not opn:
+                break
+            ov = {x for e in opn for x in e.verts}
+            split = False
+            for e in opn:
+                if not e.is_valid:
+                    continue
+                a, b = e.verts[0].co.copy(), e.verts[1].co.copy(); d = b - a; ll = d.length_squared
+                if ll < 1e-14:
+                    continue
+                on = []
+                for w in ov:
+                    if not w.is_valid or w in e.verts:
+                        continue
+                    t = (w.co - a).dot(d) / ll
+                    if 1e-6 < t < 1 - 1e-6 and (a + d * t - w.co).length < VKI_WELD_SNAP:
+                        on.append((t, w))
+                if not on:
+                    continue
+                t, w = min(on, key=lambda q: q[0])
+                ne, nv = bmesh.utils.edge_split(e, e.verts[0], t)
+                nv.co = w.co.copy()
+                split = True
+            ov = [x for x in {x for e in bm.edges if e.is_boundary and not in_end(e) for x in e.verts} if x.is_valid]
+            bmesh.ops.remove_doubles(bm, verts=ov, dist=VKI_WELD_SNAP)
+            if not split:
+                break
+        # the cut lines run across the whole face they cut (a post's face cut at every 0.25 row of the panel against
+        # it): pieces of one face that both survived are joined again, so only the contact's outline stays
+        rejoin = [e for e in bm.edges if len(e.link_faces) == 2 and e.link_faces[0][src] == e.link_faces[1][src]
+                  and e.link_faces[0][src] in cut_ids]
+        if rejoin:
+            # one edge at a time in a fixed order (by position): a face left round a hole cannot close into a ring,
+            # one cut line stays as a bridge, and the order decides which (Full and Cut twins must agree, T2)
+            touched = {x for e in rejoin for x in e.verts}
+            rejoin.sort(key=lambda e: tuple(round(c, 6) for c in (e.verts[0].co + e.verts[1].co) / 2))
+            for e in rejoin:
+                if e.is_valid and len(e.link_faces) == 2 and e.link_faces[0] is not e.link_faces[1]:
+                    bmesh.ops.dissolve_edges(bm, edges=[e], use_verts=False, use_face_split=False)
+            # every vertex the weld left in the middle of a straight edge goes too (which ones dissolve_edges keeps
+            # follows the edge order, so Full and Cut twins came out a vertex apart, T2)
+            touched |= {x for x in seam if x.is_valid}
+            mid = []
+            for x in touched:
+                if not x.is_valid or len(x.link_edges) != 2:
+                    continue
+                a, b = (e.other_vert(x).co - x.co for e in x.link_edges)
+                if a.length > 1e-9 and b.length > 1e-9 and a.normalized().dot(b.normalized()) < -0.999999:
+                    mid.append(x)
+            if mid:
+                bmesh.ops.dissolve_verts(bm, verts=mid)
+        loose_e = [e for e in bm.edges if not e.link_faces]
+        if loose_e:
+            bmesh.ops.delete(bm, geom=loose_e, context="EDGES")
+        loose_v = [x for x in bm.verts if not x.link_edges]
+        if loose_v:
+            bmesh.ops.delete(bm, geom=loose_v, context="VERTS")
+    bm.faces.layers.int.remove(ok)
+    bm.faces.layers.int.remove(src)
+    bm.normal_update()
+    return done
+
+
 def vki_meta_key(k_):
     return k_ if (k_.startswith("vki_") or k_ in ("kit", "grid_m", "hinge_axis")) else "vki_" + k_
 
@@ -611,12 +883,14 @@ VKI_AMP = {"Timber": .012, "Stone": .020, "Ashlar": .010, "Wattle": .020, "Board
 VKI_SECOND = {"A": "B", "B": "A"}
 
 
-def vki_wobble(k, L, fam, variant, holes, top_body_fn, pins=()):
+def vki_wobble(k, L, fam, variant, holes, top_body_fn, pins=(), holes_a=()):
     """§2.6 exactly: outward-only noise on wall-body faces (|y| = T/2, flagged k.body). Call it LAST, after
     every body panel exists (grid_cut 0.25). holes: [(x0, z0, x1, z1)]; top_body_fn(x) -> cap bottom z;
-    pins: Timber stud centres. Flat within 0.32..0.57 of nodes 0/1.5/3.0, zero below 0.16 and near the cap."""
+    pins: Timber stud centres; holes_a: holes on face A (-Y) only -- where something stands against the room face
+    (a chimney breast: the face behind it must stay flat, or its contact with the breast's back cannot be welded).
+    Flat within 0.32..0.57 of nodes 0/1.5/3.0, zero below 0.16 and near the cap."""
     k.wobble_log.append(dict(L=L, fam=fam, variant=variant, holes=list(holes), top_body_fn=top_body_fn,
-                             pins=list(pins)))
+                             pins=list(pins), holes_a=list(holes_a)))
     if k.wobble_off or not VKI_FLAGS.get("wobble", True):
         return 0
     A = VKI_AMP[fam]
@@ -631,6 +905,8 @@ def vki_wobble(k, L, fam, variant, holes, top_body_fn, pins=()):
         e = min(vki_smoothstep(0.32, 0.57, abs(x - n)) for n in (0.0, 1.5, 3.0) if n <= L + 1e-6)
         e *= min([vki_smoothstep(0.0, 0.10, abs(x - p)) for p in pins] or [1.0])       # Timber studs
         e *= min([vki_smoothstep(0.0, 0.15, vki_rect_dist(x, z, h)) for h in holes] or [1.0])
+        if v.co.y < 0:
+            e *= min([vki_smoothstep(0.0, 0.15, vki_rect_dist(x, z, h)) for h in holes_a] or [1.0])
         tb = top_body_fn(x)                                                             # cap bottom
         zf = vki_smoothstep(0.16, 0.41, z) * vki_smoothstep(tb, tb - 0.25, z)
         if e * zf == 0.0:

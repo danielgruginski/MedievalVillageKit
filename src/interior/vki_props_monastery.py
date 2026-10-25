@@ -556,8 +556,11 @@ def vki_mon_ivy(k, zmax):
             z = top - L * i / n
             pts.append(Vector((x, -0.025 - 0.02 * math.sin(i * 1.3 + si), z)))
             x = max(-0.62, min(0.62, x + rnd.uniform(-0.10, 0.10)))
-        for a, b in zip(pts[:-1:2], pts[2::2] + ([pts[-1]] if n % 2 else [])):       # a stem rod every 2 joints
-            vki_dpr_rod(k, a, b, 0.016, WOOD)
+        for ri, (a, b) in enumerate(zip(pts[:-1:2], pts[2::2] + ([pts[-1]] if n % 2 else []))):   # a rod every 2 joints
+            u = (b - a).normalized()                                 # 6 mm past each joint, every other one turned 45
+            vki_dpr_rod(k, a - u * 0.006, b + u * 0.006, 0.016 if ri % 2 == 0 else 0.0135, WOOD,   # deg and thinner:
+                        roll=math.pi / 4 * (ri % 2))                 # no end caps back to back, no sides in one
+            # plane (2026-10-24)
         for i, pnt in enumerate(pts[:-1]):                          # leaves: two cards a joint up top, fewer below
             f = i / n
             for j in range(3 if f < 0.25 else 2 if f < 0.7 else 1):

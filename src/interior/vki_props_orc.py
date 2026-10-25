@@ -685,6 +685,18 @@ def vki_orc_wheel(k, c, r, w, dark=0.08):
         k.box((cx + s * (w / 2 + 0.009), cy, cz), (0.012, 0.07, 2 * (r - 0.07)), IRON, bevel=0.0)
 
 
+def vki_orc_rope(k, a, b, r=0.025, sag=0.0, n=6, mi=BURLAP, segs=5):
+    """def_rope with every other segment turned half a facet on its axis: the segments overlap 1 cm at each joint, and
+    on a nearly straight rope their flats lay in one plane there (z-fighting, 2026-10-24)"""
+    a = Vector(a); b = Vector(b)
+    pts = [a + (b - a) * (i / n) - Vector((0, 0, sag * math.sin(math.pi * i / n))) for i in range(n + 1)]
+    for i, (pa, pb) in enumerate(zip(pts[:-1], pts[1:])):
+        dd = pb - pa
+        q = Vector((0, 0, 1)).rotation_difference(dd.normalized()).to_matrix().to_4x4() @ \
+            Matrix.Rotation(math.pi / segs * (i % 2), 4, "Z")
+        _cyl(k, tuple((pa + pb) / 2), r, r, dd.length + 0.01, segs, mi, rot=q)
+
+
 def vki_orc_band_on(k, a, b, t, r_in, r_out, h, mi=IRON, segs=10):
     """a band (iron, or a rope sling) round the pole a -> b at the fraction t of its length"""
     a = Vector(a); b = Vector(b)
@@ -967,7 +979,7 @@ def vki_orc_tower(k, burnt=False):
             vki_orc_band_on(k, g0, g1, (z - g0.z) / (g1.z - g0.z), 0.085, 0.13, 0.14, mi=BURLAP, segs=8)
         k.box((g1.x, g1.y, g1.z - 0.18), (0.14, 0.1, 0.24), WOOD, bevel=0.01)                     # the block
         def_rope(k, (g1.x, g1.y, g1.z - 0.28), (2.5, 2.0, 6.62), r=0.022, n=1)
-        def_rope(k, (g1.x - 0.05, g1.y, g1.z - 0.28), (1.62, 1.68, 0.95), r=0.022, sag=0.12, n=6)
+        vki_orc_rope(k, (g1.x - 0.05, g1.y, g1.z - 0.28), (1.62, 1.68, 0.95), r=0.022, sag=0.12, n=6)
         T((2.5, 0.75, 6.5), (2.5, 3.25, 6.5), 0.22, d=0.2)                                     # the beam going up
         for y in (1.7, 2.3):
             def_rope(k, (2.5, 2.0, 6.62), (2.5, y, 6.63), r=0.02, n=1)
@@ -1223,23 +1235,25 @@ def vki_orc_beartrap(k, sprung=False):
     k.box((0.0, 0.0, 0.012), (0.62, 0.05, 0.022), IRON, bevel=0.0)
     k.box((0.0, 0.0, 0.016), (0.05, 0.3, 0.022), IRON, bevel=0.0)
     _cyl(k, (0.0, 0.0, 0.036), 0.075, 0.075, 0.014, 8, IRON)
-    R = 0.2
     for s in (-1, 1):                                                    # each jaw: a half ring of 6 links, teeth on it
-        before = set(k.bm.verts)
+        R = 0.2 if s < 0 else 0.185                                      # one jaw nests inside the other: their end
+        before = set(k.bm.verts)                                         # links met on the hinge axis
         pts = [(math.cos(math.pi * i / 6) * R, s * math.sin(math.pi * i / 6) * R * 0.95) for i in range(7)]
         for i, ((x0, y0), (x1, y1)) in enumerate(zip(pts[:-1], pts[1:])):
             z = 0.02 + 0.004 * (i % 2) + (0.0015 if s > 0 else 0.0)
             vki_dpr_rod(k, (x0, y0, z), (x1, y1, z), 0.03, IRON, d=0.024)
         for i in range(1, 6):
             a = math.pi * (i + 0.5) / 6 if i < 5 else math.pi * 5.2 / 6
-            x, y = math.cos(math.pi * i / 6) * R * 0.97, s * math.sin(math.pi * i / 6) * R * 0.92
+            t = math.pi * (i + (0.25 if s > 0 else -0.25)) / 6           # the jaws' teeth interleave (shut, they met
+            x, y = math.cos(t) * R * 0.97, s * math.sin(t) * R * 0.92    # tooth on tooth in one plane)
             _cyl(k, (x, y, 0.06), 0.016, 0.0, 0.06, 4, IRON)
         jaw = [v for v in k.bm.verts if v not in before]
         if sprung:                                                       # turned up about the X axis to stand closed
             bmesh.ops.rotate(k.bm, cent=(0.0, 0.0, 0.02), matrix=Matrix.Rotation(-s * math.radians(84), 3, "X"), verts=jaw)
-    for s in (-1, 1):                                                    # the springs
-        vki_dpr_rod(k, (s * 0.28, -0.05, 0.03), (s * 0.4, 0.0, 0.06 if not sprung else 0.035), 0.035, IRON, d=0.014)
-        vki_dpr_rod(k, (s * 0.28, 0.05, 0.03), (s * 0.4, 0.0, 0.06 if not sprung else 0.035), 0.035, IRON, d=0.014)
+    for s in (-1, 1):                                                    # the springs (the two leaves end 2.4 cm
+        tz = 0.06 if not sprung else 0.035                              # apart: at one point they overlapped flat)
+        vki_dpr_rod(k, (s * 0.28, -0.05, 0.03), (s * 0.4, -0.022, tz), 0.035, IRON, d=0.014)
+        vki_dpr_rod(k, (s * 0.28, 0.05, 0.03), (s * 0.4, 0.022, tz), 0.035, IRON, d=0.014)
     vki_dpr_chain(k, (0.42, 0.02, 0.03), (0.6, 0.08, 0.03), 3, sag=0.0, link=0.07, w=0.03, t=0.01)
     _cyl(k, (0.64, 0.1, 0.05), 0.022, 0.0, 0.12, 5, IRON)
     k.set_dark(list(k.bm.verts), 0.15)
