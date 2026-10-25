@@ -391,13 +391,20 @@ class Kit:
         return f
     def finish(s,name,coll,wobble=True,grime=True,loc=(0,0,0),nudge=True):
         bm=s.bm
-        if nudge: vk_nudge_contacts(bm)       # before the wobble: on wobbled faces flush pairs are no longer flat (the
-        if wobble:                            # wobble moves both alike, so the 1.5 mm it opens stays)
+        moves=vk_nudge_contacts(bm) if nudge else []   # found while flat: wobbled, flush pairs are no longer flat
+        if nudge: vk_cut_end_overlaps(bm)     # after it: the holes this cuts would make both parts "open" to the nudge
+        if wobble:
+            vk_split_seams(bm)
             for v in bm.verts:
                 p=v.co
                 # periodic in x (period = CELL) so neighbouring modules meet exactly
                 v.co.y+=0.035*math.sin(2*math.pi*p.x/CELL+0.9)*math.sin(math.pi*max(0,min(p.z,6))/6)
                 v.co.x+=0.02*math.sin(2*math.pi*p.z/2.3+0.4)
+        # each nudged side checked last: a later move drags the corners of faces it shares with an earlier pair (the
+        # chapel corner's column face came back level with its cap), and the wobble is curved (a tall face with
+        # corners only follows it in a straight line, a band on it follows the curve, up to ~3 mm apart). Daniel's
+        # F8 pass, 2026-10-25: "fixed in the wrong order".
+        vk_nudge_settle(moves)
         bm.normal_update()
         for f in bm.faces:
             for l in f.loops:
@@ -441,15 +448,16 @@ def vk_shared_area2(Pa,Pb):
             if len(c)>2: tot+=abs(area(c))
     return tot
 VK_NUDGE=0.0015          # how far the smaller of two flush faces is moved out (past the z-fight watch's 1 mm "near")
-def vk_nudge_contacts(bm,delta=VK_NUDGE,passes=4):
+def vk_nudge_contacts(bm,delta=VK_NUDGE,passes=12):   # 12: shingled ridge tiles push each other along a row
     """core fix (z-fighting, 2026-10-24; Daniel: "no z-fighting allowed"): where two separate parts of a piece show
     faces in one plane facing the same way and overlapping -- a trim flush with the wall it is set in, a cornice top
     level with the wall top, two boards overlapping end to end -- the smaller part's whole flat side there (every
-    face of that part in the plane, connected) moves `delta` outward along its normal, so the trim stands just
-    proud. A part with an open edge (a card, a pane, a deck sheet) never moves -- against a solid part, the solid's side
-    moves instead -- and faces in a module's end planes stay (axis-aligned at x or y = +-CELL/2: neighbours butt there
-    and must meet exactly). Repeats until nothing is left (passes)."""
-    E=CELL/2
+    face of that part in the plane, connected) moves out along its normal until it stands `delta` proud (faces up to
+    1 mm apart count: then the one in front moves; nothing ever moves inward). A part with an open edge (a card, a pane, a deck sheet) never moves against a solid part -- the solid's
+    side moves instead; of two sheets (thatch slabs' gable ends) the smaller -- and faces in a module's end planes stay (axis-aligned at x or y = +-CELL/2: neighbours butt there
+    and must meet exactly). Repeats until nothing is left (passes). Returns the moves (moved faces, the faces they
+    stood on, the normal) for vk_nudge_settle after a wobble."""
+    E=CELL/2; done=[]
     for _ in range(passes):
         bm.normal_update()
         # parts: vertices joined by edges
@@ -474,23 +482,24 @@ def vk_nudge_contacts(bm,delta=VK_NUDGE,passes=4):
             r=root(f.verts[0])
             if end_plane(f): continue
             n=f.normal; ax=max(range(3),key=lambda i:abs(n[i])); c=n.copy() if n[ax]>0 else -n
-            cand.append((f,r,c,c.dot(f.verts[0].co)))
+            cand.append((f,r,c,c.dot(f.calc_center_median())))   # at the centre: builder-wobbled faces bend
         buckets={}
         for t in cand:
             f,r,c,d=t
-            buckets.setdefault((round(c.x,3),round(c.y,3),round(c.z,3),math.floor(d/5e-4)),[]).append(t)
+            buckets.setdefault((round(c.x,2),round(c.y,2),round(c.z,2),math.floor(d/1e-3)),[]).append(t)
         moves=[]; seen=set()
         for key in sorted(buckets):
             lst=buckets[key]; nb=lst+buckets.get(key[:3]+(key[3]+1,),[])
             for fa,ra,ca,da in lst:
                 for fb,rb,cb,db in nb:
-                    if ra is rb or fa.normal.dot(fb.normal)<0.9999 or abs(da-db)>2e-4: continue
-                    if ra in open_part and rb in open_part: continue
+                    # within 1 mm, not only flush: 0.2-1 mm apart still flickers at a distance (the chapel corner's
+                    # band at 0.23 mm in Daniel's F8 pass, 2026-10-25)
+                    if ra is rb or fa.normal.dot(fb.normal)<0.9995 or abs(da-db)>1e-3: continue
                     u=(Vector((0,0,1)) if abs(ca.z)<0.9 else Vector((1,0,0))); u=(u-ca*u.dot(ca)).normalized(); v=ca.cross(u)
                     Pa=[(p.co.dot(u),p.co.dot(v)) for p in fa.verts]; Pb=[(p.co.dot(u),p.co.dot(v)) for p in fb.verts]
-                    if vk_shared_area2(Pa,Pb)<2e-5: continue
+                    if min(fa.calc_area(),fb.calc_area())<1.5e-4 or vk_shared_area2(Pa,Pb)<2e-5: continue   # not the 1 cm2 facets at bevelled box corners (they dragged big faces' corners)
                     moves.append((fa,ra,fb,rb))
-        if not moves: return
+        if not moves: return done
         bm.faces.index_update()
         def region(f,r):
             """the part's faces in f's plane connected to f (its whole flat side there)"""
@@ -508,13 +517,150 @@ def vk_nudge_contacts(bm,delta=VK_NUDGE,passes=4):
             if fa in moved or fb in moved: continue
             Ra,Rb=region(fa,ra),region(fb,rb)
             Aa=sum(g.calc_area() for g in Ra); Ab=sum(g.calc_area() for g in Rb)
-            if ra in open_part: R,f=Rb,fb                  # sheets stay: the solid moves
-            elif rb in open_part: R,f=Ra,fa
+            # only ever outward: the one in front goes further out (pushing one back sank it into a third face);
+            # flush, a sheet against a solid stays (the solid moves) and of two solids or two sheets the smaller moves
+            # (which shows is the builder's call where that is wrong: the chapel corner's column stops inside its cap)
+            oab=fa.normal.dot(fa.calc_center_median()-fb.calc_center_median())
+            oa,ob=ra in open_part,rb in open_part
+            if abs(oab)>1e-5: R,f=(Ra,fa) if oab>0 else (Rb,fb)
+            elif oa and not ob: R,f=Rb,fb
+            elif ob and not oa: R,f=Ra,fa
             else: R,f=(Ra,fa) if (Aa,fa.index)<(Ab,fb.index) else (Rb,fb)
-            n=f.normal.copy()
-            for x in {x for g in R for x in g.verts}: x.co+=n*delta
-            moved|=R
+            S,g=(Rb,fb) if R is Ra else (Ra,fa)
+            n=f.normal.copy(); o=n.dot(f.calc_center_median()-g.calc_center_median())   # > 0: already in front
+            if o>=delta: continue
+            for x in {x for g_ in R for x in g_.verts}: x.co+=n*(delta-o)
+            moved|=R; done.append((R,S,n))
         bm.normal_update()
+    return done
+
+def vk_split_seams(bm,tol=1e-5,cell=0.25):
+    """before the wobble: wherever a vertex lies on another edge without being one of its ends (two parts side by side
+    that end at different heights, a T-junction), that edge gets a vertex there too, so both sides of the seam take the
+    curved wobble at the same points (else the seam opens a sliver or overlaps a wedge: Wall_Stone_Half's panels).
+    The faces that got a vertex are triangulated while still flat: wobbled, the new vertex leaves the straight edge
+    and a later triangulation can span the three with a sliver lying in the next face's plane (it z-fought)."""
+    touched=set()
+    for _ in range(12):
+        grid={}
+        for v in bm.verts:
+            grid.setdefault((math.floor(v.co.x/cell),math.floor(v.co.y/cell),math.floor(v.co.z/cell)),[]).append(v)
+        cuts=[]
+        for e in bm.edges:
+            a,b=e.verts[0].co,e.verts[1].co; d=b-a; L2=d.length_squared
+            if L2<1e-8: continue
+            lo=[math.floor((min(a[i],b[i])-tol)/cell) for i in range(3)]; hi=[math.floor((max(a[i],b[i])+tol)/cell) for i in range(3)]
+            best=None
+            for i in range(lo[0],hi[0]+1):
+                for j in range(lo[1],hi[1]+1):
+                    for kk in range(lo[2],hi[2]+1):
+                        for v in grid.get((i,j,kk),()):
+                            if v is e.verts[0] or v is e.verts[1]: continue
+                            t=(v.co-a).dot(d)/L2
+                            if t<=1e-4 or t>=1-1e-4 or (a+d*t-v.co).length>tol: continue
+                            if best is None or t<best: best=t
+            if best is not None: cuts.append((e,best))
+        if not cuts: break
+        for e,t in cuts:                          # one split per edge per pass: the rest on the next pass
+            if e.is_valid: touched|=set(bmesh.utils.edge_split(e,e.verts[0],t)[1].link_faces)
+    fs=[f for f in touched if f.is_valid and len(f.verts)>3]
+    if fs: bmesh.ops.triangulate(bm,faces=fs,quad_method="BEAUTY",ngon_method="BEAUTY")
+
+def vk_cut_end_overlaps(bm):
+    """faces of two separate parts lying in one of the module's end planes (x or y = +-CELL/2), facing the same way
+    and overlapping -- a plinth's or cornice's end inside the wall's end: the part with more face in that plane (the
+    wall's end) loses what the other's face covers (cut along the smaller one's outline, the pieces inside deleted), so nothing moves and neighbours still
+    butt exactly. A sheet (open part) is never the one cut. Seen at a run's free end and in the catalogs."""
+    E=CELL/2
+    def end_axis(f):
+        n=f.normal
+        for ax in (0,1):
+            if abs(abs(n[ax])-1)<1e-4 and all(abs(abs(v.co[ax])-E)<1e-4 for v in f.verts): return ax
+        return None
+    skip=set(); open0=None               # open parts judged as built: the holes cut here would make every part "open"
+    for _ in range(200):
+        bm.normal_update()
+        par={v:v for v in bm.verts}
+        def root(v):
+            while par[v] is not v: par[v]=par[par[v]]; v=par[v]
+            return v
+        for e in bm.edges:
+            a,b=root(e.verts[0]),root(e.verts[1])
+            if a is not b: par[a]=b
+        if open0 is None: open0={v for e in bm.edges if len(e.link_faces)<2 for v in e.verts}
+        open_part={root(v) for v in open0 if v.is_valid}
+        groups={}
+        for f in bm.faces:
+            ax=end_axis(f)
+            if ax is None or f.calc_area()<1e-8: continue
+            groups.setdefault((ax,round(f.verts[0].co[ax],3),f.normal[ax]>0),[]).append(f)
+        cut=None
+        for (ax,_c,_s),fs in sorted(groups.items()):
+            ua,va=[i for i in range(3) if i!=ax]
+            P={f:[(v.co[ua],v.co[va]) for v in f.verts] for f in fs}
+            parea={}                                  # each part's whole face in this plane, not one grid cell of it
+            for f in fs: parea[root(f.verts[0])]=parea.get(root(f.verts[0]),0.0)+f.calc_area()
+            for i,fa in enumerate(fs):
+                for fb in fs[i+1:]:
+                    ra,rb=root(fa.verts[0]),root(fb.verts[0])
+                    if ra is rb or (fa,fb) in skip: continue
+                    if vk_shared_area2(P[fa],P[fb])<2e-5: continue
+                    oa,ob=ra in open_part,rb in open_part
+                    if oa and not ob: big,small=fb,fa
+                    elif ob and not oa: big,small=fa,fb
+                    else: big,small=(fa,fb) if (parea[ra],fa.calc_area())>=(parea[rb],fb.calc_area()) else (fb,fa)
+                    cut=(big,small,ax); skip.add((fa,fb)); break
+                if cut: break
+            if cut: break
+        if cut is None: return
+        big,small,ax=cut; n=small.normal.copy()
+        pts=[v.co.copy() for v in small.verts]; ua,va=[i for i in range(3) if i!=ax]
+        poly=[(p[ua],p[va]) for p in pts]
+        sa=sum(poly[i][0]*poly[(i+1)%len(poly)][1]-poly[(i+1)%len(poly)][0]*poly[i][1] for i in range(len(poly)))
+        geom=[big]+list(big.edges)+list(big.verts)
+        for i in range(len(pts)):
+            a,b=pts[i],pts[(i+1)%len(pts)]
+            if (b-a).length<1e-6: continue
+            r=bmesh.ops.bisect_plane(bm,geom=[g for g in geom if g.is_valid],plane_co=a,plane_no=(b-a).cross(n).normalized(),dist=1e-6)
+            geom=[g for g in set(geom)|set(r["geom"]) if g.is_valid]
+        bm.normal_update()
+        def inside(c):
+            # left of every edge of the (convex) outline, in its winding: only area the small face covers
+            for i in range(len(poly)):
+                (x0,y0),(x1,y1)=poly[i],poly[(i+1)%len(poly)]
+                if ((x1-x0)*(c[1]-y0)-(y1-y0)*(c[0]-x0))*sa< -1e-9: return False
+            return True
+        gone=[f for f in geom if isinstance(f,bmesh.types.BMFace) and f is not small and abs(f.normal.dot(n)-1)<1e-3
+              and all(abs(v.co[ax]-pts[0][ax])<1e-4 for v in f.verts)
+              and inside((f.calc_center_median()[ua],f.calc_center_median()[va]))]
+        if not gone: continue                     # nothing came off (a concave outline): left, never tried again
+        loose=list({e for f in gone for e in f.edges})
+        bmesh.ops.delete(bm,geom=gone,context="FACES_ONLY")
+        loose=[e for e in loose if e.is_valid and not e.link_faces]; lv={v for e in loose for v in e.verts}
+        bmesh.ops.delete(bm,geom=loose,context="EDGES")
+        bmesh.ops.delete(bm,geom=[v for v in lv if v.is_valid and not v.link_edges],context="VERTS")
+
+def vk_nudge_settle(moves,delta=VK_NUDGE,reach=0.02):
+    """after the wobble: each side vk_nudge_contacts moved (R, standing on S, normal n) goes out along n until it is
+    `delta` clear of S everywhere -- R's corners measured to S along n and S's corners to R (rays, `reach` far)"""
+    from mathutils.bvhtree import BVHTree
+    def tree(F):
+        vs=list({v for f in F for v in f.verts}); ix={v:i for i,v in enumerate(vs)}
+        return vs,BVHTree.FromPolygons([v.co.copy() for v in vs],[[ix[v] for v in f.verts] for f in F])
+    for _ in range(2):
+        for R,S,n in moves:
+            R=[f for f in R if f.is_valid]; S=[f for f in S if f.is_valid]
+            if not R or not S: continue
+            rv,rt=tree(R); sv,st=tree(S); gap=None
+            for vs,t,sg in ((rv,st,1.0),(sv,rt,-1.0)):        # R's corners onto S, S's corners onto R
+                for v in vs:
+                    o=v.co-n*(reach*sg)
+                    hit=t.ray_cast(o,n*sg,2*reach)[0]
+                    if hit is None: continue
+                    g=(v.co-hit).dot(n)*sg
+                    gap=g if gap is None else min(gap,g)
+            if gap is not None and gap<delta:
+                for v in rv: v.co+=n*(delta-gap)
 
 def batter(k,amt=0.08):
     for v in k.bm.verts:
@@ -1906,7 +2052,8 @@ def full_rebuild(names=None):
     for o in bpy.data.objects:
         if o.data and o.data.name.startswith("VAR_") and "_inst" in o.name:
             old_var[o.data.name]=o.name.split("_inst")[0]
-    specs=[sp for sp in all_specs() if names is None or sp[0] in names]
+    pool=all_specs()+list(globals().get("TKP_SPECS",[]))     # + the terrain kit's edge pieces (vk_terrain)
+    specs=[sp for sp in pool if names is None or sp[0] in names]
     for n,fn,kw in specs:
         k=Kit(); fn(k)
         for f in k.bm.faces:
@@ -2045,7 +2192,9 @@ def chapel_wall(k,kind="W"):
         for ring in range(3): lancet_surround(k,pts,-0.36-ring*0.07,0.14+ring*0.2,0.2,0.14)   # stepped orders
         k.box((0,-0.8,0.08),(2.6,1.0,0.16),ASHLAR,bevel=0.04)
 def chapel_corner(k):
-    k.box((0,0,HC/2),(0.9,0.9,HC),ASHLAR,bevel=0.05,segs=2)
+    # the column stops 2 cm inside the cap: run up to its top, the nudge lifted the column's smaller top through the
+    # cap and ashlar showed where the cap's dressed stone belongs (Daniel, 2026-10-25)
+    k.box((0,0,(HC-0.28)/2),(0.9,0.9,HC-0.28),ASHLAR,bevel=0.05,segs=2)
     k.box((0,0,0.25),(1.05,1.05,0.5),CH_DRESS,bevel=0.04)
     for (z0,z1,d) in ((0,2.4,1.1),(2.4,3.8,0.8)):
         k.box((-0.35-d/2+0.45,-0.35-d/2+0.45,(z0+z1)/2),(d,d,z1-z0),ASHLAR,rot=(0,0,0),bevel=0.05,segs=2)
@@ -2809,7 +2958,8 @@ def ridge(k,x0,x1):
     n=max(1,int(round((x1-x0)/0.5)))
     for i in range(n):
         xa=x0+(x1-x0)*i/n; xb=x0+(x1-x0)*(i+1)/n; xm=(xa+xb)/2
-        _cyl(k,(xm,0,RIDGE+0.04+roof_sag(xm,0)),0.21,0.175,xb-xa+0.06,10,ROOF,rot=Matrix.Rotation(math.pi/2,4,"Y"))
+        # every other tile turned half a facet: where the sag lines two up, facet lay 0.6 mm over facet (z-fighting)
+        _cyl(k,(xm,0,RIDGE+0.04+roof_sag(xm,0)),0.21,0.175,xb-xa+0.06,10,ROOF,rot=Matrix.Rotation(math.pi/2,4,"Y")@Matrix.Rotation(math.pi/10*(i%2),4,"Z"))
 def roof_mid(k):
     for s in(-1,1): roof_slab(k,-1.5,1.5,s); eave_tabs(k,-1.5,1.5,s)
     ridge(k,-1.5,1.5)

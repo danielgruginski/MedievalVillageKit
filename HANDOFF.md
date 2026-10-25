@@ -2197,6 +2197,54 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     silhouettes behind cover, the camera and minimap at a map's border, loot dropped on the ground, F8). Left for later
     in 3a: the build-settings helper copied across the game's level menus. Next: 3b (the camera, the see-through driver
     and the click-to-move core out of GameCamera / ClickToMove).
+157. 2026-10-25 (Daniel's F8 pass after 155, a chapel corner's cap and wall ends: "this was fixed in the wrong
+    order"). Two holes in 155: (1) a later nudge dragged the corners of faces an earlier pair had already cleared (the
+    chapel corner's column face came back level with its cap: its top and bevel strips were other pairs), and the
+    wobble is curved, so a tall face with corners only and a band on it part by up to ~3 mm; (2) faces in the module
+    end planes were left alone and `vk_zfight` covered them as a joint, but the catalogs and a run's free end show
+    them (the plinth's and cornice's ends inside the chapel wall's end). `Kit.finish` now runs, in order:
+    - `vk_nudge_contacts`: also faces up to 1 mm apart (0.2-1 mm still flickers at a distance: the chapel band sat
+      at 0.23 mm, a "near" by the 0.2 mm line), out until `VK_NUDGE` proud. Only ever outward: of two faces apart the
+      one in front moves (pushing one back sank it into a third face: the coop's rails); flush, as before (the solid
+      against a sheet, else the smaller); two open sheets overlapping now move too (the thatch slabs' gable ends);
+      faces under 1.5 cm2 left (the facets at bevelled box corners dragged big faces' corners); 12 passes (shingled
+      ridge tiles push each other along a row); plane distances at face centres (builder-wobbled faces bend).
+      Returns the moves.
+    - `vk_cut_end_overlaps` (new): faces of two parts in an end plane (x or y = +-1.5), same facing, overlapping: the
+      part with more face in that plane loses what the other's face covers (bisected along its outline, the inside
+      deleted), so nothing moves and neighbours still butt exactly. "More face" sums the part's faces in the plane: a
+      grid-cut wall end is 0.5 m cells, and one cell counted as smaller than the plinth's end put ashlar on it. Openness judged as built (the holes it cuts would make every part
+      "open"); after the nudge for the same reason.
+    - with the wobble: `vk_split_seams` (new): a vertex lying on another part's edge splits that edge, so both sides of
+      a seam take the curved wobble at the same points (Wall_Stone_Half's panels of different heights overlapped a
+      wedge); the faces that got a vertex are triangulated while still flat (wobbled, the new vertex left the straight
+      edge and a later triangulation spanned the three with a sliver lying in the next face's plane).
+    - the wobble, then `vk_nudge_settle` (new, every piece, wobbled or not): each nudged side measured against what
+      it stood on (rays along the normal from both sides' corners) and pushed out until `VK_NUDGE` clear everywhere.
+    - `full_rebuild` also builds the terrain kit's edge pieces (`TKP_SPECS`: RetainingWall, RetainingWall_End,
+      Foundation_Drop); it skipped them without a word, so they had none of 155.
+    - Builders: ridge tiles every other one turned half a facet (the sag lined two up, facet 0.6 mm over facet); the
+      StoneUp door's jamb blocks 1 cm back from the opening (jittered, they wove through the reveal's plane); the
+      chapel corner's column stops 2 cm inside its cap (run up to the cap's top, the nudge lifted the column's smaller
+      top through it: ashlar on the cap, Daniel's second F8 look). Which face shows stays "the smaller side moves out":
+      a rule by thickness along the normal (the thin part wins) fixed the cap but changed 616 pairs in 108 pieces,
+      some plainly wrong (stakes over their burlap ties); geometry can't tell a cap on a column from a joist end flush
+      with a wall, so a wrong pick is fixed in its builder. Ray probes: cap top and sides, plinth and cornice ends all
+      StoneDressed.
+    - Check (both views now): `vk_zfight -- sided ground @<names>` (ends open: the catalog, a free end) and
+      `sided closed ends=1.5 ground` (in a run). 457 / 458 exterior pieces clean in both (the open view had 278 fights
+      before this); left Dock_Warehouse, 1.1 cm2: a 1.7 mm sliver 3 mm below the ground at its y = 1.5 end. "Near"
+      pairs (0.2-1 mm) 14 (were 199): Grave_Obelisk's pair is 1 cm underground; Pile_Planks_2's boards overlap a 1.5 mm band between
+      layers (board jitter); Ivy_B, Bridge_Wood_End, Pile_Fish_3, StoneUp_Twin under 4 cm2 each. Tris 925,643 (921,833
+      before: seam vertices and their triangles).
+    - Not reproduced: the same F8 log's small spots on Dock_Warehouse (8 rounds, 435 px), Dock_CustomsHouse (2 rounds,
+      8 px), Gatehouse_Block and Cargo_Crates (from below the ground) -- no faces within 1 mm at those points (the
+      catalog layout gives the pieces' positions: Unity x = -Blender x, Unity z = Blender y). The chapel spots had
+      46-51 rounds and ~100k px each.
+    - All masters rebuilt, .blend saved, exported for Unity (refreshed: every prefab's materials match its
+      submeshes; the chapel corner's ashlar tops out at 4.22 m under the cap's 4.5) and Godot (.md5 removed). The last
+      run held 488 masters: the 458 checked here, 29 slum pieces of 158 (rebuilt and exported with the rest, not in
+      these scans) and a stray `tmp_tw` (a timber wall copy in VK_Pieces, origin unknown, left).
 158. 2026-10-25 (Daniel: model assets for the slums -- "I wanted you to work on model assets, not on creating the map";
     he liked the planned set). **New module `vk_mod_slums` (prefix slm_), 29 pieces, in KIT_MODULES:** shack walls
     (3 m, top `SLM_HW` 2.25, outer face -Y; rough planks / patched planks (cross boards, a hide, sacking, straw in a

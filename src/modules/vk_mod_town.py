@@ -215,7 +215,8 @@ def twn_wall_stoneup_door(k):
     twn_voussoirs(k,0,hw,sp,-0.27,-0.1,n=7,th=0.24,seed=12)
     for s in(-1,1):
         for j,(zc,w) in enumerate(((zt+0.3,0.38),(zt+0.8,0.26),(zt+1.25,0.38))):
-            k.box((s*(hw+w/2),-0.24,zc),(w,0.2,0.42),STONE_BLOCK,bevel=0.04,segs=1,jitter=0.008,seed=60+j+(s>0)*4)
+            # 1 cm back from the opening: jittered, their inner faces wove through the side reveal's plane
+            k.box((s*(hw+w/2+0.01),-0.24,zc),(w,0.2,0.42),STONE_BLOCK,bevel=0.04,segs=1,jitter=0.008,seed=60+j+(s>0)*4)
     twn_arch_soffit(k,0,hw,sp,-0.25,0.02,STONE_BLOCK,n=12)
     for s in(-1,1): twn_side_reveal(k,s*hw,s,-0.25,0.02,zt,sp)
     # door leaf (boards follow the arch)
