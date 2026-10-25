@@ -138,7 +138,7 @@ def twn_wall_stoneup_twin(k):
         # reveals (dressed stone) so the recess reads
         for s in(-1,1): twn_side_reveal(k,cx+s*hw,s,-0.25,yg,zb,sp)
         twn_arch_soffit(k,cx,hw,sp,-0.25,yg,STONE_BLOCK,n=10)
-        k.box((cx,-0.15,zb+0.01),(2*hw,0.2,0.02),STONE_BLOCK,bevel=0)
+        k.box((cx,-0.151,zb+0.01),(2*hw,0.198,0.02),STONE_BLOCK,bevel=0)    # 2 mm short of the glass (it lay on it)
         twn_voussoirs(k,cx,hw,sp,-0.27,-0.13,n=7,th=0.18,seed=int(cx*10)+5,out=0.06,segs=1)
         k.box((cx,-0.05-0.012,(zb+sp)/2),(0.035,0.02,sp-zb),WOOD,bevel=0.005)          # glazing bar
         k.box((cx,-0.05-0.012,zb+0.55),(2*hw,0.02,0.035),WOOD,bevel=0.005)
@@ -271,7 +271,7 @@ def twn_bare_patch(k,cx,cz,w,h,seed=0,face=TWN_PF):
     for i in range(n):
         (xa,za),(xb,zb)=pts[i],pts[(i+1)%n]
         L=math.hypot(xb-xa,zb-za); ang=math.atan2(zb-za,xb-xa)
-        k.box(((xa+xb)/2,y-0.012,(za+zb)/2),(L+0.05,0.03,0.05),PLASTER,rot=(0,-ang,0),bevel=0.01)
+        k.box(((xa+xb)/2,y-0.012-0.003*(i%2),(za+zb)/2),(L+0.05,0.03,0.05),PLASTER,rot=(0,-ang,0),bevel=0.01)   # lips overlap at the corners: alternate depth
     k.bm.normal_update()
 
 def twn_wall_plasterup(k):
@@ -868,7 +868,8 @@ def twn_stoop_stone(k):
     W=1.8
     for j in range(3):
         top=0.18*(3-j); yf=-0.25-0.35*(j+1)
-        k.box((0,(yf-0.2)/2,top/2),(W,-yf-0.2,top),STONE_BLOCK,bevel=0.03,segs=1,jitter=0.005,seed=j)
+        # each step 6 mm a side narrower than the one under it: stacked, their sides overlapped (jittered, nearly flush)
+        k.box((0,(yf-0.2)/2,top/2),(W-0.012*j,-yf-0.2,top),STONE_BLOCK,bevel=0.03,segs=1,jitter=0.005,seed=j)
     for s in(-1,1):
         k.box((s*(W/2+0.15),-0.25-0.525,0.3),(0.3,1.05,0.6),STONE_BLOCK,bevel=0.04,segs=2,jitter=0.006,seed=5+s)
         k.box((s*(W/2+0.15),-0.25-0.525,0.62),(0.36,1.1,0.08),STONE_BLOCK,bevel=0.02)

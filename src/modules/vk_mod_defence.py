@@ -438,7 +438,8 @@ def def_tw_plinth(k,x0,x1,face=-1.35,seed=0,axis="x"):
         x+=w
 
 def def_tw_merlon(k,x,dz=0.0,slit=True,w=0.9,y0=-1.0,y1=-0.5,z0=7.22,z1=7.82):
-    stone_panel(k,x-w/2,x+w/2,z0+dz-0.25,z1+dz,y0,y1)
+    # 4 mm in from both faces: it starts 0.13 down inside the breastwork, whose faces it shared there (z-fighting)
+    stone_panel(k,x-w/2,x+w/2,z0+dz-0.25,z1+dz,y0+0.004,y1-0.004)
     rock(k,(x,(y0+y1)/2,z1+dz+0.05),(w+0.08,(y1-y0)+0.08,0.14),seed=int(x*37+dz*11)+500,tilt=0.015,segs=1)
     if slit:
         k.quad([(x-0.05,y0-0.004,z0+dz+0.08),(x+0.05,y0-0.004,z0+dz+0.08),(x+0.05,y0-0.004,z1+dz-0.1),(x-0.05,y0-0.004,z1+dz-0.1)],VOID,uvs=[(0,0),(1,0),(1,1),(0,1)])

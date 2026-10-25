@@ -2133,6 +2133,46 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     mesher a degree or two apart; letting the weld take faces that far apart cleared them but left open seams (T7) on
     four other tiles, so it is off -- the fix belongs in the cave mesher (vki_cav_ms_solid). 2,935 "near" pairs
     (0.2-1 mm) across the non-walls, not looked at.
+155. 2026-10-24 (Daniel, after an F8 pass over Catalog_KitExterior: "a lot of zFighting showed up"; then "Yes, roofs
+    first" and "now fix the rest of the z fighting"). **The exterior kit's pieces are free of z-fighting inside
+    themselves** except 4 faces in stone walls' end planes (below). Check: `tools/vk_zfight.py -- sided closed
+    ends=1.5 ground @<names>` (the watch's test, both sides; module ends at x = +-1.5 covered as a neighbour covers
+    them; the land at z -1 mm). Over the 458 exterior pieces: 1,916 fights -> 4, 455 clean (`renders/zf_final2.json`).
+    - **Shared fix, `vk_nudge_contacts`** (vk_helpers, run by `Kit.finish` before the wobble; `nudge=False` skips
+      it): two separate parts of a piece with faces in one plane, facing the same way and overlapping (trim flush
+      with its wall, a cornice top level with the wall top, boards end to end), the smaller part's whole flat side
+      there moves 1.5 mm out along its normal (`VK_NUDGE`). Open parts (cards, panes, deck sheets) never move: the
+      solid against them does. Faces in a module's end planes (x or y = +-1.5, axis-aligned) stay, so neighbours
+      still meet exactly. Opposite-facing contacts (solids resting on solids) are not touched (closed solids hide
+      them; the interior's weld, 153, does that job there).
+    - **Roofs** (most of the count: 2,207 fights over 47 roof pieces before): bargeboard pairs met in one plane at the
+      apex (every family: `o=(j+(s>0))%2` gives one board 4 mm out and 6 mm taller -- vk_helpers gable_end,
+      con_bargeboards, fro_bargeboards, sky_barge, wat_gableS); finials 0.22 deep (0.20 water); collar 0.17 and
+      raking struts 0.19 / 0.196 deep; a duplicate joist at x 0.9 removed (construction); truss depths staggered;
+      skylight / hatch curb boards (skyline), loft hatch rails (frontier), grille bars, hay-door rails, arch panels.
+      Thatch ridges: every other zigzag spar turned half a facet (neighbours mirrored, facet in facet).
+    - **Pieces fixed in their builders:** the twin window's sill, stoop steps (each 1.2 cm narrower), merlon panels,
+      the stall's void card, flower box ivy cards, the wall fountain's stream (`up=(1,0,0)`: with z its frame flipped
+      where the fall turns steep and the tube folded over itself) and ripple ring (through the water, not on it),
+      PlasterUp's bare-patch lips (alternate depth, they overlap at the corners), the cupola's band boards (one 2 cm
+      shorter: corner chamfers in one plane), the chandlery's side walls (the plain module 1.5 mm out: its plinth's
+      sloped front ran 4 mm into the window module's), the ridge sheaf's stalks (widths 3.5 / 3.8 / 4.1 cm), the
+      planter's cards (the last three half way between the first three: card i and i+3 lay in one plane).
+    - **`ind_heap`** (every heap: ore, coal, spoil, the moss hills of the cave and spring mouths, mine portal, clay
+      pit, bloomery, charcoal mound...): the lower half of the icosphere was flattened into the base plane, its
+      triangles folded over each other; now deleted and closed with one flat cap. **Quarry faces:** the upper rock
+      core stops 3 mm short of the tile edges (the soil band's ragged bottom dips below 2.7 m and both lay in the
+      edge planes).
+    - `fro_staddle` jittered its vertices in a set's order (memory addresses): the staddle stone came out different
+      on every rebuild; now in a fixed order.
+    - Left: Wall_Stone_Half, Wall_Stone_Half_Door, Wall_Stone_Passage (4 faces, 18 cm2): the plinth's end face lies in
+      the panel's end face at x = +-1.5, tilted off the plane by the wobble. Every stone wall has that overlap in its
+      end planes (the check hides them: a neighbour or a corner covers them); only a run's free end shows it. Also
+      241 "near" pairs (0.2-1 mm), not looked at.
+    - All 459 exterior masters rebuilt, .blend saved, exported for Unity and Godot (all of VK_Pieces: the roof round's
+      changes had not been exported yet). Look Around (151): `maxViewDistance` (60 m) clamps the far clip of every
+      camera it drives, the free one too (the catalogs' cameras kept 500 m and drew whole catalogs in one frame; the
+      editor's D3D12 device hung on the big ones).
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

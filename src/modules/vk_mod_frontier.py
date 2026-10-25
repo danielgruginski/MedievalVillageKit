@@ -336,9 +336,10 @@ def fro_bargeboards(k,finial="post"):
         for j in range(len(prof)-1):
             (y0,z0),(y1,z1)=prof[j],prof[j+1]
             L=math.hypot(y1-y0,z1-z0); ang=math.atan2(z1-z0,y1-y0)
-            k.box((GX+0.08,s*(y0+y1)/2,(z0+z1)/2-0.16),(0.2,L+0.2,0.46),WOOD,rot=(s*ang,0,0),bevel=0.05,segs=1)
+            o=(j+(s>0))%2      # every other board 4 mm out and 6 mm deeper (overlapping boards shared their faces)
+            k.box((GX+0.08+0.004*o,s*(y0+y1)/2,(z0+z1)/2-0.16),(0.2,L+0.2,0.46+0.006*o),WOOD,rot=(s*ang,0,0),bevel=0.05,segs=1)
     if finial=="post":
-        k.box((GX+0.08,0,RIDGE+0.35),(0.2,0.2,0.9),WOOD,bevel=0.06,segs=2)
+        k.box((GX+0.08,0,RIDGE+0.35),(0.22,0.2,0.9),WOOD,bevel=0.06,segs=2)   # 1 cm proud of the boards' faces
         k.box((GX+0.08,0,RIDGE+0.85),(0.3,0.3,0.3),WOOD,rot=(0,0,math.pi/4),bevel=0.1,segs=2)
     elif finial=="horns":
         # crossed barge ends ("horns"): each rake board continues past the apex
@@ -367,11 +368,11 @@ def fro_gable_end(k,kind="timber",XF=1.9,trim=True,window=None,finial="post"):
         for i in range(int(round(2*HALF))):
             k.box((XF+0.1,-(HALF-0.5)+i,-0.12),(0.3,0.16,0.2),WOOD,bevel=0.03)
         zc=top*0.45; half_c=YC*(1-zc/top)*0.98
-        k.box((XF-0.02,0,zc),(0.18,2*half_c,0.2),WOOD,bevel=0.035)
-        k.box((XF-0.02,0,top/2),(0.18,0.24,top),WOOD,bevel=0.035)
+        k.box((XF-0.02,0,zc),(0.17,2*half_c,0.2),WOOD,bevel=0.035)     # crossing members 5 mm apart in depth
+        k.box((XF-0.02,0,top/2),(0.18,0.24,top),WOOD,bevel=0.035)       # (gable_end: one plane z-fought)
         for s_ in(-1,1):
             L=math.hypot(YC,top); ang=math.atan2(top,YC)
-            k.box((XF-0.02,s_*YC/2,top/2-0.14),(0.18,L,0.2),WOOD,rot=(-s_*ang,0,0),bevel=0.035)
+            k.box((XF-0.02,s_*YC/2,top/2-0.14),(0.19+0.006*(s_>0),L,0.2),WOOD,rot=(-s_*ang,0,0),bevel=0.035)  # apex: 6 mm apart
             k.box((XF-0.02,s_*1.6*HALF/3,zc/2+0.1),(0.16,0.16,zc-0.1),WOOD,bevel=0.03)
         if window:
             wz=zc+0.25
@@ -387,7 +388,7 @@ def fro_gable_end(k,kind="timber",XF=1.9,trim=True,window=None,finial="post"):
         hy=0.3; hz0=0.34; hz1=min(1.0,top-0.45)
         k.quad([(XF-0.03,-hy,hz0),(XF-0.03,hy,hz0),(XF-0.03,hy,hz1),(XF-0.03,-hy,hz1)],VOID,uvs=[(0,0),(1,0),(1,1),(0,1)])
         for yy in (-hy-0.05,hy+0.05): k.box((XF+0.02,yy,(hz0+hz1)/2),(0.1,0.1,hz1-hz0+0.1),WOOD,bevel=0.02)
-        for zz in (hz0-0.04,hz1+0.04): k.box((XF+0.02,0,zz),(0.1,2*hy+0.2,0.09),WOOD,bevel=0.02)
+        for zz in (hz0-0.04,hz1+0.04): k.box((XF+0.02,0,zz),(0.11,2*hy+0.21,0.09),WOOD,bevel=0.02)   # past the jambs
         sub=Kit()
         for i in range(2): sub.box((0.02,0.15+i*0.3,(hz1-hz0)/2),(0.05,0.29,hz1-hz0-0.02),PLANKS,bevel=0.01)
         sub.box((0.06,0.3,(hz1-hz0)/2),(0.03,0.55,0.08),WOOD,bevel=0.01)
@@ -610,7 +611,7 @@ def fro_staddle(k):
     prof=[(0.20,-0.6),(0.19,0.0),(0.155,0.2),(0.13,0.44),(0.35,0.5),(0.36,0.58),(0.30,0.645)]
     fs=lathe(k,prof,(0,0,0),segs=12,mi=STONE_BLOCK,cap_top=True)                     # dressed stone (2026-10-20; was the noisy ROCK)
     rnd=random.Random(3)
-    for v in {v for f in fs for v in f.verts}:
+    for v in dict.fromkeys(v for f in fs for v in f.verts):                          # in a fixed order (a set's changed every rebuild)
         if v.co.z>0.02: v.co+=Vector((rnd.uniform(-1,1)*0.012,rnd.uniform(-1,1)*0.012,rnd.uniform(-1,1)*0.008))
     k.bm.normal_update(); k.project(fs,STONE_BLOCK)
 

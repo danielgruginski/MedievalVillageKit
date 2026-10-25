@@ -19,6 +19,10 @@ namespace MedievalKit
         [Tooltip("Seconds on each camera while touring (T): the z-fight watch probes once a second.")]
         public float tourSeconds = 2.5f;
 
+        [Tooltip("Far clip of every camera it drives, the free one too (m). The catalogs' cameras stand 32 m from what " +
+                 "they show and kept 500 m: whole catalogs drawn in one frame (the editor's D3D12 device hung on the big ones).")]
+        public float maxViewDistance = 60f;
+
         /// <summary>the verification catalogs (vkx_build_catalog's levels, Catalog_*) have nothing else to drive their
         /// cameras: Play alone gives Tab / T / F (the menu's Look Around This Level does the same for any level)</summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -43,6 +47,7 @@ namespace MedievalKit
             cams = FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None)
                 .Where(c => c.gameObject.scene.IsValid() && c.GetComponentInParent<KitLookAround>() == null)
                 .OrderBy(c => c.name, System.StringComparer.Ordinal).ToArray();
+            foreach (var c in cams) c.farClipPlane = Mathf.Min(c.farClipPlane, maxViewDistance);
             int on = System.Array.FindIndex(cams, c => c.isActiveAndEnabled && c.CompareTag("MainCamera"));
             Use(on >= 0 ? on : 0);
         }
@@ -84,7 +89,7 @@ namespace MedievalKit
                 free.orthographic = false;
                 free.fieldOfView = 50f;
                 free.nearClipPlane = 0.05f;
-                free.farClipPlane = 2000f;
+                free.farClipPlane = maxViewDistance;
             }
             free.transform.SetPositionAndRotation(from.transform.position, from.transform.rotation);
             var e = from.transform.eulerAngles;

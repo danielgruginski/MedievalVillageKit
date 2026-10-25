@@ -389,9 +389,10 @@ class Kit:
             for l,u in zip(f.loops,uvs): l[s.uv].uv=u
         else: s.project([f],mi)
         return f
-    def finish(s,name,coll,wobble=True,grime=True,loc=(0,0,0)):
+    def finish(s,name,coll,wobble=True,grime=True,loc=(0,0,0),nudge=True):
         bm=s.bm
-        if wobble:
+        if nudge: vk_nudge_contacts(bm)       # before the wobble: on wobbled faces flush pairs are no longer flat (the
+        if wobble:                            # wobble moves both alike, so the 1.5 mm it opens stays)
             for v in bm.verts:
                 p=v.co
                 # periodic in x (period = CELL) so neighbouring modules meet exactly
@@ -413,6 +414,107 @@ class Kit:
         for m in kit_mats(): me.materials.append(m)
         o["kit"]="VillageHouse"; o["cell_m"]=CELL
         return o
+
+def vk_shared_area2(Pa,Pb):
+    """area two planar polygons (2-D) share: each fanned into triangles, clipped pairwise (Sutherland-Hodgman)"""
+    def tris(P): return [(P[0],P[i],P[i+1]) for i in range(1,len(P)-1)]
+    def area(P): return sum(P[i][0]*P[(i+1)%len(P)][1]-P[(i+1)%len(P)][0]*P[i][1] for i in range(len(P)))/2
+    def clip(S,C):
+        out=list(S)
+        for i in range(len(C)):
+            a,b=C[i],C[(i+1)%len(C)]; inp,out=out,[]
+            if not inp: break
+            side=lambda p:(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0])
+            for j in range(len(inp)):
+                cur,prv=inp[j],inp[j-1]; sc,sp=side(cur),side(prv)
+                if sc>=0:
+                    if sp<0: t=sp/(sp-sc); out.append((prv[0]+t*(cur[0]-prv[0]),prv[1]+t*(cur[1]-prv[1])))
+                    out.append(cur)
+                elif sp>=0: t=sp/(sp-sc); out.append((prv[0]+t*(cur[0]-prv[0]),prv[1]+t*(cur[1]-prv[1])))
+        return out
+    tot=0.0
+    for ta in tris(Pa):
+        ta=ta if area(ta)>0 else ta[::-1]
+        for tb in tris(Pb):
+            tb=tb if area(tb)>0 else tb[::-1]
+            c=clip(ta,tb)
+            if len(c)>2: tot+=abs(area(c))
+    return tot
+VK_NUDGE=0.0015          # how far the smaller of two flush faces is moved out (past the z-fight watch's 1 mm "near")
+def vk_nudge_contacts(bm,delta=VK_NUDGE,passes=4):
+    """core fix (z-fighting, 2026-10-24; Daniel: "no z-fighting allowed"): where two separate parts of a piece show
+    faces in one plane facing the same way and overlapping -- a trim flush with the wall it is set in, a cornice top
+    level with the wall top, two boards overlapping end to end -- the smaller part's whole flat side there (every
+    face of that part in the plane, connected) moves `delta` outward along its normal, so the trim stands just
+    proud. A part with an open edge (a card, a pane, a deck sheet) never moves -- against a solid part, the solid's side
+    moves instead -- and faces in a module's end planes stay (axis-aligned at x or y = +-CELL/2: neighbours butt there
+    and must meet exactly). Repeats until nothing is left (passes)."""
+    E=CELL/2
+    for _ in range(passes):
+        bm.normal_update()
+        # parts: vertices joined by edges
+        par={v:v for v in bm.verts}
+        def root(v):
+            while par[v] is not v: par[v]=par[par[v]]; v=par[v]
+            return v
+        for e in bm.edges:
+            a,b=root(e.verts[0]),root(e.verts[1])
+            if a is not b: par[a]=b
+        open_part=set()
+        for e in bm.edges:
+            if len(e.link_faces)<2: open_part.add(root(e.verts[0]))
+        def end_plane(f):
+            n=f.normal
+            for ax in (0,1):
+                if abs(abs(n[ax])-1)<1e-4 and all(abs(abs(v.co[ax])-E)<1e-4 for v in f.verts): return True
+            return False
+        cand=[]
+        for f in bm.faces:
+            if f.calc_area()<1e-8: continue
+            r=root(f.verts[0])
+            if end_plane(f): continue
+            n=f.normal; ax=max(range(3),key=lambda i:abs(n[i])); c=n.copy() if n[ax]>0 else -n
+            cand.append((f,r,c,c.dot(f.verts[0].co)))
+        buckets={}
+        for t in cand:
+            f,r,c,d=t
+            buckets.setdefault((round(c.x,3),round(c.y,3),round(c.z,3),math.floor(d/5e-4)),[]).append(t)
+        moves=[]; seen=set()
+        for key in sorted(buckets):
+            lst=buckets[key]; nb=lst+buckets.get(key[:3]+(key[3]+1,),[])
+            for fa,ra,ca,da in lst:
+                for fb,rb,cb,db in nb:
+                    if ra is rb or fa.normal.dot(fb.normal)<0.9999 or abs(da-db)>2e-4: continue
+                    if ra in open_part and rb in open_part: continue
+                    u=(Vector((0,0,1)) if abs(ca.z)<0.9 else Vector((1,0,0))); u=(u-ca*u.dot(ca)).normalized(); v=ca.cross(u)
+                    Pa=[(p.co.dot(u),p.co.dot(v)) for p in fa.verts]; Pb=[(p.co.dot(u),p.co.dot(v)) for p in fb.verts]
+                    if vk_shared_area2(Pa,Pb)<2e-5: continue
+                    moves.append((fa,ra,fb,rb))
+        if not moves: return
+        bm.faces.index_update()
+        def region(f,r):
+            """the part's faces in f's plane connected to f (its whole flat side there)"""
+            n=f.normal; d=n.dot(f.verts[0].co); out={f}; stack=[f]
+            while stack:
+                g=stack.pop()
+                for e in g.edges:
+                    for h in e.link_faces:
+                        if h in out or root(h.verts[0]) is not r or h.normal.dot(n)<0.9999: continue
+                        if abs(n.dot(h.verts[0].co)-d)>2e-4: continue
+                        out.add(h); stack.append(h)
+            return out
+        moved=set()
+        for fa,ra,fb,rb in sorted(moves,key=lambda m:(min(m[0].index,m[2].index),max(m[0].index,m[2].index))):
+            if fa in moved or fb in moved: continue
+            Ra,Rb=region(fa,ra),region(fb,rb)
+            Aa=sum(g.calc_area() for g in Ra); Ab=sum(g.calc_area() for g in Rb)
+            if ra in open_part: R,f=Rb,fb                  # sheets stay: the solid moves
+            elif rb in open_part: R,f=Ra,fa
+            else: R,f=(Ra,fa) if (Aa,fa.index)<(Ab,fb.index) else (Rb,fb)
+            n=f.normal.copy()
+            for x in {x for g in R for x in g.verts}: x.co+=n*delta
+            moved|=R
+        bm.normal_update()
 
 def batter(k,amt=0.08):
     for v in k.bm.verts:
@@ -617,10 +719,11 @@ def gable_end(k,kind='timber',trim=True):
             (y0,z0),(y1,z1)=prof[j],prof[j+1]
             L=math.hypot(y1-y0,z1-z0); ang=math.atan2(z1-z0,y1-y0)
             yc=s*(y0+y1)/2; zc=(z0+z1)/2-0.16
-            k.box((GX+0.08,yc,zc),(0.2,L+0.2,0.46),WOOD,rot=(s*ang,0,0),bevel=0.05,segs=2)
+            o=(j+(s>0))%2          # every other board 4 mm out and 6 mm deeper: overlapping boards shared their faces
+            k.box((GX+0.08+0.004*o,yc,zc),(0.2,L+0.2,0.46+0.006*o),WOOD,rot=(s*ang,0,0),bevel=0.05,segs=2)
     # finial
     if trim:
-        k.box((GX+0.08,0,RIDGE+0.35),(0.2,0.2,0.9),WOOD,bevel=0.06,segs=2)
+        k.box((GX+0.08,0,RIDGE+0.35),(0.22,0.2,0.9),WOOD,bevel=0.06,segs=2)   # 1 cm proud of the boards' faces
         k.box((GX+0.08,0,RIDGE+0.85),(0.3,0.3,0.3),WOOD,rot=(0,0,math.pi/4),bevel=0.1,segs=2)
     # gable triangle wall (timber framed plaster), face at x=+1.5+0.40, follows the roof underside exactly
     XF={"timber":1.5+0.40,"stone":1.5+0.30,"planks":1.5+0.26}[kind]; XB=1.5-0.05
@@ -641,12 +744,15 @@ def gable_end(k,kind='timber',trim=True):
     for i in range(6):
         k.box((XF+0.1,-2.5+i*1.0,-0.12),(0.3,0.16,0.2),WOOD,bevel=0.03)
     zc=top*0.45; half_c=YC*(1-zc/top)*0.98
-    k.box((XF-0.02,0,zc),(0.18,2*half_c,0.2),WOOD,bevel=0.035)
+    # members that cross differ in depth by 5 mm (sill 0.20, raking 0.19, post 0.18, collar 0.17, studs 0.16): at
+    # one depth their faces lay in one plane where they crossed (z-fighting, 2026-10-24)
+    k.box((XF-0.02,0,zc),(0.17,2*half_c,0.2),WOOD,bevel=0.035)
     k.box((XF-0.02,0,top/2),(0.18,0.24,top),WOOD,bevel=0.035)
     for s_ in(-1,1):
         # raking beams: follow the underside, inset 0.12
         L=math.hypot(YC,top); ang=math.atan2(top,YC)
-        k.box((XF-0.02,s_*YC/2,top/2-0.14),(0.18,L,0.2),WOOD,rot=(-s_*ang,0,0),bevel=0.035)
+        k.box((XF-0.02,s_*YC/2,top/2-0.14),(0.19+0.006*(s_>0),L,0.2),WOOD,rot=(-s_*ang,0,0),bevel=0.035)   # (they
+        # overlap at the apex: one 6 mm deeper)
         k.box((XF-0.02,s_*1.6,zc/2+0.1),(0.16,0.16,zc-0.1),WOOD,bevel=0.03)
     wz=zc+0.25
     k.quad([(XF-0.04,-0.35,wz),(XF-0.04,0.35,wz),(XF-0.04,0.35,wz+0.8),(XF-0.04,-0.35,wz+0.8)],WINDOW,uvs=[(0,0),(0.7,0),(0.7,0.8),(0,0.8)])
@@ -1849,7 +1955,8 @@ def gable_special(k,kind,XF,top,YC):
             a=2*math.pi*(i+0.5)/n
             k.box((XF+0.02,math.cos(a)*(R+0.12),zc+math.sin(a)*(R+0.12)),(0.22,0.42,0.26),ASHLAR,rot=(a,0,0),bevel=0.04)
         for i in range(6):
-            a=math.pi*i/6; k.box((XF,0,zc),(0.06,0.06,2*R),IRON,rot=(a,0,0),bevel=0)
+            a=math.pi*i/6; k.box((XF+0.003*i,0,zc),(0.06,0.06,2*R),IRON,rot=(a,0,0),bevel=0)   # each 3 mm deeper:
+            # they all cross at the centre (one plane z-fought)
         k.box((XF+0.02,0,0.12),(0.3,2*YC,0.26),ASHLAR,bevel=0.04)
     else:  # planks: battens, hayloft door, hoist beam, hay
         for y in(-2.2,-1.1,1.1,2.2):
@@ -1860,7 +1967,7 @@ def gable_special(k,kind,XF,top,YC):
         k.quad([(XF-0.02,-0.7,zd),(XF-0.02,0.7,zd),(XF-0.02,0.7,zd+hd),(XF-0.02,-0.7,zd+hd)],VOID,uvs=[(0,0),(1,0),(1,1),(0,1)])
         # one door leaf swung open
         k.box((XF+0.45,-0.72,zd+hd/2),(0.9,0.08,hd),PLANKS,rot=(0,0,-1.2),bevel=0.02)
-        for zz in(zd,zd+hd): k.box((XF+0.03,0,zz),(0.14,1.6,0.14),WOOD,bevel=0.03)
+        for zz in(zd,zd+hd): k.box((XF+0.03,0,zz),(0.15,1.6,0.14),WOOD,bevel=0.03)   # 1 cm deeper than the posts
         for yy in(-0.78,0.78): k.box((XF+0.03,yy,zd+hd/2),(0.14,0.14,hd+0.1),WOOD,bevel=0.03)
         k.box((XF+0.1,0,zd+0.2),(0.5,1.2,0.35),HAY,bevel=0.1,segs=2,jitter=0.04,seed=3)
         k.box((XF+0.6,0,top-0.35),(1.4,0.18,0.2),WOOD,bevel=0.03)
@@ -2745,7 +2852,9 @@ def arch_cut_panels(k,hw,spring,top,y0,y1,mi):
     while z<spring+hw-0.005:
         dz=0.07; zc=min(z+dz,spring+hw)
         c=math.sqrt(max(0.0,hw*hw-((z+zc)/2-spring)**2))
-        for sgn in(-1,1): k.box((sgn*(c+hw)/2,(y0+y1)/2,(z+zc)/2),(hw-c+0.002,y1-y0,zc-z),mi,bevel=0)
+        # 2 mm into the pier (no crack), 1.5 mm back from both faces: flush, they shared the pier's faces where
+        # they overlapped (z-fighting, 2026-10-24)
+        for sgn in(-1,1): k.box((sgn*(c+hw)/2,(y0+y1)/2,(z+zc)/2),(hw-c+0.002,y1-y0-0.003,zc-z),mi,bevel=0)
         z=zc
     if top>spring+hw: stone_panel(k,-hw,hw,spring+hw,top,y0,y1,mi=mi)
 def arch_soffit(k,hw,spring,y0,y1,mi,n=16):
@@ -2946,7 +3055,7 @@ def cupola(k):
     k.box((0,0,zt+0.07),(B+0.36,B+0.36,0.18),WOOD,bevel=0.05,segs=2)
     for sgn in(-1,1):
         k.box((0,sgn*(B/2+0.02),zb+0.75),(B+0.1,0.12,0.14),WOOD,bevel=0.03)
-        k.box((sgn*(B/2+0.02),0,zb+0.75),(0.12,B+0.1,0.14),WOOD,bevel=0.03)
+        k.box((sgn*(B/2+0.02),0,zb+0.75),(0.12,B+0.08,0.14),WOOD,bevel=0.03)    # 2 cm shorter: corner chamfers apart
     zc=RIDGE+0.42
     for a in range(4):
         R=Matrix.Rotation(a*math.pi/2,4,"Z"); sub=Kit()
@@ -3124,7 +3233,8 @@ def thatch_ridge_cap(k,x0,x1):
             d=pb-pa; L=d.length; c=(pa+pb)/2
             q=Vector((1,0,0)).rotation_difference(d.normalized()).to_matrix().to_4x4()
             sub=Kit(); _cyl(sub,(0,0,0),0.02,0.02,L,5,WOOD,rot=Matrix.Rotation(math.pi/2,4,"Y"))
-            merge_kit(k,sub,Matrix.Translation(c)@q)
+            # every other spar turned half a facet: neighbours mirror each other where they meet, facet in facet
+            merge_kit(k,sub,Matrix.Translation(c)@q@Matrix.Rotation(math.pi/5*(i%2),4,"X"))
 def roof_thatch_mid(k):
     for s in(-1,1): thatch_slab(k,-1.5,1.5,s); thatch_eave_roll(k,-1.5,1.5,s,seed=1.0+s)
     thatch_ridge_cap(k,-1.5,1.5)
@@ -3217,13 +3327,15 @@ def prop_flowerbox(k,flowers="pink"):
             card(k,(x,rnd.uniform(-0.05,0.05),0.22+h/2),R,(rnd.uniform(-0.15,0.15),-0.25,1),h*1.05,h,flowers if rnd.random()<0.8 else "ivy",flip=rnd.random()<0.5)
     # trailing ivy over the front edge
     for i in range(4):
-        x=-0.45+i*0.3; card(k,(x,-0.2,0.1),(1,0,0),(0,-0.4,1),0.32,0.36,"ivy",flip=i%2==0)
+        x=-0.45+i*0.3; card(k,(x,-0.2-0.003*(i%2),0.1),(1,0,0),(0,-0.4,1),0.32,0.36,"ivy",flip=i%2==0)   # every other
+        # one 3 mm out: 0.32 wide at 0.30 apart, neighbours overlapped in one plane
 def prop_planter(k,flowers="pink"):
     _cyl(k,(0,0,0.25),0.26,0.33,0.5,14,CLAY); _cyl(k,(0,0,0.51),0.35,0.35,0.06,14,CLAY)
     _cyl(k,(0,0,0.5),0.29,0.29,0.02,12,SOIL)
     rnd=random.Random(9)
     for i in range(6):
-        aa=i*math.pi/3+rnd.uniform(-0.2,0.2); R=Vector((math.cos(aa),math.sin(aa),0))
+        # the last three half way between the first: card i and i+3 lay in one plane through the middle (z-fighting)
+        aa=i*math.pi/3+math.pi/6*(i>=3)+rnd.uniform(-0.2,0.2); R=Vector((math.cos(aa),math.sin(aa),0))
         h=rnd.uniform(0.45,0.6); card(k,(0,0,0.48+h/2),R,(0,0,1),h,h,flowers if i%3 else "ivy",flip=i%2==0)
 EXTRA_SPECS+=[("SM_VK_Deco_Ivy_A",lambda k: ivy_patch(k,1),dict(wobble=False,grime=True)),
               ("SM_VK_Deco_Ivy_B",lambda k: ivy_patch(k,2,x0=-1.45,x1=0.2,top=3.6,n=55,base_w=1.2),dict(wobble=False,grime=True)),
@@ -3636,7 +3748,8 @@ def wall_stall(k):
     grid_cut(k,k.box((0,-0.02,(zt+HB-0.24)/2),(CELL,0.36,HB-0.24-zt),PLANKS,bevel=0))
     k.box((0,-0.26,zt+0.06),(CELL,0.22,0.2),WOOD,bevel=0.03)
     # opening back plane (interior darkness) + stall interior hints
-    k.quad([(-1.35,1.2,0.7),(1.35,1.2,0.7),(1.35,1.2,zt),(-1.35,1.2,zt)],VOID,uvs=[(0,0),(1,0),(1,1),(0,1)])
+    # 2 mm behind the shelf's and hay's backs (y 1.2): on them, the card z-fought (2026-10-24)
+    k.quad([(-1.35,1.202,0.7),(1.35,1.202,0.7),(1.35,1.202,zt),(-1.35,1.202,zt)],VOID,uvs=[(0,0),(1,0),(1,1),(0,1)])
     for x in (-1.37,1.37):
         v=[k.bm.verts.new(p) for p in ((x,-0.2,0.7),(x,1.2,0.7),(x,1.2,zt),(x,-0.2,zt))]
         f=k.bm.faces.new(v if x<0 else v[::-1]); f.material_index=PLANKS; k.bm.normal_update(); k.project([f],PLANKS)

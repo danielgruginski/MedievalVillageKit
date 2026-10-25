@@ -114,7 +114,14 @@ def ind_heap(k,c,rx,ry,h,mi,seed=0,sub=2,rough=0.16,tile=1.5,peak=1.0,jit=0.0):
         z=h*(e**peak)*f if d.z>0 else -0.04
         if jit and d.z>0.05: f+=rj.uniform(-jit,jit); z+=rj.uniform(-jit,jit)*h
         v.co=Vector((c[0]+d.x*rx*f,c[1]+d.y*ry*f,c[2]+z))
+    # the lower half lies flat in the base, its triangles folded over each other (z-fighting): one flat cap instead
+    low=[f for f in ind_faces(vs) if all(v.co.z<c[2]-0.04+1e-6 for v in f.verts)]
+    bmesh.ops.delete(k.bm,geom=low,context="FACES")
+    vs=[v for v in vs if v.is_valid]
+    bnd=list({e for v in vs for e in v.link_edges if len(e.link_faces)==1})
+    bmesh.ops.holes_fill(k.bm,edges=bnd,sides=0)
     fs=ind_faces(vs)
+    bmesh.ops.recalc_face_normals(k.bm,faces=fs)
     for f in fs: f.material_index=mi
     k.bm.normal_update(); ind_box_uv(k,fs,tile,(seed*0.137%1,seed*0.071%1))
     return vs
@@ -395,7 +402,10 @@ def ind_qrun(k,x0,x1,yf,bench,seed,depth=0.8,missing=(),pulled=(),drill=True):
 def ind_qcores(k,lo_boxes,hi_boxes,band_boxes,seed=0):
     """ROCK cores behind the blocks (dark joints), a soil band 2.7..3.0 with a turf top"""
     for (x0,x1,y0,y1) in lo_boxes: k.box(((x0+x1)/2,(y0+y1)/2,(-0.6+1.45)/2),(x1-x0,y1-y0,2.05),ROCK,bevel=0)
-    for (x0,x1,y0,y1) in hi_boxes: k.box(((x0+x1)/2,(y0+y1)/2,(1.45+2.7)/2),(x1-x0,y1-y0,1.25),ROCK,bevel=0)
+    for (x0,x1,y0,y1) in hi_boxes:
+        # 3 mm short of the tile edges: the soil band's ragged bottom dips below 2.7 and its ends lie in those planes
+        x0,y0=[a+0.003*(a<=-1.5) for a in (x0,y0)]; x1,y1=[a-0.003*(a>=1.5) for a in (x1,y1)]
+        k.box(((x0+x1)/2,(y0+y1)/2,(1.45+2.7)/2),(x1-x0,y1-y0,1.25),ROCK,bevel=0)
     for (x0,x1,y0,y1) in band_boxes:
         vs=k.box(((x0+x1)/2,(y0+y1)/2,2.85),(x1-x0,y1-y0,0.3),SOIL,bevel=0)
         grid_cut(k,vs,0.5)

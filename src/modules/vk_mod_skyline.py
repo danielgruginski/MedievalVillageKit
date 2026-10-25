@@ -190,12 +190,13 @@ def sky_pot(k,x,y,z):
 
 def sky_barge(k,x,prof,s,h=0.46,t=0.2,segs=2):
     """bargeboards along a (ay,z) polyline on side s (as gable_end)"""
-    for (y0,z0),(y1,z1) in zip(prof[:-1],prof[1:]):
+    for j,((y0,z0),(y1,z1)) in enumerate(zip(prof[:-1],prof[1:])):
         L=math.hypot(y1-y0,z1-z0); ang=math.atan2(z1-z0,y1-y0)
-        k.box((x,s*(y0+y1)/2,(z0+z1)/2-0.16),(t,L+0.2,h),WOOD,rot=(s*ang,0,0),bevel=0.05 if segs>1 else 0.035,segs=segs)
+        o=(j+(s>0))%2          # every other board 4 mm out and 6 mm deeper (overlapping boards shared their faces)
+        k.box((x+0.004*o,s*(y0+y1)/2,(z0+z1)/2-0.16),(t,L+0.2,h+0.006*o),WOOD,rot=(s*ang,0,0),bevel=0.05 if segs>1 else 0.035,segs=segs)
 
 def sky_finial(k,x):
-    k.box((x,0,RIDGE+0.35),(0.2,0.2,0.9),WOOD,bevel=0.06,segs=2)
+    k.box((x,0,RIDGE+0.35),(0.22,0.2,0.9),WOOD,bevel=0.06,segs=2)   # 1 cm proud of the boards' faces
     k.box((x,0,RIDGE+0.85),(0.3,0.3,0.3),WOOD,rot=(0,0,math.pi/4),bevel=0.1,segs=2)
 
 def sky_hip_roll(k,p0,p1,n=5,r0=0.19,r1=0.16):
@@ -357,9 +358,9 @@ def sky_roof_mid_opening(k,kind="hatch"):
     roof_mid(k)
     ay=1.7; P=Vector((0,-ay,roof_z(ay)))
     M=Matrix.Translation(P)@Matrix.Rotation(PITCH,4,"X")      # local: x, up-slope, normal
-    for s in(-1,1):
-        k.box((s*0.47,0,0.05),(0.14,1.08,0.3),WOOD,bevel=0.03,xform=M)
-        k.box((0,s*0.47,0.05),(1.08,0.14,0.3),WOOD,bevel=0.03,xform=M)
+    for s in(-1,1):                    # the cross boards 4 mm bigger every way: at the corners the four boards'
+        k.box((s*0.47,0,0.05),(0.14,1.08,0.3),WOOD,bevel=0.03,xform=M)          # faces and tops shared planes
+        k.box((0,s*0.47,0.05),(1.088,0.148,0.308),WOOD,bevel=0.03,xform=M)
     k.box((0,-0.6,0.02),(1.2,0.12,0.12),ROOF,bevel=0.03,xform=M)          # little tile flashing below
     if kind=="hatch":
         k.box((0,0,-0.02),(0.82,0.82,0.1),VOID,bevel=0,xform=M)
@@ -698,7 +699,7 @@ def sky_em_sheaf(k):
         a=(i/19-0.5)*0.75+rnd.uniform(-0.04,0.04); y=rnd.uniform(-0.09,0.09)
         d=Vector((math.sin(a),0,math.cos(a))); lo=0.42+rnd.uniform(-0.03,0.03); hi=0.5+rnd.uniform(-0.04,0.04)
         c=T+Vector((0,y,0))+d*(hi-lo)/2
-        k.box(tuple(c),(0.035,0.035,lo+hi),HAY,rot=(0,a,0),bevel=0.01)
+        k.box(tuple(c),(0.035+0.003*(i%3),0.035,lo+hi),HAY,rot=(0,a,0),bevel=0.01)   # widths apart: near twins side in side
         e=T+Vector((0,y,0))+d*(hi+0.08)
         _ico(k,tuple(e),0.07,HAY,scale=(0.7,0.7,1.7),sub=1,jit=0.006,seed=i)
     _cyl(k,tuple(T),0.13,0.13,0.1,12,CLOTH_A)

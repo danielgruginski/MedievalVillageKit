@@ -932,8 +932,10 @@ def wat_wall_fountain(k):
     wat_poly(k,pts,WATER,uvfn=lambda p:(p.x/1.5,p.y/1.5),flip_to=(0,0,1))
     # water stream from the spout
     st=[Vector((0,y1-0.34-0.12*t,0.94-0.44*t*t)) for t in [i/6 for i in range(7)]]
-    wat_tube(k,st,[(0.035,-0.015),(0.035,0.015),(-0.035,0.015),(-0.035,-0.015)],WATER,caps=False,smooth=True)
-    wat_annulus(k,(0,y1-0.46,0.505),0.05,0.12,0.01,WATER,n=10,axis="Z")
+    # up = x, square to the whole stream (it lies in x = 0): with z the frame flipped where the fall turns steep and the
+    # tube folded over itself (z-fighting, 2026-10-24); the profile turned to keep 7 cm wide (x) by 3 cm
+    wat_tube(k,st,[(0.015,-0.035),(0.015,0.035),(-0.015,0.035),(-0.015,-0.035)],WATER,up=(1,0,0),caps=False,smooth=True)
+    wat_annulus(k,(0,y1-0.46,0.503),0.05,0.12,0.01,WATER,n=10,axis="Z")    # through the surface, not sat on it
     k.box((0,-0.8,0.05),(1.8,1.0,0.1),STONE_BLOCK,bevel=0.03)
 
 def wat_hand_pump(k):
@@ -1008,8 +1010,9 @@ def wat_gableS(k,sgn=1,vent=True):
     for s in(-1,1):
         for j in range(len(prof)-1):
             (y0,z0),(y1,z1)=prof[j],prof[j+1]; L=math.hypot(y1-y0,z1-z0); ang=math.atan2(z1-z0,y1-y0)
-            k.box((sgn*(GX+0.08),s*(y0+y1)/2,(z0+z1)/2-0.15),(0.18,L+0.18,0.4),WOOD,rot=(s*ang,0,0),bevel=0.045,segs=2)
-    k.box((sgn*(GX+0.08),0,RIDGE+0.3),(0.18,0.18,0.75),WOOD,bevel=0.05,segs=2)
+            o=(j+(s>0))%2      # every other board 4 mm out and 6 mm deeper (overlapping boards shared their faces)
+            k.box((sgn*(GX+0.08+0.004*o),s*(y0+y1)/2,(z0+z1)/2-0.15),(0.18,L+0.18,0.4+0.006*o),WOOD,rot=(s*ang,0,0),bevel=0.045,segs=2)
+    k.box((sgn*(GX+0.08),0,RIDGE+0.3),(0.20,0.18,0.75),WOOD,bevel=0.05,segs=2)   # 1 cm proud of the boards' faces
     k.box((sgn*(GX+0.08),0,RIDGE+0.72),(0.26,0.26,0.26),WOOD,rot=(0,0,math.pi/4),bevel=0.08,segs=2)
     XF=sgn*(1.5+0.26); XB=sgn*1.45
     def under(ay): return roof_z(ay)-RT/math.cos(PITCH)-0.05

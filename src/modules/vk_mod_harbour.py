@@ -615,7 +615,8 @@ def hbr_chandlery(k):
     mkt_put(k,twn_wall_stone_shop,-1.5,-D/2,0,0); mkt_put(k,wall_stone_door,1.5,-D/2,0,0)
     mkt_put(k,wall_stone_plain,-1.5,D/2,0,180); mkt_put(k,wall_stone_window,1.5,D/2,0,180)
     for sx,r in ((-1,-90),(1,90)):
-        mkt_put(k,wall_stone_window,sx*L/2,-1.5,0,r); mkt_put(k,wall_stone_plain,sx*L/2,1.5,0,r)
+        # the plain module 1.5 mm out: its plinth's sloped front ran 4 mm into the window module's, in one plane
+        mkt_put(k,wall_stone_window,sx*L/2,-1.5,0,r); mkt_put(k,wall_stone_plain,sx*(L/2+0.0015),1.5,0,r)
     W_=lambda sb: timber_frame(sb,True); P_=lambda sb: timber_frame(sb); X_=lambda sb: timber_frame(sb,False,"X")
     mkt_put(k,W_,-1.5,-D/2,H1,0); mkt_put(k,W_,1.5,-D/2,H1,0)
     mkt_put(k,P_,-1.5,D/2,H1,180); mkt_put(k,W_,1.5,D/2,H1,180)

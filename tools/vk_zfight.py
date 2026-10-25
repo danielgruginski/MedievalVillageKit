@@ -7,7 +7,9 @@
 # between neighbouring tiles). Bottoms resting on / under the ground of land pieces still show here (no ground):
 # read those as buried. Interior pieces (SM_VKI_*) rebuild through vki_rebuild; @file reads one name per line;
 # out=<path> writes the report elsewhere; "sided" checks as the game's z-fight watch does (zfight_sided below);
-# "closed" (with sided) covers wall pieces' open ends as a level does (a post or the next wall); "posts" checks each
+# "closed" (with sided) covers wall pieces' open ends as a level does (a post or the next wall; ends=X: the planes
+# x = +-X of any piece, the exterior modules' butt joints); "ground" adds the land at z -1 mm (buried bottoms
+# hidden); the exterior check: sided closed ends=1.5 ground; "posts" checks each
 # interior wall between its family's Mid posts (wall-post fights).
 import bpy, os, sys, json, math, traceback
 from mathutils import Vector
@@ -156,16 +158,21 @@ def seen_from(bvh, pts, s, off=0.002):
             if all(bvh.ray_cast(o, (d + w * 0.0105).normalized(), 40.0)[0] is None for w in (a, b)): return True
     return False
 
+END_X = next((float(a[5:]) for a in args if a.startswith("ends=")), None)   # ends=1.5: exterior modules' planes
+
 def end_blockers(o, co, polys):
     """"closed": a wall's open ends (vki_open_wall_ends) as a level has them -- covered by a post or the next wall --
-    as a quad 0.1 mm outside each end over the bounding box of the piece's vertices in that end plane"""
+    as a quad 1 mm outside each end over the bounding box of the piece's vertices in that end plane. ends=X: the
+    planes x = +-X of any piece instead (the exterior's 3 m modules butt their neighbours there)"""
     L = o.get("vki_len")
-    if o.get("vki_class") != "wall" or not L: return
-    for xe, sg in ((0.0, -1.0), (float(L), 1.0)):
+    if END_X is not None: planes = ((-END_X, -1.0), (END_X, 1.0))
+    elif o.get("vki_class") != "wall" or not L: return
+    else: planes = ((0.0, -1.0), (float(L), 1.0))
+    for xe, sg in planes:
         e = [p for p in co if abs(p.x - xe) < 1e-4]
         if not e: continue
         y0, y1 = min(p.y for p in e), max(p.y for p in e); z0, z1 = min(p.z for p in e), max(p.z for p in e)
-        x = xe + sg * 1e-4; i = len(co)
+        x = xe + sg * 1e-3; i = len(co)            # 1 mm out: past the rays' 0.3 mm start off a face in the plane
         co += [Vector((x, y0, z0)), Vector((x, y1, z0)), Vector((x, y1, z1)), Vector((x, y0, z1))]
         polys.append((i, i + 1, i + 2, i + 3))
 
@@ -175,6 +182,11 @@ def zfight_sided(o, dist=1e-3, fight=2e-4, dot=0.995, min_area=2e-5):
     polys = [tuple(p.vertices) for p in me.polygons]
     bco = list(co)
     if "closed" in args: end_blockers(o, bco, polys)
+    if "ground" in args:                    # ground: the land at z 0 (bottoms resting on it are buried)
+        xs = [p.x for p in co] or [0.0]; ys = [p.y for p in co] or [0.0]; i = len(bco)
+        bco += [Vector((min(xs) - 1, min(ys) - 1, -1e-3)), Vector((max(xs) + 1, min(ys) - 1, -1e-3)),
+                Vector((max(xs) + 1, max(ys) + 1, -1e-3)), Vector((min(xs) - 1, max(ys) + 1, -1e-3))]
+        polys.append((i, i + 1, i + 2, i + 3))
     bvh = BVHTree.FromPolygons(bco, polys)
     ts = [two_sided(m.name) if m else True for m in me.materials]
     tris = []
