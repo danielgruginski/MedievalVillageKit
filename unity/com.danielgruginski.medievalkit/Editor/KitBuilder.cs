@@ -424,6 +424,7 @@ namespace MedievalKit.Editor
                 if (!(kp.Get("vki_class") == "overlay" && kp.Get("vki_nav") == "none")) AddColliders(go, kp.Get("vki_collider"));
                 AddGroundFloor(go, kv.Key);
                 if (names.Any(IsGroundMaterial)) go.AddComponent<MeshCollider>().sharedMesh = mesh;   // walkable terrain / paving
+                AddCullLod(go, PrefabSubdir((string)d["fbx"]));
                 string dir = $"{KitPaths.Prefabs}/{PrefabSubdir((string)d["fbx"])}";
                 EnsureFolder(dir);
                 PrefabUtility.SaveAsPrefabAsset(go, $"{dir}/{kv.Key}.prefab");
@@ -432,6 +433,28 @@ namespace MedievalKit.Editor
             }
             AssetDatabase.SaveAssets();
             Log.AppendLine($"prefabs: {n}, failed {bad}");
+        }
+
+        /// <summary>
+        /// The nature's pieces vanish once they are small on screen (2026-10-25: a map's forest margin is ~3000 trees at
+        /// 7-10k triangles, 25 M of Greywall's 31 M; zoomed out over a whole map the editor drew them all and the GPU hung,
+        /// D3D12 887a0006). One LOD level, culled below this share of the screen's height (times the quality's LOD bias,
+        /// 2 on High). The game camera (30 deg, 13-32 m) sees a tree at 15% or more, a plant at 1.5%: never culled there.
+        /// </summary>
+        static readonly (string dir, float cull)[] CullBelow =
+        {
+            ("VK/Tree", 0.06f), ("VK/Bush", 0.04f), ("VK/Stump", 0.02f), ("VK/Log", 0.02f), ("VK/Rock", 0.02f), ("VK/Plant", 0.02f),
+        };
+
+        public static bool AddCullLod(GameObject go, string subdir)
+        {
+            var hit = CullBelow.FirstOrDefault(c => subdir == c.dir || subdir.StartsWith(c.dir + "/"));
+            if (hit.dir == null) return false;
+            var lg = go.GetComponent<LODGroup>();                       // (not ??: Unity's fake null)
+            if (lg == null) lg = go.AddComponent<LODGroup>();
+            lg.SetLODs(new[] { new LOD(hit.cull, go.GetComponentsInChildren<Renderer>()) });
+            lg.RecalculateBounds();
+            return true;
         }
 
         /// <summary>Prefabs mirror Art/Models: "Art/Models/VKI/Wall/x.fbx" -> "VKI/Wall".</summary>
