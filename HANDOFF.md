@@ -2373,7 +2373,17 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
       re-run after the globals change: unchanged.
     - **Open:** KitImport adds its CollisionShape3Ds unnamed (`@CollisionShape3D@N`), so a layout built before a
       reimport loses its edits to them (VKI_Dwarf_Hall warns "modified from inside an instance, but it has vanished"
-      since 161's reimport): name them in KitImport (Box0.., Ground), reimport, rebuild the layouts.
+      since 161's reimport): name them in KitImport (Box0.., Ground), reimport, rebuild the layouts. Done in 163.
+
+163. 2026-10-27 (Daniel: "Name the collision shapes in KitImport, reimport and rebuild the layouts, then go on with
+    the baked caps"). `KitImport` names its shapes: `Collision/Box0, Box1..` (vki_collider boxes and cave / stream
+    quarter slabs, in order) and `Ground/Mesh`. All 1,465 glbs reimported (md5s removed, .import touched,
+    `--headless --import`, 2.5 min; check 0 problems), the 49 structures and all 25 layouts rebuilt (every world
+    level's walk check passes; the bridge-deck ground cuts are the layout edits that the unnamed shapes lost). Travel
+    40 links, 0 problems; clickwalk ALL PASS in VK_ValleyTown, VKI_Tavern_F0, VKI_Dungeon_B1, VKI_Dwarf_Hall (no
+    "vanished" warnings now); see-through unchanged (49 buildings marked now). The click test's hold step now holds
+    toward a point in plain sight (6-10 m): the dwarf hall's held point behind a treasure room's wall walked the walker
+    up to the wall, as it should.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

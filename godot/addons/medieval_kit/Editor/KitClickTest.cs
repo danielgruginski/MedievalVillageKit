@@ -144,13 +144,19 @@ public partial class KitClickTest : Node
         }
         Check(clicked, "found a floor point 6 m off in view");
 
-        // 2: the button held toward a point 10 m off, 1.5 s
+        // 2: the button held toward a point 6-10 m off in plain sight, 1.5 s
         var start = Pos;
-        for (int i = 0; i < 16; i++)
+        bool held = false;
+        for (int i = 0; i < 32 && !held; i++)                                // 10 m off, else 6 (a small room)
         {
-            float a = Mathf.Tau * i / 16f + 0.2f;
-            var p = NavigationServer3D.MapGetClosestPoint(Map, Pos + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 10f);
-            if (Flat(p - Pos) < 7f || !OnScreen(p, out var s)) continue;
+            float a = Mathf.Tau * i / 16f + 0.2f, r = i < 16 ? 10f : 6f;
+            var p = NavigationServer3D.MapGetClosestPoint(Map, Pos + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * r);
+            if (Flat(p - Pos) < r - 3f || !OnScreen(p, out var s)) continue;
+            var straight = NavigationServer3D.MapGetPath(Map, Pos, p, true);           // in plain sight (no wall between)
+            float len = 0f;
+            for (int k = 1; k < straight.Length; k++) len += Flat(straight[k] - straight[k - 1]);
+            if (straight.Length < 2 || straight[^1].DistanceTo(p) > 0.15f || len > Flat(p - Pos) * 1.1f) continue;
+            held = true;
             legs.Screen = s; legs.Press = true; legs.Held = true;
             await Wait(90);
             legs.Held = false;
@@ -159,6 +165,7 @@ public partial class KitClickTest : Node
             Shot("2_hold");
             break;
         }
+        Check(held, "found a point 6-10 m off in plain sight in view");
 
         // 3: a click on a roof or a wall (the walker 8 m south of the nearest door's house): through to the floor behind
         // when the walker reaches it without a long way round, else up to the building

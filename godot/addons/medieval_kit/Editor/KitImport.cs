@@ -25,11 +25,14 @@ public partial class KitImport : EditorScenePostImport
         return pieces.RootElement.TryGetProperty(name, out var d) ? d : default;
     }
 
-    /// <summary>a Blender box [cx, cy, cz, sx, sy, sz] -> a Godot box shape under `body` ((x, y, z) -> (x, z, -y))</summary>
+    /// <summary>a Blender box [cx, cy, cz, sx, sy, sz] -> a Godot box shape under `body` ((x, y, z) -> (x, z, -y)), named
+    /// Box0, Box1.. in order: a level's edits to it survive a reimport (an unnamed node gets a new @CollisionShape3D@N
+    /// each time, and the level's edit to the old one is lost)</summary>
     static void AddBox(Node3D body, Node owner, float cx, float cy, float cz, float sx, float sy, float sz)
     {
         var cs = new CollisionShape3D
         {
+            Name = $"Box{body.GetChildCount()}",
             Shape = new BoxShape3D { Size = new Vector3(Mathf.Abs(sx), Mathf.Abs(sz), Mathf.Abs(sy)) },
             Position = new Vector3(cx, cz, -cy),
         };
@@ -118,7 +121,7 @@ public partial class KitImport : EditorScenePostImport
         if (ground && mi != null)       // walkable terrain / paving: the mesh itself
         {
             var gb = new StaticBody3D { Name = "Ground" };
-            var shape = new CollisionShape3D { Shape = mi.Mesh.CreateTrimeshShape() };
+            var shape = new CollisionShape3D { Name = "Mesh", Shape = mi.Mesh.CreateTrimeshShape() };
             root.AddChild(gb);
             gb.Owner = root;
             gb.AddChild(shape);
