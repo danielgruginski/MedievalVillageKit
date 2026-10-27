@@ -16,14 +16,22 @@ Contents:
 
 ## 1. Walking a level in five minutes
 
-1. Tools > Medieval Kit > Build All (materials, prefabs, levels): makes the level scenes and `KitWorld.asset`.
-2. Tools > Medieval Kit > Navigation > Bake Active Scene (or Bake Selected Scenes) for the levels you want to walk.
-3. Tools > Medieval Kit > Play From Start Level, or open a level and use Walk This Level.
+The package ships its level scenes built and their navmeshes baked (`Generated/Levels`):
+
+1. Tools > Medieval Kit > Play From Start Level: the valley town, the start of the example world (20 levels linked
+   by doors, stairs, a mine adit and a sewer grate).
+2. Or open a level and use Tools > Medieval Kit > Walk This Level. **VK_Hamlet** (a hamlet in a forest clearing,
+   built from `Documentation~/examples/Hamlet_layout.json` by `KitVillage`) shows the whole see-through: walk behind
+   the inn or the chapel.
 
 Where the level has a navmesh at its first spawn you get **KitWalker**: a capsule that walks where you click (or
 hold the left button), goes through a door you click, and is followed by the kit's camera with the see-through on.
 Without a navmesh you get **KitTestWalker** (WASD, E to take a way out). Nothing is saved into the scene: both are
 made in play mode. Look Around This Level plays with no walker: Tab steps through the level's cameras, F flies.
+
+A level you build or change yourself needs its navmesh baked again: Tools > Medieval Kit > Navigation > Bake Active
+Scene (or Bake Selected Scenes). After Tools > Medieval Kit > Build All (which rebuilds the materials, prefabs and the
+exported levels from `Art/` and `Data/`), bake the levels again.
 
 ## 2. The camera (`KitCamera`)
 
@@ -57,7 +65,8 @@ round hole round its chest. Three parts work together:
    and the half-width of the wedge from the camera to its body. Only surfaces in that wedge open (a wall beside the
    walker stays whole), and never below the kept height (the ground and the walls' feet stay).
 2. **The level's marks** (`KitSeeThrough`, set by `KitVillage` when an outdoor level starts; nothing is saved in the
-   scene). Rendering-layer bits on each renderer: *loose* pieces (trees, bushes, rocks, props) open down to the feet;
+   scene). Only maps built by `KitVillage` (from a layout, like VK_Hamlet) carry them; in the other levels (the
+   exported valley town, rooms, caves) the hole opens round the walker without them, piece by piece. Rendering-layer bits on each renderer: *loose* pieces (trees, bushes, rocks, props) open down to the feet;
    a *building's* pieces open together (a house opens as one, decided each frame); walls laid as props (a town wall,
    a palisade) open in runs. Each piece is also *cut* at 1.4 m over its base, and a *cap* (the piece's own
    cross-section, filled) closes the stub so you never see inside a wall. The caps are baked (Tools > Medieval Kit >

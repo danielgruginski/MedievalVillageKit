@@ -111,16 +111,7 @@
     { "piece": "Grave_A", "at": [28, 99], "rot": 8 },
     { "piece": "Grave_Obelisk", "at": [33, 96], "rot": 0 },
     { "piece": "Grave_Cross", "at": [37, 104], "rot": -10 },
-    { "piece": "Grave_A", "at": [26, 104], "rot": 3 },
-    { "piece": "Animal_Chickens", "at": [60, 38], "rot": 30, "collide": false },
-    { "piece": "Animal_Chickens", "at": [40, 57], "rot": -50, "collide": false },
-    { "piece": "Animal_Pig", "at": [103, 42], "rot": 20, "collide": false },
-    { "piece": "Animal_Pig", "at": [105, 45], "rot": 200, "collide": false },
-    { "piece": "Animal_Horse", "at": [30, 64], "rot": 90, "collide": false },
-    { "piece": "Animal_Cow", "at": [93, 58], "rot": 40, "collide": false },
-    { "piece": "Animal_Sheep", "at": [88, 58], "rot": 160, "collide": false },
-    { "piece": "Animal_Sheep", "at": [90, 61], "rot": 10, "collide": false },
-    { "piece": "Animal_Goat", "at": [95, 128], "rot": 250, "collide": false }
+    { "piece": "Grave_A", "at": [26, 104], "rot": 3 }
   ],
   "fences": [
     { "piece": "Prop_Fence", "points": [[88, 42], [89, 33], [95, 29], [103, 30], [107, 36]] },

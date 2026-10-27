@@ -133,7 +133,7 @@ Each phase ends with its check passing and its record in HANDOFF; commits and Pl
 7. **The other repos** (GODOT_EXPORT section 7): weapons and items, creatures, humanoids.
 8. **User documentation** (Daniel, 2026-10-26: "Do we have the documentation about how all this stuff works? If we
    don't add it to the list"). Today: the Unity package has a 10-line README and `Documentation~/LEVEL_BUILDING.md`
-   (level building, written for AI agents); the Godot addon has none; the repo's docs (UNITY_EXPORT, GODOT_EXPORT,
+   (level building, written for AI agents) and, since 0.3.0, `Documentation~/MANUAL.md`; the Godot addon has none; the repo's docs (UNITY_EXPORT, GODOT_EXPORT,
    HANDOFF) are for developing the kit, not using it. Wanted, one manual per engine, in the package / addon (shipped
    with the packs): getting started (install, the demo, the palette), pieces and their data (colliders, links,
    markers, decks), levels and the world graph (travel, chains), the generators (rooms, dungeons, caves, sewers,

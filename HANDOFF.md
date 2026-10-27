@@ -2298,6 +2298,24 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
       the hole behind houses, a door round the back, a road's end, a corpse in a fight, a party). Manual started:
       `Documentation~/MANUAL.md` (phase 8: the camera, the see-through driver, the walker, the hooks).
 
+160. 2026-10-26 (Daniel: "we can finish Unity first, upload it, and later upload the godot version"; the weapons
+    and items get a pack of their own later). **Unity pack 0.3.0** (`package.json` 0.3.0; itch/1_Medieval_Kit):
+    - Built in itch/_stage (a clean URP project, the zip unpacked as a buyer does): verify 0 problems, no compile
+      errors. Staging's `stage.sh` called `python` (missing here: `py`), so the first import ran on an empty package.
+    - **Navmeshes baked for the 20 world levels** there (`KitPack.navbake`: KitNavBake.BakeScenes over KitWorld's
+      levels; only VKI_Chapel_F0 had one) and copied back into `Generated/Levels` (scenes + `_NavMesh` assets, 1.2 MB).
+      `Generated/` is not in git: the shipped levels live in this working copy only.
+    - **VK_Hamlet**: `Documentation~/examples/Hamlet_layout.json` built by KitVillageTools.BuildVillage into
+      `Generated/Levels` (+ `Hamlet_Ground/`): the one shipped level with the see-through's marks (KitVillage), so the
+      house-as-one opening and the caps show; VK_ValleyTown is an exported level without a KitVillage (the hole
+      opens piece by piece there). The example layout still placed the six `Animal_*` placeholders removed 2026-10-21
+      ("missing pieces"): taken out of it and out of LEVEL_BUILDING's props row.
+    - **Walker check in play mode** (`KitWalkerCheck` in itch/_tools/unity/KitPack.cs, batchmode, domain reload
+      off): KitWalker spawns on the navmesh with KitCamera, MoveTo walks, behind 7 hamlet houses the hidden check
+      reads 1.0 and the hole opens; shots with the see-through on and off in `screenshots/kit_raw_walker/`.
+    - Manual section 1 rewritten for the shipped navmeshes and VK_Hamlet; INSTALL.txt and the FBX readme updated
+      (counts: 1,470 pieces, 298 textures, 187 of 200 materials with vertex colour).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
