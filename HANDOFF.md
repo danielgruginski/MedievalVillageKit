@@ -2272,6 +2272,32 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     `renders/slums/unity_shacks_*.png`, `godot_shacks_*.png`. Catalogue: 29 thumbnails, PIECES.md regenerated (1,433
     pieces, none without a thumbnail).
 
+159. 2026-10-26 (Daniel: "I thought the see-through would be on the pack, and we were going to port that into godot";
+    then "You can start step 1"). **FULL_PORT_PLAN phase 3b: the camera, the see-through driver and the click-to-move
+    core are in the package** (assembly MedievalKit.Walker, which now also references URP):
+    - `KitCamera` (from the game's GameCamera, line for line): follow at the kit's 50-degree view, the wheel's zoom,
+      the level's cameras and listeners switched off on arrival (ears at the target), shadows fitted to the view, the
+      optional border (`KitWalkWindow` over a `KitMapFrame`), and the see-through's driver: the globals
+      `_KitSeeThrough` / `_KitSeeThroughArgs` every frame, the hidden check (`KitSeeThroughProbe`) with the open/shut
+      hysteresis. Hooks: `MapFrameOf(level)`, `Keeps(camera)`, `Entered(outdoors)`.
+    - `KitPointer.Blocked(screen)`: the game's UI under the pointer (no zoom, no walk).
+    - `KitClickToMove` (from the game's ClickToMove): hold / click to walk with the floor picked through the
+      see-through's hole (`Ground`, `Hold` with the flip refusal), usable things (`Interactable`, `UseVia`), ways out
+      (`KitLink`; road ends walked into once armed), the house whose door is round the back. Virtual hooks for a game:
+      `Under`, `Press`, `Take`, `Offers`, `PassesThrough`, `Halted`, `ReadsPointer`, `TakesClicks`, `Walking`, `Went`,
+      `ClearHover`. `KitClickToMove.Leads` keeps the world graph's `@deep` open end.
+    - `KitSeeThrough.Opened(point, distance, ray, of)` (and the hit overload): a point the hole has opened, read from
+      the globals (was ClickToMove.SeenThrough).
+    - `KitWalker` (Walker/KitWalker.cs): a capsule on the navmesh with KitClickToMove and a KitCamera; Play From Start
+      Level / Walk This Level spawn it where the first spawn has a navmesh (else KitTestWalker, WASD), and spawn
+      nothing when a game's player is registered (`KitTravel.HasWalker`). Chains' play scenes keep KitTestWalker.
+    - MedievalSetting: `GameCamera : KitCamera` and `ClickToMove : KitClickToMove` (creatures, the fight's corpse
+      rule, party, closed ways, the travel map, door sounds); KitHooks sets the four hooks (GameUI.BlocksPointer,
+      AreaMap.DataOf, LookPreview, Sfx.Ambience). Same class names and fields: nothing saved refers to them (both are
+      added from code). Compiles clean in the game, no console warnings. **Not play-tested** (Daniel's play test: walk,
+      the hole behind houses, a door round the back, a road's end, a corpse in a fight, a party). Manual started:
+      `Documentation~/MANUAL.md` (phase 8: the camera, the see-through driver, the walker, the hooks).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

@@ -292,6 +292,35 @@ namespace MedievalKit
             return false;
         }
 
+        /// <summary>a point along a screen ray the see-through has opened (the hole round the walker's chest, above the height
+        /// kept over its feet, short of the walker): a pointer there looks past it, as the eye does. Read from the shader's
+        /// globals (the Walker's KitCamera sets them), so it is off when they are. `of` (the collider hit, a building's
+        /// root) brings the piece's marks: a building not in the walker's way stays whole; a loose piece (a tree, a rock, a
+        /// prop) opens down to the feet; a cut piece opens over its own cut. From the Guild RPG's ClickToMove (phase 3b).</summary>
+        public static bool Opened(Vector3 point, float distance, Ray ray, Component of = null)
+        {
+            var hole = Shader.GetGlobalVector(SeeId);                         // xyz the walker's chest, w the hole's radius
+            if (hole.w <= 0f) return false;
+            var chest = (Vector3)hole - ray.origin;
+            if (distance >= Vector3.Dot(chest, ray.direction)) return false;   // at or beyond the walker: whole
+            if (Vector3.Cross(ray.direction, chest).sqrMagnitude > hole.w * hole.w) return false;   // off the hole
+            var args = Shader.GetGlobalVector(ArgsId);                        // x the walker's feet, y the height kept
+            float keep = args.y;
+            var r = of != null ? of.GetComponentInParent<MeshRenderer>() : null;
+            if (of != null && r == null) r = of.GetComponentInChildren<MeshRenderer>();   // (a building's root: its pieces)
+            if (r != null)
+            {
+                uint m = r.renderingLayerMask;
+                if ((m & GroupBit) != 0 && (m & OpenBit) == 0) return false;
+                if (CutAt(r, args.x, out float cut)) return point.y > cut;    // its own cut (KitSeeThroughCaps), not under the feet
+                if ((m & LooseBit) != 0) keep = -0.25f;                      // (the shader's: a little under the feet)
+            }
+            return point.y > args.x + keep;
+        }
+
+        /// <summary><see cref="Opened(Vector3, float, Ray, Component)"/> for a ray's hit</summary>
+        public static bool Opened(RaycastHit h, Ray ray) => Opened(h.point, h.distance, ray, h.collider);
+
         /// <summary>does the segment a-b meet the box (slabs)?</summary>
         static bool Segment(Vector3 a, Vector3 b, Bounds box)
         {

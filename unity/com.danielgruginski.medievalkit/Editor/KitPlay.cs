@@ -4,8 +4,9 @@ using UnityEngine;
 
 namespace MedievalKit.Editor
 {
-    /// <summary>Tools > Medieval Kit > Play From Start Level: opens the world's start level and walks it with
-    /// KitTestWalker (created in play mode only, at the first spawn, so nothing is saved into the scene). Look Around This
+    /// <summary>Tools > Medieval Kit > Play From Start Level: opens the world's start level and walks it with KitWalker
+    /// (click-to-move, the kit's camera and see-through) where it has a navmesh, KitTestWalker (WASD) where not (created
+    /// in play mode only, at the first spawn, so nothing is saved into the scene). Look Around This
     /// Level: play without a walker, stepping through the scene's cameras or flying a free one (KitLookAround; the
     /// catalogs, where the game's z-fight watch, F8, then follows every view).</summary>
     [InitializeOnLoad]
@@ -55,9 +56,13 @@ namespace MedievalKit.Editor
             EditorApplication.EnterPlaymode();
         }
 
+        /// <summary>the kit's walker (KitWalker: click-to-move and the kit's camera, the see-through on) where the level has a
+        /// navmesh at its first spawn, else the WASD stand-in; none when a game's player is already registered</summary>
         public static GameObject SpawnWalker()
         {
+            if (KitTravel.HasWalker) return null;                              // a game's own player
             var spawn = Object.FindAnyObjectByType<KitSpawn>();
+            if (spawn != null && KitWalker.Spawn(spawn.transform.position, spawn.transform.rotation) is KitWalker walker) return walker.gameObject;
             var go = new GameObject("KitTestWalker");
             var cc = go.AddComponent<CharacterController>();
             cc.height = 1.7f; cc.radius = 0.3f; cc.center = new Vector3(0, 0.85f, 0);

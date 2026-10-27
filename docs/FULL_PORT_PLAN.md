@@ -111,6 +111,11 @@ Each phase ends with its check passing and its record in HANDOFF; commits and Pl
       left for later: the build-settings helper copied across the game's level menus.
    b. The camera and the see-through driver out of `GameCamera`, and the click-to-move core (floor through the hole,
       links, doors): with them the kit's see-through works without the game, and the test walker becomes a real one.
+      **Done 2026-10-26 (HANDOFF 159), not play-tested:** KitCamera, KitPointer, KitClickToMove, KitWalker,
+      KitSeeThrough.Opened; the game's GameCamera and ClickToMove are subclasses with its rules on top.
+   **3c and 3d parked 2026-10-26** (Daniel, on whether the package was growing past what people want from it: "lets
+   keep godot up to date with unity"): the Unity package stops growing here; Godot is brought level with everything
+   it has (phases 4-6, with 3a-3b's systems in 6). 3c-3d come back only if buyers or the game ask for them.
    c. The outdoor-map generators (section 2.3): the shared C# core with the layout check built in, then generators
       for the kinds the game has made by hand (walled town, village and hamlet, district of a city, road, wilds and
       woods, camp and hold, a burnt variant). Check: maps of each kind generated over many seeds pass the layout check
@@ -126,3 +131,15 @@ Each phase ends with its check passing and its record in HANDOFF; commits and Pl
    opening as one, the baked caps, and the driver moved out of the game in phase 3. Check: the spike's edge-case
    gallery (docs/history/SPIKE_SEETHROUGH.md) walked in both engines.
 7. **The other repos** (GODOT_EXPORT section 7): weapons and items, creatures, humanoids.
+8. **User documentation** (Daniel, 2026-10-26: "Do we have the documentation about how all this stuff works? If we
+   don't add it to the list"). Today: the Unity package has a 10-line README and `Documentation~/LEVEL_BUILDING.md`
+   (level building, written for AI agents); the Godot addon has none; the repo's docs (UNITY_EXPORT, GODOT_EXPORT,
+   HANDOFF) are for developing the kit, not using it. Wanted, one manual per engine, in the package / addon (shipped
+   with the packs): getting started (install, the demo, the palette), pieces and their data (colliders, links,
+   markers, decks), levels and the world graph (travel, chains), the generators (rooms, dungeons, caves, sewers,
+   houses, outdoor maps), the see-through (how the hole, the caps and the driver work, what a game must call), fires,
+   the map frame / walk window, the shroud, the hooks a game fills, and the tests (walk, travel); plus the FBX / glTF
+   zip's README. Written as each system lands in the kit (3b's driver and walker first), checked against the code.
+   Order agreed 2026-10-26: 3b, then the Godot see-through (6), the Unity pack, then 4-5 and the Godot pack.
+   Godot's phase 6 also takes 3a-3b's systems (fires, usable things, missiles, silhouettes, walkways, map frame +
+   walk window, the z-fight watch, the camera, click to move, the walker), so the two engines offer the same kit.

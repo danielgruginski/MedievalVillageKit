@@ -1,6 +1,6 @@
 {
   "name": "MedievalKit.Walker",
   "rootNamespace": "MedievalKit",
-  "references": ["MedievalKit.Runtime", "Unity.InputSystem"],
+  "references": ["MedievalKit.Runtime", "Unity.InputSystem", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime"],
   "autoReferenced": true
 }
