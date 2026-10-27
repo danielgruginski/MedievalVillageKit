@@ -4,8 +4,9 @@ using Godot;
 namespace MedievalKit;
 
 /// <summary>The scene the editor's Play From Start Level / Walk This Level run (Walker/kit_play.tscn): loads the level
-/// named in user://kit_play_level.txt (the world's start when empty) through KitTravel and walks it with a
-/// KitTestWalker, so nothing is saved into the level. Unity: KitPlay.</summary>
+/// named in user://kit_play_level.txt (the world's start when empty) through KitTravel and walks it, so nothing is saved
+/// into the level: with the kit's click-to-move walker (<see cref="KitWalker"/>) where the level has a navmesh, else the
+/// WASD stand-in (<see cref="KitTestWalker"/>). Unity: KitPlay.</summary>
 public partial class KitPlayBoot : Node
 {
     public const string LevelFile = "user://kit_play_level.txt";
@@ -20,20 +21,25 @@ public partial class KitPlayBoot : Node
         // arrive on the level's first link's spawn (both ends of a link share its id), else its first spawn
         string spawn = world?.Find(level)?.Links.FirstOrDefault()?.Id;
         KitTravel.Arrived += PlaceOnce;
-        CallDeferred(MethodName.Begin, level, spawn ?? "");
+        Callable.From(() => KitTravel.Reload(level, spawn ?? "")).CallDeferred();
     }
 
-    void Begin(string level, string spawn)
-    {
-        GetTree().Root.AddChild(new KitTestWalker { Name = "KitTestWalker" });
-        KitTravel.Reload(level, spawn);
-    }
-
-    void PlaceOnce(string level, KitSpawn spawn)
+    /// <summary>the walker, on the first arrival (no walker yet: KitTravel placed nobody; this boot scene is gone, the
+    /// level replaced it)</summary>
+    static void PlaceOnce(string level, KitSpawn spawn)
     {
         KitTravel.Arrived -= PlaceOnce;
-        if (spawn != null) return;
-        var first = GetTree().CurrentScene?.FindChildren("*", "", true, false).OfType<KitSpawn>().FirstOrDefault();
-        if (first != null && KitTravel.Walker != null) KitTravel.Place(KitTravel.Walker, first.GlobalTransform);
+        var tree = (SceneTree)Engine.GetMainLoop();
+        var scene = tree.CurrentScene;
+        var at = spawn ?? scene?.FindChildren("*", "", true, false).OfType<KitSpawn>().FirstOrDefault();
+        var t = at?.GlobalTransform ?? Transform3D.Identity;
+        bool nav = scene != null && scene.FindChildren("*", "", true, false).OfType<KitNavMesh>().Any();
+        Callable.From(() =>
+        {
+            if (nav) { KitWalker.Spawn(t); return; }
+            var w = new KitTestWalker { Name = "KitTestWalker" };
+            tree.Root.AddChild(w);
+            KitTravel.Place(w, t);
+        }).CallDeferred();
     }
 }

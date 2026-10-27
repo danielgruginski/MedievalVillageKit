@@ -43,6 +43,19 @@ public static class KitSeeThrough
 
     public static readonly StringName LayersParam = "kit_layers", BMinParam = "kit_bmin", BMaxParam = "kit_bmax";
     public static readonly StringName SeeParam = "kit_see_through", ArgsParam = "kit_see_through_args";
+    /// <summary>the globals as last set (<see cref="Set"/>; a game reads them here: Godot reads globals back only in the
+    /// editor)</summary>
+    public static Vector4 Hole { get; private set; }
+    public static Vector4 Args { get; private set; }
+
+    /// <summary>set the see-through's globals for every kit shader: the hole (its middle, xyz, at the walker's chest; its
+    /// radius, w: 0 shut) and its args (the walker's feet height, the height kept over them, the near and body margins)</summary>
+    public static void Set(Vector4 hole, Vector4 args)
+    {
+        Hole = hole; Args = args;
+        RenderingServer.GlobalShaderParameterSet(SeeParam, hole);
+        RenderingServer.GlobalShaderParameterSet(ArgsParam, args);
+    }
 
     static int nextTag;
     static readonly int[] probeTags = new int[MaxTag + 1];
@@ -354,12 +367,12 @@ public static class KitSeeThrough
     /// them). `of` (the collider hit, a building's root) brings the piece's marks. Unity: KitSeeThrough.Opened.</summary>
     public static bool Opened(Vector3 point, float distance, Vector3 rayFrom, Vector3 rayDir, Node of = null)
     {
-        var hole = (Vector4)RenderingServer.GlobalShaderParameterGet(SeeParam);
+        var hole = Hole;
         if (hole.W <= 0f) return false;
         var chest = new Vector3(hole.X, hole.Y, hole.Z) - rayFrom;
         if (distance >= chest.Dot(rayDir)) return false;
         if (rayDir.Cross(chest).LengthSquared() > hole.W * hole.W) return false;
-        var args = (Vector4)RenderingServer.GlobalShaderParameterGet(ArgsParam);
+        var args = Args;
         float keep = args.Y;
         var g = of != null ? MeshOf(of) : null;
         if (g != null)

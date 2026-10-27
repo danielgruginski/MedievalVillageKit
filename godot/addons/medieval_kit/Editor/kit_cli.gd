@@ -8,6 +8,7 @@ extends SceneTree
 #   ... (a window, no --headless)          ... -- capture <layout> <out dir> [WxH] [asbuilt]
 #        (WxH "" or left out: the layout's own size; asbuilt: one pass with the level's own shadows, as its Blender renders)
 #   ... (a window, no --headless)          ... -- seethrough <layout> <out dir>    (the see-through behind its structures)
+#   ... (a window, no --headless)          ... -- clickwalk <layout> <out dir>     (the click-to-move walker: floor, hold, doors)
 
 const EDITOR := "res://addons/medieval_kit/Editor/"
 
@@ -42,6 +43,10 @@ func _initialize() -> void:
 		var t: Node = load(EDITOR + "KitSeeThroughTest.cs").new()
 		t.Setup(args[1], args[2])
 		root.add_child(t)
+	elif cmd == "clickwalk":
+		var w: Node = load(EDITOR + "KitClickTest.cs").new()
+		w.Setup(args[1], args[2])
+		root.add_child(w)
 	else:
-		push_error("kit_cli: check [piece ...] | build <layout> ... | structures | travel | capture <layout> <out dir> [WxH] [asbuilt] | seethrough <layout> <out dir>")
+		push_error("kit_cli: check [piece ...] | build <layout> ... | structures | travel | capture <layout> <out dir> [WxH] [asbuilt] | seethrough <layout> <out dir> | clickwalk <layout> <out dir>")
 		quit(1)

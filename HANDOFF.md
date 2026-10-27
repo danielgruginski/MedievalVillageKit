@@ -2345,6 +2345,36 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
       the 3a systems (fires, usable things, missiles, silhouettes, walkways, z-fight watch), the Godot manual; and
       phase 5's KitVillage to call Loose / Runs / Building on outdoor maps.
 
+162. 2026-10-27 (Daniel: "Commit and push the Godot see-through, then port click-to-move and the walker"). 161 pushed
+    as eff95a1. **FULL_PORT_PLAN phase 6, part 2: click to move and the walker in Godot:**
+    - `Walker/KitClickToMove.cs`: Unity's KitClickToMove on Godot -- the floor under the cursor through what the
+      see-through opened (Ground: exact floor behind, else the reachable point by what was hit, else toward the point),
+      hold-to-walk with the kept way and the flip refusal, doors under the cursor (their trigger, or within 0.8 m of the
+      solid thing hit), road ends walked into once armed, KitTravel.Go on arrival, Preload on. A child node that moves
+      its parent (the body). Godot's NavigationAgent3D cannot take a way worked out ahead (the flip check needs one), so
+      the walker follows its own way (`NavigationServer3D.MapGetPath`; Speed 4.5, Acceleration 30, TurnSpeed 720,
+      Unity's agent values), its height from the way then the navmesh under it; `NavRay` stands in for Unity's
+      NavMesh.Raycast (0.2 m steps). Clicks come through `_UnhandledInput` (Godot's GUI keeps its own) and KitPointer;
+      `Pointer()` is virtual (a test or a gamepad cursor). Ray types `PointerRay` / `PointerHit`; `Cast` is
+      RaycastAll (excludes each hit's RID and casts again).
+    - Not ported yet: things to use (Unity's Interactable: phase 6's 3a part) and HouseUnder (houses whose door the
+      camera cannot see: it needs phase 5's KitVillage and its box per house).
+    - `Walker/KitWalker.cs` (capsule body + legs + KitCamera as a child; HUD and the door's prompt at the cursor);
+      `KitPlayBoot` spawns it where the level has a KitNavMesh (else KitTestWalker) once the level has arrived (its
+      arrival handler is static: the level replaces the boot scene).
+    - `KitSeeThrough.Set(hole, args)` keeps the globals in C# (`Hole`, `Args`): `RenderingServer.GlobalShaderParameterGet`
+      is editor-only ("should never be used outside the editor") and Opened read it every frame.
+    - Check: `kit_cli -- clickwalk <layout> <out>` (Editor/KitClickTest.cs, KitTestLegs moves the pointer): floor click
+      6 m off, held 1.5 s, a roof / wall click (through to the floor behind, and up to it), the doors under the cursor
+      and a round trip through the first. ALL PASS in VK_ValleyTown (5 of 5 doors show; into VKI_Mine_M1 and back),
+      VKI_Tavern_F0 (walls; up the stairs to F1 and back) and VKI_Dungeon_B1 (bars; to the sewer and back). Shots in
+      `renders/clickwalk_godot/`. VK_ValleyTown's roof step skips: exterior pieces carry no `vki_collider` (Unity's the
+      same; a village's houses get a box from KitVillage), so the ray meets only the terrain there. See-through check
+      re-run after the globals change: unchanged.
+    - **Open:** KitImport adds its CollisionShape3Ds unnamed (`@CollisionShape3D@N`), so a layout built before a
+      reimport loses its edits to them (VKI_Dwarf_Hall warns "modified from inside an instance, but it has vanished"
+      since 161's reimport): name them in KitImport (Box0.., Ground), reimport, rebuild the layouts.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

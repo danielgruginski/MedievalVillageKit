@@ -222,9 +222,11 @@ restyled stones, roof jitter (dormer 1 / dormer 0 brightness 1.038-1.046 in both
   properties, Blender slot per surface), `KitLink` (an Area3D: id, kind, target, arrival, prompt, facing), `KitSpawn` /
   `KitMarker`, `KitLevel`, `KitWorld` (+ levels, links; the arrival rule), `KitTravel` (+ `KitTravelHost`: the fade,
   threaded preloads, held levels for instant cuts, "@return" doors), `KitDecks`, `KitNavMesh` (a NavigationRegion3D
-  that sets its map's cell size), `KitEncounter`, `KitPortalMarker`, `KitStructure`. `Walker/`: `KitTestWalker`, the
-  demo (`KitDemo`, `KitDemoView`, `kit_demo.tscn`: the project's main scene), `KitPlayBoot` (Project > Tools > Play
-  From Start Level / Walk This Level).
+  that sets its map's cell size), `KitEncounter`, `KitPortalMarker`, `KitStructure`; `Runtime/World/`: the
+  see-through (`KitSeeThrough`, `KitSeeThroughProbe`), `KitMapFrame`. `Walker/`: `KitCamera` (+ `KitPointer`),
+  `KitClickToMove` + `KitWalker` (click / hold to walk on the navmesh, doors by clicking them), `KitTestWalker` (WASD),
+  the demo (`KitDemo`, `KitDemoView`, `kit_demo.tscn`: the project's main scene), `KitPlayBoot` (Project > Tools >
+  Play From Start Level / Walk This Level: KitWalker where the level has a navmesh, else KitTestWalker).
 - **Import** (`KitImport`): the piece's colliders -- `vki_collider` boxes on a StaticBody3D, layer 1 (`KitPiece.Solid`),
   or 2 (`Passable`) for doors that open and breakables; the open quarters of cave / stream tiles; the mesh itself on
   ground pieces. **Godot reimports a .glb only when its md5 file is gone and its .import is touched** (a changed import

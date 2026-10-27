@@ -98,7 +98,7 @@ public partial class KitCamera : Camera3D
     public override void _ExitTree()
     {
         KitTravel.Arrived -= OnArrived;
-        RenderingServer.GlobalShaderParameterSet(KitSeeThrough.SeeParam, Vector4.Zero);   // the editor's views stay whole
+        KitSeeThrough.Set(Vector4.Zero, KitSeeThrough.Args);                    // the editor's views stay whole
         foreach (var kv in shadowRest) if (GodotObject.IsInstanceValid(kv.Key)) kv.Key.DirectionalShadowMaxDistance = kv.Value;
         shadowRest.Clear();
     }
@@ -212,8 +212,7 @@ public partial class KitCamera : Camera3D
     {
         Vector4 Hole() => new Vector4(p.X, p.Y + 1f, p.Z, SeeThroughRadius * Mathf.SmoothStep(0f, 1f, seeOpen));
         var args = new Vector4(p.Y, KeepBelow, SeeThroughNear, SeeThroughBody);
-        RenderingServer.GlobalShaderParameterSet(KitSeeThrough.SeeParam, Hole());
-        RenderingServer.GlobalShaderParameterSet(KitSeeThrough.ArgsParam, args);
+        KitSeeThrough.Set(Hole(), args);
         float want = 1f;
         if (SeeThroughWhenHidden && SeeThroughRadius > 0f)
         {
@@ -224,7 +223,7 @@ public partial class KitCamera : Camera3D
         }
         seeOpen = Mathf.MoveToward(seeOpen, want, dt / Mathf.Max(0.01f, want > seeOpen ? SeeThroughOpenTime : SeeThroughShutTime));
         var hole = Hole();
-        RenderingServer.GlobalShaderParameterSet(KitSeeThrough.SeeParam, hole);
+        KitSeeThrough.Set(hole, args);
         KitSeeThrough.DecideAll(GlobalPosition, hole, args);
     }
 
