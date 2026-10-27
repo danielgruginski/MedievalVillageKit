@@ -464,9 +464,15 @@ def blender_alpha_mode(mn):
 
 
 class _Tres:
-    """a Godot text resource being written: ext_resources + [resource] lines"""
+    """a Godot text resource being written: ext_resources, sub_resources + [resource] lines"""
     def __init__(self, typ):
-        self.typ, self.ext, self.lines = typ, [], []
+        self.typ, self.ext, self.lines, self.subs = typ, [], [], []
+
+    def sub_res(self, typ, lines):
+        """a [sub_resource] (lines: "key = value" strings) -> its reference"""
+        sid = "sub_%d" % (len(self.subs) + 1)
+        self.subs.append((typ, sid, lines))
+        return f'SubResource("{sid}")'
 
     def ext_res(self, typ, path):
         for i, (t, p) in enumerate(self.ext):
@@ -484,6 +490,8 @@ class _Tres:
         for i, (t, p) in enumerate(self.ext):
             out.append(f'[ext_resource type="{t}" path="{p}" id="{i + 1}"]')
         if self.ext: out.append("")
+        for typ, sid, lines in self.subs:
+            out += [f'[sub_resource type="{typ}" id="{sid}"]'] + lines + [""]
         out.append("[resource]")
         out += self.lines
         return "\n".join(out) + "\n"
@@ -641,6 +649,17 @@ def gdx_material_tres(d, done):
             sp("moss_noise", "Vector2(%s, %s)" % tuple(_r(x) for x in moss.get("noise", [0, 0])))
             sp("moss_range", "Vector2(%s, %s)" % tuple(_r(x) for x in moss.get("range", [0, 1])))
             if not moss.get("gate_vertex_alpha"): notes.append("moss without the vertex-alpha gate (the shader always gates)")
+        if not two and mode in ("opaque", "clip", "hash"):
+            # the see-through's caps (Unity KitLit's SeeThroughCap pass): a one-sided solid opened by the hole shows its
+            # back faces flat, as its cut (KitLitCap.gdshader)
+            cap = ['resource_name = "%s_Cap"' % d["name"],
+                   "shader = %s" % t.ext_res("Shader", "res://addons/medieval_kit/Shaders/KitLitCap.gdshader"),
+                   "shader_parameter/base_color = %s" % _color(bc[:3], 1.0)]
+            if d.get("base_map"):
+                cap.append("shader_parameter/albedo_map = %s" % t.ext_res("Texture2D", gdx_texture(d["base_map"], done=done)))
+            if mode == "clip": cap.append("shader_parameter/alpha_cut = %r" % _r(float(d.get("cutoff", 0.5)), 6))
+            if jit: cap.append("shader_parameter/jitter = Vector2(%s, %s)" % (_r(j[0]), _r(j[1])))
+            t.set("next_pass", t.sub_res("ShaderMaterial", cap))
         return t.text(), kind, notes
     t = _Tres("StandardMaterial3D")
     t.set("resource_name", f'"{d["name"]}"')

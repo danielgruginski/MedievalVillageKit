@@ -2316,6 +2316,35 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     - Manual section 1 rewritten for the shipped navmeshes and VK_Hamlet; INSTALL.txt and the FBX readme updated
       (counts: 1,470 pieces, 298 textures, 187 of 200 materials with vertex colour).
 
+161. 2026-10-26 (Daniel: "Want to proceed with the godot build, while that one is working?"). **FULL_PORT_PLAN phase
+    6, part 1: the see-through in Godot** (addon `godot/addons/medieval_kit`):
+    - `Shaders/kit_see_through.gdshaderinc`: Unity's KitSeeThrough.hlsl line for line. Godot has no per-renderer
+      rendering layers or bounds in a shader, so the marks are instance uniforms on each GeometryInstance3D
+      (`kit_layers`, `kit_bmin`, `kit_bmax`); the hidden check's view is told by its camera's cull mask (bit 20,
+      `KIT_PROBE_CAMERA`: a camera's default mask has all 20 visual layers). Every KitLit variant clips first thing;
+      the check's colours override the outputs at the end (Godot allows no `return` in fragment()).
+    - Globals `kit_see_through` / `kit_see_through_args` (project.godot [shader_globals]; a shader naming a missing
+      global does not compile) and `rendering/limits/global_shader_variables/buffer_size` = 1,048,576 (every kit
+      material now has instance uniforms; Godot gives each instance 16 slots, 65,536 by default = 4,096 instances).
+      `MedievalKitPlugin.EnsureSettings` adds both to a buyer's project (asks for a restart).
+    - `Runtime/World/KitSeeThrough.cs` (marks: Loose, Runs, Building, Keep, cuts; Bound sets every piece's world
+      bounds, called by KitLevel once it stands; buildings register and KitCamera decides them all: Unity's KitVillage
+      keeps its own list), `KitSeeThroughProbe.cs` (a 32 x 40 SubViewport sharing the world, own black linear
+      environment, read back the frame after; tags as green = tag / 255 since Godot's view comes back sRGB-encoded),
+      `KitMapFrame.cs` (+ KitWalkWindow), `Walker/KitCamera.cs` (Unity's KitCamera on Godot's axes: north -Z,
+      screen right +X; Distance zoom limits are ZoomNear/ZoomFar, Camera3D owns Near/Far; shadows fitted on the scene's
+      shadowed DirectionalLight3Ds; KitPointer in the same file).
+    - Back-face caps: `Shaders/KitLitCap.gdshader` (Unity KitLit's SeeThroughCap pass: cull_front, the vertex stage
+      drops it when shut / probe / shadow pass / out of the way, level-face light without the sun's shadow), the
+      `next_pass` of the 63 one-sided solid materials (gdx_export `_Tres.sub_res`; `gdx_export.py -- materials`).
+    - Check: `kit_cli -- seethrough <layout> <out>` (Editor/KitSeeThroughTest.cs): Structures_Showcase, 45 VKX_ST_
+      groups as buildings, a stand-in behind 6: tannery, brewery, mine, apiary hidden 0.67-1.0, hole open, one
+      building open each; dyer's yard and charcoal burner (low, open) 0.00, shut. `renders/seethrough_godot/`.
+    - On the way: 283 glbs failed to load (the z-fight re-export removed their .md5): `godot --headless --import`.
+    - **Left for phase 6:** the real (baked) caps (KitSeeThroughCaps, its bank and bake), click to move + KitWalker,
+      the 3a systems (fires, usable things, missiles, silhouettes, walkways, z-fight watch), the Godot manual; and
+      phase 5's KitVillage to call Loose / Runs / Building on outdoor maps.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

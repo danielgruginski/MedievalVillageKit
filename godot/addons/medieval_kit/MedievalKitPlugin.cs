@@ -12,6 +12,7 @@ public partial class MedievalKitPlugin : EditorPlugin
 
     public override void _EnterTree()
     {
+        EnsureSettings();
         AddToolMenuItem(Check, Callable.From(() => new KitBuilder().CheckPieces(System.Array.Empty<string>())));
         AddToolMenuItem(Build, Callable.From(() => GD.Print(new KitBuilder().BuildAllLayouts())));
         AddToolMenuItem(PlayStart, Callable.From(() => Play("")));
@@ -20,6 +21,34 @@ public partial class MedievalKitPlugin : EditorPlugin
             if (EditorInterface.Singleton.GetEditedSceneRoot() is KitLevel l) Play(l.LevelName);
             else GD.PushWarning("[MedievalKit] Walk This Level: the open scene is not a kit level (res://kit/layouts/)");
         }));
+    }
+
+    /// <summary>The project settings the kit's shaders need (FULL_PORT_PLAN phase 6): the see-through's two global
+    /// uniforms (kit_see_through.gdshaderinc: a shader naming a global the project lacks does not compile), and room for
+    /// instance uniforms -- every kit material has some (the see-through's marks), and Godot gives each instance 16 slots
+    /// of the global buffer, 65,536 by default: 4,096 instances, under one outdoor map's pieces. Saved once; Godot reads
+    /// the buffer size at start, so the first time it asks for a restart.</summary>
+    static void EnsureSettings()
+    {
+        bool changed = false, restart = false;
+        foreach (var g in new[] { "kit_see_through", "kit_see_through_args" })
+        {
+            string key = "shader_globals/" + g;
+            if (ProjectSettings.HasSetting(key)) continue;
+            ProjectSettings.SetSetting(key, new Godot.Collections.Dictionary { { "type", "vec4" }, { "value", Vector4.Zero } });
+            changed = true;
+        }
+        const string buffer = "rendering/limits/global_shader_variables/buffer_size";
+        const int want = 1 << 20;
+        if ((int)ProjectSettings.GetSetting(buffer, 65536) < want)
+        {
+            ProjectSettings.SetSetting(buffer, want);
+            changed = restart = true;
+        }
+        if (!changed) return;
+        ProjectSettings.Save();
+        GD.Print("[MedievalKit] project settings added for the kit's shaders (the see-through's globals, the instance uniform buffer)"
+                 + (restart ? ": restart the editor (Project > Reload Current Project) before running" : ""));
     }
 
     /// <summary>runs Walker/kit_play.tscn on `level` (empty: the world's start) with the test walker</summary>

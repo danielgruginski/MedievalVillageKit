@@ -7,6 +7,7 @@ extends SceneTree
 #   ...                         --headless ... -- travel                          (every link of every built world level)
 #   ... (a window, no --headless)          ... -- capture <layout> <out dir> [WxH] [asbuilt]
 #        (WxH "" or left out: the layout's own size; asbuilt: one pass with the level's own shadows, as its Blender renders)
+#   ... (a window, no --headless)          ... -- seethrough <layout> <out dir>    (the see-through behind its structures)
 
 const EDITOR := "res://addons/medieval_kit/Editor/"
 
@@ -37,6 +38,10 @@ func _initialize() -> void:
 		var c: Node = load(EDITOR + "KitCapture.cs").new()
 		c.Setup(args[1], args[2], res, args.has("asbuilt"))
 		root.add_child(c)
+	elif cmd == "seethrough":
+		var t: Node = load(EDITOR + "KitSeeThroughTest.cs").new()
+		t.Setup(args[1], args[2])
+		root.add_child(t)
 	else:
-		push_error("kit_cli: check [piece ...] | build <layout> ... | structures | travel | capture <layout> <out dir> [WxH] [asbuilt]")
+		push_error("kit_cli: check [piece ...] | build <layout> ... | structures | travel | capture <layout> <out dir> [WxH] [asbuilt] | seethrough <layout> <out dir>")
 		quit(1)

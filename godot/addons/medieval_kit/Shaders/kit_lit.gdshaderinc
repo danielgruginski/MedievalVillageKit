@@ -16,6 +16,9 @@
 //   - the roof brightness jitter (Blender's Object Info > Random): the instance uniform object_random, which the layout
 //     builder sets per placement to the value Blender computes from the object's name (KIT_JITTER only: Godot gives
 //     every instance of a material with instance uniforms 16 slots of a buffer of 4096 instances' worth);
+//   - the see-through round the walker (kit_see_through.gdshaderinc, Unity's KitSeeThrough.hlsl): every variant clips
+//     the hole first thing; in the hidden check's view (KitSeeThroughProbe's camera) it draws only what the hole would
+//     open, flat magenta (green: a building's tag);
 //   - a bump from a height map over the geometric normal (vk_leafgen's leaves and herbs: Blender's Bump node, height
 //     T_*_H; the flip on back faces it adds is Godot's own for two-sided materials). Unity keeps their flat cards.
 // Variants (a .gdshader each: KitLit[TwoSided][Jitter][Clip|Hash|Blend|Glass].gdshader, defines and this file):
@@ -38,6 +41,10 @@
 #endif
 render_mode blend_mix, KIT_DEPTH, KIT_CULL, diffuse_lambert, specular_schlick_ggx;
 #include "res://addons/medieval_kit/Shaders/kit_noise.gdshaderinc"
+#ifndef KIT_TWO_SIDED
+#define KIT_SEE_THROUGH_SOLID
+#endif
+#include "res://addons/medieval_kit/Shaders/kit_see_through.gdshaderinc"
 
 uniform vec4 base_color : source_color = vec4(1.0);
 uniform sampler2D albedo_map : source_color, hint_default_white, filter_linear_mipmap_anisotropic, repeat_enable;
@@ -78,6 +85,10 @@ uniform float bump_strength = 0.25;
 uniform float bump_distance = 0.02;            // Blender's Bump Distance (m)
 
 void fragment() {
+	bool kit_probe = (CAMERA_VISIBLE_LAYERS & KIT_PROBE_CAMERA) != 0u;
+	if (kit_st_clipped((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, CAMERA_POSITION_WORLD, MODEL_MATRIX, FRAGCOORD.xy, kit_probe)) {
+		discard;
+	}
 	vec4 tex = texture(albedo_map, UV);
 	float rough = use_rough_map ? clamp(texture(rough_map, UV).r * rough_scale, 0.0, 1.0) : roughness;
 	vec3 nrm = texture(normal_map, UV).rgb;
@@ -130,4 +141,15 @@ void fragment() {
 #elif defined(KIT_GLASS)
 	ALPHA = 1.0;
 #endif
+	if (kit_probe) {                               // the hidden check's view: flat magenta, a building's tag in green
+		ALBEDO = vec3(0.0);                        // (Godot allows no `return` in fragment(): it overrides at the end)
+		BACKLIGHT = vec3(0.0);
+		SPECULAR = 0.0;
+		METALLIC = 0.0;
+		ROUGHNESS = 1.0;
+		EMISSION = kit_st_probe_color();
+#if defined(KIT_CLIP) || defined(KIT_HASH) || defined(KIT_BLEND) || defined(KIT_GLASS)
+		ALPHA = 1.0;
+#endif
+	}
 }
