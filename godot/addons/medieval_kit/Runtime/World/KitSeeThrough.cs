@@ -253,7 +253,8 @@ public static class KitSeeThrough
             live.Add(this);
         }
 
-        public bool Gone => !IsInstanceValid(Root) || !Root.IsInsideTree();
+        /// <summary>its root was freed (a level held out of the tree by KitTravel keeps its buildings: they wait)</summary>
+        public bool Gone => !IsInstanceValid(Root);
 
         Aabb All()
         {
@@ -295,8 +296,36 @@ public static class KitSeeThrough
     public static void DecideAll(Vector3 cam, Vector4 see, Vector4 args)
     {
         live.RemoveAll(b => b.Gone);
-        foreach (var b in live) b.Decide(cam, see, args);
+        foreach (var b in live) if (b.Root.IsInsideTree()) b.Decide(cam, see, args);
     }
+
+    /// <summary>
+    /// The see-through's buildings, cuts and caps for a level that stands (KitLevel calls it after <see cref="Bound"/>):
+    /// each premade structure in it (a KitStructure, or a layout's VKX_ST_ group) opens as one building, its pieces cut
+    /// <see cref="KitSeeThroughCaps.Height"/> over its floor (its root's height) with caps. Unity's
+    /// KitVillage.SetUpSeeThrough does this for its villages (loose nature and props, walls in runs, houses with floors):
+    /// phase 5's KitVillage adds those. The cap bake calls it with KitSeeThroughCaps.Collecting set.
+    /// </summary>
+    public static List<Building> SetUpLevel(Node level)
+    {
+        var list = new List<Building>();
+        foreach (var n in level.FindChildren("*", "Node3D", true, false))
+        {
+            if (n is not Node3D s || !IsStructure(s)) continue;
+            bool inner = false;                                        // (a structure inside one already taken)
+            for (var p = s.GetParent(); p != null && p != level && !inner; p = p.GetParent()) inner = p is Node3D pn && IsStructure(pn);
+            if (inner) continue;
+            var gs = new List<GeometryInstance3D>(Geometry(s)).ToArray();
+            if (gs.Length == 0) continue;
+            var b = new Building(s, gs);
+            list.Add(b);
+            foreach (var g in gs) KitSeeThroughCaps.Cut(g, b.Floor, b);
+        }
+        KitSeeThroughCaps.Settle();
+        return list;
+    }
+
+    static bool IsStructure(Node3D n) => n is KitStructure || n.Name.ToString().StartsWith("VKX_ST_");
 
     /// <summary>the buildings registered now (a level's, while it is in the tree)</summary>
     public static IReadOnlyList<Building> Buildings => live;

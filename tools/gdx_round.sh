@@ -1,6 +1,6 @@
 #!/bin/sh
 # The Godot side of a GDX export (docs/GODOT_EXPORT.md): build the project's C#, import, check the pieces, build a
-# layout, render its cameras and compare them with the Blender renders.
+# layout, bake the see-through's caps (every built layout), render its cameras and compare them with the Blender renders.
 #   sh tools/gdx_round.sh [layout=Pilot] [project=E:/Unity/Godot/GameArtGeneration/medieval-kit] [shots dir] [WxH]
 #   (the catalogs: sh tools/gdx_round.sh Catalog_Exterior "" <project>/catalog/exterior/shots 1920x1080;
 #    a world level at its own size: sh tools/gdx_round.sh VKI_Tavern_F0 "" <project>/catalog/levels/VKI_Tavern_F0 "")
@@ -17,6 +17,7 @@ dotnet build "$P/MedievalKit.csproj" -nologo -v q 2>&1 | grep -E "error|warn|Err
 "$G" --headless --path "$P" --import 2>&1 | grep -iE "warn|error" | grep -vE "Leaked|PagedAllocator|at: ~" | head -20
 "$G" --headless --path "$P" --script "$CLI" -- check 2>&1 | grep -E "^CHECK|SCRIPT ERROR" | tail -20
 "$G" --headless --path "$P" --script "$CLI" -- build "$LAYOUT" 2>&1 | grep -E "BUILD|SCRIPT ERROR|ERROR"
+"$G" --headless --path "$P" --script "$CLI" -- bakecaps 2>&1 | grep -E "BAKECAPS|SCRIPT ERROR|ERROR"
 "$G" --path "$P" --resolution 320x180 --script "$CLI" -- capture "$LAYOUT" "$SHOTS" "$RES" 2>&1 \
 	| grep -E "CAPTURE|SCRIPT ERROR|SHADER ERROR|ERROR"
 py "$REPO/tools/gdx_compare.py" "$SHOTS" "$P/kit/data/layouts/$LAYOUT.json"

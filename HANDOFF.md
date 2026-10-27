@@ -2385,6 +2385,35 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     toward a point in plain sight (6-10 m): the dwarf hall's held point behind a treasure room's wall walked the walker
     up to the wall, as it should.
 
+164. 2026-10-27 (same request: "then go on with the baked caps"). **FULL_PORT_PLAN phase 6, part 3: the see-through's
+    real caps in Godot** (Unity's KitSeeThroughCaps + CapBank + bake, round 3 of the 2026-10-13/14 spike):
+    - `Runtime/World/KitSeeThroughCaps.cs`: Cut (the cut 1.4 m over the base in the piece's marks; solid = a material
+      whose next_pass is KitLitCap, bark = M_VK_Bark*), the section and fill (loops by material, outer vs hole by the
+      faces' own direction, Eberly bridges, ear clipping, outlines stacked by area), Register / Settle / Rank, and the
+      pool of 96 MeshInstance3Ds laid each frame over the pieces in the hole's cone (`LayPool`, from KitCamera after
+      DecideAll; each gets its piece's marks | CapBit, bounds and object_random). Godot differences: the faces' outward
+      side comes from the vertex normals (Godot winds front faces clockwise in a right-handed space: the cross product
+      points in), caps wind the other way from Unity's, each cap surface keeps its own vertices, and what the bank
+      lacks is made in play too (a few ms a frame, `Flush`): Godot can read a mesh in a game, waiting on the GPU.
+    - Bank: `KitSeeThroughCapBank` + `KitSeeThroughCapEntry` (own file: Godot serializes a resource by its script's
+      file; `bool[]` cannot be exported -> GrainBits) at `res://kit/see_through_caps.res`, keyed by the piece's name +
+      mesh name (an imported mesh's resource path is not stable), stale by vertex count / bounds.
+      `kit_cli -- bakecaps [layout ...]` (Editor/KitSeeThroughCapsBake.cs; works headless: the dummy renderer keeps
+      mesh arrays), also in `tools/gdx_round.sh`. Now: 23 levels, 49 buildings, 150 caps needed, 134 cap meshes (8,364
+      triangles), 16 empty, 0 not filled, 10 s.
+    - `KitSeeThrough.SetUpLevel(level)` (KitLevel calls it after Bound; `KitLevel.SetUpSeeThrough` off for the bake):
+      each KitStructure or VKX_ST_ group opens as a building, its pieces cut over its floor with caps. Unity's
+      KitVillage does more (loose nature and props, walls in runs, a house's floor over its walls' box): phase 5.
+      KitSeeThroughTest now uses the level's own buildings and shoots each stand with the caps off too (`_nocaps`).
+    - Fixed on the way: a building whose level KitTravel held out of the tree was dropped from the live list (Gone
+      meant "out of the tree"), so on coming back the see-through no longer opened it; now Gone = freed, and DecideAll
+      skips the ones out of the tree.
+    - Check: seethrough Structures_Showcase: 660 caps registered, all from the bank; behind the brewery / apiary /
+      tannery / merchant house 5 / 1 / 5 / 7 caps drawn, the caps change 1.4-6.4k pixels each, all on the cut walls;
+      the tannery's timber braces inside its plaster wall no longer show at the cut
+      (`renders/seethrough_godot/caps_before_after.png`). Travel 0 problems; clickwalk ALL PASS (valley, tavern); the
+      play scene runs clean.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

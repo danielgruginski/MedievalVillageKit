@@ -225,6 +225,7 @@ public partial class KitCamera : Camera3D
         var hole = Hole();
         KitSeeThrough.Set(hole, args);
         KitSeeThrough.DecideAll(GlobalPosition, hole, args);
+        KitSeeThroughCaps.LayPool(this);
     }
 
     /// <summary>the sun's shadows drawn only as far as the view reaches: the ground the screen's top corners see, plus a

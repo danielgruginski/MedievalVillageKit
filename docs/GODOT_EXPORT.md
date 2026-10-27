@@ -223,7 +223,9 @@ restyled stones, roof jitter (dormer 1 / dormer 0 brightness 1.038-1.046 in both
   `KitMarker`, `KitLevel`, `KitWorld` (+ levels, links; the arrival rule), `KitTravel` (+ `KitTravelHost`: the fade,
   threaded preloads, held levels for instant cuts, "@return" doors), `KitDecks`, `KitNavMesh` (a NavigationRegion3D
   that sets its map's cell size), `KitEncounter`, `KitPortalMarker`, `KitStructure`; `Runtime/World/`: the
-  see-through (`KitSeeThrough`, `KitSeeThroughProbe`), `KitMapFrame`. `Walker/`: `KitCamera` (+ `KitPointer`),
+  see-through (`KitSeeThrough` + `SetUpLevel`, `KitSeeThroughProbe`, the real caps `KitSeeThroughCaps` with their bank
+  `KitSeeThroughCapBank` -> `res://kit/see_through_caps.res`, baked by `kit_cli -- bakecaps`, in `tools/gdx_round.sh`),
+  `KitMapFrame`. `Walker/`: `KitCamera` (+ `KitPointer`),
   `KitClickToMove` + `KitWalker` (click / hold to walk on the navmesh, doors by clicking them), `KitTestWalker` (WASD),
   the demo (`KitDemo`, `KitDemoView`, `kit_demo.tscn`: the project's main scene), `KitPlayBoot` (Project > Tools >
   Play From Start Level / Walk This Level: KitWalker where the level has a navmesh, else KitTestWalker).
