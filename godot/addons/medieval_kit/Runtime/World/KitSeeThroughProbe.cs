@@ -81,7 +81,7 @@ public partial class KitSeeThroughProbe : SubViewport
         if (dist < 1f) return;
         float frameH = FrameWidth * H / W;
         cam.GlobalTransform = new Transform3D(Basis.LookingAt(dv / dist, Vector3.Up), from);
-        cam.Fov = Mathf.RadToDeg(2f * Mathf.Atan(0.5f * frameH / dist));
+        cam.Fov = Mathf.Clamp(Mathf.RadToDeg(2f * Mathf.Atan(0.5f * frameH / dist)), 1f, 179f);   // (Godot's least: 1 degree, 57 m off)
         cam.Far = dist + 3f;
         cam.CullMask = view.CullMask | KitSeeThrough.ProbeCameraBit;
         RenderTargetUpdateMode = UpdateMode.Once;

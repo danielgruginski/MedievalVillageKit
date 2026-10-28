@@ -188,7 +188,7 @@ public static class KitTravel
 
     static IEnumerable<Node> Below(Node n)
     {
-        foreach (Node c in n.GetChildren())
+        foreach (Node c in KitNodes.Children(n))
         {
             yield return c;
             foreach (var d in Below(c)) yield return d;
@@ -215,7 +215,7 @@ public static class KitTravel
     {
         w.GlobalTransform = new Transform3D(t.Basis.Orthonormalized(), t.Origin);
         if (w is CharacterBody3D cb) cb.Velocity = Vector3.Zero;
-        foreach (var agent in w.FindChildren("*", "NavigationAgent3D", true, false).OfType<NavigationAgent3D>())
+        foreach (var agent in KitNodes.Below(w, "NavigationAgent3D").OfType<NavigationAgent3D>())
             agent.TargetPosition = t.Origin;
     }
 

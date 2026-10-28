@@ -21,5 +21,5 @@ public partial class KitEncounter : Node3D
     /// <summary>the room's area (local, centred on this node, standing on it), e.g. for a wake-up trigger</summary>
     [Export] public Vector3 Size = new(4.5f, 3f, 4.5f);
 
-    public IEnumerable<Node3D> Points => GetChildren().OfType<Node3D>();
+    public IEnumerable<Node3D> Points => KitNodes.Children(this).OfType<Node3D>();
 }

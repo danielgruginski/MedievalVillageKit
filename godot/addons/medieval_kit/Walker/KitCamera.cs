@@ -111,7 +111,7 @@ public partial class KitCamera : Camera3D
         MakeCurrent();
         ears?.MakeCurrent();
         suns.Clear();
-        foreach (var n in GetTree().Root.FindChildren("*", "DirectionalLight3D", true, false))
+        foreach (var n in KitNodes.Below(GetTree().Root, "DirectionalLight3D"))
             if (n is DirectionalLight3D l && l.ShadowEnabled) suns.Add(l);
         bool outdoors = GetTree().GetFirstNodeInGroup("kit_village") != null;
         Entered?.Invoke(outdoors);

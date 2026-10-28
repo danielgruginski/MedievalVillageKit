@@ -15,7 +15,8 @@ public readonly record struct PointerHit(Vector3 Point, float Distance, Node Col
 
 /// <summary>
 /// A walker's legs, Diablo / Baldur's Gate style: hold the left button to walk toward the cursor, click the ground to walk
-/// there; click a way out (a door, stair, cave mouth: a <see cref="KitLink"/>) to walk to it and take it. Road ends at a
+/// there; click something to use (an <see cref="Interactable"/>) to walk to it and use it; click a way out (a door,
+/// stair, cave mouth: a <see cref="KitLink"/>) to walk to it and take it. Road ends at a
 /// map's edge (KitLink.WalkInto) are taken by walking on into them, once the walker has stepped clear of the one it
 /// arrived by. Clicks the game's UI takes stay there (Godot's GUI eats them before _UnhandledInput; and
 /// <see cref="KitPointer"/>). A child of the walker's body (any Node3D), which it moves; walks the levels' baked navmesh
@@ -27,8 +28,8 @@ public readonly record struct PointerHit(Vector3 Point, float Distance, Node Col
 /// between going left and right of it.</para>
 /// <para>Godot: the walker follows its own way along the navmesh (Unity's NavMeshAgent; a NavigationAgent3D cannot take a
 /// way worked out ahead, which the held button's flip check needs): <see cref="Speed"/>, <see cref="Acceleration"/>,
-/// <see cref="TurnSpeed"/> as the agent's. Not yet here: things to use (Unity's Interactable, port phase 6's 3a systems)
-/// and houses whose door the camera cannot see (Unity's HouseUnder: Godot has no village builder yet).</para>
+/// <see cref="TurnSpeed"/> as the agent's. Not yet here: houses whose door the camera cannot see (Unity's HouseUnder:
+/// Godot has no village builder yet).</para>
 /// <para>A game adds its own rules in a subclass: <see cref="Under"/>, <see cref="Press"/>, <see cref="Take"/>,
 /// <see cref="Offers"/>, <see cref="PassesThrough"/> and the small hooks (<see cref="Halted"/>, <see cref="ReadsPointer"/>,
 /// <see cref="TakesClicks"/>, <see cref="Walking"/>, <see cref="Went"/>, <see cref="Pointer"/>).</para>
@@ -56,6 +57,8 @@ public partial class KitClickToMove : Node
     protected Node3D body;
     /// <summary>the way out walked to (taken on arrival)</summary>
     protected KitLink target;
+    /// <summary>the thing walked to (used on arrival)</summary>
+    protected Interactable using_;
     /// <summary>the button is held (hold-to-walk); a road's end may be walked into (stepped clear of the arrival one);
     /// a held way was refused as a flip (walked to when the button comes up)</summary>
     protected bool holding, armed, refused;
@@ -72,6 +75,10 @@ public partial class KitClickToMove : Node
 
     /// <summary>the way out under the cursor (its prompt shows)</summary>
     public KitLink Hover { get; protected set; }
+    /// <summary>the usable thing under the cursor</summary>
+    public Interactable HoverThing { get; protected set; }
+    /// <summary>what the walker is walking to use</summary>
+    public Interactable Using => using_;
     /// <summary>a click sent the walker somewhere (the walkable point): a pointer's ring goes there</summary>
     public event System.Action<Vector3> Clicked;
     /// <summary>the walker moved (this node's parent)</summary>
@@ -98,7 +105,7 @@ public partial class KitClickToMove : Node
 
     protected virtual void OnArrived(string level, KitSpawn spawn)
     {
-        target = null; holding = false; armed = false; refused = false;
+        target = null; using_ = null; holding = false; armed = false; refused = false;
         way = null; velocity = Vector3.Zero;
         Settle();
     }
@@ -125,7 +132,7 @@ public partial class KitClickToMove : Node
     /// <summary>the walker went through a way out (a door's sound)</summary>
     protected virtual void Went(KitLink l) { }
     /// <summary>clear what is under the cursor (every frame, before <see cref="Under"/>)</summary>
-    protected virtual void ClearHover() { Hover = null; }
+    protected virtual void ClearHover() { Hover = null; HoverThing = null; }
 
     /// <summary>the pointer this frame: where it is on the screen, pressed since the last frame, held now. False: no
     /// pointer. The mouse; a test or a gamepad cursor brings its own.</summary>
@@ -140,7 +147,23 @@ public partial class KitClickToMove : Node
 
     // ------------------------------------------------------------------ the navmesh (Unity's NavMesh calls)
 
-    bool NavReady => NavigationServer3D.MapGetRegions(Map).Count > 0;
+    /// <summary>the map has a navmesh (asked once a physics frame: each ask makes a Godot array, disposed here -- left to
+    /// the finalizer, Godot arrays freed on the GC's thread crash the engine)</summary>
+    bool NavReady
+    {
+        get
+        {
+            ulong f = Engine.GetPhysicsFrames();
+            if (f == readyFrame) return navReady;
+            readyFrame = f;
+            var regions = NavigationServer3D.MapGetRegions(Map);
+            using var native = (Godot.Collections.Array)regions;
+            navReady = regions.Count > 0;
+            return navReady;
+        }
+    }
+    ulong readyFrame = ulong.MaxValue;
+    bool navReady;
 
     /// <summary>the navmesh's nearest point to p within r (Unity: NavMesh.SamplePosition)</summary>
     protected bool Sample(Vector3 p, float r, out Vector3 at)
@@ -186,7 +209,7 @@ public partial class KitClickToMove : Node
     /// <summary>walk to a point (the nearest walkable spot to it)</summary>
     public void MoveTo(Vector3 p)
     {
-        target = null; refused = false;
+        target = null; using_ = null; refused = false;
         aimed = p;
         SetDestination(p);
     }
@@ -195,13 +218,15 @@ public partial class KitClickToMove : Node
     public PointerHit[] Cast(PointerRay ray, bool areas = false)
     {
         var space = body.GetWorld3D().DirectSpaceState;
+        // (the Godot arrays and dictionaries disposed here: left to the finalizer, one freed after the engine quits crashes it)
         var skip = new Godot.Collections.Array<Rid>();
-        var q = new PhysicsRayQueryParameters3D { From = ray.From, To = ray.At(500f), CollideWithAreas = areas, CollideWithBodies = true };
+        using var skipNative = (Godot.Collections.Array)skip;              // (a typed array is disposed through its own)
+        using var q = new PhysicsRayQueryParameters3D { From = ray.From, To = ray.At(500f), CollideWithAreas = areas, CollideWithBodies = true };
         var hits = new List<PointerHit>();
         for (int i = 0; i < 32; i++)
         {
             q.Exclude = skip;
-            var r = space.IntersectRay(q);
+            using var r = space.IntersectRay(q);
             if (r.Count == 0) break;
             var p = (Vector3)r["position"];
             hits.Add(new PointerHit(p, (p - ray.From).Dot(ray.Dir), r["collider"].AsGodotObject() as Node));
@@ -271,7 +296,7 @@ public partial class KitClickToMove : Node
     public void Hold(PointerHit[] hits, PointerRay ray)
     {
         if (!Ground(hits, ray, out var aim, out bool exact, out var pointed)) return;
-        target = null;
+        target = null; using_ = null;
         Walking();
         if (!exact)
         {
@@ -307,8 +332,16 @@ public partial class KitClickToMove : Node
     /// <summary>walk to a way out and take it</summary>
     public void Interact(KitLink link)
     {
-        target = link; refused = false;
+        target = link; using_ = null; refused = false;
         SetDestination(DoorPoint(link));
+    }
+
+    /// <summary>walk to something and use it on arrival</summary>
+    public void Interact(Interactable thing)
+    {
+        target = null; using_ = thing; refused = false;
+        if (InReach(thing)) { Use(thing); return; }
+        SetDestination(thing.UsePoint);
     }
 
     protected bool SetDestination(Vector3 p)
@@ -374,6 +407,13 @@ public partial class KitClickToMove : Node
                 holding = false;
             }
         }
+        // at the thing to use
+        if (using_ != null)
+        {
+            if (!IsInstanceValid(using_) || !using_.CanUse) using_ = null;
+            else if (InReach(using_) || (!HasPath && Flat(using_.UsePoint - body.GlobalPosition) < using_.UseRadius + 1.2f))
+                Use(using_);
+        }
         // at a way out
         var here = LinksHere();
         if (target != null && (here.Contains(target) || Near(target))) { Take(target); return; }
@@ -429,12 +469,25 @@ public partial class KitClickToMove : Node
         }
     }
 
-    /// <summary>a click on what is under the cursor (<see cref="Under"/>): a way out is walked to and taken. False:
-    /// nothing taken, the click walks to the floor.</summary>
+    /// <summary>a click on what is under the cursor (<see cref="Under"/>): a usable thing is walked to and used, a way
+    /// out walked to and taken. False: nothing taken, the click walks to the floor.</summary>
     protected virtual bool Press(PointerHit[] hits, PointerRay ray)
     {
+        if (HoverThing != null) { Walking(); holding = false; Interact(HoverThing); return true; }
         if (Hover != null) { Walking(); Interact(Hover); holding = false; return true; }
         return false;
+    }
+
+    protected bool InReach(Interactable i) => Flat(i.UsePoint - body.GlobalPosition) <= i.UseRadius;
+
+    protected void Use(Interactable i)
+    {
+        using_ = null;
+        way = null;
+        velocity = Vector3.Zero;                                // stand still now (a kneel may check the speed)
+        var d = i.GlobalPosition - body.GlobalPosition; d.Y = 0f;
+        if (d.LengthSquared() > 1e-3f) body.GlobalBasis = Basis.LookingAt(d.Normalized(), Vector3.Up);
+        i.Use();
     }
 
     protected static float Flat(Vector3 v) => new Vector2(v.X, v.Z).Length();
@@ -459,8 +512,31 @@ public partial class KitClickToMove : Node
         }
     }
 
-    /// <summary>what the cursor is on: a way out (where the cursor meets something solid)</summary>
-    protected virtual void Under(PointerHit[] hits, PointerRay ray, Camera3D c) => Hover = LinkUnder(ray);
+    /// <summary>what the cursor is on: a usable thing or a way out, whichever is nearest along the ray (a way out is
+    /// where the cursor meets something solid: <see cref="Surface"/>)</summary>
+    protected virtual void Under(PointerHit[] hits, PointerRay ray, Camera3D c)
+    {
+        var (th, td, _) = ThingUnder(hits);
+        var link = LinkUnder(ray);
+        float ld = link != null ? Surface(hits, ray) : float.MaxValue;
+        if (th != null && td <= ld + Tie) HoverThing = th;
+        else Hover = link;
+    }
+
+    /// <summary>a usable thing under the cursor, how far along the ray, how far off the cursor's point: hit anywhere
+    /// along the ray (a find's prop stands for it: <see cref="UseVia"/>), or near where the ray meets something
+    /// (<see cref="Interactable.Under(Node, Vector3, out float)"/>) -- the floor behind a rock, not only the rock's top</summary>
+    protected (Interactable, float, float) ThingUnder(PointerHit[] hits)
+    {
+        foreach (var h in hits)
+        {
+            var i = UseVia.Of(h.Collider);
+            if (i != null && i.CanUse) return (i, h.Distance, 0f);
+            var near = Interactable.Under(null, IsFloor(h, out var f) ? f : h.Point, out float off);
+            if (near != null) return (near, h.Distance, off);
+        }
+        return (null, float.MaxValue, float.MaxValue);
+    }
 
     /// <summary>the cursor's ray passes through this hit to what is behind: what the see-through has opened</summary>
     protected virtual bool PassesThrough(PointerHit h, PointerRay ray) => Opened(h, ray);
@@ -498,13 +574,18 @@ public partial class KitClickToMove : Node
     /// <summary>the links whose triggers reach within r of a point</summary>
     IEnumerable<KitLink> Triggers(Vector3 at, float r)
     {
-        var q = new PhysicsShapeQueryParameters3D
+        using var q = new PhysicsShapeQueryParameters3D
         {
             Shape = new SphereShape3D { Radius = r }, Transform = new Transform3D(Basis.Identity, at),
             CollideWithAreas = true, CollideWithBodies = false,
         };
-        return body.GetWorld3D().DirectSpaceState.IntersectShape(q, 16)
-                   .Select(x => Up<KitLink>(x["collider"].AsGodotObject() as Node)).Where(l => l != null).Distinct();
+        var found = body.GetWorld3D().DirectSpaceState.IntersectShape(q, 16);
+        using var foundNative = (Godot.Collections.Array)found;
+        var links = new List<KitLink>();
+        foreach (var x in found)
+            using (x)
+                if (Up<KitLink>(x["collider"].AsGodotObject() as Node) is KitLink l && !links.Contains(l)) links.Add(l);
+        return links;
     }
 
     static T Up<T>(Node n) where T : class
@@ -514,7 +595,7 @@ public partial class KitClickToMove : Node
     }
 
     /// <summary>a link's trigger box (null: none)</summary>
-    static CollisionShape3D Box(KitLink l) => l.GetChildren().OfType<CollisionShape3D>().FirstOrDefault();
+    static CollisionShape3D Box(KitLink l) => KitNodes.Children(l).OfType<CollisionShape3D>().FirstOrDefault();
 
     /// <summary>where a way out is used from: the middle of its trigger (the link itself without one)</summary>
     protected static Vector3 DoorPoint(KitLink l) => Box(l) is CollisionShape3D s ? s.GlobalPosition : l.GlobalPosition;

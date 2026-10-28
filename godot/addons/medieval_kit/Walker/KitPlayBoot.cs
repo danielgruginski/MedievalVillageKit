@@ -31,9 +31,9 @@ public partial class KitPlayBoot : Node
         KitTravel.Arrived -= PlaceOnce;
         var tree = (SceneTree)Engine.GetMainLoop();
         var scene = tree.CurrentScene;
-        var at = spawn ?? scene?.FindChildren("*", "", true, false).OfType<KitSpawn>().FirstOrDefault();
+        var at = spawn ?? KitNodes.Below(scene, "").OfType<KitSpawn>().FirstOrDefault();
         var t = at?.GlobalTransform ?? Transform3D.Identity;
-        bool nav = scene != null && scene.FindChildren("*", "", true, false).OfType<KitNavMesh>().Any();
+        bool nav = scene != null && KitNodes.Below(scene, "").OfType<KitNavMesh>().Any();
         Callable.From(() =>
         {
             if (nav) { KitWalker.Spawn(t); return; }

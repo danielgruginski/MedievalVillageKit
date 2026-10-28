@@ -115,7 +115,7 @@ public partial class KitClickTest : Node
         Check(KitTravel.Reload(layout, ""), $"load {layout}");
         Check(await Until(() => KitTravel.CurrentLevel == layout && !KitTravel.Travelling, 30f), "arrived");
         var scene = GetTree().CurrentScene;
-        var spawn = scene.FindChildren("*", "", true, false).OfType<KitSpawn>().FirstOrDefault();
+        var spawn = KitNodes.Below(scene, "").OfType<KitSpawn>().FirstOrDefault();
         legs = new KitTestLegs();
         walker = KitWalker.Spawn(spawn?.GlobalTransform ?? Transform3D.Identity, legs);
         await Wait(40);
@@ -170,7 +170,7 @@ public partial class KitClickTest : Node
         // 3: a click on a roof or a wall (the walker 8 m south of the nearest door's house): through to the floor behind
         // when the walker reaches it without a long way round, else up to the building
         var scene3 = GetTree().CurrentScene;
-        var house = scene3.FindChildren("*", "", true, false).OfType<KitLink>()
+        var house = KitNodes.Below(scene3, "").OfType<KitLink>()
                           .Where(l => KitClickToMove.Leads(l) && !l.WalkInto).OrderBy(l => l.GlobalPosition.DistanceTo(Pos)).FirstOrDefault();
         var houseStand = house != null ? StandNear(house.GlobalPosition, 8f) : null;
         await StandAt(houseStand);
@@ -207,13 +207,13 @@ public partial class KitClickTest : Node
         }
 
         // 4: the doors: the cursor on each, a click on the first under it; through and back
-        var links = scene.FindChildren("*", "", true, false).OfType<KitLink>()
+        var links = KitNodes.Below(scene, "").OfType<KitLink>()
                          .Where(l => KitClickToMove.Leads(l) && !l.WalkInto && l.Target != layout && l.Target != "@return")
                          .OrderBy(l => l.GlobalPosition.DistanceTo(Pos)).Take(8).ToList();
         int shown = 0; bool went = false;
         foreach (var l in links)
         {
-            var door = l.GetChildren().OfType<CollisionShape3D>().FirstOrDefault()?.GlobalPosition ?? l.GlobalPosition;
+            var door = KitNodes.Children(l).OfType<CollisionShape3D>().FirstOrDefault()?.GlobalPosition ?? l.GlobalPosition;
             if (!await StandAt(StandNear(door, 4f))) { Say($"     {l.LinkId}: no stand near it joined to the spawn"); continue; }
             if (!OnScreen(door, out var s)) { Say($"     {l.LinkId}: off screen"); continue; }
             legs.Screen = s;
@@ -229,10 +229,10 @@ public partial class KitClickTest : Node
             if (!went) continue;
             await Wait(20);
             Shot("5_inside");
-            var inside = GetTree().CurrentScene.FindChildren("*", "", true, false).OfType<KitLink>()
+            var inside = KitNodes.Below(GetTree().CurrentScene, "").OfType<KitLink>()
                                   .FirstOrDefault(b => b.Target == "@return" || b.Target == layout);
             if (inside == null) { Check(false, $"{l.Target}: a way back"); continue; }
-            var back = inside.GetChildren().OfType<CollisionShape3D>().FirstOrDefault()?.GlobalPosition ?? inside.GlobalPosition;
+            var back = KitNodes.Children(inside).OfType<CollisionShape3D>().FirstOrDefault()?.GlobalPosition ?? inside.GlobalPosition;
             bool seen = OnScreen(back, out var bs);
             legs.Screen = bs;
             await Wait(2);

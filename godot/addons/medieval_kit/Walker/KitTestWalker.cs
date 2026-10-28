@@ -29,7 +29,7 @@ public partial class KitTestWalker : CharacterBody3D
         var w = new KitTestWalker { Name = "KitTestWalker" };
         tree.Root.AddChild(w);
         var scene = tree.CurrentScene;
-        var at = scene?.FindChildren("*", "", true, false).OfType<KitSpawn>()
+        var at = KitNodes.Below(scene, "").OfType<KitSpawn>()
             .FirstOrDefault(s => spawn == null || s.SpawnId == spawn);
         if (at != null) KitTravel.Place(w, at.GlobalTransform);
         return w;
@@ -98,12 +98,11 @@ public partial class KitTestWalker : CharacterBody3D
         }
         // stick to the ground (kit floors and terrain have colliders; no gravity drift where there are none)
         var space = GetWorld3D().DirectSpaceState;
-        var hit = space.IntersectRay(new PhysicsRayQueryParameters3D
-        {
-            From = GlobalPosition + Vector3.Up * 1.5f, To = GlobalPosition + Vector3.Down * 2.5f,
-            CollideWithAreas = false, Exclude = new Godot.Collections.Array<Rid> { GetRid() },
-        });
-        if (hit.Count > 0) GlobalPosition = new Vector3(GlobalPosition.X, ((Vector3)hit["position"]).Y, GlobalPosition.Z);
+        var ex = new Godot.Collections.Array<Rid> { GetRid() };
+        using (var exNative = (Godot.Collections.Array)ex)                  // (Godot arrays disposed: see KitClickToMove.Cast)
+        using (var rq = new PhysicsRayQueryParameters3D { From = GlobalPosition + Vector3.Up * 1.5f, To = GlobalPosition + Vector3.Down * 2.5f, CollideWithAreas = false, Exclude = ex })
+        using (var hit = space.IntersectRay(rq))
+            if (hit.Count > 0) GlobalPosition = new Vector3(GlobalPosition.X, ((Vector3)hit["position"]).Y, GlobalPosition.Z);
         // links within reach
         near = null;
         var q = new PhysicsShapeQueryParameters3D
@@ -111,8 +110,11 @@ public partial class KitTestWalker : CharacterBody3D
             Shape = new SphereShape3D { Radius = 0.6f }, Transform = new Transform3D(Basis.Identity, GlobalPosition + Vector3.Up),
             CollideWithAreas = true, CollideWithBodies = false,
         };
-        foreach (var r in space.IntersectShape(q, 8))
-            if (r["collider"].AsGodotObject() is KitLink l && l.CanUse(this)) { near = l; break; }
+        var found = space.IntersectShape(q, 8);
+        using (var foundNative = (Godot.Collections.Array)found)
+            foreach (var r in found)
+                using (r)
+                    if (near == null && r["collider"].AsGodotObject() is KitLink l && l.CanUse(this)) near = l;
         if (Controls && near != null && Input.IsPhysicalKeyPressed(Key.E) && !KitTravel.Travelling) near.Use();
         float p = Mathf.DegToRad(CamPitch);
         cam.GlobalPosition = GlobalPosition + new Vector3(0f, Mathf.Sin(p), Mathf.Cos(p)) * CamDistance;

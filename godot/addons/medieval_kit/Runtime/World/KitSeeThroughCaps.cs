@@ -373,7 +373,7 @@ public static class KitSeeThroughCaps
             for (int s = 0; s < mesh.GetSurfaceCount() && s < 32; s++)
             {
                 if ((solid & (1u << s)) == 0) continue;
-                var arr = mesh.SurfaceGetArrays(s);
+                using var arr = mesh.SurfaceGetArrays(s);                       // (disposed: see KitClickToMove.Cast)
                 var v = arr[(int)Mesh.ArrayType.Vertex].AsVector3Array();
                 var nv = arr[(int)Mesh.ArrayType.Normal];
                 var nrm = nv.VariantType == Variant.Type.Nil ? null : nv.AsVector3Array();
@@ -484,7 +484,7 @@ public static class KitSeeThroughCaps
                 tan[i * 4] = 1f; tan[i * 4 + 3] = 1f;
                 col[i] = new Color(1f, 1f, 1f, 0f);           // no baked shading, no moss
             }
-            var arrays = new Godot.Collections.Array();
+            using var arrays = new Godot.Collections.Array();
             arrays.Resize((int)Mesh.ArrayType.Max);
             arrays[(int)Mesh.ArrayType.Vertex] = verts[s].ToArray();
             arrays[(int)Mesh.ArrayType.Normal] = nrm;

@@ -2414,6 +2414,50 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
       (`renders/seethrough_godot/caps_before_after.png`). Travel 0 problems; clickwalk ALL PASS (valley, tavern); the
       play scene runs clean.
 
+165. 2026-10-27 (Daniel: "Port the systems"). **FULL_PORT_PLAN phase 6, part 4: phase 3a's systems in Godot**
+    (`godot/addons/medieval_kit/Runtime/World/`), Unity's rules on Godot's nodes:
+    - Fires: `FireFx` (the parts as GPUParticles3D + ParticleProcessMaterial on the Unity package's flipbooks, copied to
+      the addon's `FX/`; materials made in code: unshaded particle billboards, the body alpha blended, core / glow /
+      embers additive, soft by proximity fade, render priority for Unity's sorting fudges. A rate is `amount_ratio` of
+      the part's max over its lifetime; size and lifetime ranges are scale_min/max and lifetime_randomness; spots are
+      emission points (eight jittered per spot); Unity's noise is turbulence; the breeze a constant push; bursts and the
+      collapse's puffs `emit_particle`; run-ahead is preprocess; the stretched embers are plain billboards), `Fire`
+      (Blaze / Collapse / Douse / Smoulder / Burst / Steady / Splash; `Blazing`, `Smouldering`), `FireFlicker` (a child
+      of any Light3D; FastNoiseLite for Unity's Perlin), `KitFires` (the kit's torches, braziers, hearths, fire pits and
+      bonfire lit at their M_VKI_GlowIn surface, its box from `RenderingServer.MeshGetSurface` without reading the
+      mesh; the glow turned to coals or hidden; the nearest LIT_ fire light flickering, else a lamp of its own). A
+      level lights its fires as it stands (`KitLevel.LightFires`, on; a game with its own campfires turns it off).
+      Light energy = Unity's intensity x 0.5 (`FireFx.LightScale`).
+    - `Interactable` (an abstract Node3D in `All` while in the tree) + `UseVia` (a child of a body that stands for
+      one); KitClickToMove now hovers, walks to and uses them (HoverThing, Using, Interact(thing), ThingUnder: Unity's).
+    - `Missile` (+ `IMissileLanding`; a scene or a node duplicated, under the current scene), `KitGround` (Floor,
+      Scatter), `KitWalkways` (named meshes get a deck body and a navmesh region on the level's own cell size; KitLevel
+      calls Ensure).
+    - `CreatureSilhouettes`: Godot has no render pass over chosen renderers, so a creature's meshes get a
+      material_overlay: `Shaders/CreatureSilhouetteMark` (stencil 1 where it or the player is seen, pulled 3 cm toward
+      the camera) with `CreatureSilhouetteFill` as its next pass (depth_test_inverted, stencil not 1, the colour);
+      the player's meshes the mark only. Godot 4.7's `stencil_mode` and inverted depth test; nothing in the hidden
+      check's view.
+    - **Not ported: the z-fight watch** (Unity draws every renderer again with an id shader through command buffers and
+      reads two depth layers back at float precision; Godot has no such hooks: it would be a design of its own, e.g.
+      a probe camera bit in kit_lit with per-instance ids and depth peeling). The Blender z-fight tool (HANDOFF
+      132-133) checks the pieces at the source.
+    - Fixed on the way: Godot arrays left to .NET's finalizer (FindChildren, GetChildren, MapGetRegions, ray results)
+      crashed the game on quit, now and then (0xC0000005 in godotsharp_array_destroy): `Runtime/KitNodes.cs` (Below,
+      Children) for every runtime lookup, the ray and navmesh results disposed, the walker's navmesh check once a
+      physics frame; a level's setup waits until it is in the tree (KitTravel can take it out again before the
+      deferred call: "!is_inside_tree" from Bound); the hidden check's camera keeps a FOV of at least 1 degree.
+    - Check: `kit_cli -- systems <out>` (Editor/KitSystemsTest.cs) ALL PASS: dungeon B1's 6 kit fires lit (5 wall
+      torches, a brazier; 6 lights flickering, 13 parts emitting); a blaze lit from a corner spreading, collapsing and
+      gone, smouldering; a fire circle and a splash; a missile arriving; 6 ground spots on the floor; in the tavern a
+      creature behind a crate drawn red where hidden (48 pixels, none elsewhere, the flicker paused for the
+      comparison), a usable post hovered, walked to and used, a walkway deck with navmesh on its top. Shots in
+      `renders/systems_godot/`. Also: travel 0 problems, clickwalk ALL PASS (valley, dungeon B1, tavern, dwarf hall),
+      see-through unchanged, the play scene quits cleanly (4 of 4).
+    - **Open:** travel's VKI_Dungeon_B3 crypt link failed once in three runs (the path ending 0.74 m off): Godot's
+      edge merge reports "more than 2 edges ... same map rasterization space" (32 errors) on some levels, and which
+      edges join can vary. The brazier's bowl reads near white with or without its fire (the piece's own look).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

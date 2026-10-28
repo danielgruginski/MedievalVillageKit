@@ -144,5 +144,6 @@ Each phase ends with its check passing and its record in HANDOFF; commits and Pl
    Godot's phase 6 also takes 3a-3b's systems (fires, usable things, missiles, silhouettes, walkways, map frame +
    walk window, the z-fight watch, the camera, click to move, the walker), so the two engines offer the same kit.
    Done in Godot: the see-through, the camera, the map frame (HANDOFF 161); click to move and the walker (162); the
-   real caps, baked (164). Left: the 3a systems (with things to use for click to move), and after phase 5's KitVillage:
-   HouseUnder, the house floors under the hole, loose nature / props and wall runs in SetUpLevel.
+   real caps, baked (164); the 3a systems: fires, usable things (with click to move), missiles, silhouettes, walkways,
+   ground helpers (165). Left: the z-fight watch (a Godot design of its own: no per-renderer command buffers), and after
+   phase 5's KitVillage: HouseUnder, the house floors under the hole, loose nature / props and wall runs in SetUpLevel.

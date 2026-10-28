@@ -24,7 +24,7 @@ public partial class KitDemoView : Node
     public static void Open(string level, bool walk)
     {
         var tree = (SceneTree)Engine.GetMainLoop();
-        foreach (var old in tree.Root.GetChildren().OfType<KitDemoView>()) old.QueueFree();
+        foreach (var old in KitNodes.Children(tree.Root).OfType<KitDemoView>()) old.QueueFree();
         tree.Root.AddChild(new KitDemoView { level = level, walk = walk, Name = "KitDemoView" });
     }
 
@@ -60,7 +60,7 @@ public partial class KitDemoView : Node
     }
 
     Camera3D[] LevelCameras() =>
-        GetTree().CurrentScene?.FindChildren("*", "Camera3D", true, false).OfType<Camera3D>()
+        KitNodes.Below(GetTree().CurrentScene, "Camera3D").OfType<Camera3D>()
             .OrderBy(c => (string)c.Name, System.StringComparer.Ordinal).ToArray() ?? System.Array.Empty<Camera3D>();
 
     void NextCamera(int step)

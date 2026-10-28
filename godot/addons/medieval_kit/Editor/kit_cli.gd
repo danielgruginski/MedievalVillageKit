@@ -10,6 +10,7 @@ extends SceneTree
 #   ... (a window, no --headless)          ... -- seethrough <layout> <out dir>    (the see-through behind its structures)
 #   ... (a window, no --headless)          ... -- clickwalk <layout> <out dir>     (the click-to-move walker: floor, hold, doors)
 #   ...                         --headless ... -- bakecaps [layout ...]           (the see-through's caps -> res://kit/see_through_caps.res)
+#   ... (a window, no --headless)          ... -- systems <out dir>                (fires, missile, silhouettes, usable things, decks)
 
 const EDITOR := "res://addons/medieval_kit/Editor/"
 
@@ -48,10 +49,14 @@ func _initialize() -> void:
 		await process_frame      # the root joins the tree after _initialize (the levels go in it)
 		print(load(EDITOR + "KitSeeThroughCapsBake.cs").new().Bake(PackedStringArray(args.slice(1))))
 		quit()
+	elif cmd == "systems":
+		var t: Node = load(EDITOR + "KitSystemsTest.cs").new()
+		t.Setup(args[1])
+		root.add_child(t)
 	elif cmd == "clickwalk":
 		var w: Node = load(EDITOR + "KitClickTest.cs").new()
 		w.Setup(args[1], args[2])
 		root.add_child(w)
 	else:
-		push_error("kit_cli: check [piece ...] | build <layout> ... | structures | travel | capture <layout> <out dir> [WxH] [asbuilt] | seethrough <layout> <out dir> | clickwalk <layout> <out dir> | bakecaps [layout ...]")
+		push_error("kit_cli: check [piece ...] | build <layout> ... | structures | travel | capture <layout> <out dir> [WxH] [asbuilt] | seethrough <layout> <out dir> | clickwalk <layout> <out dir> | bakecaps [layout ...] | systems <out dir>")
 		quit(1)

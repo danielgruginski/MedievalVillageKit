@@ -18,7 +18,7 @@ public partial class KitPiece : Node3D
     /// swaps in Blender (vk_helpers.SLOT), so this is how a generator restyles a piece.</summary>
     [Export] public int[] BlenderSlots = System.Array.Empty<int>();
 
-    public MeshInstance3D MeshInstance => FindChildren("*", "MeshInstance3D", true, false).OfType<MeshInstance3D>().FirstOrDefault();
+    public MeshInstance3D MeshInstance => KitNodes.Below(this, "MeshInstance3D").OfType<MeshInstance3D>().FirstOrDefault();
 
     /// <summary>The surface carrying Blender material slot `slot`, or -1.</summary>
     public int SurfaceOfSlot(int slot) => System.Array.IndexOf(BlenderSlots, slot);

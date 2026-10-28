@@ -22,7 +22,7 @@ public static class KitDecks
         owner ??= root;
         root.GetNodeOrNull(CutName)?.Free();
         var decks = new List<Rect2>();                       // in root space, x / z
-        var pieces = root.FindChildren("*", "", true, false).OfType<KitPiece>().ToList();
+        var pieces = KitNodes.Below(root, "").OfType<KitPiece>().ToList();
         foreach (var kp in pieces)
         {
             string js = kp.Get("vki_bridge");
@@ -46,7 +46,7 @@ public static class KitDecks
         {
             if (kp.Get("vki_class") != "ground") continue;
             if (kp.GetNodeOrNull<StaticBody3D>("Collision") is not { } body) continue;
-            foreach (var cs in body.GetChildren().OfType<CollisionShape3D>())
+            foreach (var cs in KitNodes.Children(body).OfType<CollisionShape3D>())
             {
                 if (cs.Disabled || cs.Shape is not BoxShape3D box) continue;
                 if (cs.Position.Y + box.Size.Y / 2f <= 0.01f) continue;     // the tile's own floor slabs: walked on, not cut

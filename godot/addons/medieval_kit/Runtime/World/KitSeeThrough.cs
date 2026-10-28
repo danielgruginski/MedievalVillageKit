@@ -96,7 +96,7 @@ public static class KitSeeThrough
     public static IEnumerable<GeometryInstance3D> Geometry(Node root)
     {
         if (root is GeometryInstance3D self) yield return self;
-        foreach (var n in root.FindChildren("*", "GeometryInstance3D", true, false))
+        foreach (var n in KitNodes.Below(root, "GeometryInstance3D"))
             if (n is GeometryInstance3D g) yield return g;
     }
 
@@ -182,7 +182,7 @@ public static class KitSeeThrough
     {
         int n = 0;
         uint bits = LooseBit | (round ? RoundBit : 0u);
-        foreach (var piece in group.GetChildren())
+        foreach (var piece in KitNodes.Children(group))
         {
             if (IsStanding(piece.Name)) continue;
             foreach (var g in Geometry(piece)) { SetLayers(g, Layers(g) | bits); n++; }
@@ -194,7 +194,7 @@ public static class KitSeeThrough
     public static List<Building> Runs(Node group)
     {
         var parts = new List<(List<GeometryInstance3D> gs, Aabb b)>();
-        foreach (var piece in group.GetChildren())
+        foreach (var piece in KitNodes.Children(group))
         {
             if (!IsStanding(piece.Name)) continue;
             var gs = new List<GeometryInstance3D>(Geometry(piece));
@@ -309,7 +309,7 @@ public static class KitSeeThrough
     public static List<Building> SetUpLevel(Node level)
     {
         var list = new List<Building>();
-        foreach (var n in level.FindChildren("*", "Node3D", true, false))
+        foreach (var n in KitNodes.Below(level, "Node3D"))
         {
             if (n is not Node3D s || !IsStructure(s)) continue;
             bool inner = false;                                        // (a structure inside one already taken)
@@ -421,7 +421,7 @@ public static class KitSeeThrough
         for (var p = n; p != null; p = p.GetParent())
         {
             if (p is GeometryInstance3D g) return g;
-            foreach (var c in p.GetChildren()) if (c is GeometryInstance3D cg) return cg;
+            foreach (var c in KitNodes.Children(p)) if (c is GeometryInstance3D cg) return cg;
             if (p is KitPiece) break;
         }
         foreach (var g in Geometry(n)) return g;
