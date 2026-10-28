@@ -4,6 +4,14 @@ How the package's systems work and what a game has to do to use them. It is bein
 in the package (FULL_PORT_PLAN phase 8). For building levels (rooms from plans, the generators, chains, the walk
 tests) see [LEVEL_BUILDING.md](LEVEL_BUILDING.md).
 
+**How this was tested.** The kit was written by an AI coding assistant (Claude), directed by its author, and most of
+it was tested by that AI: automated checks that build the levels, walk them and read the results back. The systems in
+this manual (the camera, the see-through, click to move, fires, usable things, missiles, creature silhouettes,
+walkways) were also played by a person: they come from the author's own top-down RPG in Unity, where he plays them.
+That play-testing was done in the game, not on this package: the code was moved out of the game into the package
+afterwards, and the package's copies were checked by the AI (they compile, and a walker check plays the shipped
+levels with the camera and the see-through on). They should behave the same; if something does not, please say so.
+
 Contents:
 
 1. [Walking a level in five minutes](#1-walking-a-level-in-five-minutes)

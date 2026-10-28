@@ -4,6 +4,14 @@ How the addon's systems work and what a game has to do to use them (Godot 4.7, .
 of the kit's Unity package and offers the same systems; where Godot works differently, it says so. Everything is in
 the `MedievalKit` namespace.
 
+**How this was tested.** The Godot addon was written and tested by an AI coding assistant (Claude), directed by the
+kit's author. Every system here has an automated check (section 11) that drives it in the kit's own levels the way a
+player would (clicks, held buttons, doors, a stand-in behind buildings) and reads the results back from logs, pixels
+and screenshots; those checks pass. **None of it has been played by a person in Godot yet.** The Unity systems it
+ports were also played by a person, in the author's own Unity game (see the Unity package's manual), so the rules are
+proven there; how they were carried over to Godot is checked only by the AI's tests. If something behaves oddly,
+please say so.
+
 Contents:
 
 1. [Getting started](#1-getting-started)
