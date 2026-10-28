@@ -2458,6 +2458,16 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
       edge merge reports "more than 2 edges ... same map rasterization space" (32 errors) on some levels, and which
       edges join can vary. The brazier's bowl reads near white with or without its fire (the piece's own look).
 
+166. 2026-10-27 (Daniel: "The Zfight scanner will not be part of the godot. The manual of usage would be nice").
+    **The Godot manual: `godot/addons/medieval_kit/MANUAL.md`** (FULL_PORT_PLAN phase 8; ships in the addon, linked
+    from plugin.cfg and GODOT_EXPORT): getting started (the plugin's project settings and restart, the demo, Play From
+    Start Level / Walk This Level), levels and travel, the camera, the see-through (globals, marks as instance
+    uniforms, buildings from SetUpLevel, the caps and their bake, the driver, driving it from a game's own camera),
+    click to move and KitWalker, usable things, fires (the calls, the kit's own fires, FireFlicker), missiles / the
+    ground / walkways, creature silhouettes, the hooks and virtual members, the kit_cli checks, and what the addon
+    lacks (the z-fight watch, by Daniel's call; the village builder; chain streaming). Every name checked against the
+    code. **Decision:** the z-fight watch stays Unity-only (plan updated).
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.
