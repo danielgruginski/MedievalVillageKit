@@ -1,3 +1,4 @@
+using System.Linq;
 using Godot;
 
 namespace MedievalKit;
@@ -5,7 +6,7 @@ namespace MedievalKit;
 /// <summary>Level root: camera settings and links from VKI_Root (Props), and the world graph the level belongs to. Once
 /// it stands, its pieces get their world bounds for the see-through's shader (<see cref="KitSeeThrough.Bound"/>: Unity
 /// gives every renderer its bounds, Godot's shader has none), and its structures open as buildings, cut with caps
-/// (<see cref="KitSeeThrough.SetUpLevel"/>); its fires burn (<see cref="KitFires.LightLevel"/>) and its walkway decks
+/// (<see cref="KitSeeThrough.SetUpLevel"/>; a village's: <see cref="KitVillage.SetUpSeeThrough"/>); its fires burn (<see cref="KitFires.LightLevel"/>) and its walkway decks
 /// get their navmesh (<see cref="KitWalkways.Ensure"/>).</summary>
 [GlobalClass]
 public partial class KitLevel : Node3D
@@ -38,6 +39,7 @@ public partial class KitLevel : Node3D
         setUp = true;
         KitSeeThrough.Bound(this);
         KitSeeThrough.SetUpLevel(this);
+        foreach (var v in KitNodes.Below(this, "").OfType<KitVillage>()) v.SetUpSeeThrough();   // an outdoor map's own
         if (LightFires) KitFires.LightLevel(this);
         KitWalkways.Ensure(this);
     }

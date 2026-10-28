@@ -16,7 +16,8 @@ public readonly record struct PointerHit(Vector3 Point, float Distance, Node Col
 /// <summary>
 /// A walker's legs, Diablo / Baldur's Gate style: hold the left button to walk toward the cursor, click the ground to walk
 /// there; click something to use (an <see cref="Interactable"/>) to walk to it and use it; click a way out (a door,
-/// stair, cave mouth: a <see cref="KitLink"/>) to walk to it and take it. Road ends at a
+/// stair, cave mouth: a <see cref="KitLink"/>) to walk to it and take it -- a house whose door the camera cannot see
+/// (round the back) stands for it (<see cref="HouseUnder"/>). Road ends at a
 /// map's edge (KitLink.WalkInto) are taken by walking on into them, once the walker has stepped clear of the one it
 /// arrived by. Clicks the game's UI takes stay there (Godot's GUI eats them before _UnhandledInput; and
 /// <see cref="KitPointer"/>). A child of the walker's body (any Node3D), which it moves; walks the levels' baked navmesh
@@ -28,8 +29,7 @@ public readonly record struct PointerHit(Vector3 Point, float Distance, Node Col
 /// between going left and right of it.</para>
 /// <para>Godot: the walker follows its own way along the navmesh (Unity's NavMeshAgent; a NavigationAgent3D cannot take a
 /// way worked out ahead, which the held button's flip check needs): <see cref="Speed"/>, <see cref="Acceleration"/>,
-/// <see cref="TurnSpeed"/> as the agent's. Not yet here: houses whose door the camera cannot see (Unity's HouseUnder:
-/// Godot has no village builder yet).</para>
+/// <see cref="TurnSpeed"/> as the agent's.</para>
 /// <para>A game adds its own rules in a subclass: <see cref="Under"/>, <see cref="Press"/>, <see cref="Take"/>,
 /// <see cref="Offers"/>, <see cref="PassesThrough"/> and the small hooks (<see cref="Halted"/>, <see cref="ReadsPointer"/>,
 /// <see cref="TakesClicks"/>, <see cref="Walking"/>, <see cref="Went"/>, <see cref="Pointer"/>).</para>
@@ -51,6 +51,9 @@ public partial class KitClickToMove : Node
     [Export] public float Speed = 4.5f, Acceleration = 30f, TurnSpeed = 720f;
     /// <summary>how near the way's end counts as there (m)</summary>
     [Export] public float StoppingDistance = 0.05f;
+    /// <summary>a house whose door faces away from the camera, within this many degrees of its heading (round the back),
+    /// stands for its door: the cursor on its walls or roof is on the door. 0: off; 180: every house with a door.</summary>
+    [Export] public float HiddenDoor = 72f;          // Greywall's keep_st_6 (69) in; the hamlet's cottage_4 (74), the inn (76) out
     /// <summary>the camera whose view the cursor is on (null: the viewport's)</summary>
     public Camera3D Cam;
 
@@ -72,6 +75,8 @@ public partial class KitClickToMove : Node
     Vector3 velocity;
     int settle = -1;                                                // frames to wait for a level's navmesh before standing on it
     ulong settleFrom;
+    readonly List<House> houses = new();                            // the active level's buildings (HouseUnder)
+    bool housesFound;                                               // (false: found again, after an arrival)
 
     /// <summary>the way out under the cursor (its prompt shows)</summary>
     public KitLink Hover { get; protected set; }
@@ -107,6 +112,7 @@ public partial class KitClickToMove : Node
     {
         target = null; using_ = null; holding = false; armed = false; refused = false;
         way = null; velocity = Vector3.Zero;
+        housesFound = false;                                        // the level's houses are found again (HouseUnder)
         Settle();
     }
 
@@ -513,14 +519,15 @@ public partial class KitClickToMove : Node
     }
 
     /// <summary>what the cursor is on: a usable thing or a way out, whichever is nearest along the ray (a way out is
-    /// where the cursor meets something solid: <see cref="Surface"/>)</summary>
+    /// where the cursor meets something solid: <see cref="Surface"/>); with neither, a house whose door the camera
+    /// cannot see stands for the door (<see cref="HouseUnder"/>)</summary>
     protected virtual void Under(PointerHit[] hits, PointerRay ray, Camera3D c)
     {
         var (th, td, _) = ThingUnder(hits);
         var link = LinkUnder(ray);
         float ld = link != null ? Surface(hits, ray) : float.MaxValue;
         if (th != null && td <= ld + Tie) HoverThing = th;
-        else Hover = link;
+        else Hover = link ?? HouseUnder(hits, ray, c);
     }
 
     /// <summary>a usable thing under the cursor, how far along the ray, how far off the cursor's point: hit anywhere
@@ -596,6 +603,133 @@ public partial class KitClickToMove : Node
 
     /// <summary>a link's trigger box (null: none)</summary>
     static CollisionShape3D Box(KitLink l) => KitNodes.Children(l).OfType<CollisionShape3D>().FirstOrDefault();
+
+    // ------------------------------------------------------------------ houses whose door the camera cannot see
+
+    /// <summary>a building of an outdoor map: its root, its body (in the root's space, <see cref="FindHouses"/>) and
+    /// its doors (null: it has none, or none the camera cannot see)</summary>
+    struct House { public Node3D root; public Aabb body; public KitLink[] doors; }
+
+    /// <summary>how far a house's body reaches past the box over its walls, for the eaves (m)</summary>
+    const float Eaves = 0.5f;
+
+    /// <summary>
+    /// The door of the house under the cursor, where the camera cannot see it (houses with their doors on the north had
+    /// their roof over the cursor: the door's trigger stands behind the house, in the shadow of its box, so no ray reaches
+    /// it): the nearest house along the ray (its body), unless the see-through has opened it (the walker behind it: the
+    /// floor round the walker is clicked through it) or something solid stands in front of it (a crate, a tree, a wall),
+    /// and one of its doors faces away from the camera (<see cref="HiddenDoor"/>): its door nearest where the ray meets
+    /// it. A click walks round to it and goes in. A house with no way in, or with its doors in view, keeps the click (the
+    /// floor behind it, or up to its wall: <see cref="Ground"/>).
+    /// </summary>
+    protected KitLink HouseUnder(PointerHit[] hits, PointerRay ray, Camera3D c)
+    {
+        if (!housesFound) { housesFound = true; FindHouses(c); }
+        float best = float.MaxValue; int bi = -1;
+        for (int i = 0; i < houses.Count; i++)
+        {
+            var h = houses[i];
+            if (!IsInstanceValid(h.root) || !h.root.IsInsideTree()) continue;
+            var inv = h.root.GlobalTransform.AffineInverse();
+            Vector3 from = inv * ray.From, dir = inv.Basis * ray.Dir;
+            if (!RayBox(h.body, from, dir, out float t)) continue;
+            var lp = from + dir * t;
+            float d = (h.root.GlobalTransform * lp - ray.From).Dot(ray.Dir);
+            if (d <= 0f || d >= best || KitSeeThrough.Opened(ray.At(d), d, ray.From, ray.Dir, h.root)) continue;
+            best = d; bi = i;
+        }
+        if (bi < 0 || houses[bi].doors == null) return null;
+        foreach (var h in hits)                                             // nearest first: something solid in front of it
+        {
+            if (h.Distance >= best - 0.05f) break;
+            if (!PassesThrough(h, ray)) return null;
+        }
+        var at = ray.At(best);
+        KitLink door = null; float dd = float.MaxValue;
+        foreach (var l in houses[bi].doors)                                 // several: the one on the cursor's side
+        {
+            if (!IsInstanceValid(l)) continue;
+            float m = Flat(DoorPoint(l) - at);
+            if (m < dd) { dd = m; door = l; }
+        }
+        return door;
+    }
+
+    /// <summary>where a ray meets a box (t along `dir`; 0 when it starts inside); false: it misses (Unity's Bounds.IntersectRay)</summary>
+    static bool RayBox(Aabb box, Vector3 from, Vector3 dir, out float t)
+    {
+        float t0 = 0f, t1 = float.MaxValue;
+        for (int i = 0; i < 3; i++)
+        {
+            float o = from[i], d = dir[i], lo = box.Position[i], hi = box.End[i];
+            if (Mathf.Abs(d) < 1e-8f) { if (o < lo || o > hi) { t = 0f; return false; } continue; }
+            float a = (lo - o) / d, b = (hi - o) / d;
+            if (a > b) (a, b) = (b, a);
+            t0 = Mathf.Max(t0, a); t1 = Mathf.Min(t1, b);
+            if (t0 > t1) { t = 0f; return false; }
+        }
+        t = t0;
+        return true;
+    }
+
+    /// <summary>
+    /// The active level's buildings, as its <see cref="KitVillage"/> made them: each under its "Buildings" named by its
+    /// id, its door's link taking the same id, or a link put by hand under the building. Its body is the village's box
+    /// over its walls (its "Box" body, 4 m high: the one collider a building has -- the ray goes through a roof to it, or
+    /// past it to the floor behind) widened by the eaves and raised to 60% of the house's height: under the eaves of a
+    /// tall house, so a ray that meets its roof anywhere (one under 50 degrees) comes down into the body over the walls,
+    /// and one that passes over its far eave comes down beyond it. A house without a door still hides those behind it.
+    /// Its doors are kept when one of them faces away from the camera (<see cref="HiddenDoor"/>: the box's side nearest
+    /// the door's trigger). Rooms, caves and chains have no village: no houses. (Levels KitTravel's preload holds out of
+    /// the tree are not searched.)
+    /// </summary>
+    void FindHouses(Camera3D c)
+    {
+        houses.Clear();
+        var top = GetTree().Root;
+        var links = KitNodes.Below(top, "").OfType<KitLink>().Where(l => !l.WalkInto && Leads(l)).ToList();
+        var view = c != null ? -c.GlobalBasis.Z : Vector3.Forward;
+        view.Y = 0f;
+        view = view.Normalized();
+        float away = Mathf.Cos(Mathf.DegToRad(Mathf.Clamp(HiddenDoor, 0f, 180f)));
+        foreach (var v in KitNodes.Below(top, "").OfType<KitVillage>())
+        {
+            if (v.GetNodeOrNull("Buildings") is not Node3D group) continue;
+            foreach (var b in KitNodes.Children(group).OfType<Node3D>())
+            {
+                var shape = KitNodes.Children(b).OfType<StaticBody3D>().Where(x => x.Name.ToString().StartsWith("Box"))
+                    .SelectMany(x => KitNodes.Children(x).OfType<CollisionShape3D>()).LastOrDefault(x => !x.Disabled && x.Shape is BoxShape3D);
+                if (shape == null) continue;
+                var toB = b.GlobalTransform.AffineInverse();
+                var size = ((BoxShape3D)shape.Shape).Size;
+                var walls = new Aabb((toB * shape.GlobalTransform).Origin - size / 2f, size);
+                Vector3 wc = walls.GetCenter();
+                float wx = size.X / 2f + Eaves, wz = size.Z / 2f + Eaves, high = walls.End.Y;
+                foreach (var mi in KitNodes.Below(b, "MeshInstance3D").OfType<MeshInstance3D>())   // its height: what stands over its walls
+                {
+                    if (!mi.Visible) continue;
+                    var rb = toB * mi.GlobalTransform * mi.GetAabb();
+                    var p = rb.GetCenter();
+                    if (Mathf.Abs(p.X - wc.X) > wx || Mathf.Abs(p.Z - wc.Z) > wz) continue;
+                    high = Mathf.Max(high, rb.End.Y);
+                }
+                float low = walls.Position.Y;
+                var lo = new Vector3(wc.X - wx, low + 0.3f, wc.Z - wz);                            // (the floor at its foot stays floor)
+                var hi = new Vector3(wc.X + wx, Mathf.Max(walls.End.Y, low + 0.6f * (high - low)), wc.Z + wz);
+                var doors = links.Where(l => b.IsAncestorOf(l) || (l.LinkId == b.Name && v.IsAncestorOf(l))).ToArray();
+                bool hidden = HiddenDoor > 0f && doors.Any(l =>
+                {
+                    var q = toB * DoorPoint(l);
+                    var o = q - q.Clamp(walls.Position, walls.End);                 // out of the walls' side the door is on
+                    if (new Vector2(o.X, o.Z).LengthSquared() < 1e-4f) o = q - wc;
+                    o = b.GlobalBasis * o;
+                    o.Y = 0f;
+                    return o.LengthSquared() > 1e-6f && o.Normalized().Dot(view) >= away;
+                });
+                houses.Add(new House { root = b, body = new Aabb(lo, hi - lo), doors = hidden ? doors : null });
+            }
+        }
+    }
 
     /// <summary>where a way out is used from: the middle of its trigger (the link itself without one)</summary>
     protected static Vector3 DoorPoint(KitLink l) => Box(l) is CollisionShape3D s ? s.GlobalPosition : l.GlobalPosition;

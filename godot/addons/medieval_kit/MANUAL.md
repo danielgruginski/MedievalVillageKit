@@ -5,7 +5,7 @@ of the kit's Unity package and offers the same systems; where Godot works differ
 the `MedievalKit` namespace.
 
 **How this was tested.** The Godot addon was written and tested by an AI coding assistant (Claude), directed by the
-kit's author. Every system here has an automated check (section 12) that drives it in the kit's own levels the way a
+kit's author. Every system here has an automated check (section 13) that drives it in the kit's own levels the way a
 player would (clicks, held buttons, doors, a stand-in behind buildings) and reads the results back from logs, pixels
 and screenshots; those checks pass. **None of it has been played by a person in Godot yet.** The Unity systems it
 ports were also played by a person, in the author's own Unity game (see the Unity package's manual), so the rules are
@@ -24,9 +24,10 @@ Contents:
 8. [Missiles, the ground, walkways](#8-missiles-the-ground-walkways)
 9. [Creature silhouettes](#9-creature-silhouettes)
 10. [Rooms, generators, houses and chains](#10-rooms-generators-houses-and-chains)
-11. [Hooks a game fills](#11-hooks-a-game-fills)
-12. [Checks from the command line](#12-checks-from-the-command-line)
-13. [What the Godot addon does not have](#13-what-the-godot-addon-does-not-have)
+11. [Outdoor maps (`KitVillage`)](#11-outdoor-maps-kitvillage)
+12. [Hooks a game fills](#12-hooks-a-game-fills)
+13. [Checks from the command line](#13-checks-from-the-command-line)
+14. [What the Godot addon does not have](#14-what-the-godot-addon-does-not-have)
 
 ## 1. Getting started
 
@@ -112,10 +113,10 @@ round hole round its chest. Four parts work together:
    (`KitStructure`, or a layout's `VKX_ST_` group) become **buildings** (`KitSeeThrough.SetUpLevel`, called by
    `KitLevel`): a building's pieces open together, decided each frame. `KitSeeThrough.Loose(group)` (trees, rocks,
    props: open down to the feet) and `KitSeeThrough.Runs(group)` (walls placed as props, opening in runs) are there
-   for a game's own levels; the kit's village builder will call them (section 13).
+   for a game's own levels; the kit's village builder calls them for its trees, props and wall runs (section 11).
 3. **The caps**. Each building piece is cut 1.4 m over its building's floor, and a cap (the piece's own
    cross-section at the cut, filled) closes the stub, so you never see inside a wall (`KitSeeThroughCaps`). The cap
-   meshes are **baked**: `kit_cli -- bakecaps` (section 12) writes `res://kit/see_through_caps.res`; bake again after
+   meshes are **baked**: `kit_cli -- bakecaps` (section 13) writes `res://kit/see_through_caps.res`; bake again after
    rebuilding the layouts or re-exporting pieces. A piece the bank lacks gets its cap made in play, a few
    milliseconds a frame (Godot reads the mesh back from the GPU: a stall), and the game prints a reminder to bake. A
    pool of 96 cap meshes is laid each frame over the pieces in the hole's reach. Behind the caps, the one-sided kit
@@ -149,6 +150,10 @@ keep it under the walker's radius), `SeeThroughNear` (0.25 m), and the hidden ch
   kept (no swinging between left and right of a crate).
 - **Ways out**: click a `KitLink` to walk to it and take it (`KitTravel.Go`); road ends (`WalkInto`) are taken by
   walking on into them, once the walker has stepped clear of the one it arrived by.
+- **Houses round the back**: on an outdoor map, a house whose door faces away from the camera (within `HiddenDoor`,
+  72 degrees, of the camera's heading) stands for its door: the cursor on its walls or roof is on the door, and a
+  click walks round to it and goes in. A house with its door in view keeps the click (the floor behind it). 0 turns
+  this off; 180 makes every house with a door answer.
 - **Usable things** (section 6): click to walk up and use.
 - For a game's UI: `Hover` (the way out under the cursor), `HoverThing`, `Using`, the `Clicked` event (the point a
   click sent the walker to). From code: `MoveTo(point)`, `Interact(link)`, `Interact(thing)`.
@@ -207,7 +212,7 @@ spots where its own fires burn.
 Godot notes: each part is a GPUParticles3D. Its rate is a share of its maximum over its lifetime
 (`FireFx.Rate(part, perSecond)`); "already burning when first seen" is the part's preprocess (`FireFx.Warm`); a level
 held out of the tree keeps its particles where they were. Light energy is Unity's intensity x `FireFx.LightScale` (0.5).
-Sounds: the kit has none; set `Fire.SoundLoop` and `Fire.SoundAt` (section 11).
+Sounds: the kit has none; set `Fire.SoundLoop` and `Fire.SoundAt` (section 12).
 
 ## 8. Missiles, the ground, walkways
 
@@ -307,14 +312,94 @@ Godot's parser sees a box collider's faces, not its volume, so the floor inside 
 hearth's 2.2 m block) would stay walkable, an island sealed in the box; the bake adds every such box as an
 obstruction too, as Unity's solid colliders are.
 
-**Checks** (section 12): `rooms golden` rebuilds the kit's own Blender rooms and compares them with Blender's export
+**Checks** (section 13): `rooms golden` rebuilds the kit's own Blender rooms and compares them with Blender's export
 (17 of 19 the same; Smithy and Townhouse_F1 differ by the known 0.3 m prop slides, as in Unity); `rooms validate`
 walk-tests seeds of every generator (every spawn, link and encounter point and every floor cell on the first spawn's
 island); `chains validate` walks the sample chain end to end; `chains stream` runs a baked chain's play scene and
 checks what the streamer holds in each piece; `shot` renders any scene top-down and from the game's camera, to look
 at what was built.
 
-## 11. Hooks a game fills
+## 11. Outdoor maps (`KitVillage`)
+
+A village, hamlet, road, wood, camp or harbour from a layout: a JSON file of the map's size, seed, ground (relief,
+rim, terrain tiers with cliffs and ramps, the sea and its quays), roads and paved areas, buildings (kit structures or
+generated houses, `"house": {cells, stories, seed, shape}`), gardens, props, fences, trees, the forest round the
+clearing, scatter, grass, and the game's things: spawns, links, markers, encounters, exits. The layout format is the
+Unity kit's, unchanged: the Unity package's `Documentation~/LEVEL_BUILDING.md` section 5.7 describes every key, and a
+layout written for one engine builds in the other. Two examples ship in `Examples/`: `Hamlet_layout.json` (a clearing
+in a forest) and `HarbourTest_layout.json` (the sea, quays, moored boats, a lighthouse).
+
+**Same rules, not the same numbers.** The Godot builder follows the Unity kit's rules (where the forest stands, how
+the roads are painted, where the grass grows, what the walk test asks), and a layout gives the same map in its
+plan: the buildings, roads, terrain, links and markers where the layout puts them. The random parts (which tree,
+where a fern falls, the blades of grass) are not drawn in the same order as Unity's, so the two engines' forests and
+scatter differ in detail.
+
+**Building one.** From the command line (headless):
+
+```
+godot --headless --path . --script res://addons/medieval_kit/Editor/kit_cli.gd -- rooms village <layout.json> <scene.tscn>
+```
+
+builds the layout into a new scene (`KitVillageTools.BuildVillage`): a `KitLevel` root named after the map, a
+`KitVillage` under it, the sun and sky of `VK_ValleyTown`, a camera at the arrival, the navmesh baked and the walk
+test run. The ground's mesh, control map and materials are saved beside the scene in `<map>_Ground/`. In the editor:
+add a `KitVillage` to a scene, paste the layout into `layout`, press **Build** (or **Clear**); then bake its navmesh
+(`KitVillageTools.Bake`) like the command does. Read the report's notes: a building on a road, a prop that found no
+piece, a building past the forest's wall.
+
+What a build makes, under the `KitVillage`:
+
+| Node | What |
+|---|---|
+| `Ground` | the ground mesh `Ground` (one mesh: its relief and the pads under buildings; a trimesh body `GroundBody`), `Terrain` (the tiers' cliffs, ramps and stairs merged into one mesh and body), `Sea` and its `SeaMask`, the `Grass` |
+| `Buildings` | one node per building, named by its id; each has a `Box` body over its walls (4 m high), the building's only collider |
+| `Props`, `Nature`, `Walls` | props and fences; trees, the forest and scatter; the invisible wall round the clearing (`WallBodies`), broken by the roads |
+| `Logic` | links (`LNK_<id>`, a door's trigger with its arrival spawn), spawns, markers (`MRK_<role>_<id>`), encounters, exits |
+| `KitNavMesh` | the baked navmesh (by `rooms village` or `KitVillageTools.Bake`) |
+
+The ground's material is `KitTerrain` with this map's control map (roads, paving, dirt and sand painted in; row 0 of
+the image is the map's north). `KitVillage.Spawn` makes each piece (a game may pool them).
+
+**Grass (`KitGrass`).** Clumps of five to seven blades on a jittered grid, thinning where the ground turns to dirt or
+paving, out at the forest's edge, on steep ground and under buildings, props and trees; taller in patches, darker in
+the forest's shade. The layout's `"grass"` sets `spacing`, `height` [min, max], `edge`, `shadows` and `tip` (the
+blades' tip colour: a burnt land's dull straw); `"grass": false` turns it off. The clumps are one byte array on the
+`KitGrass` node, drawn in 16 m chunks (a MultiMesh each, made when the node enters the tree, not saved); each blade's
+shape, sway in the wind and parting round the walker are worked out in the shader (`Shaders/KitGrass.gdshader`:
+`wind`, `wind_strength`, `push_radius`, `push_strength`, `root_dark`, `translucency`). The blades take their colour
+from the ground's grass (`grass_map`, `macro_map`, `grass_sat` copied from the ground material). Settings on the node:
+`reach` (90 m: chunks further than this are not drawn), `castShadows`, `minHeight` / `maxHeight`. Godot: there is no
+compute cull as in Unity; Godot's own culling drops whole chunks out of view or past `reach`.
+
+**The sea.** Water quads over the sea's cells with `Materials/KitSea.tres` (`Shaders/KitSea.gdshader`: ripples, depth
+colour from the depth buffer, refraction, foam along shores and quays, glints). A moored boat's hull is kept dry by a
+`KitWaterMask` mesh at its waterline (`Materials/KitWaterMask.tres`): it writes the stencil, and the sea is not drawn
+there. Quays, water stairs and the sea's bed come from the terrain's tiles.
+
+**Navmesh and walk test.** `KitVillageTools.Bake` bakes on 0.1 m cells. It leaves out the forest beyond the
+clearing's walls from floor to sky, and the ground under the raised terrain up to a metre (the tiers' tops and ramps
+stay). It also leaves out the sea's bed and drowned shore up to just under the water (quays and water stairs stay) and
+the crop beds. Islands under 2 m² are dropped for every navmesh the kit bakes, as Unity's are: the top of a sack pile,
+a chest or a fire pit is not floor. The walk test (`KitVillageTools.WalkVillage`) checks that every spawn, marker
+and encounter point on the ground is reached from the arrival. A marker in a cage is a prisoner, so it is skipped,
+and so is an encounter point lifted off the ground (archers on a walkway). It also checks that probes just beyond the
+forest's wall are not reached ("the forest leaks at ..."). Doors and breakables count as open; a second bake with
+them shut lists what they close off.
+
+**See-through.** A `KitLevel` holding a village sets its see-through up from the village
+(`KitVillage.SetUpSeeThrough`). Each building opens as one: it is cut at its ground floor, and a plank floor is drawn in
+the hole so the walker behind it is seen standing on something. Trees, bushes and loose props are cut on their own,
+and wall and fence runs as runs. `KitSeeThrough.SetUpLevel` leaves a village's structures to it.
+
+**The shroud (`KitShroud`).** For underground levels: the rock away from where the walker can go darkens with that
+distance, black a few metres in, so the rock between passages fades into the dark. Put a `KitShroud` node in the
+level's scene; a chain's play scene has one (`chains bake` keeps the one already there, as it was tuned). While it is
+in the tree it reads the navmesh near the level's floor into a distance field, rebuilt on each arrival, and every
+KitLit material darkens by it. Settings (live): `darkFrom` (0.2 m), `blackAt` (3 m), `topLight` (0.4, the light the
+rock tops keep), `cell` (0.5 m), `floorBand` (1.6 m).
+
+## 12. Hooks a game fills
 
 Static hooks the addon calls back through (set them early, e.g. in an autoload's `_Ready`):
 
@@ -327,7 +412,7 @@ Static hooks the addon calls back through (set them early, e.g. in an autoload's
 | `Fire.SoundAt(id, point, volume, pitch)` | a one-shot (`fire_spray`, `spell_hit`, `earth`) | silent |
 | `KitWalkways.Names()` | the deck pieces' names | no decks |
 | `KitTravel.ScenePath(level)` | a level's scene | `res://kit/layouts/<level>.tscn` |
-| `KitRoom.Spawn(scene)`, `KitHouseGenerator.Spawn(scene)` | makes a piece (pooling) | `Instantiate` |
+| `KitRoom.Spawn(scene)`, `KitHouseGenerator.Spawn(scene)`, `KitVillage.Spawn(scene)` | makes a piece (pooling) | `Instantiate` |
 | `KitInteriorRules.External(name)` | a piece the kit does not have (a game's own) | none |
 | `KitChain.AfterBake(chain)` | the game's additions to a chain's baked pieces | nothing |
 
@@ -352,7 +437,7 @@ One Godot rule for C# code that walks the scene tree every frame: `FindChildren`
 arrays, and one left to .NET's finalizer can be freed after the engine has shut down, crashing the game on quit. The
 addon uses `KitNodes.Below(root, type)` and `KitNodes.Children(node)` instead, which leave none.
 
-## 12. Checks from the command line
+## 13. Checks from the command line
 
 With the .NET build of Godot, after `dotnet build`, in the project folder:
 
@@ -371,25 +456,23 @@ godot --headless --path . --script res://addons/medieval_kit/Editor/kit_cli.gd -
 | `seethrough <layout> <out>` | a stand-in behind each building: the hole, the caps, shots on and off | a window |
 | `clickwalk <layout> <out>` | the walker: a floor click, the button held, a wall click, the doors and a round trip | a window |
 | `systems <out>` | fires, a blaze, a missile, a silhouette, a usable thing, a walkway deck | a window |
+| `gfx <out>` | grass (heights, tints, shadows, parting round the walker), the sea and a boat's water mask, the shroud on and off | a window |
 | `rooms golden [log]` | the kit's Blender rooms rebuilt by KitRoom against Blender's export | headless |
 | `rooms validate [which] [count] [first seed]` | seeds of each generator (`cave`, `dungeon`, `sewer`, `connector`, `interior`, `all`) built and walk-tested | headless |
 | `rooms dump <which> <count> <first seed> <out.jsonl>` | the generators' levels as JSON, to diff with the Unity kit's (`tools/rooms_parity.py`) | headless |
+| `rooms village <layout.json> <scene.tscn>` | an outdoor map built from its layout, baked, walk-tested and saved | headless |
 | `houses [count] [first seed]` | random houses as scenes and a showcase in `res://kit_houses/` | headless |
 | `chains sample <chain.tres> [seed]`, `chains bake <chain.tres>` | the sample chain made and baked; a chain baked | headless |
 | `chains validate [count] [first seed]`, `chains stream <play.tscn>` | the sample chain walked end to end; the streamer over a baked chain | headless |
-| `shot <scene.tscn> <out prefix> [WxH]` | any scene rendered top-down and from the game's camera | a window |
+| `shot <scene.tscn> <out prefix> [WxH] [node\|x,y [radius]]` | any scene rendered top-down and from the game's camera; with a node's name or a plan point, both views close round it (radius 15 m) | a window |
 
 The window ones need a display (drop `--headless`); each writes a log and shots to `<out>` and quits.
 
-## 13. What the Godot addon does not have
+## 14. What the Godot addon does not have
 
 - **The z-fight watch** (Unity's F8 tool that logs surfaces fighting in play) is not part of the Godot addon. The
   kit's pieces are checked for z-fighting in Blender, at the source.
-- **The village builder** (Unity's `KitVillage`: outdoor maps from a layout, with loose nature and props, wall runs,
-  a house's floor under the hole and its box) is not ported yet. Until it is, `KitSeeThrough.SetUpLevel` takes a
-  level's structures as buildings, and `KitClickToMove` has no stand-in for a house whose door faces away from the
-  camera (Unity's `hiddenDoor`).
-- **The shroud** (Unity's `KitShroud`: the rock away from a chain's passages fading to black) is not ported yet; a
-  chain's play scene has none. It comes with the village builder (FULL_PORT_PLAN phase 5).
-- **Eight herbs of the second and third chapters** (`SM_VK_Plant_Angelica`... `Samphire`) are in the Unity package
-  but not exported to Godot yet (they are not in the kit's main .blend); phase 5 brings them.
+- **Outdoor-map generators** (whole villages, roads or woods generated from a seed) exist in neither engine: outdoor
+  maps are built from layouts written by hand (or by a tool of your own).
+- **The grass's compute cull** (Unity draws its grass through a compute shader that culls each clump): Godot culls the
+  grass by 16 m chunks instead.

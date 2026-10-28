@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
@@ -13,23 +14,32 @@ namespace MedievalKit;
 public partial class KitNavMesh : NavigationRegion3D
 {
     /// <summary>the kit's walker (radius 0.3: the kit's 0.84 m doors, height 1.8, step 0.35, slope 40), on cells of
-    /// `voxel` metres (0.05 indoors and in caves: narrow doors and openings; 0.1 on outdoor maps), heights in 0.05 m</summary>
+    /// `voxel` metres (0.05 indoors and in caves: narrow doors and openings; 0.1 on outdoor maps), heights in 0.05 m;
+    /// islands under 2 m² left out (Unity's minRegionArea: the tops of sacks, chests and fire pits are no floor)</summary>
     public static NavigationMesh Settings(float voxel = 0.05f) => new()
     {
         CellSize = voxel, CellHeight = 0.05f,
+        RegionMinSize = Mathf.Sqrt(2f) / voxel,                    // (squared: a count of cells)
         AgentRadius = 0.3f, AgentHeight = 1.8f, AgentMaxClimb = 0.35f, AgentMaxSlope = 40f,
         GeometryParsedGeometryType = NavigationMesh.ParsedGeometryType.StaticColliders,
         GeometryCollisionMask = KitPiece.Solid,
         GeometrySourceGeometryMode = NavigationMesh.SourceGeometryMode.RootNodeChildren,
     };
 
-    /// <summary>the surface of everything under root (which must be in the tree: the parser reads global transforms)</summary>
-    public static NavigationMesh Bake(Node3D root, float voxel = 0.05f)
+    /// <summary>the surface of everything under root (which must be in the tree: the parser reads global transforms);
+    /// `notWalkable`: outlines in root space (their y left out) where none is made between the heights `bottom` and
+    /// `top` (an outdoor map's forest beyond its walls from floor to sky, the ground under its raised terrain, its sea;
+    /// Unity's Not Walkable volumes); `mask`: the collision layers baked (the solid ones; with
+    /// <see cref="KitPiece.Passable"/> too, doors and breakables count as shut)</summary>
+    public static NavigationMesh Bake(Node3D root, float voxel = 0.05f, IEnumerable<(Vector3[] poly, float bottom, float top)> notWalkable = null, uint mask = KitPiece.Solid)
     {
         var nm = Settings(voxel);
+        nm.GeometryCollisionMask = mask;
         var src = new NavigationMeshSourceGeometryData3D();
         NavigationServer3D.ParseSourceGeometryData(nm, src, root);
         SolidBoxes(root, nm, src);
+        foreach (var (poly, bottom, top) in notWalkable ?? Enumerable.Empty<(Vector3[], float, float)>())
+            src.AddProjectedObstruction(poly, bottom, top - bottom, true);
         NavigationServer3D.BakeFromSourceGeometryData(nm, src);
         return nm;
     }

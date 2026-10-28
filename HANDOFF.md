@@ -2503,6 +2503,48 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
       and the houses looked at. Not done: the inspector buttons (`ExportToolButton`) were not pressed in the editor's
       GUI (the same calls run headless); a chain's play scene has no shroud (KitShroud is phase 5); nothing played by a
       person.
+168. 2026-10-28 (Daniel: "Start phase 5"; mid-way: "no need to do a perfect copy, they can differ in results").
+    **FULL_PORT_PLAN phase 5: outdoor maps in Godot** (GODOT_EXPORT 5e; the addon's MANUAL section 11). `KitVillage`
+    (+ `.Terrain`, `.Patches`, `.ForestDress`, `.Grass`, `.SeeThrough`; a tool `Node3D`, Build / Clear) builds a
+    layout of the Unity kit's format: ground mesh and control map, terrain tiers (tiles merged into one mesh and body),
+    the sea and its water masks, buildings (structures and generated houses) with their `Box` bodies and doors, gardens,
+    props, fences, trees, the forest and its dress, scatter, patches, grass, spawns, links, markers, encounters, exits.
+    `KitGrass` + `Shaders/KitGrass.gdshader`, `KitSea` + `KitWaterMask` shaders and materials (Godot 4.7's stencil),
+    `KitShroud` + `kit_shroud.gdshaderinc` (in every KitLit material and the caps; a chain's play scene now carries
+    one, kept as tuned on a re-bake). Editor: `KitVillageTools` (`BuildVillage`, `Bake`, `WalkVillage`), kit_cli
+    `rooms village <layout> <scene>`, `gfx <out>` (grass, sea, mask, shroud shots and pixel checks), `shot ... [node|x,y
+    [radius]]` (a close-up). See-through: `KitVillage.SetUpSeeThrough` (a building per `Buildings` child cut at its
+    floor with a plank floor in the hole, loose nature and props, wall runs), called by `KitLevel`; `KitClickToMove`
+    got Unity's HouseUnder (`HiddenDoor` 72). Examples: `Examples/Hamlet_layout.json`, `HarbourTest_layout.json`.
+    Two agents ported the terrain / patches / forest dress and the grass / sea / mask / shroud; I ported the core, the
+    see-through set-up, the tools and HouseUnder.
+    - **Rules, not numbers** (Daniel's call above): no seed parity this time; the forest's and scatter's random draws
+      differ from Unity's, the plan does not (buildings, roads, terrain, links, markers where the layout puts them).
+    - **The check: the game's own layouts.** All 11 outdoor layouts of MedievalSetting (`Assets/MedievalKitWorld/`:
+      Hamlet, Woods, Warcamp, ShepherdDowns, Northfields, BurntMarch, BanditRoad, Greywall, OrcHold, MonasteryRoad,
+      Saltmere_Docks) build in Godot (21-68 s each) and walk: 9 / 11 clean; Northfields and BurntMarch report "the
+      forest leaks at (108, ...)": the open burnt ground east of the farm, the same in Unity's area map (a layout
+      matter, not the port's). Hamlet and Woods compared with Unity's baked area maps (top-down): the same plan, piece
+      for piece; Godot's forest reads darker from above (the same species mix: lighting, not placement). HarbourTest
+      and Saltmere_Docks: quays, depth bands, foam, moored boats dry inside. Close-ups of a tier knoll and the inn.
+    - **Navmesh fixes found by the game maps:** (1) not-walkable zones now have heights, as Unity's modifier boxes do:
+      outside the walls floor to sky, under raised terrain up to 1 m (it had carved the tiers' tops away: herbs on a
+      knoll unreachable), the sea up to `SeaWalkTop`; (2) `KitNavMesh.Settings` drops islands under 2 m²
+      (`RegionMinSize` = sqrt 2 / cell, Unity's default `minRegionArea`): a marker on a fire pit, sacks or a chest had
+      snapped to the prop's top, an island of its own (Hamlet 246 islands -> 33). Rooms and chains re-validated with it.
+    - **HouseUnder checked** on the game Hamlet (a scratch test aiming the game camera at every building): at 72
+      degrees only the house with its door on the north side answers; at 180 all 13 houses with doors do.
+    - **Checks:** `gfx` ALL PASS (9); `rooms village` on both examples and the 11 game maps; after the navmesh change
+      `rooms validate all 20` 320 / 320, `chains validate 10` 10 / 10, `rooms golden` 10 / 12 (the two known slides),
+      `travel` 40 links, 0 problems (its "Parse Error" lines at the very end are preloads cut off by the quit). Not done: no person
+      played a village; the wind and the shroud's arrival path were seen in stills only; the grass culls per 16 m
+      chunk (no compute cull, as agreed); the inspector buttons not pressed in the GUI.
+    - **Herbs:** the eight chapter 2 / 3 herbs were built headless (`rebuild_nature`) and exported to Godot (not
+      saved in the .blend: to do with the four props of 167, in an open Blender).
+    - **Gotchas:** C# 14's `field` keyword means a property's own backing field inside an accessor (a member named
+      `field` read back null); compare navigation worlds by `GetWorld3D().NavigationMap` RIDs; two Godot processes on
+      one project at once can fail to parse each other's scenes (`travel` did, alone it passes): run checks one at a
+      time.
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with

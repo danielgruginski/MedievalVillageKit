@@ -16,6 +16,8 @@
 //   - the roof brightness jitter (Blender's Object Info > Random): the instance uniform object_random, which the layout
 //     builder sets per placement to the value Blender computes from the object's name (KIT_JITTER only: Godot gives
 //     every instance of a material with instance uniforms 16 slots of a buffer of 4096 instances' worth);
+//   - the shroud of an underground level (kit_shroud.gdshaderinc, Unity's KitShroud.hlsl): the surface darkened away
+//     from the walkable ground while a KitShroud is on;
 //   - the see-through round the walker (kit_see_through.gdshaderinc, Unity's KitSeeThrough.hlsl): every variant clips
 //     the hole first thing; in the hidden check's view (KitSeeThroughProbe's camera) it draws only what the hole would
 //     open, flat magenta (green: a building's tag);
@@ -45,6 +47,7 @@ render_mode blend_mix, KIT_DEPTH, KIT_CULL, diffuse_lambert, specular_schlick_gg
 #define KIT_SEE_THROUGH_SOLID
 #endif
 #include "res://addons/medieval_kit/Shaders/kit_see_through.gdshaderinc"
+#include "res://addons/medieval_kit/Shaders/kit_shroud.gdshaderinc"
 
 uniform vec4 base_color : source_color = vec4(1.0);
 uniform sampler2D albedo_map : source_color, hint_default_white, filter_linear_mipmap_anisotropic, repeat_enable;
@@ -141,6 +144,14 @@ void fragment() {
 #elif defined(KIT_GLASS)
 	ALPHA = 1.0;
 #endif
+	// underground: away from the walkable ground, into the dark (kit_shroud.gdshaderinc; Unity scales the lit colour,
+	// here what makes it: the surface, its glow and its highlights)
+	if (kit_shroud_args.x > 0.0) {
+		float shroud = kit_shroud((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, (INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
+		ALBEDO *= shroud;
+		EMISSION *= shroud;
+		SPECULAR *= shroud;
+	}
 	if (kit_probe) {                               // the hidden check's view: flat magenta, a building's tag in green
 		ALBEDO = vec3(0.0);                        // (Godot allows no `return` in fragment(): it overrides at the end)
 		BACKLIGHT = vec3(0.0);

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using Godot;
 
@@ -192,6 +193,39 @@ public static class KitSeeThroughCaps
             return;
         }
         pending.Enqueue((mi, mesh, q, solid, bark, b));
+    }
+
+    /// <summary>a house's floor: a plank quad over its walls' box (the "Box" body KitVillage puts on its root), at its
+    /// floor, a cap of its building (drawn only where the hole opened it): the ground inside a house is the map's grass.
+    /// The root must stand in the tree. Unity: KitSeeThroughCaps.Floor.</summary>
+    public static MeshInstance3D Floor(KitSeeThrough.Building b)
+    {
+        if (Collecting != null || b?.Root == null) return null;
+        var root = b.Root;
+        var cs = root.GetNodeOrNull<StaticBody3D>("Box") is { } body ? KitNodes.Children(body).OfType<CollisionShape3D>().FirstOrDefault() : null;
+        var mat = KitInteriorRules.Default.Mat("M_VK_Planks") ?? KitInteriorRules.Default.Mat("M_VK_Wood");
+        if (cs?.Shape is not BoxShape3D box || mat == null) return null;
+        float hx = Mathf.Max(0.1f, box.Size.X * 0.5f - 0.05f), hz = Mathf.Max(0.1f, box.Size.Z * 0.5f - 0.05f);
+        var c = cs.Position;
+        var v = new[] { new Vector3(c.X - hx, 0.02f, c.Z - hz), new Vector3(c.X + hx, 0.02f, c.Z - hz), new Vector3(c.X + hx, 0.02f, c.Z + hz), new Vector3(c.X - hx, 0.02f, c.Z + hz) };
+        var arrays = new Godot.Collections.Array();
+        arrays.Resize((int)Mesh.ArrayType.Max);
+        arrays[(int)Mesh.ArrayType.Vertex] = v;
+        arrays[(int)Mesh.ArrayType.Normal] = new[] { Vector3.Up, Vector3.Up, Vector3.Up, Vector3.Up };
+        arrays[(int)Mesh.ArrayType.TexUV] = v.Select(p => new Vector2(p.X, p.Z) * Tile).ToArray();
+        arrays[(int)Mesh.ArrayType.Color] = new[] { new Color(1, 1, 1, 0), new Color(1, 1, 1, 0), new Color(1, 1, 1, 0), new Color(1, 1, 1, 0) };
+        arrays[(int)Mesh.ArrayType.Index] = new[] { 0, 1, 2, 0, 2, 3 };       // clockwise from above: Godot's front
+        var m = new ArrayMesh { ResourceName = root.Name + "_SeeThroughFloor" };
+        m.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
+        arrays.Dispose();
+        m.SurfaceSetMaterial(0, mat);
+        var fr = new MeshInstance3D { Name = "SeeThroughFloor", Mesh = m, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
+        root.AddChild(fr);
+        KitSeeThrough.Bound(fr);
+        uint tag = b.Pieces.Length > 0 ? KitSeeThrough.Layers(b.Pieces[0]) & KitSeeThrough.TagMask : 0u;
+        KitSeeThrough.SetLayers(fr, 1u | KitSeeThrough.GroupBit | KitSeeThrough.CapBit | tag | (b.Open ? KitSeeThrough.OpenBit : 0u));
+        b.Caps.Add(fr);
+        return fr;
     }
 
     /// <summary>make queued caps for up to `budgetMs` of this frame; returns how many are left</summary>

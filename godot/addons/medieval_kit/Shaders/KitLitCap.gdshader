@@ -9,6 +9,7 @@ shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, cull_front, diffuse_lambert, specular_disabled;
 #define KIT_SEE_THROUGH_SOLID
 #include "res://addons/medieval_kit/Shaders/kit_see_through.gdshaderinc"
+#include "res://addons/medieval_kit/Shaders/kit_shroud.gdshaderinc"
 
 uniform vec4 base_color : source_color = vec4(1.0);
 uniform sampler2D albedo_map : source_color, hint_default_white, filter_linear_mipmap_anisotropic, repeat_enable;
@@ -41,7 +42,8 @@ void fragment() {
 	if (kit_see_through.w * t / L - length(v - d * t) < 0.0 || foot - p.y < 0.0) discard;   // off the hole, or above the foot
 	vec3 r = p - cam;
 	vec3 top = cam + r * clamp((foot - cam.y) / min(r.y, -1e-4), 0.0, 1.0);   // where the line of sight meets the cut
-	ALBEDO = texture(albedo_map, top.xz * KIT_CAP_TILE).rgb * base_color.rgb * mix(jitter.x, jitter.y, object_random) * KIT_CAP_SHADE;
+	ALBEDO = texture(albedo_map, top.xz * KIT_CAP_TILE).rgb * base_color.rgb * mix(jitter.x, jitter.y, object_random) * KIT_CAP_SHADE
+		* kit_shroud(top, vec3(0.0, 1.0, 0.0));        // underground: the shroud at the cut
 	NORMAL = normalize((VIEW_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).xyz);   // a level face
 	ROUGHNESS = 1.0;
 }

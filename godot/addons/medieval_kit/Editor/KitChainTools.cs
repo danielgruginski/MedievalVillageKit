@@ -271,10 +271,13 @@ public static class KitChainTools
     }
 
     /// <summary>&lt;chain&gt;_Play.tscn: the sun and environment of VKI_Dungeon_B4, a KitChainStreamer, one navmesh over every
-    /// piece (KitNavMesh: paths run into pieces not streamed in yet) and a KitTestWalker</summary>
+    /// piece (KitNavMesh: paths run into pieces not streamed in yet), a KitShroud (as the play scene's was tuned, on a
+    /// re-bake) and a KitTestWalker</summary>
     static string WritePlayScene(string chainPath, string folder, string chainName, NavigationMesh nm)
     {
         string path = $"{folder}/{chainName}_Play.tscn";
+        var shroud = TunedShroud(path) ?? new KitShroud();      // the rock away from the passages fades to black
+        shroud.Name = "KitShroud";
         var root = new Node3D { Name = chainName + "_Play" };
         try
         {
@@ -297,6 +300,8 @@ public static class KitChainTools
             var nav = new KitNavMesh { Name = "KitNavMesh", NavigationMesh = nm };
             root.AddChild(nav);
             nav.Owner = root;
+            root.AddChild(shroud);
+            shroud.Owner = root;
             var w = new KitTestWalker { Name = "KitTestWalker" };
             root.AddChild(w);
             w.Owner = root;
@@ -307,6 +312,19 @@ public static class KitChainTools
             return err == Error.Ok ? path : $"(failed: {err})";
         }
         finally { root.Free(); }
+    }
+
+    /// <summary>the KitShroud of the play scene already at `path` (null: none yet), loose, so a re-bake keeps it as tuned</summary>
+    static KitShroud TunedShroud(string path)
+    {
+        if (!ResourceLoader.Exists(path)) return null;
+        var old = GD.Load<PackedScene>(path).Instantiate();
+        try
+        {
+            var s = KitNodes.Below(old, "").OfType<KitShroud>().FirstOrDefault();
+            return s == null ? null : new KitShroud { darkFrom = s.darkFrom, blackAt = s.blackAt, topLight = s.topLight, cell = s.cell, floorBand = s.floorBand };
+        }
+        finally { old.Free(); }
     }
 
     /// <summary>a KitChain like the sample chain (maze cave -> dungeon -> open cave, and a side cave branching off the

@@ -11,13 +11,15 @@ extends SceneTree
 #   ... (a window, no --headless)          ... -- clickwalk <layout> <out dir>     (the click-to-move walker: floor, hold, doors)
 #   ...                         --headless ... -- bakecaps [layout ...]           (the see-through's caps -> res://kit/see_through_caps.res)
 #   ... (a window, no --headless)          ... -- systems <out dir>                (fires, missile, silhouettes, usable things, decks)
+#   ... (a window, no --headless)          ... -- gfx <out dir>                    (grass, the sea and a boat's water mask, the shroud)
 #   ...                         --headless ... -- rooms golden [log]               (the kit's Blender rooms rebuilt by KitRoom)
 #   ...                         --headless ... -- rooms validate [which] [count] [first seed]   (generators walk-tested)
 #   ...                         --headless ... -- rooms dump <which> <count> <first seed> <out.jsonl>   (to diff with Unity's)
+#   ...                         --headless ... -- rooms village <layout.json> <scene.tscn>   (an outdoor map built, walk-tested, saved)
 #   ...                         --headless ... -- houses [count] [first seed]       (house set -> res://kit_houses/)
 #   ...                         --headless ... -- chains sample <chain.tres> [seed] | bake <chain.tres> | validate [count] [first]
 #   ...                         --headless ... -- chains stream <play.tscn>       (the streamer over a baked chain)
-#   ... (a window, no --headless)          ... -- shot <scene.tscn> <out prefix> [WxH]   (top-down and the game's view)
+#   ... (a window, no --headless)          ... -- shot <scene.tscn> <out prefix> [WxH] [node|x,y [radius]]   (top-down and the game's view)
 
 const EDITOR := "res://addons/medieval_kit/Editor/"
 
@@ -60,6 +62,10 @@ func _initialize() -> void:
 		var t: Node = load(EDITOR + "KitSystemsTest.cs").new()
 		t.Setup(args[1])
 		root.add_child(t)
+	elif cmd == "gfx":
+		var t: Node = load(EDITOR + "KitGfxTest.cs").new()
+		t.Setup(args[1])
+		root.add_child(t)
 	elif cmd == "rooms":
 		var r: Node = load(EDITOR + "KitRoomsCli.cs").new()
 		r.Setup(PackedStringArray(args.slice(1)))
@@ -74,12 +80,12 @@ func _initialize() -> void:
 		root.add_child(h)
 	elif cmd == "shot":
 		var s: Node = load(EDITOR + "KitShot.cs").new()
-		s.Setup(args[1], args[2], args[3] if args.size() > 3 else "")
+		s.Setup(args[1], args[2], args[3] if args.size() > 3 else "", args[4] if args.size() > 4 else "", args[5] if args.size() > 5 else "")
 		root.add_child(s)
 	elif cmd == "clickwalk":
 		var w: Node = load(EDITOR + "KitClickTest.cs").new()
 		w.Setup(args[1], args[2])
 		root.add_child(w)
 	else:
-		push_error("kit_cli: check [piece ...] | build <layout> ... | structures | travel | capture <layout> <out dir> [WxH] [asbuilt] | seethrough <layout> <out dir> | clickwalk <layout> <out dir> | bakecaps [layout ...] | systems <out dir> | rooms golden|validate|dump ... | chains sample|bake|validate|stream ... | houses [count] [seed]")
+		push_error("kit_cli: check [piece ...] | build <layout> ... | structures | travel | capture <layout> <out dir> [WxH] [asbuilt] | seethrough <layout> <out dir> | clickwalk <layout> <out dir> | bakecaps [layout ...] | systems <out dir> | gfx <out dir> | rooms golden|validate|dump|village ... | chains sample|bake|validate|stream ... | houses [count] [seed]")
 		quit(1)

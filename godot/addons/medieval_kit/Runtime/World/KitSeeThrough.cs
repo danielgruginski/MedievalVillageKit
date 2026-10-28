@@ -303,8 +303,8 @@ public static class KitSeeThrough
     /// The see-through's buildings, cuts and caps for a level that stands (KitLevel calls it after <see cref="Bound"/>):
     /// each premade structure in it (a KitStructure, or a layout's VKX_ST_ group) opens as one building, its pieces cut
     /// <see cref="KitSeeThroughCaps.Height"/> over its floor (its root's height) with caps. Unity's
-    /// KitVillage.SetUpSeeThrough does this for its villages (loose nature and props, walls in runs, houses with floors):
-    /// phase 5's KitVillage adds those. The cap bake calls it with KitSeeThroughCaps.Collecting set.
+    /// KitVillage.SetUpSeeThrough does this for its villages (loose nature and props, walls in runs, houses with floors);
+    /// here too: a village's structures are left to it. The cap bake calls it with KitSeeThroughCaps.Collecting set.
     /// </summary>
     public static List<Building> SetUpLevel(Node level)
     {
@@ -312,8 +312,8 @@ public static class KitSeeThrough
         foreach (var n in KitNodes.Below(level, "Node3D"))
         {
             if (n is not Node3D s || !IsStructure(s)) continue;
-            bool inner = false;                                        // (a structure inside one already taken)
-            for (var p = s.GetParent(); p != null && p != level && !inner; p = p.GetParent()) inner = p is Node3D pn && IsStructure(pn);
+            bool inner = false;                                        // (a structure inside one already taken, or a village's: its own)
+            for (var p = s.GetParent(); p != null && p != level && !inner; p = p.GetParent()) inner = p is KitVillage || (p is Node3D pn && IsStructure(pn));
             if (inner) continue;
             var gs = new List<GeometryInstance3D>(Geometry(s)).ToArray();
             if (gs.Length == 0) continue;

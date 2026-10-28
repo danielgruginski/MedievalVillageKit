@@ -24,18 +24,24 @@ public partial class MedievalKitPlugin : EditorPlugin
     }
 
     /// <summary>The project settings the kit's shaders need (FULL_PORT_PLAN phase 6): the see-through's two global
-    /// uniforms (kit_see_through.gdshaderinc: a shader naming a global the project lacks does not compile), and room for
+    /// uniforms (kit_see_through.gdshaderinc: a shader naming a global the project lacks does not compile) and the
+    /// shroud's four (kit_shroud.gdshaderinc), and room for
     /// instance uniforms -- every kit material has some (the see-through's marks), and Godot gives each instance 16 slots
     /// of the global buffer, 65,536 by default: 4,096 instances, under one outdoor map's pieces. Saved once; Godot reads
     /// the buffer size at start, so the first time it asks for a restart.</summary>
     static void EnsureSettings()
     {
         bool changed = false, restart = false;
-        foreach (var g in new[] { "kit_see_through", "kit_see_through_args" })
+        foreach (var g in new[] { "kit_see_through", "kit_see_through_args", "kit_shroud_rect", "kit_shroud_args", "kit_shroud_args2" })
         {
             string key = "shader_globals/" + g;
             if (ProjectSettings.HasSetting(key)) continue;
             ProjectSettings.SetSetting(key, new Godot.Collections.Dictionary { { "type", "vec4" }, { "value", Vector4.Zero } });
+            changed = true;
+        }
+        if (!ProjectSettings.HasSetting("shader_globals/kit_shroud_tex"))      // the shroud's distance field (KitShroud)
+        {
+            ProjectSettings.SetSetting("shader_globals/kit_shroud_tex", new Godot.Collections.Dictionary { { "type", "sampler2D" }, { "value", "" } });
             changed = true;
         }
         const string buffer = "rendering/limits/global_shader_variables/buffer_size";

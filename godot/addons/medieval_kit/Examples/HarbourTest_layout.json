@@ -1,0 +1,39 @@
+{
+  "name": "HarbourTest",
+  "seed": 7,
+  "size": [42, 30],
+  "margin": 12,
+  "relief": 0.2,
+  "clearing": {"centre": [21, 15], "radius": [44, 34], "lumps": 0},
+  "terrain": {
+    "areas": [{"rect": [0, 0, 42, 30], "level": 1}],
+    "sea": [
+      {"rect": [0, 0, 42, 12]},
+      {"rect": [0, 12, 9, 18]},
+      {"rect": [15, 12, 42, 15]},
+      {"rect": [15, 15, 18, 18]},
+      {"rect": [21, 15, 42, 18]},
+      {"rect": [18, 18, 21, 21]},
+      {"rect": [30, 18, 33, 21]}
+    ],
+    "quays": [
+      {"rect": [3, 18, 9, 21], "kind": "stairs"},
+      {"rect": [24, 18, 30, 21], "kind": "slip"}
+    ]
+  },
+  "props": [
+    {"piece": "SM_VK_Harbour_Ladder", "at": [9, 15], "rot": -90, "z": 1.5, "collide": false},
+    {"piece": "SM_VK_Jetty_Deck", "at": [12, 10.5], "rot": -90, "z": 1.5},
+    {"piece": "SM_VK_Jetty_Landing", "at": [12, 10.5], "rot": -90, "z": 1.5},
+    {"piece": "SM_VK_Jetty_End", "at": [12, 7.5], "rot": -90, "z": 1.5},
+    {"piece": "SM_VK_Breakwater", "at": [37.5, 16.5], "rot": -90, "z": 1.5},
+    {"piece": "SM_VK_Breakwater", "at": [37.5, 13.5], "rot": -90, "z": 1.5},
+    {"piece": "SM_VK_Breakwater", "at": [37.5, 10.5], "rot": -90, "z": 1.5},
+    {"piece": "SM_VK_Breakwater_End", "at": [37.5, 7.5], "rot": -90, "z": 1.5},
+    {"piece": "SM_VK_Prop_Rowboat", "at": [15.5, 6.5], "rot": 80, "z": -0.35, "collide": false},
+    {"piece": "SM_VK_Ship_Cog", "at": [25, 4.5], "rot": 0, "z": -0.6, "collide": false},
+    {"piece": "SM_VK_Boat_Fishing", "at": [5, 5], "rot": 70, "z": -0.8, "collide": false},
+    {"piece": "SM_VK_Harbour_Buoy", "at": [19, 9.5], "z": -0.6, "collide": false}
+  ],
+  "spawns": [{"id": "arrival", "at": [21, 25], "facing": 180}]
+}

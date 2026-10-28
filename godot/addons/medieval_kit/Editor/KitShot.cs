@@ -8,15 +8,19 @@ namespace MedievalKit.Editor;
 /// <summary>A look at any scene (a generated room, a chain's piece, the house showcase): rendered top-down (north up,
 /// orthographic over its meshes) and from the game's camera (50 degrees, looking north), with the scene's own light
 /// or, without one, a sun. A room generated in code: build it, save it as a scene, shoot it. Needs a window.
-/// kit_cli: shot &lt;scene.tscn&gt; &lt;out prefix&gt; [WxH]. Unity: LEVEL_BUILDING 6.4's render.</summary>
+/// `near`: a node's name (a marker, a piece) or a plan point "x,y" and a radius in metres (default 15): both views close round that node.
+/// kit_cli: shot &lt;scene.tscn&gt; &lt;out prefix&gt; [WxH] [node [radius]]. Unity: LEVEL_BUILDING 6.4's render.</summary>
 public partial class KitShot : Node
 {
     string scenePath = "", outPrefix = "";
     Vector2I size = new(1600, 1000);
+    string near = "";
+    float radius = 15f;
 
-    public void Setup(string scene, string prefix, string res)
+    public void Setup(string scene, string prefix, string res, string nearNode = "", string nearRadius = "")
     {
-        scenePath = scene; outPrefix = prefix;
+        scenePath = scene; outPrefix = prefix; near = nearNode ?? "";
+        if (float.TryParse(nearRadius, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var r)) radius = r;
         if (!string.IsNullOrEmpty(res) && res.Contains('x')) size = new Vector2I(int.Parse(res.Split('x')[0]), int.Parse(res.Split('x')[1]));
     }
 
@@ -42,6 +46,21 @@ public partial class KitShot : Node
             var b = mi.GlobalTransform * mi.GetAabb();
             box = first ? b : box.Merge(b);
             first = false;
+        }
+        if (near != "")
+        {
+            Vector3 p;
+            var xy = near.Split(',');
+            if (xy.Length == 2 && float.TryParse(xy[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float px)
+                && float.TryParse(xy[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float py))
+                p = scene.GlobalTransform * new Vector3(px, box.GetCenter().Y, -py);      // a plan point (x east, y north)
+            else
+            {
+                var n = KitNodes.Below(scene, "").OfType<Node3D>().FirstOrDefault(x => x.Name == near);
+                if (n == null) { GD.PushError($"shot: no node {near}"); GetTree().Quit(1); return; }
+                p = n.GlobalPosition;
+            }
+            box = new Aabb(p - new Vector3(radius, 2f, radius), new Vector3(2 * radius, 4f, 2 * radius));
         }
         var c = box.GetCenter();
         float aspect = size.X / (float)size.Y;

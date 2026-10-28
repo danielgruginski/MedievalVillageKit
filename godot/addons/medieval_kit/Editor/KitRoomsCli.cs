@@ -6,7 +6,7 @@ namespace MedievalKit.Editor;
 
 /// <summary>kit_cli's room commands (KitRoomTools), run once the node stands in the tree, then quit:
 /// rooms golden [log] | rooms validate [which] [count] [first seed] | rooms dump &lt;which&gt; &lt;count&gt; &lt;first seed&gt; &lt;out.jsonl&gt; |
-/// houses [count] [first seed] | housedump [count] [out.jsonl]</summary>
+/// houses [count] [first seed] | housedump [count] [out.jsonl] | village &lt;layout.json&gt; &lt;scene.tscn&gt;</summary>
 public partial class KitRoomsCli : Node
 {
     string[] args = Array.Empty<string>();
@@ -35,6 +35,9 @@ public partial class KitRoomsCli : Node
                     break;
                 case "houses":
                     GD.Print(KitHouseTools.GenerateHouseSet(this, int.Parse(Arg(1, "12")), int.Parse(Arg(2, "1000"))));
+                    break;
+                case "village":
+                    GD.Print(KitVillageTools.BuildVillage(this, Arg(1, ""), Arg(2, "")));
                     break;
                 case "housedump":
                     GD.Print(KitHouseTools.Dump(this, int.Parse(Arg(1, "20")), Arg(2, "user://houses_dump.jsonl")));

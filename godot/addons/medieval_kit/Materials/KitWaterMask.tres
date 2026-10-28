@@ -1,0 +1,8 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://addons/medieval_kit/Shaders/KitWaterMask.gdshader" id="1"]
+
+[resource]
+resource_name = "M_VKT_WaterMask"
+render_priority = -1
+shader = ExtResource("1")

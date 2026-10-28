@@ -287,6 +287,27 @@ restyled stones, roof jitter (dormer 1 / dormer 0 brightness 1.038-1.046 in both
   320 walkable (168 s); `chains sample` (7 pieces, 12 / 12 spawns), `chains validate 10` 10 / 10, `chains stream`
   all pass; three world levels rebuilt and `travel` (40 links, 0 problems) with the new bake; `shot` renders.
 
+## 5e. Phase 5: outdoor maps (2026-10-28, HANDOFF 168)
+
+- **Runtime** (`Runtime/World/`): `KitVillage` (+ `.Terrain`, `.Patches`, `.ForestDress`, `.Grass`, `.SeeThrough`) builds
+  a layout of the Unity kit's format; `KitGrass` (clumps as bytes, drawn in 16 m MultiMesh chunks; blades, wind and
+  parting in `Shaders/KitGrass.gdshader`); `KitShroud` (`Runtime/`, + `Shaders/kit_shroud.gdshaderinc`, included by
+  `kit_lit.gdshaderinc` and the cap shader; four shader globals, declared by the plugin). `Shaders/KitSea.gdshader` +
+  `Materials/KitSea.tres` and `KitWaterMask` (stencil write / read, Godot 4.7). `KitClickToMove` has HouseUnder.
+- **Editor:** `KitVillageTools` (`BuildVillage`: a KitLevel scene with the ground's resources saved in
+  `<map>_Ground/`; `Bake`; `WalkVillage`), `KitGfxTest`; kit_cli `rooms village <layout> <scene>`, `gfx <out>`, and
+  `shot` takes `[node|x,y [radius]]`. Examples: `Examples/Hamlet_layout.json`, `Examples/HarbourTest_layout.json`.
+- **Not seed parity:** the plan of a layout is the same in both engines; the forest's and scatter's random draws and
+  the grass blades are not (Daniel's call).
+- **Navmesh:** not-walkable zones with heights, as Unity's modifier boxes (beyond the walls: all; under raised
+  terrain: up to 1 m; the sea: up to `SeaWalkTop`); islands under 2 m² dropped for every bake (`RegionMinSize` =
+  sqrt 2 / cell: Unity's `minRegionArea`).
+- **Kit art:** the eight chapter 2 / 3 herbs exported (built headless; not in the saved .blend).
+- **Checks:** the 11 outdoor layouts of MedievalSetting built and walked (9 clean; Northfields and BurntMarch's forest
+  leak is in the layout, Unity's area map shows the same opening); Hamlet and Woods against Unity's baked area maps;
+  both examples; `gfx` all pass; `rooms validate all 20` 320 / 320, `chains validate 10` 10 / 10, `rooms golden`
+  10 / 12 as before, `travel` 40 links 0 problems.
+
 ## 6. What converts cleanly, what needs shaders (all 200 materials of materials.json)
 
 | | Materials |

@@ -134,6 +134,10 @@ Each phase ends with its check passing and its record in HANDOFF; commits and Pl
    phase 5, then the Godot itch files, and phase 7 after those.
 5. **Godot outdoor maps.** KitVillage (terrain, grass with GPU culling, patches, forest dress, the sea) with the
    KitGrass, KitSea and KitWaterMask shaders, navmesh baking (NavigationRegion3D), the shroud. Check: a game map's layout built in both engines, captures from its cameras.
+   **Done 2026-10-28 (HANDOFF 168; GODOT_EXPORT 5e).** Same rules, not the same numbers (Daniel: "no need to do a
+   perfect copy, they can differ in results"). All 11 of the game's outdoor layouts build and walk in Godot (9 clean,
+   2 with a forest leak that Unity's map shows too); Hamlet and Woods match Unity's area maps plan for plan; the
+   grass culls per 16 m chunk (no compute cull). The see-through leftovers below are done with it.
 6. **Godot see-through.** The shader's hole and caps pass, the hidden check (a small SubViewport read back), a building
    opening as one, the baked caps, and the driver moved out of the game in phase 3. Check: the spike's edge-case
    gallery (docs/history/SPIKE_SEETHROUGH.md) walked in both engines.
@@ -153,5 +157,6 @@ Each phase ends with its check passing and its record in HANDOFF; commits and Pl
    Done in Godot: the see-through, the camera, the map frame (HANDOFF 161); click to move and the walker (162); the
    real caps, baked (164); the 3a systems: fires, usable things (with click to move), missiles, silhouettes, walkways,
    ground helpers (165); the manual (166). **The z-fight watch is not part of the Godot addon** (Daniel, 2026-10-27:
-   "The Zfight scanner will not be part of the godot"; the pieces are checked in Blender). Left after phase 5's
-   KitVillage: HouseUnder, the house floors under the hole, loose nature / props and wall runs in SetUpLevel.
+   "The Zfight scanner will not be part of the godot"; the pieces are checked in Blender). Done with phase 5
+   (HANDOFF 168): HouseUnder, the house floors under the hole, loose nature / props and wall runs
+   (`KitVillage.SetUpSeeThrough`).
