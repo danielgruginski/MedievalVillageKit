@@ -198,6 +198,11 @@ public static class KitTravel
     static void Arrive(Node scene, string id)
     {
         var spawn = Below(scene).OfType<KitSpawn>().FirstOrDefault(s => s.SpawnId == id);
+        if (spawn == null)      // a chain's play scene: its streamer loads the piece holding the spawn and places the walker
+        {
+            var st = Below(scene).OfType<KitChainStreamer>().FirstOrDefault();
+            if (st?.chain?.WithSpawn(id) != null) { st.Arrive(id); pendingReturn = null; return; }
+        }
         var back = Below(scene).OfType<KitLink>().FirstOrDefault(l => l.LinkId == id);
         Node3D at = spawn ?? (Node3D)back;     // no spawn: stand at the link itself (a hand-made door without a KitSpawn)
         if (pendingReturn != null && back != null && back.Target == "@return") returns.Push(pendingReturn.Value);
@@ -209,6 +214,9 @@ public static class KitTravel
         if (at != null && w != null) Place(w, at.GlobalTransform);
         Arrived?.Invoke(level, spawn);
     }
+
+    /// <summary>tells the game a walker arrived (a chain's streamer, once the arrival's piece is in)</summary>
+    public static void NotifyArrived(string level, KitSpawn spawn) => Arrived?.Invoke(level, spawn);
 
     /// <summary>put a walker somewhere: a body stops moving, a NavigationAgent3D below it forgets its path</summary>
     public static void Place(Node3D w, Transform3D t)

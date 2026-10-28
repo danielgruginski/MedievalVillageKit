@@ -1,3 +1,4 @@
+using System.Linq;
 using Godot;
 
 namespace MedievalKit;
@@ -28,8 +29,31 @@ public partial class KitNavMesh : NavigationRegion3D
         var nm = Settings(voxel);
         var src = new NavigationMeshSourceGeometryData3D();
         NavigationServer3D.ParseSourceGeometryData(nm, src, root);
+        SolidBoxes(root, nm, src);
         NavigationServer3D.BakeFromSourceGeometryData(nm, src);
         return nm;
+    }
+
+    /// <summary>
+    /// Unity bakes a box collider as a solid; Godot's parser sees only its faces, so the floor inside a box taller than
+    /// the walker (a hearth's 2.2 m block) stays walkable, an island sealed in the box. Every such solid box goes in as
+    /// a projected obstruction too (its footprint, eroded by the walker's radius like the box itself): nothing inside.
+    /// </summary>
+    static void SolidBoxes(Node3D root, NavigationMesh nm, NavigationMeshSourceGeometryData3D src)
+    {
+        var toRoot = root.GlobalTransform.AffineInverse();
+        foreach (var cs in KitNodes.Below(root, "CollisionShape3D").OfType<CollisionShape3D>())
+        {
+            if (cs.Disabled || cs.Shape is not BoxShape3D box || cs.GetParent() is not StaticBody3D body || (body.CollisionLayer & nm.GeometryCollisionMask) == 0)
+                continue;
+            var t = toRoot * cs.GlobalTransform;
+            var h = box.Size / 2f;
+            var corners = new[] { new Vector3(-h.X, -h.Y, -h.Z), new Vector3(h.X, -h.Y, -h.Z), new Vector3(h.X, -h.Y, h.Z), new Vector3(-h.X, -h.Y, h.Z) }
+                .Select(c => t * c).ToArray();
+            float bottom = corners.Min(c => c.Y), height = (t.Basis * new Vector3(0, box.Size.Y, 0)).Length();
+            if (height < nm.AgentHeight || Mathf.Abs(t.Basis.Y.Normalized().Y) < 0.99f) continue;     // upright and tall only
+            src.AddProjectedObstruction(corners, bottom, height, false);
+        }
     }
 
     public override void _EnterTree()

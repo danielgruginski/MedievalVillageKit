@@ -2468,6 +2468,42 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
     lacks (the z-fight watch, by Daniel's call; the village builder; chain streaming). Every name checked against the
     code. **Decision:** the z-fight watch stays Unity-only (plan updated).
 
+167. 2026-10-28 (Daniel: "Do Godot Phase 4, Phase 5 will be next, but Phase 7 is probably only going to be done after
+    we produce the itch files"). **FULL_PORT_PLAN phase 4: rooms, generators, houses and chains in Godot**
+    (GODOT_EXPORT 5d; the addon's MANUAL section 10). Ported line for line from the Unity package: `KitRoom` (+ Props,
+    Debris), `KitRoomLayout`, `KitCaveLayout`, `KitPortal`, `KitFurnisher`, `KitSetPieces`, the five room generators
+    (two agents ported cave / connector / interior and dungeon / sewer), their settings as resources, `KitInteriorRules`,
+    `KitHouseGenerator` + `KitHouseRules`, `KitChain` (+ `KitChainMap`, `KitChainPiece`), `KitChainStreamer` and
+    KitTravel's hand-over, `KitSolid`; editor: `KitRoomTools` (golden test, walk test, generator validation, dump),
+    `KitChainTools` (bake, play scene, sample, validation), `KitHouseTools`, `KitShot`; kit_cli `rooms`, `houses`,
+    `chains`, `shot`. `gdx_export.py rules` copies interior_rules / house_rules into the Godot kit.
+    - **Same seed, same level, measured:** `tools/rooms_parity.py` against the Unity editor (`tools/rooms_parity_unity.cs`
+      by reflection): 48 / 48 built levels (16 runs x 3 seeds: plan, record, every placement, spawns, links,
+      encounters); 1,000 plans (the Unity sources compiled with Unity's own Mono csc and run on Mono, against the port);
+      20 / 20 houses; golden test 17 / 19 as Unity's.
+    - **Mono vs .NET (the non-obvious part):** System.Random, Dictionary / HashSet order, trig and the lazy
+      `OrderBy...ThenBy...First()` are the same in both (an early "fix" that listed before First broke parity: removed).
+      Two differ: `ToList` / `ToArray` straight after an `OrderBy` of ONE element computes no key in .NET (Mono does),
+      so a random key's draw goes missing (`MonoLinq.ToListKeyed`); and Mono keeps float locals and expression steps in
+      double, rounding only into fields, arrays, calls and casts (UnityMath's multi-step members do the same; the
+      generators' own float code changed nothing in 1,000 plans, so it stays as Unity's -- a Roslyn rewriter that
+      widened it all was tried and dropped). JSON is System.Text.Json read through `KitJson`: a cast on a node throws
+      where Newtonsoft converts.
+    - **Four props older in Godot than in Unity:** `SM_VKI_Prop_LootPile`, `Crystals`, `Cocoon`, `Boulder` were redone
+      in code on 2026-10-20 (137) and exported to Unity, but **the .blend still holds the old masters** (944 tris for the
+      loot pile against 3,524). Rebuilt headless (`vki_rebuild`, not saved) and re-exported to Godot. To do: rebuild
+      them in the open Blender and save the .blend. The eight chapter 2 / 3 herbs (`SM_VK_Plant_Angelica`...) are in
+      Unity's export but not in the .blend's masters: not in Godot yet (phase 5).
+    - **Navmesh:** Godot's parser sees a box collider's faces, so the floor inside a box taller than the walker (a
+      hearth's 2.2 m block) baked as a sealed island (Townhouse / Tavern floors failed the walk test);
+      `KitNavMesh.Bake` adds such boxes as projected obstructions. Three world levels rebuilt (walk 4/4, 6/6, 4/4) and
+      `travel` (40 links, 0 problems) with it; the other levels' saved navmeshes are as before until rebuilt.
+    - **Checks:** `rooms validate all 20` 320 / 320 walkable (168 s); `chains sample` (7 pieces, 12 / 12 spawns),
+      `chains validate 10` 10 / 10, `chains stream` all pass; `houses 12` set and showcase; shots of a dungeon, a cave
+      and the houses looked at. Not done: the inspector buttons (`ExportToolButton`) were not pressed in the editor's
+      GUI (the same calls run headless); a chain's play scene has no shroud (KitShroud is phase 5); nothing played by a
+      person.
+
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
   `vki_rebuild` and show it in a workshop scene as an object sharing the master's mesh.

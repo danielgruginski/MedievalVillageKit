@@ -832,6 +832,17 @@ def gdx_export_world(levels=None, render=True):
     return out
 
 
+def gdx_export_rules():
+    """the generators' rules as the Unity export wrote them (vkx_export_interior_rules / vkx_export_house_rules: Blender
+    room space and Blender piece names, nothing engine-specific) -> kit/data/interior_rules.json (KitRoom and the room
+    generators) and kit/data/house_rules.json (KitHouseGenerator); run those two first when the Blender rules change"""
+    out = []
+    for fn in ("interior_rules.json", "house_rules.json"):
+        shutil.copyfile(os.path.join(VKX["VKX_DATA"], fn), os.path.join(_mk(os.path.join(GDX_KIT, "data")), fn))
+        out.append(fn)
+    return out
+
+
 def gdx_export_structures(render=True):
     """the premade structures (vkx_build_structures: Blender's builders, a row in scene GDX_Structures) -> one
     kit/data/structures/<name>.json each (origin on the structure's own, as Unity's Data/Structures; KitBuilder makes
@@ -1215,6 +1226,8 @@ if globals().get("__name__") == "__main__" and bpy.app.background and "--" in sy
         gdx_link_addon()
         lv = [a for a in args[1:] if a != "norender"] or None
         print("GDX " + json.dumps(gdx_export_world(lv, render="norender" not in args), default=str))
+    elif args[:1] == ["rules"]:       # the generators' rules (KitRoom, KitHouseGenerator)
+        print("GDX " + json.dumps(gdx_export_rules()))
     elif args[:1] == ["structures"]:  # structures [norender]
         gdx_link_addon()
         print("GDX " + json.dumps(gdx_export_structures(render="norender" not in args), default=str))

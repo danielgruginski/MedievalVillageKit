@@ -125,6 +125,13 @@ Each phase ends with its check passing and its record in HANDOFF; commits and Pl
 4. **Godot rooms and generators.** KitRoom and the six generators (+ the new outdoor ones from the shared core), and
    chains (KitChain, its bake, KitChainStreamer and KitTravel's hand-over to it).
    Check: same seed, same layout as Unity (dumped and diffed), the generators' walk validators.
+   **Done 2026-10-28 (HANDOFF 167; GODOT_EXPORT 5d).** KitRoom, the cave / dungeon / sewer / interior / connector
+   generators, the house generator, chains with their bake, streamer and KitTravel hand-over (no outdoor generators:
+   3c is parked). Same seed, same level: 1,000 generated plans the same as Unity's Mono run of the Unity sources; 48
+   built levels the same as the Unity editor's (every placement, spawn, link, encounter); 20 houses the same; the golden
+   test as Unity's (17 / 19, the two known prop slides). Walk: 320 / 320 generated levels (20 seeds x 16 runs), the
+   sample chain 10 / 10 seeds end to end, the streamer over the baked chain. Daniel's order after it (2026-10-28):
+   phase 5, then the Godot itch files, and phase 7 after those.
 5. **Godot outdoor maps.** KitVillage (terrain, grass with GPU culling, patches, forest dress, the sea) with the
    KitGrass, KitSea and KitWaterMask shaders, navmesh baking (NavigationRegion3D), the shroud. Check: a game map's layout built in both engines, captures from its cameras.
 6. **Godot see-through.** The shader's hole and caps pass, the hidden check (a small SubViewport read back), a building

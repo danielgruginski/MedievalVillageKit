@@ -44,7 +44,23 @@ public static class KitWalkTest
         return o;
     }
 
-    public static Result Run(NavigationMesh nm, List<Point> points)
+    /// <summary>a navmesh's polygons joined into islands where they share an edge</summary>
+    public sealed class Islands
+    {
+        public Vector3[] verts;
+        public int[][] polys;
+        public int[] island;              // polygon -> its island's id
+        public int Count;
+
+        /// <summary>the island of the polygon nearest p within `reach` across and `rise` up / down, or -1</summary>
+        public int At(Vector3 p, float reach = Reach, float rise = Rise)
+        {
+            int pi = Nearest(p, verts, polys, reach, rise);
+            return pi >= 0 ? island[pi] : -1;
+        }
+    }
+
+    public static Islands Join(NavigationMesh nm)
     {
         var verts = nm.GetVertices();
         int np = nm.GetPolygonCount();
@@ -66,13 +82,19 @@ public static class KitWalkTest
                 else edges[e] = i;
             }
         }
-        int islands = Enumerable.Range(0, np).Count(i => Find(i) == i);
-        var home = new int[points.Count];               // point -> its island (-1: off the navmesh)
-        for (int i = 0; i < points.Count; i++)
+        return new Islands
         {
-            int pi = Nearest(points[i].At, verts, polys);
-            home[i] = pi >= 0 ? Find(pi) : -1;
-        }
+            verts = verts, polys = polys, island = Enumerable.Range(0, np).Select(Find).ToArray(),
+            Count = Enumerable.Range(0, np).Count(i => Find(i) == i),
+        };
+    }
+
+    public static Result Run(NavigationMesh nm, List<Point> points)
+    {
+        var map = Join(nm);
+        int np = map.polys.Length, islands = map.Count;
+        var home = new int[points.Count];               // point -> its island (-1: off the navmesh)
+        for (int i = 0; i < points.Count; i++) home[i] = map.At(points[i].At);
         var starts = Enumerable.Range(0, points.Count).Where(i => points[i].Name.StartsWith("spawn ") && home[i] >= 0).ToList();
         if (starts.Count == 0) return new Result(0, points.Count, "nowhere (no spawn on the navmesh)", points.Select(p => p.Name).ToList(), islands, np);
         int best = starts.OrderByDescending(s => home.Count(h => h == home[s])).First();
@@ -81,8 +103,8 @@ public static class KitWalkTest
         return new Result(points.Count - missed.Count, points.Count, points[best].Name, missed, islands, np);
     }
 
-    /// <summary>the polygon nearest p within Reach across and Rise up / down, or -1</summary>
-    static int Nearest(Vector3 p, Vector3[] verts, int[][] polys)
+    /// <summary>the polygon nearest p within `reach` across and `rise` up / down, or -1</summary>
+    static int Nearest(Vector3 p, Vector3[] verts, int[][] polys, float reach = Reach, float rise = Rise)
     {
         int best = -1;
         float bestD = float.MaxValue;
@@ -94,7 +116,7 @@ public static class KitWalkTest
                 var q = ClosestOnTriangle(p, verts[poly[0]], verts[poly[k]], verts[poly[k + 1]]);
                 var d = q - p;
                 float across = new Vector2(d.X, d.Z).Length();
-                if (across > Reach || Mathf.Abs(d.Y) > Rise) continue;
+                if (across > reach || Mathf.Abs(d.Y) > rise) continue;
                 float dist = d.Length();
                 if (dist < bestD) { bestD = dist; best = i; }
             }

@@ -5,7 +5,7 @@ of the kit's Unity package and offers the same systems; where Godot works differ
 the `MedievalKit` namespace.
 
 **How this was tested.** The Godot addon was written and tested by an AI coding assistant (Claude), directed by the
-kit's author. Every system here has an automated check (section 11) that drives it in the kit's own levels the way a
+kit's author. Every system here has an automated check (section 12) that drives it in the kit's own levels the way a
 player would (clicks, held buttons, doors, a stand-in behind buildings) and reads the results back from logs, pixels
 and screenshots; those checks pass. **None of it has been played by a person in Godot yet.** The Unity systems it
 ports were also played by a person, in the author's own Unity game (see the Unity package's manual), so the rules are
@@ -23,9 +23,10 @@ Contents:
 7. [Fires](#7-fires)
 8. [Missiles, the ground, walkways](#8-missiles-the-ground-walkways)
 9. [Creature silhouettes](#9-creature-silhouettes)
-10. [Hooks a game fills](#10-hooks-a-game-fills)
-11. [Checks from the command line](#11-checks-from-the-command-line)
-12. [What the Godot addon does not have](#12-what-the-godot-addon-does-not-have)
+10. [Rooms, generators, houses and chains](#10-rooms-generators-houses-and-chains)
+11. [Hooks a game fills](#11-hooks-a-game-fills)
+12. [Checks from the command line](#12-checks-from-the-command-line)
+13. [What the Godot addon does not have](#13-what-the-godot-addon-does-not-have)
 
 ## 1. Getting started
 
@@ -111,10 +112,10 @@ round hole round its chest. Four parts work together:
    (`KitStructure`, or a layout's `VKX_ST_` group) become **buildings** (`KitSeeThrough.SetUpLevel`, called by
    `KitLevel`): a building's pieces open together, decided each frame. `KitSeeThrough.Loose(group)` (trees, rocks,
    props: open down to the feet) and `KitSeeThrough.Runs(group)` (walls placed as props, opening in runs) are there
-   for a game's own levels; the kit's village builder will call them (section 12).
+   for a game's own levels; the kit's village builder will call them (section 13).
 3. **The caps**. Each building piece is cut 1.4 m over its building's floor, and a cap (the piece's own
    cross-section at the cut, filled) closes the stub, so you never see inside a wall (`KitSeeThroughCaps`). The cap
-   meshes are **baked**: `kit_cli -- bakecaps` (section 11) writes `res://kit/see_through_caps.res`; bake again after
+   meshes are **baked**: `kit_cli -- bakecaps` (section 12) writes `res://kit/see_through_caps.res`; bake again after
    rebuilding the layouts or re-exporting pieces. A piece the bank lacks gets its cap made in play, a few
    milliseconds a frame (Godot reads the mesh back from the GPU: a stall), and the game prints a reminder to bake. A
    pool of 96 cap meshes is laid each frame over the pieces in the hole's reach. Behind the caps, the one-sided kit
@@ -206,7 +207,7 @@ spots where its own fires burn.
 Godot notes: each part is a GPUParticles3D. Its rate is a share of its maximum over its lifetime
 (`FireFx.Rate(part, perSecond)`); "already burning when first seen" is the part's preprocess (`FireFx.Warm`); a level
 held out of the tree keeps its particles where they were. Light energy is Unity's intensity x `FireFx.LightScale` (0.5).
-Sounds: the kit has none; set `Fire.SoundLoop` and `Fire.SoundAt` (section 10).
+Sounds: the kit has none; set `Fire.SoundLoop` and `Fire.SoundAt` (section 11).
 
 ## 8. Missiles, the ground, walkways
 
@@ -234,7 +235,86 @@ Godot notes: Godot has no render pass over chosen objects, so each mesh gets a m
 CreatureSilhouetteMark` with `CreatureSilhouetteFill` as its next pass: Godot 4.7's stencil and inverted depth
 test). An overlay a creature already had is replaced.
 
-## 10. Hooks a game fills
+## 10. Rooms, generators, houses and chains
+
+The level-building side of the kit, ported line for line from the Unity package (its
+`Documentation~/LEVEL_BUILDING.md` is the long guide; everything there holds here with the Godot names below). The
+fields keep the Unity kit's names, so code written against one reads the same against the other:
+`room.dungeon.seed = 42; room.RandomDungeon();`.
+
+**Same seed, same level.** A generator given the same settings and seed builds the same level in both engines: the
+plan, the record, every piece and its place, the spawns, links and encounters (checked on 1,000 generated plans and on
+48 fully built levels against the Unity editor, and 20 houses; `tools/rooms_parity.py`). Two things make that hold,
+for anyone changing the code: Unity's Mono and .NET differ in one LINQ case (`ToList` / `ToArray` straight after an
+`OrderBy` of a single element skips its key in .NET; with a random key that shifts every draw after it), so the
+generators list a random order with `ToListKeyed()`; and Unity's maths (`MedievalKit.UnityMath`: Mathf, Vector2) is
+used as Unity computes it, aliased in the generator files. Records are JSON (`System.Text.Json.Nodes`); read a node
+with `KitJson`'s `.F()`, `.I()`, `.S()`, `.B()` (and `.Fq()`... for missing values), never with a cast:
+`(float)node` throws when the number was made in memory as a double.
+
+**A room from a plan (`KitRoom`).** A `Node3D` (a tool script) that builds a room from an ASCII plan and a room
+record: walls by family and height, posts, floors, exits with their doors, stairs, gates, passages, pits, furniture
+from the plan's codes or the record's props, debris, encounters, markers, portals, the pieces' lights. Plan space is
+the Blender kit's (x east, y north, z up, the plan's south-west corner at the origin; one cell 1.5 m, row 0 the
+south / camera side); the node's local space is `(x, z, -y)`, a turn `rot` about Blender z a turn of `rot` about y.
+
+```csharp
+var room = new KitRoom { Name = "Crypt" };
+AddChild(room);                         // in the tree (its pieces' links and lights go under it)
+room.dungeon.theme = "Crypt"; room.dungeon.seed = 42;
+room.RandomDungeon();                   // fills room.plan / room.record and builds
+foreach (var n in room.notes) GD.Print(n);   // what the build could not place: read them
+```
+
+In the editor: add a KitRoom to a scene, set a generator's settings in the inspector (`cave`, `dungeon`, `sewer`,
+`interior`, `connector`) and press Random Cave / Random Dungeon / ...; or type a preset's name (`VKI_Tavern_F0`) and
+press Load Preset, edit `plan` and `record`, press Generate. The pieces are instanced scenes owned by the edited scene,
+so save it like any other. `KitRoom.Spawn` makes each piece (a game may pool them).
+
+| Generator | Call | Settings (resource) |
+|---|---|---|
+| Caves (maze or open, chasm with rope bridges, pools, crystals, finds, encounters) | `RandomCave()` | `KitCaveOptions` |
+| Dungeons (Dungeon, Crypt, Warren, Hideout: themed rooms, set-pieces, an encounter per room, a lair) | `RandomDungeon()` | `KitDungeonOptions` |
+| Town sewers (brick tunnels over channels, cisterns, grottoes, the ladder up, the way down) | `RandomSewer()` | `KitSewerOptions` |
+| House floors (Cottage, Townhouse, Tavern, Workshop: hall, hearth, side rooms, a bar, books) | `RandomInterior()` | `KitInteriorOptions` |
+| Connectors (a short passage between two maps of a chain) | `RandomConnector()` | `KitConnectorOptions` |
+
+The rules (plan tokens, families, styles, the kit's own rooms as presets) are `KitInteriorRules.Default`, read from
+`res://kit/data/interior_rules.json`; a copy pointed to by a `KitInteriorRules` resource on `rules` customises them.
+A name the kit does not have (a game's own piece in a cave's finds, `Goblin_Dead_1`) is looked up through
+`KitInteriorRules.External`.
+
+**Houses (`KitHouseGenerator`).** A village house of kit pieces under the node: `cells` x 2 bays (or an L: `shape`,
+`armCells`, `wingCells`), `stories`, `seed`, a random style or a given one (`ground`, `plaster`, `shutter`, `roof`),
+the front and back bays (`"WDW"`), chimney, dormers, dressing. Generate / Reroll / Clear in the inspector; the rules
+are `res://kit/data/house_rules.json` (`KitHouseRules`). `kit_cli houses` writes a set of random houses as scenes and
+a showcase to `res://kit_houses/`.
+
+**Chains: one continuous world.** A `KitChain` resource lists maps (`KitChainMap`: a generated cave or dungeon, or a
+hand-made plan whose record has `portals` with their `at`); each map after the first joins an earlier one through a
+connector between that map's portal and its own `inPortal`. `KitChainTools.Bake` (kit_cli `chains bake
+<chain.tres>`) builds every piece lined up on its portals, refuses overlaps and portals that lead nowhere, walks the
+whole chain on one navmesh, saves each piece as a scene in a folder named after the chain, fills the chain's
+`pieces` and writes `<chain>_Play.tscn`: the dungeon light, a `KitChainStreamer`, one navmesh over every piece and a
+WASD walker. The streamer keeps the walker's piece and its neighbours in the tree (loaded in the background, one at a
+time) and frees what is two joins away. A link from elsewhere into the chain targets the play scene with an arrival
+spawn's id: `KitTravel` hands it to the streamer, which loads that piece first and places the walker. A game's own
+additions to the baked pieces go in `KitChain.AfterBake`, so a re-bake keeps them. `kit_cli chains sample` makes and
+bakes the sample chain (a maze cave, a dungeon, an open cave, a side cave on a branch).
+
+**The navmesh of a room** is baked like a level's (`KitNavMesh.Bake`): from the solid colliders, the kit's walker.
+Godot's parser sees a box collider's faces, not its volume, so the floor inside a box taller than the walker (a
+hearth's 2.2 m block) would stay walkable, an island sealed in the box; the bake adds every such box as an
+obstruction too, as Unity's solid colliders are.
+
+**Checks** (section 12): `rooms golden` rebuilds the kit's own Blender rooms and compares them with Blender's export
+(17 of 19 the same; Smithy and Townhouse_F1 differ by the known 0.3 m prop slides, as in Unity); `rooms validate`
+walk-tests seeds of every generator (every spawn, link and encounter point and every floor cell on the first spawn's
+island); `chains validate` walks the sample chain end to end; `chains stream` runs a baked chain's play scene and
+checks what the streamer holds in each piece; `shot` renders any scene top-down and from the game's camera, to look
+at what was built.
+
+## 11. Hooks a game fills
 
 Static hooks the addon calls back through (set them early, e.g. in an autoload's `_Ready`):
 
@@ -247,6 +327,9 @@ Static hooks the addon calls back through (set them early, e.g. in an autoload's
 | `Fire.SoundAt(id, point, volume, pitch)` | a one-shot (`fire_spray`, `spell_hit`, `earth`) | silent |
 | `KitWalkways.Names()` | the deck pieces' names | no decks |
 | `KitTravel.ScenePath(level)` | a level's scene | `res://kit/layouts/<level>.tscn` |
+| `KitRoom.Spawn(scene)`, `KitHouseGenerator.Spawn(scene)` | makes a piece (pooling) | `Instantiate` |
+| `KitInteriorRules.External(name)` | a piece the kit does not have (a game's own) | none |
+| `KitChain.AfterBake(chain)` | the game's additions to a chain's baked pieces | nothing |
 
 Switches: `KitLevel.SetUpSeeThrough`, `KitLevel.LightFires`, `KitTravel.Preload`, `KitSeeThroughCaps.FlushMs`.
 
@@ -269,7 +352,7 @@ One Godot rule for C# code that walks the scene tree every frame: `FindChildren`
 arrays, and one left to .NET's finalizer can be freed after the engine has shut down, crashing the game on quit. The
 addon uses `KitNodes.Below(root, type)` and `KitNodes.Children(node)` instead, which leave none.
 
-## 11. Checks from the command line
+## 12. Checks from the command line
 
 With the .NET build of Godot, after `dotnet build`, in the project folder:
 
@@ -288,10 +371,17 @@ godot --headless --path . --script res://addons/medieval_kit/Editor/kit_cli.gd -
 | `seethrough <layout> <out>` | a stand-in behind each building: the hole, the caps, shots on and off | a window |
 | `clickwalk <layout> <out>` | the walker: a floor click, the button held, a wall click, the doors and a round trip | a window |
 | `systems <out>` | fires, a blaze, a missile, a silhouette, a usable thing, a walkway deck | a window |
+| `rooms golden [log]` | the kit's Blender rooms rebuilt by KitRoom against Blender's export | headless |
+| `rooms validate [which] [count] [first seed]` | seeds of each generator (`cave`, `dungeon`, `sewer`, `connector`, `interior`, `all`) built and walk-tested | headless |
+| `rooms dump <which> <count> <first seed> <out.jsonl>` | the generators' levels as JSON, to diff with the Unity kit's (`tools/rooms_parity.py`) | headless |
+| `houses [count] [first seed]` | random houses as scenes and a showcase in `res://kit_houses/` | headless |
+| `chains sample <chain.tres> [seed]`, `chains bake <chain.tres>` | the sample chain made and baked; a chain baked | headless |
+| `chains validate [count] [first seed]`, `chains stream <play.tscn>` | the sample chain walked end to end; the streamer over a baked chain | headless |
+| `shot <scene.tscn> <out prefix> [WxH]` | any scene rendered top-down and from the game's camera | a window |
 
 The window ones need a display (drop `--headless`); each writes a log and shots to `<out>` and quits.
 
-## 12. What the Godot addon does not have
+## 13. What the Godot addon does not have
 
 - **The z-fight watch** (Unity's F8 tool that logs surfaces fighting in play) is not part of the Godot addon. The
   kit's pieces are checked for z-fighting in Blender, at the source.
@@ -299,5 +389,7 @@ The window ones need a display (drop `--headless`); each writes a log and shots 
   a house's floor under the hole and its box) is not ported yet. Until it is, `KitSeeThrough.SetUpLevel` takes a
   level's structures as buildings, and `KitClickToMove` has no stand-in for a house whose door faces away from the
   camera (Unity's `hiddenDoor`).
-- **Chain streaming** (Unity's `KitChainStreamer`: maps streamed as one world) is not ported yet; `KitTravel` moves
-  between whole levels.
+- **The shroud** (Unity's `KitShroud`: the rock away from a chain's passages fading to black) is not ported yet; a
+  chain's play scene has none. It comes with the village builder (FULL_PORT_PLAN phase 5).
+- **Eight herbs of the second and third chapters** (`SM_VK_Plant_Angelica`... `Samphire`) are in the Unity package
+  but not exported to Godot yet (they are not in the kit's main .blend); phase 5 brings them.

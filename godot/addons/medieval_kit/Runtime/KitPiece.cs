@@ -24,7 +24,23 @@ public partial class KitPiece : Node3D
     public int SurfaceOfSlot(int slot) => System.Array.IndexOf(BlenderSlots, slot);
 
     public string Get(string key, string fallback = null) => Props.Get(key, fallback);
+    public bool Has(string key) => Props.Has(key);
+    public float GetFloat(string key, float fallback = 0f) => Props.GetFloat(key, fallback);
 
-    /// <summary>a 0 / 1 property set and not off ("0", "False")</summary>
-    public bool Flag(string key) => Props.Get(key) is string v && v != "" && v != "0" && v != "False";
+    /// <summary>sets a property on this piece only: the dictionary a placed piece got from its scene is copied first,
+    /// so its siblings keep theirs</summary>
+    public void Set(string key, string value)
+    {
+        if (!ownProps) { Props = Props.Duplicate(); ownProps = true; }
+        Props[key] = value;
+    }
+
+    bool ownProps;
+
+    /// <summary>a 0 / 1 property set and not off ("0", "0.0" -- glTF extras bring whole numbers in as floats -- "False")</summary>
+    public bool Flag(string key) => Truthy(Props.Get(key));
+
+    public static bool Truthy(string v) =>
+        !string.IsNullOrEmpty(v) && v != "False" && v != "false" &&
+        !(float.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f) && f == 0f);
 }

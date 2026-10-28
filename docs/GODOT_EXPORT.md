@@ -253,7 +253,39 @@ restyled stones, roof jitter (dormer 1 / dormer 0 brightness 1.038-1.046 in both
 - **Captures** (`sh tools/gdx_levels.sh`: each level's Blender cameras at the level's own size and shadows): interiors
   and dungeons **1.9-5.7 / 255** mean (the chapel the highest: window shafts and the doorway area light), the valley
   **5.6-7.8** with one camera at 16.5 (an oak crown in front: the leaves' look C, and the river's noise stand-in).
-- Not yet: chains and their streamer (phase 4), the see-through (phase 6: a walker under a roof is hidden).
+- Chains and their streamer: phase 4 (5d); the see-through: phase 6 (HANDOFF 161-164).
+
+## 5d. Phase 4: rooms, generators, houses, chains (2026-10-28, HANDOFF 167)
+
+- **Runtime** (`Runtime/Rooms/`, `Runtime/Generation/`, the Unity package's counterparts, line for line): `KitRoom`
+  (+ `.Props`, `.Debris`; a tool `Node3D`), `KitRoomLayout` + `KitCaveLayout` (plan parsing, walls, cave tiles),
+  `KitPortal`, `KitFurnisher`, `KitSetPieces`, the generators (`KitCaveGenerator`, `KitDungeonGenerator`,
+  `KitSewerGenerator`, `KitInteriorGenerator`, `KitConnectorGenerator`) with their settings as resources
+  (`KitCaveOptions`...), `KitInteriorRules` (reads `kit/data/interior_rules.json`; pieces by name from `pieces.json`,
+  their mesh box from the imported mesh), `KitHouseGenerator` + `KitHouseRules` (`kit/data/house_rules.json`),
+  `KitChain` + `KitChainMap` + `KitChainPiece` (resources), `KitChainStreamer`, KitTravel's hand-over of an arrival to
+  it; `World/KitSolid` (boxes for exterior props reused in rooms; the rest of it for phase 5). `gdx_export.py rules`
+  copies the two rules files from the Unity export's Data/.
+- **Unity's numbers in .NET.** The fields keep Unity's names. `UnityMath` (Mathf, Vector2, a box Vector3) is Unity's
+  maths, aliased in the ported files. Records are `System.Text.Json.Nodes` read through `KitJson` (a cast on a node
+  throws where Newtonsoft's converts: a double read as float). Unity's editor runs Mono, measured against .NET 10
+  (2026-10-28, by compiling the Unity sources with Unity's own Mono csc and running them on both): the same
+  System.Random, LINQ, Dictionary / HashSet and trig, but (1) `ToList` / `ToArray` right after an `OrderBy` of one
+  element computes no key in .NET (`MonoLinq.ToListKeyed` enumerates instead: a random key's draw is kept) and (2)
+  Mono keeps float locals and an expression's steps in double, rounding only into fields, arrays, calls and casts
+  (`UnityMath` does the same inside Unity's multi-step members; in the generators it changed no plan in 1,000, so
+  their own float code stays as Unity's).
+- **Parity** (`kit_cli rooms dump` vs the same runs in the Unity editor by reflection, `tools/rooms_parity_unity.cs`;
+  `tools/rooms_parity.py`): 48 / 48 built levels the same (16 generator runs x 3 seeds: plans, records, every
+  placement to 2 mm, spawns, links, encounters); 1,000 plans (100 seeds x 10 runs, Unity sources on Mono vs the port)
+  the same; 20 / 20 houses. Four interior props (`LootPile`, `Crystals`, `Cocoon`, `Boulder`) were older in Godot
+  than in Unity (HANDOFF 137 redid them in code; the .blend still holds the old masters): rebuilt headless and
+  re-exported.
+- **Navmesh:** `KitNavMesh.Bake` adds every solid box taller than the walker as a projected obstruction (Godot's
+  parser sees a box's faces; the floor inside a 2.2 m hearth block was a walkable island).
+- **Checks:** `rooms golden` 17 / 19 (Smithy, Townhouse_F1: Unity's known prop slides); `rooms validate all 20` 320 /
+  320 walkable (168 s); `chains sample` (7 pieces, 12 / 12 spawns), `chains validate 10` 10 / 10, `chains stream`
+  all pass; three world levels rebuilt and `travel` (40 links, 0 problems) with the new bake; `shot` renders.
 
 ## 6. What converts cleanly, what needs shaders (all 200 materials of materials.json)
 
