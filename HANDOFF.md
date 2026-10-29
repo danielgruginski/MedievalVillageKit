@@ -2545,6 +2545,18 @@ Unity export (2026-09-30; details in docs/UNITY_EXPORT.md):
       `field` read back null); compare navigation worlds by `GetWorld3D().NavigationMap` RIDs; two Godot processes on
       one project at once can fail to parse each other's scenes (`travel` did, alone it passes): run checks one at a
       time.
+169. 2026-10-28 (Daniel: "Start itch files"). **The kit's Godot pack for itch** (itch `_tools/make_packs.py kit_godot` ->
+    `1_Medieval_Kit/downloads/MedievalVillageKit_Godot_0.3.0.zip`, 437 MB, 4,249 files; README
+    `_tools/readmes/kit_godot.txt`; page notes, devlog and g01-g03 screenshots in `1_Medieval_Kit/`). The project at
+    `E:\Unity\Godot\GameArtGeneration\medieval-kit` minus .godot/, pilot/, catalog/, maps/, _scratch/, nuget.config and
+    the .bat files, plus **the built C# assembly** (`.godot/mono/temp/bin/Debug`): the pieces import through the
+    addon's C# import script, which must load on a buyer's first open, before any Build. Addon changes for it (4d76b2b):
+    the two example outdoor maps built into `res://kit/examples/` and listed in the demo menu (KitPaths.Examples);
+    `KitTravel.ScenePath` takes a scene's res:// path as its own scene; Walk This Level and the demo open a map that is
+    not a world level by its path, arriving at its `arrival` spawn; plugin.cfg version 0.3.0; MANUAL section 1 (the
+    shroud's globals, the examples). Checked in a clean unzip: import 0 errors (6 min), `check` 1,473 / 0 before and
+    after `dotnet build` (0 errors), `travel` 40 / 0, dungeons walkable, the hamlet example rebuilt and walked, the demo
+    and Walk This Level place the walker on the examples. Daniel uploads (ITCH_PAGE "Godot release").
 
 ## 6. Gotchas
 - `vki_ws_build` refuses a piece whose master already sits in VKI_Pieces ("not yours"): build it there with
