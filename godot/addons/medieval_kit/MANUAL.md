@@ -40,16 +40,20 @@ What is where in the project:
 | `res://kit/materials/`, `res://kit/textures/` | the shared materials (KitLit) and their textures |
 | `res://kit/layouts/` | the built levels (`<name>.tscn`, each with its navmesh `<name>_nav.res`) |
 | `res://kit/structures/` | the premade structures (a smithy, a brewery...: `KitStructure`) |
+| `res://kit/examples/` | outdoor maps built from the addon's `Examples/*_layout.json` (section 11) |
 | `res://kit/world.tres` | the world graph (`KitWorld`): which level links to which, and the start |
 | `res://kit/see_through_caps.res` | the see-through's caps, baked (section 4) |
 
-1. **Enable the plugin** (Project > Project Settings > Plugins > Medieval Kit). The first time it adds two global
-   shader uniforms (`kit_see_through`, `kit_see_through_args`) and raises the instance-uniform buffer to 1,048,576
+1. **Enable the plugin** (Project > Project Settings > Plugins > Medieval Kit; the kit's own project has it on).
+   In a project of your own, the first time it adds the global shader uniforms (`kit_see_through`,
+   `kit_see_through_args` and the shroud's four, `kit_shroud_...`) and raises the instance-uniform buffer to 1,048,576
    (every kit material has instance uniforms, and Godot gives each instance 16 slots). It asks for a restart:
-   Project > Reload Current Project. Without these settings the kit's shaders do not compile.
+   Project > Reload Current Project. Without these settings the kit's shaders do not compile. The plugin also holds
+   the pieces' import script (`Editor/KitImport.cs`): keep it enabled.
 2. **Build the C#** (the Build button, or `dotnet build` in the project folder).
 3. **Play.** The project's main scene is the demo (`Walker/kit_demo.tscn`): pick a level and walk it with WASD (E at a
-   door), Tab through Blender's camera views, F for a free camera.
+   door), Tab through Blender's camera views, F for a free camera. The outdoor maps of `res://kit/examples/` are at the
+   end of its list.
 4. **Walk a level with the kit's own walker**: Project > Tools > Medieval Kit: Play From Start Level (the valley
    town, the start of the example world: 20 levels linked by doors, stairs, a mine adit and a sewer grate), or open a
    level from `res://kit/layouts/` and use Medieval Kit: Walk This Level. Where the level has a navmesh you get

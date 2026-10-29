@@ -14,6 +14,7 @@ public static class KitPaths
     public const string LayoutScenes = Root + "layouts/";    // <name>.tscn, built from them (KitBuilder)
     public const string StructureData = Data + "structures/"; // <name>.json, from gdx_export_structures
     public const string Structures = Root + "structures/";    // <name>.tscn, built from them (KitBuilder.BuildStructures)
+    public const string Examples = Root + "examples/";        // <map>.tscn, outdoor maps built from Examples/*_layout.json
     public const string Addon = "res://addons/medieval_kit/";
     public const string Shaders = Addon + "Shaders/";
     public const string Runtime = Addon + "Runtime/";

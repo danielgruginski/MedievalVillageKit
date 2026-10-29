@@ -18,8 +18,9 @@ public partial class KitPlayBoot : Node
         var world = ResourceLoader.Exists(KitPaths.World) ? GD.Load<KitWorld>(KitPaths.World) : null;
         if (level == "") level = world?.Start ?? "";
         if (!ResourceLoader.Exists(KitTravel.ScenePath(level))) { GD.PushError($"[KitPlay] no level '{level}' (build the layouts first)"); return; }
-        // arrive on the level's first link's spawn (both ends of a link share its id), else its first spawn
-        string spawn = world?.Find(level)?.Links.FirstOrDefault()?.Id;
+        // arrive on the level's first link's spawn (both ends of a link share its id); an outdoor map from a layout (a
+        // scene path) on its arrival; else its first spawn
+        string spawn = world?.Find(level)?.Links.FirstOrDefault()?.Id ?? (level.StartsWith("res://") ? "arrival" : null);
         KitTravel.Arrived += PlaceOnce;
         Callable.From(() => KitTravel.Reload(level, spawn ?? "")).CallDeferred();
     }

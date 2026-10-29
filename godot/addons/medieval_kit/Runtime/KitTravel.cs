@@ -22,8 +22,9 @@ public static class KitTravel
     public static event Action<string, KitSpawn> Arrived;       // level, spawn (null if none was found)
     public static event Action<KitLink> Leaving;
 
-    /// <summary>a level name -> its scene: the kit's built levels by default; a game maps its own</summary>
-    public static Func<string, string> ScenePath = name => KitPaths.LayoutScenes + name + ".tscn";
+    /// <summary>a level name -> its scene: the kit's built levels by default (a name that is already a scene's
+    /// res:// path is its own scene); a game maps its own</summary>
+    public static Func<string, string> ScenePath = name => name.StartsWith("res://") ? name : KitPaths.LayoutScenes + name + ".tscn";
     /// <summary>hold the current level's link targets loaded, for instant cuts (off: the held levels are freed)</summary>
     public static bool Preload
     {

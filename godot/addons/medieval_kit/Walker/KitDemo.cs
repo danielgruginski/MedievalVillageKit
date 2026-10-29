@@ -5,7 +5,8 @@ using Godot;
 namespace MedievalKit;
 
 /// <summary>The kit's demo menu (Walker/kit_demo.tscn; the Godot project's main scene, so Play or the project's
-/// "Play Medieval Kit demo.bat" opens it): every built level of res://kit/layouts. A world level is walked with the test
+/// "Play Medieval Kit demo.bat" opens it): every built level of res://kit/layouts and the outdoor maps of
+/// res://kit/examples (built from the addon's Examples/ layouts by KitVillage). A world level is walked with the test
 /// walker (its doors and stairs taken with E, as KitTravel does in a game); every layout can be looked at through
 /// Blender's own cameras or a free camera (KitDemoView). Nothing here is needed by a game.</summary>
 public partial class KitDemo : Control
@@ -41,6 +42,14 @@ public partial class KitDemo : Control
         list.AddChild(Text("Walk a level", 20));
         list.AddChild(Grid(levels.Select(l => (Label(l), (Action)(() => KitDemoView.Open(l.Name, true))))));
         var others = built.Where(n => levels.All(l => l.Name != n)).OrderBy(n => n, StringComparer.Ordinal).ToList();
+        var examples = DirAccess.DirExistsAbsolute(KitPaths.Examples)
+            ? DirAccess.GetFilesAt(KitPaths.Examples).Where(f => f.EndsWith(".tscn")).OrderBy(f => f, StringComparer.Ordinal).ToList()
+            : new System.Collections.Generic.List<string>();
+        if (examples.Count > 0)
+        {
+            list.AddChild(Text("Outdoor maps built from a layout (KitVillage: terrain, grass, forest, the sea)", 20));
+            list.AddChild(Grid(examples.Select(f => (f[..^5] + "  (outdoors)", (Action)(() => KitDemoView.Open(KitPaths.Examples + f, true))))));
+        }
         if (others.Count > 0)
         {
             list.AddChild(Text("Look around (Blender's cameras, free camera)", 20));

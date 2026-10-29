@@ -44,7 +44,8 @@ public partial class KitDemoView : Node
             walker = new KitTestWalker { Name = "KitTestWalker" };
             GetTree().Root.AddChild(walker);
             var world = ResourceLoader.Exists(KitPaths.World) ? GD.Load<KitWorld>(KitPaths.World) : null;
-            KitTravel.Reload(level, world?.Find(level)?.Links.FirstOrDefault()?.Id ?? "");
+            // a world level: at its first link's spawn; an outdoor map from a layout (a scene path): at its arrival
+            KitTravel.Reload(level, world?.Find(level)?.Links.FirstOrDefault()?.Id ?? (level.StartsWith("res://") ? "arrival" : ""));
             mode = Mode.Walker;
         }
         else

@@ -18,8 +18,10 @@ public partial class MedievalKitPlugin : EditorPlugin
         AddToolMenuItem(PlayStart, Callable.From(() => Play("")));
         AddToolMenuItem(WalkThis, Callable.From(() =>
         {
-            if (EditorInterface.Singleton.GetEditedSceneRoot() is KitLevel l) Play(l.LevelName);
-            else GD.PushWarning("[MedievalKit] Walk This Level: the open scene is not a kit level (res://kit/layouts/)");
+            // a world level by its name; any other kit level (an outdoor map from a layout, a room) by its scene's path
+            if (EditorInterface.Singleton.GetEditedSceneRoot() is KitLevel l)
+                Play(l.SceneFilePath.StartsWith(KitPaths.LayoutScenes) || l.SceneFilePath == "" ? l.LevelName : l.SceneFilePath);
+            else GD.PushWarning("[MedievalKit] Walk This Level: the open scene is not a kit level (a KitLevel root)");
         }));
     }
 
